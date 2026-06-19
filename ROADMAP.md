@@ -2,6 +2,13 @@
 
 ## Etapa 1 - Panel del Local
 
+### v4.6.6 Disponibilidad exacta por mesa
+
+- la disponibilidad manual y la autoasignacion comparan conflictos por ID exacto de mesa
+- `assigned_table_ids` y `tableId` se normalizan para no perder ocupaciones reales
+- la reserva actual se ignora al editar para no bloquearse contra si misma
+- la web publica conserva la regla de solo mostrar horarios realmente reservables
+
 ### v4.6.5 Ocupacion por slot unificada
 
 - el helper comun de ocupacion ahora se usa como base para Reservas, Plano y Asignar mesa

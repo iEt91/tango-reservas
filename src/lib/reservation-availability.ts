@@ -55,6 +55,7 @@ export type ReservationTableAvailabilityResult = {
   availableTableIds: string[];
 };
 
+// Only pending-with-table and confirmed reservations block a table.
 const ACTIVE_STATUSES: Reservation["status"][] = ["pending", "confirmed"];
 
 export function normalizeAssignedTableIds(values: unknown) {
@@ -93,21 +94,38 @@ export function normalizeAssignedTableIds(values: unknown) {
   ];
 }
 
-export function reservationUsesTable(
-  reservation: Pick<Reservation, "assignedTableIds"> | { assigned_table_ids?: unknown },
-  tableId: string,
+function getReservationTableIds(
+  reservation:
+    | Pick<Reservation, "assignedTableIds" | "tableId">
+    | { assigned_table_ids?: unknown; tableId?: unknown },
 ) {
   const assignedTableIds =
     "assignedTableIds" in reservation
       ? reservation.assignedTableIds
       : (reservation as { assigned_table_ids?: unknown }).assigned_table_ids;
+  const directTableId =
+    "tableId" in reservation ? reservation.tableId : (reservation as { tableId?: unknown }).tableId;
 
-  return normalizeAssignedTableIds(
-    assignedTableIds,
-  ).some((entry) => entry === tableId);
+  const normalizedIds = normalizeAssignedTableIds(assignedTableIds);
+  if (normalizedIds.length > 0) {
+    return normalizedIds;
+  }
+
+  return typeof directTableId === "string" && directTableId.trim()
+    ? [directTableId.trim()]
+    : [];
 }
 
-function isReservationBlockingStatus(status: Reservation["status"]) {
+export function reservationUsesTable(
+  reservation:
+    | Pick<Reservation, "assignedTableIds" | "tableId">
+    | { assigned_table_ids?: unknown; tableId?: unknown },
+  tableId: string,
+) {
+  return getReservationTableIds(reservation).some((entry) => entry === tableId);
+}
+
+export function isReservationBlockingStatus(status: Reservation["status"]) {
   return status === "confirmed" || status === "pending";
 }
 
@@ -217,6 +235,25 @@ export function getReservationDurationMinutes(
   return 120;
 }
 
+export function getReservationInterval(
+  reservation: Pick<Reservation, "reservationDate" | "reservationTime" | "serviceId">,
+  service: Service | null | undefined,
+  context: ReservationDurationContext = {},
+) {
+  const range = getReservationDateTimeRange(reservation, service, context);
+  if (!range) {
+    return null;
+  }
+
+  return {
+    start: range.start,
+    end: range.end,
+    startMinutes: range.startMinutes,
+    endMinutes: range.endMinutes,
+    durationMinutes: getReservationDurationMinutes(reservation, service, context),
+  };
+}
+
 export function getReservationDateTimeRange(
   reservation: Pick<Reservation, "reservationDate" | "reservationTime" | "serviceId">,
   service: Service | null | undefined,
@@ -251,6 +288,15 @@ export function doDateTimeRangesOverlap(
   bEndMinutes: number,
 ) {
   return aStartMinutes < bEndMinutes && bStartMinutes < aEndMinutes;
+}
+
+export function intervalsOverlap(
+  aStartMinutes: number,
+  aEndMinutes: number,
+  bStartMinutes: number,
+  bEndMinutes: number,
+) {
+  return doDateTimeRangesOverlap(aStartMinutes, aEndMinutes, bStartMinutes, bEndMinutes);
 }
 
 export function isReservationActiveAtSlot(
@@ -378,9 +424,7 @@ export function getAvailableTablesForReservationSlot({
   }
 
   for (const reservation of overlappingReservations) {
-    const assignedTableIds = normalizeAssignedTableIds(
-      (reservation as { assignedTableIds?: unknown }).assignedTableIds,
-    );
+    const assignedTableIds = getReservationTableIds(reservation);
     if (assignedTableIds.length === 0) {
       continue;
     }
@@ -476,9 +520,7 @@ export function getOccupiedTableIdsForSlot({
   });
 
   for (const reservation of overlappingReservations) {
-    for (const tableId of normalizeAssignedTableIds(
-      (reservation as { assignedTableIds?: unknown }).assignedTableIds,
-    )) {
+    for (const tableId of getReservationTableIds(reservation)) {
       occupiedTableIds.add(tableId);
     }
   }

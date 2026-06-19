@@ -5,7 +5,8 @@ import type {
   ReservationRules,
   Service,
 } from "@/data/types";
-import { buildDateTimeFromDateAndTime } from "@/lib/date-time";
+import { buildDateTimeFromDateAndTime, timeToMinutes } from "@/lib/date-time";
+import { intervalsOverlap } from "@/lib/reservation-availability";
 
 export type AvailabilityState =
   | "ok"
@@ -80,11 +81,6 @@ function combineDateAndTime(dateValue: string, timeValue: string) {
   return buildDateTimeFromDateAndTime(dateValue, timeValue);
 }
 
-function parseTimeToMinutes(timeValue: string) {
-  const [hours = "0", minutes = "0"] = timeValue.split(":");
-  return Number(hours) * 60 + Number(minutes);
-}
-
 function formatMinutesToTime(minutes: number) {
   const normalized = ((minutes % 1440) + 1440) % 1440;
   const hours = Math.floor(normalized / 60);
@@ -101,15 +97,6 @@ function getDayOfWeek(dateValue: string) {
   }
 
   return dayNames[date.getDay()];
-}
-
-function overlaps(
-  leftStart: number,
-  leftEnd: number,
-  rightStart: number,
-  rightEnd: number,
-) {
-  return leftStart < rightEnd && leftEnd > rightStart;
 }
 
 export function calculateAvailabilityForReservations({
@@ -188,18 +175,20 @@ export function calculateAvailabilityForReservations({
     };
   }
 
-  const openMinutes = parseTimeToMinutes(dailyHours.openTime);
-  const closeMinutes = parseTimeToMinutes(dailyHours.closeTime);
+  const openMinutes = timeToMinutes(dailyHours.openTime) ?? 0;
+  const closeMinutes = timeToMinutes(dailyHours.closeTime) ?? 0;
   const breakStartMinutes = dailyHours.breakStartTime
-    ? parseTimeToMinutes(dailyHours.breakStartTime)
+    ? timeToMinutes(dailyHours.breakStartTime)
     : null;
   const breakEndMinutes = dailyHours.breakEndTime
-    ? parseTimeToMinutes(dailyHours.breakEndTime)
+    ? timeToMinutes(dailyHours.breakEndTime)
     : null;
   const slotStep = rules.slotDurationMinutes;
   const serviceDuration = service.durationMinutes;
   const capacityLimit = Math.min(rules.maxReservationsPerSlot, service.capacity);
   const earliestAllowed = new Date(now.getTime() + rules.minNoticeMinutes * 60 * 1000);
+  // Allow the last slot if it still finishes before the closing minute.
+  const latestAllowedStartMinutes = closeMinutes + 1 - serviceDuration;
 
   const filteredReservations = reservations.filter(
     (reservation) =>
@@ -213,7 +202,7 @@ export function calculateAvailabilityForReservations({
 
   for (
     let startMinutes = openMinutes;
-    startMinutes + serviceDuration <= closeMinutes;
+    startMinutes <= latestAllowedStartMinutes;
     startMinutes += slotStep
   ) {
     const time = formatMinutesToTime(startMinutes);
@@ -245,7 +234,7 @@ export function calculateAvailabilityForReservations({
     if (
       breakStartMinutes !== null &&
       breakEndMinutes !== null &&
-      overlaps(
+      intervalsOverlap(
         startMinutes,
         startMinutes + serviceDuration,
         breakStartMinutes,
@@ -279,7 +268,7 @@ export function calculateAvailabilityForReservations({
       );
       const overlapsCandidate =
         reservation.status !== "completed" &&
-        overlaps(
+        intervalsOverlap(
           candidateStart.getTime(),
           candidateEnd.getTime(),
           reservationStart.getTime(),

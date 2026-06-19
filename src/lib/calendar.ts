@@ -5,10 +5,11 @@ import type {
   ReservationRules,
   ReservationStatus,
 } from "@/data/types";
+import { timeToMinutes } from "@/lib/date-time";
 import { getTableAvailabilitySummary } from "@/data/reservations";
 import { getBusinessServices } from "@/data/scheduling";
 import { sortReservationsForLocalPanel } from "@/lib/reservations";
-import { isReservationActiveAtSlot } from "@/lib/reservation-availability";
+import { intervalsOverlap, isReservationActiveAtSlot } from "@/lib/reservation-availability";
 
 export type CalendarViewMode = "day" | "week";
 export type CalendarStatusFilter = ReservationStatus | "all";
@@ -120,26 +121,12 @@ export function normalizeDateKey(value?: string | Date | null) {
   return `${year}-${month}-${day}`;
 }
 
-function parseTimeToMinutes(timeValue: string) {
-  const [hours = "0", minutes = "0"] = timeValue.split(":");
-  return Number(hours) * 60 + Number(minutes);
-}
-
 function formatMinutesToTime(minutes: number) {
   const normalized = ((minutes % 1440) + 1440) % 1440;
   const hours = Math.floor(normalized / 60);
   const mins = normalized % 60;
 
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
-}
-
-function overlaps(
-  leftStart: number,
-  leftEnd: number,
-  rightStart: number,
-  rightEnd: number,
-) {
-  return leftStart < rightEnd && leftEnd > rightStart;
 }
 
 function normalizeSearchValue(value: string) {
@@ -272,7 +259,7 @@ export function getDayOfWeek(dateValue: string) {
 }
 
 function sortByStartTime(times: string[]) {
-  return [...times].sort((left, right) => parseTimeToMinutes(left) - parseTimeToMinutes(right));
+  return [...times].sort((left, right) => (timeToMinutes(left) ?? 0) - (timeToMinutes(right) ?? 0));
 }
 
 export function getReservationsByDay(reservations: Reservation[], dateValue: string) {
@@ -301,7 +288,7 @@ export function groupReservationsByTime(reservations: Reservation[]) {
   }
 
   return [...map.entries()]
-    .sort(([leftTime], [rightTime]) => parseTimeToMinutes(leftTime) - parseTimeToMinutes(rightTime))
+    .sort(([leftTime], [rightTime]) => (timeToMinutes(leftTime) ?? 0) - (timeToMinutes(rightTime) ?? 0))
     .map(([time, items]) => ({ time, items }));
 }
 
@@ -398,13 +385,13 @@ export function buildDaySchedule({
     } satisfies CalendarDaySchedule;
   }
 
-  const openMinutes = parseTimeToMinutes(businessHours.openTime);
-  const closeMinutes = parseTimeToMinutes(businessHours.closeTime);
+  const openMinutes = timeToMinutes(businessHours.openTime) ?? 0;
+  const closeMinutes = timeToMinutes(businessHours.closeTime) ?? 0;
   const breakStartMinutes = businessHours.breakStartTime
-    ? parseTimeToMinutes(businessHours.breakStartTime)
+    ? timeToMinutes(businessHours.breakStartTime)
     : null;
   const breakEndMinutes = businessHours.breakEndTime
-    ? parseTimeToMinutes(businessHours.breakEndTime)
+    ? timeToMinutes(businessHours.breakEndTime)
     : null;
   const slotStep = rules.slotDurationMinutes;
   const services = getBusinessServices(businessId);
@@ -416,22 +403,24 @@ export function buildDaySchedule({
   );
 
   const slots: CalendarSlot[] = [];
+  // Keep the final minute of service visible when closing is 23:59.
+  const latestEndMinutes = closeMinutes + 1;
 
   for (
     let startMinutes = openMinutes;
-    startMinutes + slotStep <= closeMinutes;
+    startMinutes < latestEndMinutes;
     startMinutes += slotStep
   ) {
     const time = formatMinutesToTime(startMinutes);
-    const isBreak =
-      breakStartMinutes !== null &&
-      breakEndMinutes !== null &&
-      overlaps(
-        startMinutes,
-        startMinutes + slotStep,
-        breakStartMinutes,
-        breakEndMinutes,
-      );
+      const isBreak =
+        breakStartMinutes !== null &&
+        breakEndMinutes !== null &&
+        intervalsOverlap(
+          startMinutes,
+          startMinutes + slotStep,
+          breakStartMinutes,
+          breakEndMinutes,
+        );
     const reservationsForSlot = filteredReservations.filter((reservation) =>
       isReservationActiveAtSlot(reservation, dateValue, time, {
         service: services.find((entry) => entry.id === reservation.serviceId) ?? null,

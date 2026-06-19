@@ -8,7 +8,7 @@ import type {
   Service,
 } from "@/data/types";
 import { buildCustomersFromReservations, classifyCustomer, getCustomerKey } from "@/lib/crm";
-import { buildDateTimeFromDateAndTime } from "@/lib/date-time";
+import { buildDateTimeFromDateAndTime, timeToMinutes } from "@/lib/date-time";
 import { getFloorTablesByBusinessId } from "@/data/floor-plan";
 import { getJoinedTableByReservationId } from "@/data/joined-tables";
 import { getBusinessHours, getBusinessServices, getReservationRules } from "@/data/scheduling";
@@ -17,6 +17,7 @@ import {
   getTableAvailabilitySummary,
   validateReservationTableAssignment,
 } from "@/data/reservations";
+import { intervalsOverlap } from "@/lib/reservation-availability";
 
 export type ReportPeriod = "today" | "7d" | "30d" | "month" | "custom";
 
@@ -284,20 +285,11 @@ function formatPercent(value: number) {
   return `${(value * 100).toFixed(value >= 0.1 ? 1 : 0)}%`;
 }
 
-function parseTimeToMinutes(timeValue: string) {
-  const [hours = "0", minutes = "0"] = timeValue.split(":");
-  return Number(hours) * 60 + Number(minutes);
-}
-
 function formatMinutesToTime(minutes: number) {
   const normalized = ((minutes % 1440) + 1440) % 1440;
   const hours = Math.floor(normalized / 60);
   const mins = normalized % 60;
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
-}
-
-function overlaps(leftStart: number, leftEnd: number, rightStart: number, rightEnd: number) {
-  return leftStart < rightEnd && leftEnd > rightStart;
 }
 
 function parseAssignedTableIds(value: unknown) {
@@ -441,26 +433,29 @@ function buildReportSlotSummaries({
       continue;
     }
 
-    const openMinutes = parseTimeToMinutes(businessHours.openTime);
-    const closeMinutes = parseTimeToMinutes(businessHours.closeTime);
+    const openMinutes = timeToMinutes(businessHours.openTime) ?? 0;
+    const closeMinutes = timeToMinutes(businessHours.closeTime) ?? 0;
     const breakStartMinutes = businessHours.breakStartTime
-      ? parseTimeToMinutes(businessHours.breakStartTime)
+      ? timeToMinutes(businessHours.breakStartTime)
       : null;
     const breakEndMinutes = businessHours.breakEndTime
-      ? parseTimeToMinutes(businessHours.breakEndTime)
+      ? timeToMinutes(businessHours.breakEndTime)
       : null;
     const slotStep = Math.max(1, rules.slotDurationMinutes || 30);
+    // Treat 23:59 as the last minute of service, so the final reservable
+    // start is still allowed if it fits fully before closing.
+    const latestEndMinutes = closeMinutes + 1;
 
     for (
       let startMinutes = openMinutes;
-      startMinutes + slotStep <= closeMinutes;
+      startMinutes < latestEndMinutes;
       startMinutes += slotStep
     ) {
       const time = formatMinutesToTime(startMinutes);
       if (
         breakStartMinutes !== null &&
         breakEndMinutes !== null &&
-        overlaps(
+        intervalsOverlap(
           startMinutes,
           startMinutes + slotStep,
           breakStartMinutes,

@@ -8,10 +8,16 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v4.6.5`
+`v4.6.6`
 
-Esta version unifica la ocupacion por slot para que Reservas, Plano y Asignar mesa usen la misma logica real de mesas y duracion.
+Esta version unifica la ocupacion por slot y corrige la comparacion exacta por mesa e intervalo para que Reservas, Plano, Calendario y la web publiquen la misma disponibilidad real.
 
+## Etapa v4.6.6
+
+- corrige la comparacion por ID exacto de mesa en conflictos de reserva
+- centraliza la normalizacion de `assigned_table_ids` y `tableId`
+- usa la duracion real de la reserva para calcular solapamiento en asignacion manual
+- mantiene la web publica mostrando solo horarios realmente reservables
 ## Etapa v4.6.5
 
 - Unifica la logica de ocupacion por slot entre Reservas, Plano y Asignar mesa.

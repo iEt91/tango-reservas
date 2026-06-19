@@ -23,6 +23,8 @@ import { LOCAL_STORE_EVENTS, LOCAL_STORE_KEYS } from "@/lib/data/localStore";
 import {
   findAvailableTableForReservation,
   getOccupiedTableIdsForSlot as getOccupiedTableIdsForSlotFromAvailability,
+  getReservationDurationMinutes,
+  getReservationsOverlappingSlot,
   isReservationActiveAtSlot,
   normalizeAssignedTableIds,
   reservationUsesTable,
@@ -509,6 +511,28 @@ function findLiveTable(businessId: string, tableId: string) {
   return getFloorTablesByBusinessId(businessId).find((table) => table.id === tableId) ?? null;
 }
 
+function getReservationConflictReservations(reservation: Reservation) {
+  const services = getBusinessServices(reservation.businessId);
+  const service = services.find((entry) => entry.id === reservation.serviceId) ?? null;
+  const fallbackDurationMinutes = getReservationRules(reservation.businessId)?.slotDurationMinutes ?? 120;
+  const durationMinutes = getReservationDurationMinutes(reservation, service, {
+    fallbackDurationMinutes,
+  });
+
+  // We compare the full reservation interval here so a 15:00 booking blocks all
+  // of its real duration, not only the first 30-minute slot.
+  return getReservationsOverlappingSlot({
+    businessId: reservation.businessId,
+    date: reservation.reservationDate,
+    time: reservation.reservationTime,
+    reservations: dedupeReservations(getReservationsSnapshotInternal()),
+    services,
+    slotDurationMinutes: durationMinutes,
+    fallbackDurationMinutes,
+    optionalReservationIdToIgnore: reservation.id,
+  });
+}
+
 export function getActiveReservationsForSlot(
   businessId: string,
   date: string,
@@ -727,11 +751,7 @@ export function getAvailableTablesForSlot(
 
 export function findIndividualTableOptions(reservation: Reservation) {
   const tables = getTablesForBusiness(reservation.businessId);
-  const slotReservations = getActiveReservationsForSlot(
-    reservation.businessId,
-    reservation.reservationDate,
-    reservation.reservationTime,
-  );
+  const slotReservations = getReservationConflictReservations(reservation);
   const activeJoinedTables = getActiveJoinedTablesForSlot(
     reservation.businessId,
     reservation.reservationDate,
@@ -764,11 +784,7 @@ export function findIndividualTableOptions(reservation: Reservation) {
 
 export function findJoinedTableOptions(reservation: Reservation) {
   const tables = getTablesForBusiness(reservation.businessId);
-  const slotReservations = getActiveReservationsForSlot(
-    reservation.businessId,
-    reservation.reservationDate,
-    reservation.reservationTime,
-  );
+  const slotReservations = getReservationConflictReservations(reservation);
   const activeJoinedTables = getActiveJoinedTablesForSlot(
     reservation.businessId,
     reservation.reservationDate,
@@ -830,11 +846,7 @@ export function validateReservationTableAssignment(reservation: Reservation) {
     return { isValid: true, errors, warnings } satisfies ReservationTableAssignmentValidation;
   }
 
-  const slotReservations = getActiveReservationsForSlot(
-    reservation.businessId,
-    reservation.reservationDate,
-    reservation.reservationTime,
-  );
+  const slotReservations = getReservationConflictReservations(reservation);
   const activeJoinedTables = getActiveJoinedTablesForSlot(
     reservation.businessId,
     reservation.reservationDate,
@@ -1218,11 +1230,7 @@ export function assignReservationToTable(reservationId: string, tableId: string)
     throw new Error("La mesa no existe o no pertenece a este negocio.");
   }
 
-  const slotReservations = getActiveReservationsForSlot(
-    reservation.businessId,
-    reservation.reservationDate,
-    reservation.reservationTime,
-  );
+  const slotReservations = getReservationConflictReservations(reservation);
   const activeJoinedTables = getActiveJoinedTablesForSlot(
     reservation.businessId,
     reservation.reservationDate,
@@ -1282,11 +1290,7 @@ export function assignReservationToJoinedTable(
   const selectedTables = uniqueTableIds
     .map((tableId) => tables.find((table) => table.id === tableId) ?? null)
     .filter((table): table is FloorTable => table !== null);
-  const slotReservations = getActiveReservationsForSlot(
-    reservation.businessId,
-    reservation.reservationDate,
-    reservation.reservationTime,
-  );
+  const slotReservations = getReservationConflictReservations(reservation);
   const activeJoinedTables = getActiveJoinedTablesForSlot(
     reservation.businessId,
     reservation.reservationDate,

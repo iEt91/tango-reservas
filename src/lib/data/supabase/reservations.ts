@@ -20,6 +20,7 @@ import {
   getAvailableTablesForReservationSlot,
   getOccupiedTableIdsForSlot,
   getReservationsOverlappingSlot,
+  intervalsOverlap,
   normalizeAssignedTableIds,
   reservationUsesTable,
 } from "@/lib/reservation-availability";
@@ -166,6 +167,29 @@ function normalizeAndValidateAssignedTableIds(tableIds: string[]) {
   return uniqueTableIds;
 }
 
+function getReservationAssignedTableIds(
+  reservation:
+    | Pick<Reservation, "assignedTableIds" | "tableId">
+    | { assigned_table_ids?: unknown; tableId?: unknown },
+) {
+  const normalized = normalizeAssignedTableIds(
+    "assignedTableIds" in reservation
+      ? reservation.assignedTableIds
+      : (reservation as { assigned_table_ids?: unknown }).assigned_table_ids,
+  );
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  const directTableId =
+    "tableId" in reservation ? reservation.tableId : (reservation as { tableId?: unknown }).tableId;
+
+  return typeof directTableId === "string" && directTableId.trim()
+    ? [directTableId.trim()]
+    : [];
+}
+
 function getReservationSlotDurationMinutes(businessId: string, reservation: Reservation) {
   const service =
     getSupabaseServicesByBusinessSync(businessId).find((entry) => entry.id === reservation.serviceId) ??
@@ -178,10 +202,6 @@ function isBaseTableUsable(table: FloorTable) {
     table.status !== "blocked" &&
     table.status !== "out_of_service"
   );
-}
-
-function overlaps(leftStart: number, leftEnd: number, rightStart: number, rightEnd: number) {
-  return leftStart < rightEnd && rightStart < leftEnd;
 }
 
 export async function findBestAvailableTableForReservation({
@@ -233,7 +253,10 @@ export async function findBestAvailableTableForReservation({
       services.find((entry) => entry.id === reservation.serviceId)?.durationMinutes ?? 120;
     const existingEnd = existingStart + Math.max(1, existingServiceDuration);
 
-    if (reservation.reservationDate !== reservationDate || !overlaps(existingStart, existingEnd, start, end)) {
+    if (
+      reservation.reservationDate !== reservationDate ||
+      !intervalsOverlap(existingStart, existingEnd, start, end)
+    ) {
       continue;
     }
 
@@ -1041,7 +1064,7 @@ export function getSupabaseTableAvailabilitySummary(
   }
 
   for (const reservation of reservations) {
-    const assignedTableIds = normalizeAssignedTableIds(reservation.assignedTableIds);
+    const assignedTableIds = getReservationAssignedTableIds(reservation);
 
     for (const tableId of assignedTableIds) {
       occupiedTableIds.add(tableId);
@@ -1070,7 +1093,9 @@ export function getSupabaseTableAvailabilitySummary(
   }
 
   const availableTables = tables.filter((table) => !occupiedTableIds.has(table.id));
-  const reservationsWithoutTable = reservations.filter((reservation) => normalizeAssignedTableIds(reservation.assignedTableIds).length === 0);
+  const reservationsWithoutTable = reservations.filter(
+    (reservation) => getReservationAssignedTableIds(reservation).length === 0,
+  );
 
   return {
     businessId,
@@ -1080,7 +1105,7 @@ export function getSupabaseTableAvailabilitySummary(
     reservationsWithoutTable,
     assignmentsByTableId: reservations.reduce<Record<string, Reservation[]>>(
       (assignments, reservation) => {
-        const assignedTableIds = normalizeAssignedTableIds(reservation.assignedTableIds);
+        const assignedTableIds = getReservationAssignedTableIds(reservation);
 
         for (const tableId of assignedTableIds) {
           assignments[tableId] = [...(assignments[tableId] ?? []), reservation];
