@@ -1,0 +1,704 @@
+import type { MenuCategory, MenuItem } from "@/data/types";
+import {
+  getInitialMenuCategoriesForBusiness,
+  getInitialMenuItemsForBusiness,
+  initialMenuCategories,
+  initialMenuItems,
+} from "@/mocks/menu";
+import { LOCAL_STORE_EVENTS, LOCAL_STORE_KEYS } from "@/lib/data/localStore";
+
+type MenuStore = {
+  categories: MenuCategory[];
+  items: MenuItem[];
+};
+
+const STORAGE_KEY = LOCAL_STORE_KEYS.menu;
+const CHANGE_EVENT = LOCAL_STORE_EVENTS.menu;
+
+let menuStore: MenuStore = {
+  categories: initialMenuCategories.map((category) => ({ ...category })),
+  items: initialMenuItems.map((item) => ({ ...item, tags: [...(item.tags ?? [])] })),
+};
+let hasHydratedFromStorage = false;
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function cloneCategory(category: MenuCategory) {
+  return { ...category };
+}
+
+function cloneItem(item: MenuItem) {
+  return {
+    ...item,
+    tags: [...(item.tags ?? [])],
+  };
+}
+
+function cloneCategories(categories: MenuCategory[]) {
+  return categories.map(cloneCategory);
+}
+
+function cloneItems(items: MenuItem[]) {
+  return items.map(cloneItem);
+}
+
+function normalizeText(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getInitials(value: string) {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  const initials = parts.map((part) => part[0] ?? "").join("");
+  return initials.toUpperCase() || "MN";
+}
+
+function createId(prefix: string, businessId: string, name: string) {
+  const suffix = normalizeText(name) || "item";
+  const randomPart =
+    globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}-${businessId}-${suffix}-${randomPart}`;
+}
+
+function readStoreFromStorage() {
+  if (!isBrowser()) {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<MenuStore>;
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    return {
+      categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+    } satisfies MenuStore;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeCategory(category: Partial<MenuCategory> & { id: string; businessId: string }): MenuCategory {
+  const timestamp = typeof category.createdAt === "string" ? category.createdAt : nowIso();
+
+  return {
+    id: category.id,
+    businessId: category.businessId,
+    name: category.name?.trim() || "Nueva categoria",
+    description:
+      typeof category.description === "string" && category.description.trim().length > 0
+        ? category.description.trim()
+        : null,
+    sortOrder: Number.isFinite(category.sortOrder) ? Number(category.sortOrder) : 0,
+    isActive: typeof category.isActive === "boolean" ? category.isActive : true,
+    createdAt: timestamp,
+    updatedAt: typeof category.updatedAt === "string" ? category.updatedAt : timestamp,
+  };
+}
+
+function normalizeItem(item: Partial<MenuItem> & { id: string; businessId: string; categoryId: string }): MenuItem {
+  const timestamp = typeof item.createdAt === "string" ? item.createdAt : nowIso();
+  const name = item.name?.trim() || "Nuevo item";
+
+  return {
+    id: item.id,
+    businessId: item.businessId,
+    categoryId: item.categoryId,
+    name,
+    description: item.description?.trim() || "",
+    price:
+      typeof item.price === "number" && Number.isFinite(item.price) && item.price >= 0
+        ? item.price
+        : null,
+    imageDataUrl:
+      typeof item.imageDataUrl === "string" && item.imageDataUrl.trim().length > 0
+        ? item.imageDataUrl.trim()
+        : null,
+    imageUrl:
+      typeof item.imageUrl === "string" && item.imageUrl.trim().length > 0
+        ? item.imageUrl.trim()
+        : null,
+    imagePlaceholder:
+      typeof item.imagePlaceholder === "string" && item.imagePlaceholder.trim().length > 0
+        ? item.imagePlaceholder.trim()
+        : getInitials(name),
+    isActive: typeof item.isActive === "boolean" ? item.isActive : true,
+    isFeatured: typeof item.isFeatured === "boolean" ? item.isFeatured : false,
+    sortOrder: Number.isFinite(item.sortOrder) ? Number(item.sortOrder) : 0,
+    tags: Array.isArray(item.tags) ? item.tags.filter(Boolean) : [],
+    createdAt: timestamp,
+    updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : timestamp,
+  };
+}
+
+function loadStoreIfNeeded() {
+  if (!isBrowser() || hasHydratedFromStorage) {
+    return;
+  }
+
+  hasHydratedFromStorage = true;
+  const stored = readStoreFromStorage();
+
+  if (stored) {
+    menuStore = {
+      categories: stored.categories.map((category) =>
+        normalizeCategory(category as MenuCategory & { id: string; businessId: string }),
+      ),
+      items: stored.items.map((item) =>
+        normalizeItem(item as MenuItem & { id: string; businessId: string; categoryId: string }),
+      ),
+    };
+  }
+}
+
+function persistStore() {
+  if (!isBrowser()) {
+    return;
+  }
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(menuStore));
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+function updateStore(nextStore: MenuStore) {
+  menuStore = nextStore;
+  hasHydratedFromStorage = true;
+  persistStore();
+}
+
+function getBusinessCategoriesInternal(businessId: string) {
+  return menuStore.categories
+    .filter((category) => category.businessId === businessId)
+    .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name));
+}
+
+function getBusinessItemsInternal(businessId: string) {
+  const categoryOrder = new Map(
+    getBusinessCategoriesInternal(businessId).map((category, index) => [category.id, index]),
+  );
+
+  return menuStore.items
+    .filter((item) => item.businessId === businessId)
+    .sort((left, right) => {
+      const leftCategory = categoryOrder.get(left.categoryId) ?? 9999;
+      const rightCategory = categoryOrder.get(right.categoryId) ?? 9999;
+
+      if (leftCategory !== rightCategory) {
+        return leftCategory - rightCategory;
+      }
+
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+}
+
+function getNextSortOrderForCategory(businessId: string) {
+  return getBusinessCategoriesInternal(businessId).reduce(
+    (max, category) => Math.max(max, category.sortOrder),
+    -1,
+  ) + 1;
+}
+
+function getNextSortOrderForItem(businessId: string, categoryId: string) {
+  return getBusinessItemsInternal(businessId)
+    .filter((item) => item.categoryId === categoryId)
+    .reduce((max, item) => Math.max(max, item.sortOrder), -1) + 1;
+}
+
+function getMenuIdPrefix(categoryOrItem: "category" | "item") {
+  return categoryOrItem === "category" ? "menu-category" : "menu-item";
+}
+
+function sortStore() {
+  menuStore = {
+    categories: [...menuStore.categories].sort(
+      (left, right) =>
+        left.businessId.localeCompare(right.businessId) ||
+        left.sortOrder - right.sortOrder ||
+        left.name.localeCompare(right.name),
+    ),
+    items: [...menuStore.items].sort(
+      (left, right) =>
+        left.businessId.localeCompare(right.businessId) ||
+        left.categoryId.localeCompare(right.categoryId) ||
+        left.sortOrder - right.sortOrder ||
+        left.name.localeCompare(right.name),
+    ),
+  };
+}
+
+function replaceBusinessMenu(businessId: string, categories: MenuCategory[], items: MenuItem[]) {
+  const nextCategories = menuStore.categories.filter((category) => category.businessId !== businessId);
+  const nextItems = menuStore.items.filter((item) => item.businessId !== businessId);
+  updateStore({
+    categories: [...nextCategories, ...categories.map(cloneCategory)],
+    items: [...nextItems, ...items.map(cloneItem)],
+  });
+}
+
+export function getMenuCategoriesByBusinessId(businessId: string) {
+  loadStoreIfNeeded();
+  return cloneCategories(getBusinessCategoriesInternal(businessId));
+}
+
+export function getMenuItemsByBusinessId(businessId: string) {
+  loadStoreIfNeeded();
+  return cloneItems(getBusinessItemsInternal(businessId));
+}
+
+export function getMenuItemsByCategoryId(businessId: string, categoryId: string) {
+  return getMenuItemsByBusinessId(businessId).filter((item) => item.categoryId === categoryId);
+}
+
+export function getMenuSummary(businessId: string) {
+  const categories = getMenuCategoriesByBusinessId(businessId);
+  const items = getMenuItemsByBusinessId(businessId);
+  const activeCategories = categories.filter((category) => category.isActive).length;
+  const activeItems = items.filter((item) => item.isActive).length;
+  const featuredItems = items.filter((item) => item.isActive && item.isFeatured).length;
+  const itemsWithoutPrice = items.filter((item) => item.isActive && item.price == null).length;
+
+  return {
+    totalCategories: categories.length,
+    activeCategories,
+    totalItems: items.length,
+    activeItems,
+    featuredItems,
+    itemsWithoutPrice,
+  };
+}
+
+export function createMenuCategory(
+  businessId: string,
+  data: Pick<MenuCategory, "name" | "description" | "isActive">,
+) {
+  loadStoreIfNeeded();
+  const timestamp = nowIso();
+  const category: MenuCategory = {
+    id: createId(getMenuIdPrefix("category"), businessId, data.name),
+    businessId,
+    name: data.name.trim(),
+    description: data.description?.trim() || null,
+    sortOrder: getNextSortOrderForCategory(businessId),
+    isActive: data.isActive,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  updateStore({
+    categories: [category, ...menuStore.categories],
+    items: menuStore.items,
+  });
+
+  sortStore();
+  persistStore();
+  return cloneCategory(category);
+}
+
+export function updateMenuCategory(
+  categoryId: string,
+  data: Partial<Pick<MenuCategory, "name" | "description" | "isActive" | "sortOrder">>,
+) {
+  loadStoreIfNeeded();
+  const index = menuStore.categories.findIndex((category) => category.id === categoryId);
+  if (index === -1) {
+    return null;
+  }
+
+  const timestamp = nowIso();
+  const updatedCategory: MenuCategory = {
+    ...menuStore.categories[index],
+    ...data,
+    name: data.name?.trim() || menuStore.categories[index].name,
+    description:
+      data.description === undefined
+        ? menuStore.categories[index].description ?? null
+        : data.description?.trim() || null,
+    sortOrder:
+      typeof data.sortOrder === "number" && Number.isFinite(data.sortOrder)
+        ? data.sortOrder
+        : menuStore.categories[index].sortOrder,
+    updatedAt: timestamp,
+  };
+
+  updateStore({
+    categories: menuStore.categories.map((category, categoryIndex) =>
+      categoryIndex === index ? updatedCategory : category,
+    ),
+    items: menuStore.items,
+  });
+  sortStore();
+  persistStore();
+  return cloneCategory(updatedCategory);
+}
+
+export function toggleMenuCategoryStatus(categoryId: string) {
+  loadStoreIfNeeded();
+  const category = menuStore.categories.find((entry) => entry.id === categoryId);
+  if (!category) {
+    return null;
+  }
+
+  return updateMenuCategory(categoryId, { isActive: !category.isActive });
+}
+
+export function deleteMenuCategory(categoryId: string) {
+  loadStoreIfNeeded();
+  const category = menuStore.categories.find((entry) => entry.id === categoryId);
+  if (!category) {
+    return false;
+  }
+
+  updateStore({
+    categories: menuStore.categories.filter((entry) => entry.id !== categoryId),
+    items: menuStore.items.filter((entry) => entry.categoryId !== categoryId),
+  });
+  sortStore();
+  persistStore();
+  return true;
+}
+
+export function moveMenuCategory(categoryId: string, direction: -1 | 1) {
+  loadStoreIfNeeded();
+  const categories = getBusinessCategoriesInternal(
+    menuStore.categories.find((category) => category.id === categoryId)?.businessId ?? "",
+  );
+  const index = categories.findIndex((category) => category.id === categoryId);
+  const targetIndex = index + direction;
+
+  if (index === -1 || targetIndex < 0 || targetIndex >= categories.length) {
+    return null;
+  }
+
+  const current = categories[index];
+  const target = categories[targetIndex];
+  const timestamp = nowIso();
+
+  const updatedCategories = menuStore.categories.map((category) => {
+    if (category.id === current.id) {
+      return { ...category, sortOrder: target.sortOrder, updatedAt: timestamp };
+    }
+    if (category.id === target.id) {
+      return { ...category, sortOrder: current.sortOrder, updatedAt: timestamp };
+    }
+    return category;
+  });
+
+  updateStore({
+    categories: updatedCategories,
+    items: menuStore.items,
+  });
+  sortStore();
+  persistStore();
+  return cloneCategory(updatedCategories.find((category) => category.id === categoryId) ?? current);
+}
+
+export function createMenuItem(
+  businessId: string,
+  data: Pick<
+    MenuItem,
+    "categoryId" | "name" | "description" | "price" | "imageDataUrl" | "imageUrl" | "imagePlaceholder" | "isActive" | "isFeatured" | "tags"
+  >,
+) {
+  loadStoreIfNeeded();
+  const timestamp = nowIso();
+  const name = data.name.trim();
+  const item: MenuItem = {
+    id: createId(getMenuIdPrefix("item"), businessId, name),
+    businessId,
+    categoryId: data.categoryId,
+    name,
+    description: data.description.trim(),
+    price:
+      typeof data.price === "number" && Number.isFinite(data.price) && data.price >= 0
+        ? data.price
+        : null,
+    imageDataUrl: data.imageDataUrl?.trim() || null,
+    imageUrl: data.imageUrl?.trim() || null,
+    imagePlaceholder: data.imagePlaceholder?.trim() || getInitials(name),
+    isActive: data.isActive,
+    isFeatured: Boolean(data.isFeatured),
+    sortOrder: getNextSortOrderForItem(businessId, data.categoryId),
+    tags: [...(data.tags ?? [])],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  updateStore({
+    categories: menuStore.categories,
+    items: [item, ...menuStore.items],
+  });
+  sortStore();
+  persistStore();
+  return cloneItem(item);
+}
+
+export function updateMenuItem(
+  itemId: string,
+  data: Partial<
+    Pick<
+      MenuItem,
+      | "categoryId"
+      | "name"
+      | "description"
+      | "price"
+      | "imageDataUrl"
+      | "imageUrl"
+      | "imagePlaceholder"
+      | "isActive"
+      | "isFeatured"
+      | "sortOrder"
+      | "tags"
+    >
+  >,
+) {
+  loadStoreIfNeeded();
+  const index = menuStore.items.findIndex((item) => item.id === itemId);
+  if (index === -1) {
+    return null;
+  }
+
+  const timestamp = nowIso();
+  const current = menuStore.items[index];
+  const name = data.name?.trim() || current.name;
+  const updatedItem: MenuItem = {
+    ...current,
+    ...data,
+    name,
+    description: data.description === undefined ? current.description : data.description.trim(),
+    price:
+      typeof data.price === "number" && Number.isFinite(data.price) && data.price >= 0
+        ? data.price
+        : data.price === null
+          ? null
+          : current.price ?? null,
+    imageDataUrl:
+      data.imageDataUrl === undefined
+        ? current.imageDataUrl ?? null
+        : data.imageDataUrl?.trim() || null,
+    imageUrl:
+      data.imageUrl === undefined
+        ? current.imageUrl ?? null
+        : data.imageUrl?.trim() || null,
+    imagePlaceholder:
+      data.imagePlaceholder === undefined
+        ? current.imagePlaceholder ?? getInitials(name)
+        : data.imagePlaceholder?.trim() || getInitials(name),
+    isActive: typeof data.isActive === "boolean" ? data.isActive : current.isActive,
+    isFeatured: typeof data.isFeatured === "boolean" ? data.isFeatured : current.isFeatured ?? false,
+    sortOrder:
+      typeof data.sortOrder === "number" && Number.isFinite(data.sortOrder)
+        ? data.sortOrder
+        : current.sortOrder,
+    tags: Array.isArray(data.tags) ? [...data.tags] : current.tags ? [...current.tags] : [],
+    updatedAt: timestamp,
+  };
+
+  updateStore({
+    categories: menuStore.categories,
+    items: menuStore.items.map((item, itemIndex) => (itemIndex === index ? updatedItem : item)),
+  });
+  sortStore();
+  persistStore();
+  return cloneItem(updatedItem);
+}
+
+export function toggleMenuItemStatus(itemId: string) {
+  loadStoreIfNeeded();
+  const item = menuStore.items.find((entry) => entry.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  return updateMenuItem(itemId, { isActive: !item.isActive });
+}
+
+export function deleteMenuItem(itemId: string) {
+  loadStoreIfNeeded();
+  const exists = menuStore.items.some((entry) => entry.id === itemId);
+  if (!exists) {
+    return false;
+  }
+
+  updateStore({
+    categories: menuStore.categories,
+    items: menuStore.items.filter((entry) => entry.id !== itemId),
+  });
+  sortStore();
+  persistStore();
+  return true;
+}
+
+export function duplicateMenuItem(itemId: string) {
+  loadStoreIfNeeded();
+  const item = menuStore.items.find((entry) => entry.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  const timestamp = nowIso();
+  const copy: MenuItem = {
+    ...item,
+    id: createId(getMenuIdPrefix("item"), item.businessId, `${item.name} copia`),
+    name: `${item.name} Copia`,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    sortOrder: getNextSortOrderForItem(item.businessId, item.categoryId),
+  };
+
+  updateStore({
+    categories: menuStore.categories,
+    items: [copy, ...menuStore.items],
+  });
+  sortStore();
+  persistStore();
+  return cloneItem(copy);
+}
+
+export function moveMenuItem(itemId: string, direction: -1 | 1) {
+  loadStoreIfNeeded();
+  const item = menuStore.items.find((entry) => entry.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  const items = getBusinessItemsInternal(item.businessId).filter(
+    (entry) => entry.categoryId === item.categoryId,
+  );
+  const index = items.findIndex((entry) => entry.id === itemId);
+  const targetIndex = index + direction;
+
+  if (index === -1 || targetIndex < 0 || targetIndex >= items.length) {
+    return null;
+  }
+
+  const current = items[index];
+  const target = items[targetIndex];
+  const timestamp = nowIso();
+
+  const updatedItems = menuStore.items.map((entry) => {
+    if (entry.id === current.id) {
+      return { ...entry, sortOrder: target.sortOrder, updatedAt: timestamp };
+    }
+    if (entry.id === target.id) {
+      return { ...entry, sortOrder: current.sortOrder, updatedAt: timestamp };
+    }
+    return entry;
+  });
+
+  updateStore({
+    categories: menuStore.categories,
+    items: updatedItems,
+  });
+  sortStore();
+  persistStore();
+  return cloneItem(updatedItems.find((entry) => entry.id === itemId) ?? current);
+}
+
+export function resetMenuForBusiness(businessId: string) {
+  loadStoreIfNeeded();
+  const categories = getInitialMenuCategoriesForBusiness(businessId).map((category) => ({ ...category }));
+  const items = getInitialMenuItemsForBusiness(businessId).map((item) => ({
+    ...item,
+    tags: [...(item.tags ?? [])],
+  }));
+
+  replaceBusinessMenu(businessId, categories, items);
+  sortStore();
+  persistStore();
+  return {
+    categories: getMenuCategoriesByBusinessId(businessId),
+    items: getMenuItemsByBusinessId(businessId),
+  };
+}
+
+export function deleteMenuForBusiness(businessId: string) {
+  loadStoreIfNeeded();
+  updateStore({
+    categories: menuStore.categories.filter((category) => category.businessId !== businessId),
+    items: menuStore.items.filter((item) => item.businessId !== businessId),
+  });
+  sortStore();
+  persistStore();
+}
+
+export function duplicateMenuForBusiness(sourceBusinessId: string, targetBusinessId: string) {
+  loadStoreIfNeeded();
+  const sourceCategories = getMenuCategoriesByBusinessId(sourceBusinessId);
+  const sourceItems = getMenuItemsByBusinessId(sourceBusinessId);
+  const timestamp = nowIso();
+
+  const categoryIdMap = new Map<string, string>();
+  const duplicatedCategories = sourceCategories.map<MenuCategory>((category, index) => {
+    const nextId = createId("menu-category", targetBusinessId, `${category.name}-${index + 1}`);
+    categoryIdMap.set(category.id, nextId);
+
+    return {
+      ...category,
+      id: nextId,
+      businessId: targetBusinessId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  });
+
+  const duplicatedItems = sourceItems.map<MenuItem>((item, index) => ({
+    ...item,
+    id: createId("menu-item", targetBusinessId, `${item.name}-${index + 1}`),
+    businessId: targetBusinessId,
+    categoryId: categoryIdMap.get(item.categoryId) ?? item.categoryId,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }));
+
+  replaceBusinessMenu(targetBusinessId, duplicatedCategories, duplicatedItems);
+  sortStore();
+  persistStore();
+
+  return {
+    categories: cloneCategories(duplicatedCategories),
+    items: cloneItems(duplicatedItems),
+  };
+}
+
+export function subscribeMenu(listener: () => void) {
+  if (!isBrowser()) {
+    return () => {};
+  }
+
+  const onCustomChange = () => listener();
+  const onStorageChange = () => listener();
+
+  window.addEventListener(CHANGE_EVENT, onCustomChange);
+  window.addEventListener("storage", onStorageChange);
+
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, onCustomChange);
+    window.removeEventListener("storage", onStorageChange);
+  };
+}

@@ -1,0 +1,347 @@
+import type { Business } from "@/data/types";
+import { getSupabaseReadClient } from "@/lib/supabase/read-client";
+
+type BusinessBase = Pick<Business, "id" | "name" | "category" | "description">;
+
+type SupabaseBusinessWebContentRow = {
+  business_id: string;
+  hero_title: string | null;
+  hero_subtitle: string | null;
+  hero_badge: string | null;
+  about_title: string | null;
+  about_text: string | null;
+  about_secondary_text: string | null;
+  public_tags: unknown;
+  hero_image_url: string | null;
+  show_hero: boolean;
+  show_about: boolean;
+  show_featured_menu: boolean;
+  show_full_menu: boolean;
+  show_gallery: boolean;
+  show_location: boolean;
+  show_reservations: boolean;
+  show_whatsapp: boolean;
+  show_email: boolean;
+  show_socials: boolean;
+};
+
+type SupabaseFloorPlanSettingsRow = {
+  business_id: string;
+  background_image_url: string | null;
+  background_x: number;
+  background_y: number;
+  background_width: number;
+  background_height: number;
+  background_opacity: number;
+  background_brightness: number;
+  background_contrast: number;
+};
+
+type SupabaseServiceRow = {
+  business_id: string;
+  name: string;
+  description: string | null;
+  duration_minutes: number | null;
+  capacity: number | null;
+  price: number | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
+function getSupabaseClientOrThrow() {
+  const supabase = getSupabaseReadClient();
+
+  if (!supabase) {
+    throw new Error("Faltan variables de entorno de Supabase.");
+  }
+
+  return supabase;
+}
+
+function toText(value: string | null | undefined) {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function formatSupabaseTableError(
+  table: string,
+  error: {
+    message?: string | null;
+    code?: string | null;
+    details?: string | null;
+    hint?: string | null;
+  } | Error | unknown,
+) {
+  const data =
+    error && typeof error === "object"
+      ? (error as {
+          message?: string | null;
+          code?: string | null;
+          details?: string | null;
+          hint?: string | null;
+        })
+      : null;
+
+  const message =
+    (error instanceof Error ? error.message : data?.message)?.trim() || "No se pudo completar la operación.";
+  const code = data?.code?.trim();
+  const details = data?.details?.trim();
+  const hint = data?.hint?.trim();
+
+  const parts = [`Falló ${table}: ${message}`];
+
+  if (code) {
+    parts.push(`Code: ${code}`);
+  }
+
+  if (details) {
+    parts.push(`Details: ${details}`);
+  }
+
+  if (hint) {
+    parts.push(`Hint: ${hint}`);
+  }
+
+  return new Error(parts.join(". "));
+}
+
+async function upsertBusinessWebContent(row: SupabaseBusinessWebContentRow) {
+  const supabase = getSupabaseClientOrThrow();
+
+  const { error } = await supabase
+    .schema("public")
+    .from("business_web_content")
+    .upsert(row, { onConflict: "business_id" });
+
+  if (error) {
+    throw formatSupabaseTableError("business_web_content", error);
+  }
+}
+
+async function upsertFloorPlanSettings(row: SupabaseFloorPlanSettingsRow) {
+  const supabase = getSupabaseClientOrThrow();
+
+  const { error } = await supabase
+    .schema("public")
+    .from("floor_plan_settings")
+    .upsert(row, { onConflict: "business_id" });
+
+  if (error) {
+    throw formatSupabaseTableError("floor_plan_settings", error);
+  }
+}
+
+async function insertService(row: SupabaseServiceRow) {
+  const supabase = getSupabaseClientOrThrow();
+
+  const { error } = await supabase.schema("public").from("services").insert(row);
+
+  if (error) {
+    throw formatSupabaseTableError("services", error);
+  }
+}
+
+async function fetchServicesForBusiness(businessId: string) {
+  const supabase = getSupabaseClientOrThrow();
+
+  const { data, error } = await supabase
+    .schema("public")
+    .from("services")
+    .select(
+      "id, business_id, name, description, duration_minutes, capacity, price, is_active, sort_order, created_at, updated_at",
+    )
+    .eq("business_id", businessId)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw formatSupabaseTableError("services", error);
+  }
+
+  return (data ?? []) as (SupabaseServiceRow & { id: string })[];
+}
+
+export function createDefaultBusinessWebContent(business: BusinessBase): SupabaseBusinessWebContentRow {
+  return {
+    business_id: business.id,
+    hero_title: business.name,
+    hero_subtitle: toText(business.category) ?? "Experiencia del local",
+    hero_badge: toText(business.category),
+    about_title: business.name,
+    about_text: toText(business.description),
+    about_secondary_text: null,
+    public_tags: [],
+    hero_image_url: null,
+    show_hero: true,
+    show_about: true,
+    show_featured_menu: true,
+    show_full_menu: true,
+    show_gallery: true,
+    show_location: true,
+    show_reservations: true,
+    show_whatsapp: true,
+    show_email: true,
+    show_socials: true,
+  };
+}
+
+export function createDefaultFloorPlanSettings(businessId: string): SupabaseFloorPlanSettingsRow {
+  return {
+    business_id: businessId,
+    background_image_url: null,
+    background_x: 0,
+    background_y: 0,
+    background_width: 1000,
+    background_height: 600,
+    background_opacity: 50,
+    background_brightness: 100,
+    background_contrast: 100,
+  };
+}
+
+export function createDefaultService(businessId: string): SupabaseServiceRow {
+  return {
+    business_id: businessId,
+    name: "Reserva general",
+    description: "Servicio inicial para reservas.",
+    duration_minutes: 120,
+    capacity: 10,
+    price: null,
+    is_active: true,
+    sort_order: 0,
+  };
+}
+
+export async function createBusinessBaseRecords(business: BusinessBase) {
+  await upsertBusinessWebContent(createDefaultBusinessWebContent(business));
+  await upsertFloorPlanSettings(createDefaultFloorPlanSettings(business.id));
+  await insertService(createDefaultService(business.id));
+}
+
+export async function duplicateBusinessWebContent(
+  originalBusinessId: string,
+  newBusinessId: string,
+  fallbackBusiness?: BusinessBase,
+) {
+  const supabase = getSupabaseClientOrThrow();
+
+  const { data, error } = await supabase
+    .schema("public")
+    .from("business_web_content")
+    .select(
+      "hero_title, hero_subtitle, hero_badge, about_title, about_text, about_secondary_text, public_tags, hero_image_url, show_hero, show_about, show_featured_menu, show_full_menu, show_gallery, show_location, show_reservations, show_whatsapp, show_email, show_socials",
+    )
+    .eq("business_id", originalBusinessId)
+    .maybeSingle();
+
+  if (error) {
+    throw formatSupabaseTableError("business_web_content", error);
+  }
+
+  const source = data as Omit<SupabaseBusinessWebContentRow, "business_id"> | null;
+
+  if (!source) {
+    await upsertBusinessWebContent(
+      createDefaultBusinessWebContent(
+        fallbackBusiness ?? {
+          id: newBusinessId,
+          name: "Nuevo negocio",
+          category: "Negocio",
+          description: "",
+        },
+      ),
+    );
+    return;
+  }
+
+  await upsertBusinessWebContent({
+    business_id: newBusinessId,
+    hero_title: source.hero_title,
+    hero_subtitle: source.hero_subtitle,
+    hero_badge: source.hero_badge,
+    about_title: source.about_title,
+    about_text: source.about_text,
+    about_secondary_text: source.about_secondary_text,
+    public_tags: source.public_tags ?? [],
+    hero_image_url: source.hero_image_url,
+    show_hero: source.show_hero,
+    show_about: source.show_about,
+    show_featured_menu: source.show_featured_menu,
+    show_full_menu: source.show_full_menu,
+    show_gallery: source.show_gallery,
+    show_location: source.show_location,
+    show_reservations: source.show_reservations,
+    show_whatsapp: source.show_whatsapp,
+    show_email: source.show_email,
+    show_socials: source.show_socials,
+  });
+}
+
+export async function duplicateFloorPlanSettings(originalBusinessId: string, newBusinessId: string) {
+  const supabase = getSupabaseClientOrThrow();
+
+  const { data, error } = await supabase
+    .schema("public")
+    .from("floor_plan_settings")
+    .select(
+      "background_image_url, background_x, background_y, background_width, background_height, background_opacity, background_brightness, background_contrast",
+    )
+    .eq("business_id", originalBusinessId)
+    .maybeSingle();
+
+  if (error) {
+    throw formatSupabaseTableError("floor_plan_settings", error);
+  }
+
+  const source = data as Omit<SupabaseFloorPlanSettingsRow, "business_id"> | null;
+
+  if (!source) {
+    await upsertFloorPlanSettings(createDefaultFloorPlanSettings(newBusinessId));
+    return;
+  }
+
+  await upsertFloorPlanSettings({
+    business_id: newBusinessId,
+    background_image_url: source.background_image_url,
+    background_x: source.background_x,
+    background_y: source.background_y,
+    background_width: source.background_width,
+    background_height: source.background_height,
+    background_opacity: source.background_opacity,
+    background_brightness: source.background_brightness,
+    background_contrast: source.background_contrast,
+  });
+}
+
+export async function duplicateServices(originalBusinessId: string, newBusinessId: string) {
+  const supabase = getSupabaseClientOrThrow();
+  const sourceServices = await fetchServicesForBusiness(originalBusinessId);
+
+  const { error: deleteError } = await supabase
+    .schema("public")
+    .from("services")
+    .delete()
+    .eq("business_id", newBusinessId);
+
+  if (deleteError) {
+    throw formatSupabaseTableError("services", deleteError);
+  }
+
+  if (sourceServices.length === 0) {
+    await insertService(createDefaultService(newBusinessId));
+    return;
+  }
+
+  for (const service of sourceServices) {
+    await insertService({
+      business_id: newBusinessId,
+      name: service.name,
+      description: service.description,
+      duration_minutes: service.duration_minutes,
+      capacity: service.capacity,
+      price: service.price,
+      is_active: service.is_active,
+      sort_order: service.sort_order,
+    });
+  }
+}
