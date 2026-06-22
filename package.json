@@ -1,12 +1,13 @@
 {
   "name": "tango-reservas",
-  "version": "4.6.6",
+  "version": "5.0.7-design-lab",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:availability": "node scripts/availability-regression-tests.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

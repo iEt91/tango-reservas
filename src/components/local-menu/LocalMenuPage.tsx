@@ -1063,6 +1063,8 @@ export function LocalMenuPage() {
   const {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
@@ -1070,7 +1072,7 @@ export function LocalMenuPage() {
   });
 
   useEffect(() => {
-    if (!mounted || !selectedBusinessKey) {
+    if (!mounted || !selectedBusinessKey || !isSelectionReady) {
       return;
     }
 
@@ -1439,7 +1441,7 @@ export function LocalMenuPage() {
     totalCount: items.filter((item) => item.categoryId === category.id).length,
   }));
 
-  if (!mounted || !selectedBusiness) {
+  if (!mounted || !selectedBusiness || !isSelectionReady) {
     if (mounted && businesses.length > 0 && !businesses.some((business) => business.status === "active")) {
       return <LocalNoActiveBusinessesState />;
     }
@@ -1494,22 +1496,33 @@ export function LocalMenuPage() {
         </div>
 
         <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <label className="space-y-1">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              Negocio
-            </span>
-            <select
-              value={selectedBusinessKey}
-              onChange={(event) => handleBusinessChange(event.target.value)}
-              className="input-base min-w-[240px]"
-            >
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.name} - {business.city}
-                </option>
-              ))}
-            </select>
-          </label>
+          {canChangeBusiness ? (
+            <label className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                Negocio
+              </span>
+              <select
+                value={selectedBusinessKey}
+                onChange={(event) => handleBusinessChange(event.target.value)}
+                className="input-base min-w-[240px]"
+              >
+                {businesses.map((business) => (
+                  <option key={business.id} value={business.id}>
+                    {business.name} - {business.city}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                Negocio
+              </span>
+              <div className="input-base min-w-[240px] text-slate-100">
+                {selectedBusiness?.name ?? "Negocio asignado"}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">

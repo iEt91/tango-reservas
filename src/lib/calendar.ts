@@ -393,8 +393,9 @@ export function buildDaySchedule({
   const breakEndMinutes = businessHours.breakEndTime
     ? timeToMinutes(businessHours.breakEndTime)
     : null;
-  const slotStep = rules.slotDurationMinutes;
+  const slotStep = Math.max(1, rules.slotDurationMinutes || 30);
   const services = getBusinessServices(businessId);
+  const fallbackDurationMinutes = rules.defaultReservationDurationMinutes ?? 120;
   const selectedDateKey = normalizeDateKey(dateValue);
   const filteredReservations = buildReservationFilters(reservations, filters, {
     serviceNameById,
@@ -425,7 +426,7 @@ export function buildDaySchedule({
       isReservationActiveAtSlot(reservation, dateValue, time, {
         service: services.find((entry) => entry.id === reservation.serviceId) ?? null,
         slotDurationMinutes: slotStep,
-        fallbackDurationMinutes: slotStep,
+        fallbackDurationMinutes,
       }),
     );
     const tableSummary = getTableAvailabilitySummary(

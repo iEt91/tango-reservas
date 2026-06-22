@@ -550,6 +550,8 @@ export function LocalWebPage() {
   const {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
@@ -557,7 +559,7 @@ export function LocalWebPage() {
   });
 
   useEffect(() => {
-    if (!mounted || !selectedBusiness) {
+    if (!mounted || !selectedBusiness || !isSelectionReady) {
       return;
     }
 
@@ -954,7 +956,7 @@ export function LocalWebPage() {
     );
   }
 
-  if (!mounted || !selectedBusiness || !contentDraft) {
+  if (!mounted || !selectedBusiness || !contentDraft || !isSelectionReady) {
     return (
       <section className="space-y-4">
         <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 shadow-2xl shadow-black/20 sm:px-5">
@@ -1022,20 +1024,29 @@ export function LocalWebPage() {
         </div>
 
         <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <label className="space-y-1">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Negocio</span>
-            <select
-              value={selectedBusiness.id}
-              onChange={(event) => handleBusinessChange(event.target.value)}
-              className="input-base min-w-[240px]"
-            >
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.name} - {business.city}
-                </option>
-              ))}
-            </select>
-          </label>
+          {canChangeBusiness ? (
+            <label className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Negocio</span>
+              <select
+                value={selectedBusiness.id}
+                onChange={(event) => handleBusinessChange(event.target.value)}
+                className="input-base min-w-[240px]"
+              >
+                {businesses.map((business) => (
+                  <option key={business.id} value={business.id}>
+                    {business.name} - {business.city}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Negocio</span>
+              <div className="input-base min-w-[240px] text-slate-100">
+                {selectedBusiness?.name ?? "Negocio asignado"}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Acciones</span>

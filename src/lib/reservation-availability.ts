@@ -3,6 +3,7 @@ import { buildDateTimeFromDateAndTime, normalizeDateKey, timeToMinutes } from "@
 
 export type ReservationDurationContext = {
   service?: Service | null;
+  defaultDurationMinutes?: number | null;
   fallbackDurationMinutes?: number | null;
 };
 
@@ -122,6 +123,7 @@ export function reservationUsesTable(
     | { assigned_table_ids?: unknown; tableId?: unknown },
   tableId: string,
 ) {
+  // Table conflicts are always matched by exact ID, never by label/name.
   return getReservationTableIds(reservation).some((entry) => entry === tableId);
 }
 
@@ -228,6 +230,10 @@ export function getReservationDurationMinutes(
     return service.durationMinutes;
   }
 
+  if (typeof context.defaultDurationMinutes === "number" && context.defaultDurationMinutes > 0) {
+    return context.defaultDurationMinutes;
+  }
+
   if (typeof context.fallbackDurationMinutes === "number" && context.fallbackDurationMinutes > 0) {
     return context.fallbackDurationMinutes;
   }
@@ -259,6 +265,7 @@ export function getReservationDateTimeRange(
   service: Service | null | undefined,
   context: ReservationDurationContext = {},
 ): ReservationRange | null {
+  // reservationStart and reservationEnd define the full occupied interval.
   const start = buildDateTimeFromDateAndTime(reservation.reservationDate, reservation.reservationTime);
   if (!start) {
     return null;
@@ -287,6 +294,7 @@ export function doDateTimeRangesOverlap(
   bStartMinutes: number,
   bEndMinutes: number,
 ) {
+  // Two intervals overlap only when each one starts before the other ends.
   return aStartMinutes < bEndMinutes && bStartMinutes < aEndMinutes;
 }
 
@@ -464,6 +472,8 @@ export function getAvailableTablesForReservationSlot({
     }
   }
 
+  // availableTables only keeps mesas that survive business, status, capacity and
+  // real overlap checks for the exact reservation interval being evaluated.
   const availableTables = tables
     .filter((table) => {
       const reasons = reasonsByTableId[table.id] ?? [];

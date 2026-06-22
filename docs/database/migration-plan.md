@@ -191,6 +191,7 @@ alter table if exists public.businesses
 
 - por ahora no existe una tabla `business_hours` migrada en Supabase
 - para que el widget de reservas siga siendo usable, en modo Supabase se usa un fallback demo de horarios y reglas
+- la nueva configuracion de reservas (`usar mismo horario del local`, `inicio/fin de reservas`, `intervalo de slots`, `duracion estandar`, `terminar despues del cierre`) sigue viva en la capa de scheduling local mientras no exista una migracion dedicada
 - ese fallback permite probar fechas y horarios sin bloquear reservas por una configuracion vacia
 - mas adelante se debera crear una tabla `business_hours` o una estructura equivalente para guardar horarios persistentes por negocio
 - cuando exista esa tabla, el fallback demo debera desaparecer y la disponibilidad debera leerse desde Supabase

@@ -82,6 +82,11 @@ export type ReservationRules = {
   requiresConfirmation: boolean;
   allowCancellation: boolean;
   cancellationLimitHours: number;
+  useBusinessHoursForReservations?: boolean;
+  reservationOpenTime?: string | null;
+  reservationCloseTime?: string | null;
+  allowReservationsAfterClose?: boolean;
+  defaultReservationDurationMinutes?: number;
 };
 
 export type AvailabilitySlot = {

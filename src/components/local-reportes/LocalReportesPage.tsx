@@ -33,7 +33,7 @@ import {
 import { clearDemoReservations, seedDemoReservations } from "@/lib/demo-seed";
 import { useLocalBusinessSelection } from "@/hooks/useLocalBusinessSelection";
 import {
-  LOCAL_BUSINESS_QUERY_KEY,
+  getLocalBusinessSlugFromSearchParams,
   resolveBusinessForLocalRoute,
 } from "@/lib/local-business-routing";
 
@@ -249,7 +249,8 @@ export function LocalReportesPage() {
   const [mounted, setMounted] = useState(false);
   const [revision, setRevision] = useState(0);
   const searchParams = useSearchParams();
-  const businessQuery = searchParams.get(LOCAL_BUSINESS_QUERY_KEY)?.trim() ?? "";
+  const businessQuery = getLocalBusinessSlugFromSearchParams(searchParams);
+  const isSupportMode = searchParams.get("mode") === "support";
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [businessesSourceLabel, setBusinessesSourceLabel] = useState(
@@ -267,6 +268,12 @@ export function LocalReportesPage() {
   const [isResolvingRouteBusiness, setIsResolvingRouteBusiness] = useState(false);
 
   useEffect(() => {
+    if (!isSupportMode) {
+      setResolvedRouteBusiness(null);
+      setIsResolvingRouteBusiness(false);
+      return;
+    }
+
     let cancelled = false;
 
     const syncBusinesses = async () => {
@@ -337,18 +344,18 @@ export function LocalReportesPage() {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [businessQuery, businesses]);
+  }, [businessQuery, businesses, isSupportMode]);
 
   const selectedBusinessKey = useMemo(() => {
     if (selectedBusinessId && businesses.some((business) => business.id === selectedBusinessId)) {
       return selectedBusinessId;
     }
 
-    if (resolvedRouteBusiness) {
+    if (isSupportMode && resolvedRouteBusiness) {
       return resolvedRouteBusiness.id;
     }
 
-    if (getDataSource() === "supabase" && businessQuery) {
+    if (getDataSource() === "supabase" && businessQuery && isSupportMode) {
       return "";
     }
 
@@ -357,16 +364,16 @@ export function LocalReportesPage() {
     }
 
     return businesses.find((business) => business.status === "active")?.id ?? "";
-  }, [businesses, resolvedRouteBusiness, selectedBusinessId]);
+  }, [businesses, businessQuery, isSupportMode, resolvedRouteBusiness, selectedBusinessId]);
 
   const selectedBusiness =
-    businesses.find((business) => business.id === selectedBusinessKey) ??
-    resolvedRouteBusiness ??
-    null;
+    businesses.find((business) => business.id === selectedBusinessKey) ?? null;
 
   const {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
@@ -382,7 +389,7 @@ export function LocalReportesPage() {
   );
 
   useEffect(() => {
-    if (!mounted || !selectedBusinessKey || getDataSource() !== "supabase") {
+    if (!mounted || !selectedBusinessKey || !isSelectionReady || getDataSource() !== "supabase") {
       return;
     }
 
@@ -392,7 +399,7 @@ export function LocalReportesPage() {
   }, [mounted, selectedBusinessKey]);
 
   const reportData = useMemo(() => {
-    if (!mounted || !selectedBusinessKey) {
+    if (!mounted || !selectedBusinessKey || !isSelectionReady) {
       return null;
     }
 
@@ -407,7 +414,9 @@ export function LocalReportesPage() {
 
   const showLocalDemoControls = getDataSource() === "local";
   const shouldWaitForBusiness =
-    getDataSource() === "supabase" && (!selectedBusinessKey || isResolvingRouteBusiness);
+    getDataSource() === "supabase" &&
+    isSupportMode &&
+    (!isSelectionReady || isResolvingRouteBusiness);
 
   const summaryCards: MetricCard[] = reportData
     ? [
@@ -542,7 +551,7 @@ export function LocalReportesPage() {
     setDemoMessage(`Demo comercial eliminada: ${result.removed} reservas.`);
   }
 
-  if (!mounted || !reportData || !selectedBusiness) {
+  if (!mounted || !reportData || !selectedBusiness || !isSelectionReady) {
     return (
       <section className="space-y-4">
         <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 shadow-2xl shadow-black/20 sm:px-5">
@@ -594,22 +603,33 @@ export function LocalReportesPage() {
         </div>
 
         <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <label className="space-y-1">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              Negocio
-            </span>
-            <select
-              value={selectedBusinessKey}
-              onChange={(event) => handleBusinessChange(event.target.value)}
-              className="input-base min-w-[240px]"
-            >
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.name} - {business.city}
-                </option>
-              ))}
-            </select>
-          </label>
+          {canChangeBusiness ? (
+            <label className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                Negocio
+              </span>
+              <select
+                value={selectedBusinessKey}
+                onChange={(event) => handleBusinessChange(event.target.value)}
+                className="input-base min-w-[240px]"
+              >
+                {businesses.map((business) => (
+                  <option key={business.id} value={business.id}>
+                    {business.name} - {business.city}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                Negocio
+              </span>
+              <div className="input-base min-w-[240px] text-slate-100">
+                {selectedBusiness?.name ?? "Negocio asignado"}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">

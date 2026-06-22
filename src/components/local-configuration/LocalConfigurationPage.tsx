@@ -22,11 +22,12 @@ import {
 import {
   getBusinessHours,
   getReservationRules,
+  createDefaultReservationRules,
   updateBusinessHours,
   updateReservationRules,
-} from "@/data/scheduling";
+} from "@/lib/scheduling";
 import { toBusinessFormValues } from "@/lib/data/businesses";
-import { LOCAL_BUSINESS_QUERY_KEY } from "@/lib/local-business-routing";
+import { getLocalBusinessSlugFromSearchParams } from "@/lib/local-business-routing";
 import type {
   Business,
   BusinessFormValues,
@@ -58,17 +59,7 @@ const dayLabels: Record<DayOfWeek, string> = {
 };
 
 function createFallbackRules(businessId: string): ReservationRules {
-  return {
-    id: `rules-${businessId}`,
-    businessId,
-    slotDurationMinutes: 30,
-    maxReservationsPerSlot: 4,
-    minNoticeMinutes: 30,
-    maxDaysAhead: 14,
-    requiresConfirmation: true,
-    allowCancellation: true,
-    cancellationLimitHours: 4,
-  };
+  return createDefaultReservationRules(businessId);
 }
 
 function normalizeHours(businessId: string, hours: BusinessHours[]) {
@@ -189,7 +180,7 @@ export function LocalConfigurationPage() {
   const dataSource = getDataSource();
   const sourceLabel = dataSource === "supabase" ? "Supabase" : "local/mock";
   const searchParams = useSearchParams();
-  const businessQuery = searchParams.get(LOCAL_BUSINESS_QUERY_KEY)?.trim() ?? "";
+  const businessQuery = getLocalBusinessSlugFromSearchParams(searchParams);
 
   const selectedBusiness = useMemo(
     () =>
@@ -198,10 +189,13 @@ export function LocalConfigurationPage() {
     [businessOptions, selectedBusinessId],
   );
   const draftBusiness = businessDraft ?? (selectedBusiness ? toBusinessFormValues(selectedBusiness) : null);
+  const useBusinessHoursForReservations = rules?.useBusinessHoursForReservations ?? true;
 
   const {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses: businessOptions,
     selectedBusinessId,
@@ -270,7 +264,7 @@ export function LocalConfigurationPage() {
   }, [businessQuery, dataSource, selectedBusinessId]);
 
   useEffect(() => {
-    if (!mounted || !selectedBusinessId) {
+    if (!mounted || !selectedBusinessId || !isSelectionReady) {
       return;
     }
 
@@ -380,14 +374,46 @@ export function LocalConfigurationPage() {
     );
   }
 
-  function updateRuleField(field: keyof ReservationRules, value: string | boolean) {
+  function updateRuleField(field: keyof ReservationRules, value: string | boolean | null) {
     setRules((current) => {
       const base = current ?? createFallbackRules(selectedBusinessId);
+      const next: ReservationRules = { ...base };
 
-      return {
-        ...base,
-        [field]: typeof value === "boolean" ? value : Number(value),
-      } as ReservationRules;
+      if (
+        field === "requiresConfirmation" ||
+        field === "allowCancellation" ||
+        field === "useBusinessHoursForReservations" ||
+        field === "allowReservationsAfterClose"
+      ) {
+        if (field === "requiresConfirmation") {
+          next.requiresConfirmation = Boolean(value);
+        } else if (field === "allowCancellation") {
+          next.allowCancellation = Boolean(value);
+        } else if (field === "useBusinessHoursForReservations") {
+          next.useBusinessHoursForReservations = Boolean(value);
+        } else if (field === "allowReservationsAfterClose") {
+          next.allowReservationsAfterClose = Boolean(value);
+        }
+        return next;
+      }
+
+      if (field === "reservationOpenTime" || field === "reservationCloseTime") {
+        next[field] = typeof value === "string" && value.trim().length > 0 ? value : null;
+        return next;
+      }
+
+      if (field === "slotDurationMinutes") {
+        next.slotDurationMinutes = Number(value);
+      } else if (field === "minNoticeMinutes") {
+        next.minNoticeMinutes = Number(value);
+      } else if (field === "maxDaysAhead") {
+        next.maxDaysAhead = Number(value);
+      } else if (field === "cancellationLimitHours") {
+        next.cancellationLimitHours = Number(value);
+      } else if (field === "defaultReservationDurationMinutes") {
+        next.defaultReservationDurationMinutes = Number(value);
+      }
+      return next;
     });
   }
 
@@ -553,7 +579,7 @@ export function LocalConfigurationPage() {
     }
   }
 
-  if (!mounted || !selectedBusiness) {
+  if (!mounted || !selectedBusiness || !isSelectionReady) {
     return (
       <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
         {loadError || "Cargando configuracion..."}
@@ -580,22 +606,33 @@ export function LocalConfigurationPage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[380px] xl:grid-cols-1">
-            <label className="space-y-1.5">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                Negocio
-              </span>
-              <select
-                value={selectedBusinessId}
-                onChange={(event) => handleBusinessChange(event.target.value)}
-                className="input-base"
-              >
-                {businessOptions.map((business) => (
-                  <option key={business.id} value={business.id}>
-                    {business.name} - {business.city}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {canChangeBusiness ? (
+              <label className="space-y-1.5">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                  Negocio
+                </span>
+                <select
+                  value={selectedBusinessId}
+                  onChange={(event) => handleBusinessChange(event.target.value)}
+                  className="input-base"
+                >
+                  {businessOptions.map((business) => (
+                    <option key={business.id} value={business.id}>
+                      {business.name} - {business.city}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                  Negocio
+                </span>
+                <div className="input-base text-slate-100">
+                  {selectedBusiness?.name ?? "Negocio asignado"}
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1 text-[11px] text-slate-300">
@@ -827,22 +864,93 @@ export function LocalConfigurationPage() {
           </ConfigSection>
 
           <ConfigSection
+            title="Horarios de reservas"
+            description="Define cuándo la web puede aceptar nuevas reservas y cómo interpreta la duración por defecto."
+          >
+            <div className="space-y-4">
+              <ToggleCard
+                label={useBusinessHoursForReservations ? "Sí" : "No"}
+                checked={useBusinessHoursForReservations}
+                onChange={(checked) =>
+                  updateRuleField("useBusinessHoursForReservations", checked)
+                }
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Inicio reservas">
+                  <input
+                    type="time"
+                    value={rules?.reservationOpenTime ?? ""}
+                    disabled={useBusinessHoursForReservations}
+                    onChange={(event) =>
+                      updateRuleField("reservationOpenTime", event.target.value || null)
+                    }
+                    className="input-base disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </Field>
+                <Field label="Fin reservas">
+                  <input
+                    type="time"
+                    value={rules?.reservationCloseTime ?? ""}
+                    disabled={useBusinessHoursForReservations}
+                    onChange={(event) =>
+                      updateRuleField("reservationCloseTime", event.target.value || null)
+                    }
+                    className="input-base disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </Field>
+                <Field label="Intervalo de slots">
+                  <input
+                    type="number"
+                    min={15}
+                    step={15}
+                    value={rules?.slotDurationMinutes ?? 30}
+                    onChange={(event) =>
+                      updateRuleField("slotDurationMinutes", event.target.value)
+                    }
+                    className="input-base"
+                  />
+                </Field>
+                <Field label="Duracion estandar por defecto">
+                  <input
+                    type="number"
+                    min={15}
+                    step={15}
+                    value={rules?.defaultReservationDurationMinutes ?? 120}
+                    onChange={(event) =>
+                      updateRuleField(
+                        "defaultReservationDurationMinutes",
+                        event.target.value,
+                      )
+                    }
+                    className="input-base"
+                  />
+                </Field>
+              </div>
+
+              <ToggleCard
+                label={(rules?.allowReservationsAfterClose ?? true) ? "Sí" : "No"}
+                checked={rules?.allowReservationsAfterClose ?? true}
+                onChange={(checked) =>
+                  updateRuleField("allowReservationsAfterClose", checked)
+                }
+              />
+
+              <p className="text-sm leading-6 text-slate-300">
+                Si usas el horario del local, la web toma la apertura y el cierre
+                diarios. Si lo desactivas, usa el horario propio de reservas.
+                Cuando se permiten reservas que terminan después del cierre, el
+                horario puede seguir siendo visible aunque la ocupación termine
+                más tarde.
+              </p>
+            </div>
+          </ConfigSection>
+
+          <ConfigSection
             title="Reglas de reserva"
             description="Parametros operativos que afectan la disponibilidad del negocio."
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Duracion del slot">
-                <input
-                  type="number"
-                  min={15}
-                  step={15}
-                  value={rules?.slotDurationMinutes ?? 30}
-                  onChange={(event) =>
-                    updateRuleField("slotDurationMinutes", event.target.value)
-                  }
-                  className="input-base"
-                />
-              </Field>
               <Field label="Capacidad por slot">
                 <input
                   type="number"

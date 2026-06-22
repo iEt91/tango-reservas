@@ -94,6 +94,8 @@ export function calculatePublicAvailability({
   const service =
     serviceOverride ?? resolveSelectedService(businessId, serviceId, services);
   const reservations = reservationsOverride ?? getReservationsByBusinessId(businessId);
+  const fallbackDurationMinutes =
+    rules?.defaultReservationDurationMinutes ?? 120;
 
   const baseAvailability = calculateAvailabilityForReservations({
     businessId,
@@ -114,6 +116,10 @@ export function calculatePublicAvailability({
   }
 
   const tables = getTablesForBusiness(businessId);
+  const serviceDurationMinutes =
+    typeof service.durationMinutes === "number" && service.durationMinutes > 0
+      ? service.durationMinutes
+      : fallbackDurationMinutes;
 
   if (tables.length === 0) {
     return baseAvailability;
@@ -137,12 +143,12 @@ export function calculatePublicAvailability({
       businessId,
       reservationDate: date,
       reservationTime: slot.time,
-      durationMinutes: service.durationMinutes,
+      durationMinutes: serviceDurationMinutes,
       partySize,
       reservations,
       tables,
       services,
-      fallbackDurationMinutes: service.durationMinutes ?? 120,
+      fallbackDurationMinutes,
     });
 
     const bestSuggestion = tableAvailability.availableTables[0] ?? null;

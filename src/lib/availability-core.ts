@@ -99,6 +99,46 @@ function getDayOfWeek(dateValue: string) {
   return dayNames[date.getDay()];
 }
 
+function resolveReservationWindow(
+  businessHours: BusinessHours,
+  rules: ReservationRules,
+) {
+  const useBusinessHoursForReservations =
+    rules.useBusinessHoursForReservations ?? true;
+  const startTime = useBusinessHoursForReservations
+    ? businessHours.openTime
+    : rules.reservationOpenTime?.trim() || businessHours.openTime;
+  const endTime = useBusinessHoursForReservations
+    ? businessHours.closeTime
+    : rules.reservationCloseTime?.trim() || businessHours.closeTime;
+  const startMinutes = timeToMinutes(startTime);
+  const endMinutes = timeToMinutes(endTime);
+
+  if (startMinutes === null || endMinutes === null) {
+    return null;
+  }
+
+  return {
+    startMinutes,
+    endMinutes,
+    startTime,
+    endTime,
+    allowReservationsAfterClose: rules.allowReservationsAfterClose ?? true,
+  };
+}
+
+function getReservationDurationMinutes(
+  service: Service,
+  rules: ReservationRules,
+) {
+  return Math.max(
+    1,
+    service.durationMinutes ||
+      rules.defaultReservationDurationMinutes ||
+      120,
+  );
+}
+
 export function calculateAvailabilityForReservations({
   businessId,
   date,
@@ -175,20 +215,35 @@ export function calculateAvailabilityForReservations({
     };
   }
 
-  const openMinutes = timeToMinutes(dailyHours.openTime) ?? 0;
-  const closeMinutes = timeToMinutes(dailyHours.closeTime) ?? 0;
+  const reservationWindow = resolveReservationWindow(dailyHours, rules);
+
+  if (!reservationWindow) {
+    return {
+      status: "no_rules",
+      message: "Todavia no hay horarios de reserva configurados para este negocio.",
+      slots: [],
+      businessHours: dailyHours,
+      reservationRules: rules,
+      service,
+    };
+  }
+
+  const openMinutes = reservationWindow.startMinutes;
+  const closeMinutes = reservationWindow.endMinutes;
   const breakStartMinutes = dailyHours.breakStartTime
     ? timeToMinutes(dailyHours.breakStartTime)
     : null;
   const breakEndMinutes = dailyHours.breakEndTime
     ? timeToMinutes(dailyHours.breakEndTime)
     : null;
-  const slotStep = rules.slotDurationMinutes;
-  const serviceDuration = service.durationMinutes;
+  const slotStep = Math.max(1, rules.slotDurationMinutes || 30);
+  const serviceDuration = getReservationDurationMinutes(service, rules);
   const capacityLimit = Math.min(rules.maxReservationsPerSlot, service.capacity);
   const earliestAllowed = new Date(now.getTime() + rules.minNoticeMinutes * 60 * 1000);
-  // Allow the last slot if it still finishes before the closing minute.
-  const latestAllowedStartMinutes = closeMinutes + 1 - serviceDuration;
+  // The public widget only limits the start window here. The real occupancy
+  // check happens later with the full reservation duration, so we do not
+  // subtract duration from the closing hour and hide valid late starts.
+  const latestAllowedStartMinutes = closeMinutes;
 
   const filteredReservations = reservations.filter(
     (reservation) =>
@@ -227,6 +282,19 @@ export function calculateAvailabilityForReservations({
         available: false,
         remainingCapacity: 0,
         reason: "Anticipo minimo no alcanzado",
+      });
+      continue;
+    }
+
+    if (
+      !reservationWindow.allowReservationsAfterClose &&
+      startMinutes + serviceDuration > closeMinutes
+    ) {
+      slots.push({
+        time,
+        available: false,
+        remainingCapacity: 0,
+        reason: "Fuera del horario operativo",
       });
       continue;
     }

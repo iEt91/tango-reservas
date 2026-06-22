@@ -4,6 +4,7 @@ import type {
   ReservationStatus,
 } from "@/data/types";
 import { getDataSource } from "@/lib/data/dataSource";
+import { getReservationRules } from "@/data/scheduling";
 import * as localReservations from "@/lib/reservations";
 import * as supabaseReservations from "@/lib/data/supabase/reservations";
 import { getSupabaseFloorTablesByBusinessSync } from "@/lib/data/supabase/floorPlan";
@@ -294,6 +295,8 @@ export function getAvailableTablesForSlot(
   time: string,
 ) {
   if (isSupabaseMode()) {
+    const rules = getReservationRules(businessId);
+    const fallbackDurationMinutes = rules?.defaultReservationDurationMinutes ?? 120;
     const tables = getSupabaseFloorTablesByBusinessSync(businessId);
     const services = getSupabaseServicesByBusinessSync(businessId);
     const reservations = getSupabaseReservationsByBusinessSync(businessId);
@@ -301,12 +304,12 @@ export function getAvailableTablesForSlot(
       businessId,
       reservationDate: date,
       reservationTime: time,
-      durationMinutes: 120,
+      durationMinutes: fallbackDurationMinutes,
       partySize: 1,
       tables,
       reservations,
       services,
-      fallbackDurationMinutes: 120,
+      fallbackDurationMinutes,
     }).availableTables;
   }
 
@@ -441,11 +444,16 @@ export function getBestPublicTableAssignment(
   input: Parameters<typeof localReservations.getBestPublicTableAssignment>[0],
 ) {
   if (isSupabaseMode()) {
+    const rules = getReservationRules(input.businessId);
+    const fallbackDurationMinutes = rules?.defaultReservationDurationMinutes ?? 120;
     const tables = getSupabaseFloorTablesByBusinessSync(input.businessId);
     const services = getSupabaseServicesByBusinessSync(input.businessId);
     const reservations = getSupabaseReservationsByBusinessSync(input.businessId);
     const service = services.find((entry) => entry.id === input.serviceId) ?? null;
-    const durationMinutes = service?.durationMinutes ?? 120;
+    const durationMinutes =
+      service && service.durationMinutes > 0
+        ? service.durationMinutes
+        : fallbackDurationMinutes;
     const availability = getAvailableTablesForReservationSlot({
       businessId: input.businessId,
       reservationDate: input.reservationDate,
@@ -455,7 +463,7 @@ export function getBestPublicTableAssignment(
       tables,
       reservations,
       services,
-      fallbackDurationMinutes: durationMinutes,
+      fallbackDurationMinutes,
     });
     const bestTable = availability.availableTables[0] ?? null;
 

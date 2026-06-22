@@ -13,8 +13,12 @@ import {
 export const POSTGRES_UUID_REGEX =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
+export function normalizeBusinessQueryValue(value: string) {
+  return value.trim().split(/[?&#]/)[0]?.trim() ?? "";
+}
+
 export async function resolveBusinessForDataSource(businessParam: string): Promise<Business | null> {
-  const value = businessParam.trim();
+  const value = normalizeBusinessQueryValue(businessParam);
 
   if (!value) {
     return null;

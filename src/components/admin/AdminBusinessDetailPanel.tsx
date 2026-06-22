@@ -18,6 +18,7 @@ import { getBusinessHours, getBusinessServices, getReservationRules, subscribeSc
 import { getMenuSummary, subscribeMenu } from "@/data/menu";
 import { getFloorTablesByBusinessId, subscribeFloorPlan } from "@/data/floor-plan";
 import { getPublicWebContentByBusinessId, subscribePublicWeb } from "@/lib/data/webContent";
+import { buildLocalAccessHref } from "@/lib/local-business-routing";
 import { AdminDeleteBusinessDialog } from "./AdminDeleteBusinessDialog";
 
 type AdminBusinessDetailPanelProps = {
@@ -277,14 +278,20 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
 
   const quickLinks = business
     ? [
-        { href: `/local/reservas?business=${encodeURIComponent(business.slug)}`, label: "Reservas" },
         {
-          href: `/local/configuracion?business=${encodeURIComponent(business.slug)}`,
+          href: buildLocalAccessHref("/local/reservas", business.slug, null, "support"),
+          label: "Reservas",
+        },
+        {
+          href: buildLocalAccessHref("/local/configuracion", business.slug, null, "support"),
           label: "Configuración",
         },
-        { href: `/local/menu?business=${encodeURIComponent(business.slug)}`, label: "Menú" },
-        { href: `/local/plano?business=${encodeURIComponent(business.slug)}`, label: "Plano" },
-        { href: `/local/reportes?business=${encodeURIComponent(business.slug)}`, label: "Reportes" },
+        { href: buildLocalAccessHref("/local/menu", business.slug, null, "support"), label: "Menú" },
+        { href: buildLocalAccessHref("/local/plano", business.slug, null, "support"), label: "Plano" },
+        {
+          href: buildLocalAccessHref("/local/reportes", business.slug, null, "support"),
+          label: "Reportes",
+        },
         { href: `/${encodeURIComponent(business.slug)}`, label: "Ver web pública" },
       ]
     : [];
@@ -369,7 +376,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
               Ver web pública
             </Link>
             <Link
-              href={`/local/reservas?business=${encodeURIComponent(business.slug)}`}
+              href={buildLocalAccessHref("/local/reservas", business.slug, null, "support")}
               className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
             >
               Ir al panel local

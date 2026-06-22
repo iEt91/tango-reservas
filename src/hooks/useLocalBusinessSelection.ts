@@ -12,13 +12,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Business } from "@/data/types";
 import { resolveBusinessForDataSource } from "@/lib/data/business-resolution";
 import {
+  buildLocalBusinessHref,
   getActiveBusinessFallback,
   getBusinessByIdFromList,
   getBusinessBySlugFromList,
+  getFallbackBusiness,
+  getLocalAccessMode,
+  getLocalBusinessSlugFromSearchParams,
+  getStoredOwnerBusinessSlug,
   INVALID_LOCAL_BUSINESS_MESSAGE,
   NO_ACTIVE_LOCAL_BUSINESS_MESSAGE,
-  LOCAL_BUSINESS_QUERY_KEY,
   navigateToBusiness,
+  setStoredOwnerBusinessSlug,
+  type LocalAccessMode,
 } from "@/lib/local-business-routing";
 
 type UseLocalBusinessSelectionParams = {
@@ -35,30 +41,51 @@ export function useLocalBusinessSelection({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const accessMode = getLocalAccessMode(searchParams);
+  const canChangeBusiness = accessMode === "support";
   const [warning, setWarning] = useState("");
   const [resolvedRequestedBusiness, setResolvedRequestedBusiness] = useState<Business | null>(null);
-  const [requestedBusinessState, setRequestedBusinessState] = useState<"idle" | "loading" | "resolved">("idle");
+  const [requestedBusinessState, setRequestedBusinessState] = useState<
+    "idle" | "loading" | "resolved"
+  >("idle");
   const [pendingBusinessSlug, setPendingBusinessSlug] = useState("");
+  const [ownerBusinessSlug, setOwnerBusinessSlug] = useState("");
+  const [ownerBusinessReady, setOwnerBusinessReady] = useState(false);
 
-  const queryBusinessSlug = searchParams.get(LOCAL_BUSINESS_QUERY_KEY)?.trim() ?? "";
+  const queryBusinessSlug = getLocalBusinessSlugFromSearchParams(searchParams);
 
   const requestedBusiness = useMemo(() => {
-    if (!queryBusinessSlug) {
+    if (!canChangeBusiness || !queryBusinessSlug) {
       return null;
     }
 
+    const immediateRequestedBusiness =
+      getBusinessBySlugFromList(businesses, queryBusinessSlug) ??
+      getBusinessByIdFromList(businesses, queryBusinessSlug);
+
     if (requestedBusinessState !== "resolved") {
-      return null;
+      return immediateRequestedBusiness;
     }
 
     return (
       resolvedRequestedBusiness ??
-      getBusinessBySlugFromList(businesses, queryBusinessSlug) ??
-      getBusinessByIdFromList(businesses, queryBusinessSlug)
+      immediateRequestedBusiness
     );
-  }, [businesses, queryBusinessSlug, requestedBusinessState, resolvedRequestedBusiness]);
+  }, [
+    businesses,
+    canChangeBusiness,
+    queryBusinessSlug,
+    requestedBusinessState,
+    resolvedRequestedBusiness,
+  ]);
 
   useEffect(() => {
+    if (!canChangeBusiness) {
+      setResolvedRequestedBusiness(null);
+      setRequestedBusinessState("idle");
+      return;
+    }
+
     let cancelled = false;
 
     const syncRequestedBusiness = async () => {
@@ -82,42 +109,173 @@ export function useLocalBusinessSelection({
     return () => {
       cancelled = true;
     };
-  }, [queryBusinessSlug]);
+  }, [canChangeBusiness, queryBusinessSlug]);
 
-  const selectedBusiness = useMemo(
-    () => {
-      if (pendingBusinessSlug) {
-        const pendingBusiness =
-          getBusinessBySlugFromList(businesses, pendingBusinessSlug) ??
-          getBusinessByIdFromList(businesses, pendingBusinessSlug);
+  useEffect(() => {
+    if (canChangeBusiness) {
+      setOwnerBusinessReady(false);
+      setOwnerBusinessSlug("");
+      return;
+    }
 
-        if (pendingBusiness) {
-          return pendingBusiness;
-        }
+    if (businesses.length === 0) {
+      setOwnerBusinessReady(true);
+      setOwnerBusinessSlug("");
+      return;
+    }
+
+    const storedSlug = getStoredOwnerBusinessSlug();
+    const storedBusiness = storedSlug
+      ? getBusinessBySlugFromList(businesses, storedSlug) ??
+        getBusinessByIdFromList(businesses, storedSlug)
+      : null;
+    const queryBusiness =
+      queryBusinessSlug && !canChangeBusiness
+        ? getBusinessBySlugFromList(businesses, queryBusinessSlug) ??
+          getBusinessByIdFromList(businesses, queryBusinessSlug)
+        : null;
+    const fallbackBusiness = storedBusiness ?? queryBusiness ?? getFallbackBusiness(businesses);
+    const nextSlug = fallbackBusiness?.slug ?? "";
+
+    setOwnerBusinessSlug(nextSlug);
+    setOwnerBusinessReady(true);
+
+    if (nextSlug && nextSlug !== storedSlug) {
+      setStoredOwnerBusinessSlug(nextSlug);
+    }
+  }, [businesses, canChangeBusiness, queryBusinessSlug]);
+
+  const ownerSelectedBusiness = useMemo(() => {
+    if (canChangeBusiness) {
+      return null;
+    }
+
+    if (!ownerBusinessReady || !ownerBusinessSlug) {
+      return null;
+    }
+
+    return (
+      getBusinessBySlugFromList(businesses, ownerBusinessSlug) ??
+      getBusinessByIdFromList(businesses, ownerBusinessSlug) ??
+      getActiveBusinessFallback(businesses) ??
+      getFallbackBusiness(businesses)
+    );
+  }, [businesses, canChangeBusiness, ownerBusinessReady, ownerBusinessSlug]);
+
+  const selectedBusiness = useMemo(() => {
+    if (!canChangeBusiness) {
+      return ownerSelectedBusiness;
+    }
+
+    if (pendingBusinessSlug) {
+      const pendingBusiness =
+        getBusinessBySlugFromList(businesses, pendingBusinessSlug) ??
+        getBusinessByIdFromList(businesses, pendingBusinessSlug);
+
+      if (pendingBusiness) {
+        return pendingBusiness;
       }
+    }
 
-      if (queryBusinessSlug && requestedBusinessState !== "resolved") {
-        return null;
-      }
-
-      if (requestedBusinessState === "resolved" && requestedBusiness) {
+    if (queryBusinessSlug) {
+      if (requestedBusiness) {
         return requestedBusiness;
       }
 
-      if (selectedBusinessId) {
-        const nextSelectedBusiness = businesses.find((business) => business.id === selectedBusinessId);
-        if (nextSelectedBusiness) {
-          return nextSelectedBusiness;
-        }
+      if (requestedBusinessState !== "resolved") {
+        return (
+          getBusinessBySlugFromList(businesses, queryBusinessSlug) ??
+          getBusinessByIdFromList(businesses, queryBusinessSlug)
+        );
       }
 
+      if (requestedBusinessState === "resolved") {
+        return requestedBusiness;
+      }
+    }
+
+    if (requestedBusinessState === "resolved" && requestedBusiness) {
+      return requestedBusiness;
+    }
+
+    if (selectedBusinessId) {
+      const nextSelectedBusiness = businesses.find((business) => business.id === selectedBusinessId);
+      if (nextSelectedBusiness) {
+        return nextSelectedBusiness;
+      }
+    }
+
+    if (!queryBusinessSlug) {
       return getActiveBusinessFallback(businesses);
-    },
-    [businesses, pendingBusinessSlug, requestedBusiness, requestedBusinessState, selectedBusinessId, queryBusinessSlug],
-  );
+    }
+
+    return null;
+  }, [
+    businesses,
+    canChangeBusiness,
+    ownerSelectedBusiness,
+    pendingBusinessSlug,
+    queryBusinessSlug,
+    requestedBusiness,
+    requestedBusinessState,
+    selectedBusinessId,
+  ]);
+
+  const isSelectionReady = useMemo(() => {
+    if (!canChangeBusiness) {
+      return ownerBusinessReady && Boolean(ownerBusinessSlug);
+    }
+
+    if (queryBusinessSlug) {
+      return Boolean(requestedBusiness) || requestedBusinessState === "resolved";
+    }
+
+    return businesses.length > 0;
+  }, [
+    businesses.length,
+    canChangeBusiness,
+    ownerBusinessReady,
+    ownerBusinessSlug,
+    queryBusinessSlug,
+    requestedBusinessState,
+  ]);
 
   useEffect(() => {
     if (businesses.length === 0) {
+      return;
+    }
+
+    if (!canChangeBusiness) {
+      if (!ownerBusinessReady || !ownerBusinessSlug) {
+        return;
+      }
+
+      const ownerBusiness =
+        getBusinessBySlugFromList(businesses, ownerBusinessSlug) ??
+        getBusinessByIdFromList(businesses, ownerBusinessSlug) ??
+        getActiveBusinessFallback(businesses) ??
+        getFallbackBusiness(businesses);
+
+      if (!ownerBusiness) {
+        setSelectedBusinessId("");
+        setWarning(NO_ACTIVE_LOCAL_BUSINESS_MESSAGE);
+        return;
+      }
+
+      if (ownerBusiness.id !== selectedBusinessId) {
+        setSelectedBusinessId(ownerBusiness.id);
+      }
+
+      if (queryBusinessSlug !== ownerBusiness.slug) {
+        router.replace(buildLocalBusinessHref(pathname, ownerBusiness.slug, searchParams), {
+          scroll: false,
+        });
+      }
+
+      if (warning) {
+        setWarning("");
+      }
+
       return;
     }
 
@@ -140,12 +298,9 @@ export function useLocalBusinessSelection({
         }
 
         if (requestedBusiness.slug !== queryBusinessSlug) {
-          router.replace(
-            navigateToBusiness(pathname, requestedBusiness.slug, searchParams),
-            {
-              scroll: false,
-            },
-          );
+          router.replace(navigateToBusiness(pathname, requestedBusiness.slug, searchParams), {
+            scroll: false,
+          });
         }
 
         if (warning !== INVALID_LOCAL_BUSINESS_MESSAGE) {
@@ -158,26 +313,8 @@ export function useLocalBusinessSelection({
         return;
       }
 
-      const fallbackBusiness = getActiveBusinessFallback(businesses);
-      if (fallbackBusiness && fallbackBusiness.id !== selectedBusinessId) {
-        setSelectedBusinessId(fallbackBusiness.id);
-      }
-
-      if (fallbackBusiness) {
-        setWarning(INVALID_LOCAL_BUSINESS_MESSAGE);
-
-        if (fallbackBusiness.slug !== queryBusinessSlug) {
-          router.replace(
-            navigateToBusiness(pathname, fallbackBusiness.slug, searchParams),
-            {
-            scroll: false,
-            },
-          );
-        }
-      } else {
-        setSelectedBusinessId("");
-        setWarning(NO_ACTIVE_LOCAL_BUSINESS_MESSAGE);
-      }
+      setSelectedBusinessId("");
+      setWarning(INVALID_LOCAL_BUSINESS_MESSAGE);
       return;
     }
 
@@ -197,12 +334,16 @@ export function useLocalBusinessSelection({
     setWarning(NO_ACTIVE_LOCAL_BUSINESS_MESSAGE);
   }, [
     businesses,
+    canChangeBusiness,
+    ownerBusinessReady,
+    ownerBusinessSlug,
     pathname,
     queryBusinessSlug,
     requestedBusiness,
     requestedBusinessState,
     pendingBusinessSlug,
     router,
+    searchParams,
     selectedBusinessId,
     setSelectedBusinessId,
     warning,
@@ -210,6 +351,10 @@ export function useLocalBusinessSelection({
 
   const syncBusinessInUrl = useCallback(
     (businessId: string) => {
+      if (!canChangeBusiness) {
+        return;
+      }
+
       const nextBusiness = businesses.find((business) => business.id === businessId);
 
       if (!nextBusiness) {
@@ -221,20 +366,27 @@ export function useLocalBusinessSelection({
         scroll: false,
       });
     },
-    [businesses, pathname, router, searchParams],
+    [businesses, canChangeBusiness, pathname, router, searchParams],
   );
 
   const handleBusinessChange = useCallback(
     (businessId: string) => {
+      if (!canChangeBusiness) {
+        return;
+      }
+
       setSelectedBusinessId(businessId);
       setWarning("");
       syncBusinessInUrl(businessId);
     },
-    [setSelectedBusinessId, syncBusinessInUrl],
+    [canChangeBusiness, setSelectedBusinessId, syncBusinessInUrl],
   );
 
   return {
+    accessMode,
     businessWarning: warning,
+    canChangeBusiness,
+    isSelectionReady,
     handleBusinessChange,
     selectedBusiness,
     syncBusinessInUrl,

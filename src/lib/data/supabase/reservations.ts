@@ -6,6 +6,7 @@ import type {
   Service,
 } from "@/data/types";
 import { POSTGRES_UUID_REGEX } from "@/lib/data/business-resolution";
+import { getReservationRules } from "@/data/scheduling";
 import {
   getSupabaseFloorTablesByBusiness,
   getSupabaseFloorTablesByBusinessSync,
@@ -194,7 +195,9 @@ function getReservationSlotDurationMinutes(businessId: string, reservation: Rese
   const service =
     getSupabaseServicesByBusinessSync(businessId).find((entry) => entry.id === reservation.serviceId) ??
     null;
-  return service?.durationMinutes ?? 120;
+  const defaultDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
+  return service?.durationMinutes ?? defaultDurationMinutes;
 }
 
 function isBaseTableUsable(table: FloorTable) {
@@ -226,6 +229,8 @@ export async function findBestAvailableTableForReservation({
     tables ? Promise.resolve(tables) : getSupabaseFloorTablesByBusiness(businessId),
     getSupabaseServicesByBusiness(businessId),
   ]);
+  const defaultDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
 
   const start = timeToMinutes(reservationTime);
   if (start === null) {
@@ -250,7 +255,8 @@ export async function findBestAvailableTableForReservation({
     }
 
     const existingServiceDuration =
-      services.find((entry) => entry.id === reservation.serviceId)?.durationMinutes ?? 120;
+      services.find((entry) => entry.id === reservation.serviceId)?.durationMinutes ??
+      defaultDurationMinutes;
     const existingEnd = existingStart + Math.max(1, existingServiceDuration);
 
     if (
@@ -728,6 +734,12 @@ export async function createSupabaseReservation(
 
   const autoConfirmReservations = business?.auto_confirm_reservations ?? true;
   const shouldAutoAssignTables = data.source === "web" && autoConfirmReservations;
+  const defaultDurationMinutes =
+    getReservationRules(safeBusinessId)?.defaultReservationDurationMinutes ?? 120;
+  const serviceDurationMinutes =
+    typeof service.durationMinutes === "number" && service.durationMinutes > 0
+      ? service.durationMinutes
+      : defaultDurationMinutes;
   const tables = shouldAutoAssignTables
     ? await getSupabaseFloorTablesByBusiness(safeBusinessId)
     : [];
@@ -736,12 +748,12 @@ export async function createSupabaseReservation(
         businessId: safeBusinessId,
         reservationDate: data.reservationDate,
         reservationTime: data.reservationTime,
-        durationMinutes: service.durationMinutes,
+        durationMinutes: serviceDurationMinutes,
         partySize: data.partySize,
         reservations,
         tables,
         services,
-        fallbackDurationMinutes: service.durationMinutes ?? 120,
+        fallbackDurationMinutes: defaultDurationMinutes,
       })
     : null;
   const assignedTableId = tableAvailability?.availableTables[0]?.id ?? null;
@@ -881,7 +893,10 @@ export async function updateSupabaseReservationAssignedTables(
   const services = await getSupabaseServicesByBusiness(businessId);
   const service = services.find((entry) => entry.id === current.service_id) ?? null;
   const reservations = await getSupabaseReservationsByBusiness(businessId);
-  const durationMinutes = service?.durationMinutes ?? 120;
+  const defaultDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
+  const durationMinutes =
+    service && service.durationMinutes > 0 ? service.durationMinutes : defaultDurationMinutes;
   const availability = getAvailableTablesForReservationSlot({
     businessId,
     reservationDate: current.reservation_date,
@@ -891,7 +906,7 @@ export async function updateSupabaseReservationAssignedTables(
     reservations,
     tables,
     services,
-    fallbackDurationMinutes: durationMinutes,
+    fallbackDurationMinutes: defaultDurationMinutes,
     optionalReservationIdToIgnore: reservationId,
   });
 
@@ -987,14 +1002,20 @@ export function getSupabaseActiveReservationsForSlot(
   time: string,
 ) {
   const services = getSupabaseServicesByBusinessSync(businessId);
+  const slotStepMinutes = Math.max(
+    1,
+    getReservationRules(businessId)?.slotDurationMinutes || 30,
+  );
+  const defaultDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
   return getReservationsOverlappingSlot({
     businessId,
     date,
     time,
     reservations: getSupabaseReservationsByBusinessSync(businessId),
     services,
-    slotDurationMinutes: 30,
-    fallbackDurationMinutes: 120,
+    slotDurationMinutes: slotStepMinutes,
+    fallbackDurationMinutes: defaultDurationMinutes,
   });
 }
 
@@ -1023,6 +1044,12 @@ export function getSupabaseTableAvailabilitySummary(
 ) {
   const tables = getSupabaseFloorTablesByBusinessSync(businessId);
   const services = getSupabaseServicesByBusinessSync(businessId);
+  const slotStepMinutes = Math.max(
+    1,
+    getReservationRules(businessId)?.slotDurationMinutes || 30,
+  );
+  const defaultDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
   const sourceReservations = reservationsOverride ?? getSupabaseReservationsByBusinessSync(businessId);
   const reservations = getReservationsOverlappingSlot({
     businessId,
@@ -1030,8 +1057,8 @@ export function getSupabaseTableAvailabilitySummary(
     time,
     reservations: sourceReservations,
     services,
-    slotDurationMinutes: 30,
-    fallbackDurationMinutes: 120,
+    slotDurationMinutes: slotStepMinutes,
+    fallbackDurationMinutes: defaultDurationMinutes,
   });
   const occupiedTableIds = new Set(
     getOccupiedTableIdsForSlot({
@@ -1040,8 +1067,8 @@ export function getSupabaseTableAvailabilitySummary(
       time,
       reservations: sourceReservations,
       services,
-      fallbackDurationMinutes: 120,
-      slotDurationMinutes: 30,
+      fallbackDurationMinutes: defaultDurationMinutes,
+      slotDurationMinutes: slotStepMinutes,
     }),
   );
   const warningsByTableId: Record<string, string[]> = {};

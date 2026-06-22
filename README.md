@@ -8,9 +8,131 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v4.6.6`
+`v5.0.7-design-lab`
 
-Esta version unifica la ocupacion por slot y corrige la comparacion exacta por mesa e intervalo para que Reservas, Plano, Calendario y la web publiquen la misma disponibilidad real.
+Esta version ajusta `/local/design-lab` con correcciones quirurgicas de overflow, grafico horario y canvas del plano sobre la maqueta estatica de referencia, sin tocar la logica critica.
+
+## Etapa v5.0.7-design-lab
+
+- corrige la tarjeta de Ocupación de hoy para que solo muestre `72 / 106 cubiertos` a la izquierda y el donut a la derecha;
+- rehace Ocupación por franja horaria como gráfico real con eje Y, eje X y 16 barras;
+- agranda el canvas interno del Plano del salón sin tocar la lógica real ni Supabase.
+
+## Etapa v5.0.2-design-lab
+
+- corrige overflow en las metricas superiores;
+- reorganiza las metricas para que numero y label convivan sin desbordes;
+- corrige la tarjeta de Próxima reserva;
+- corrige la tarjeta de Ocupación de hoy para que el donut quede dentro;
+- expande la fila inferior para que Acciones rápidas se vea completa;
+- rehace el gráfico de Ocupación por franja horaria y elimina el tooltip flotante;
+- mantiene la maqueta estatica aislada sin tocar la logica real ni Supabase.
+
+## Etapa v5.0.1-design-lab
+
+- corrige scrolls verticales y horizontales en desktop dentro de `/local/design-lab`;
+- compacta las metricas superiores para liberar espacio y acercar la maqueta al mock;
+- corrige la card de ocupacion de hoy para que el donut quede dentro de la tarjeta;
+- mueve el CTA de "Ver todas las reservas de hoy" al header de la card de reservas;
+- ajusta acciones rapidas para que los textos queden centrados y sin overflow;
+- mantiene la maqueta estatica aislada sin tocar la logica real ni Supabase.
+
+## Etapa v5.0.0-design-lab
+
+- crea `/local/design-lab` como una maqueta estatica aislada del Panel Local;
+- replica la captura mock de referencia con componentes visuales nuevos y sin usar Supabase;
+- no modifica la logica de reservas, disponibilidad, mesas ni rutas operativas reales;
+- sirve como base visual para migrar luego el Panel Local real por etapas.
+
+## Etapa v5.0.0
+
+- reconstruye `/local?business=demuru` como dashboard premium desde una lectura visual de la captura mock adjunta;
+- fija la sidebar y la topbar interna del Panel Local con una composicion mas cercana al layout de referencia;
+- conserva la logica real de reservas, disponibilidad, asignacion de mesas, Supabase y tests;
+- preserva la separacion soporte/admin vs duenio/local introducida en v4.7.0;
+- deja `/local/reservas` y el resto de los modulos locales funcionales sin redisenarlos todavia.
+
+## Etapa v4.9.2
+
+- rediseña `/local` siguiendo la referencia visual adjunta con la maxima fidelidad posible;
+- fija la sidebar del Panel Local, mantiene el topbar interno y permite scroll vertical en el main sin mover la navegacion;
+- acerca cards, tabla, plano, grafico, actividad, clientes y acciones rapidas al mock premium;
+- mantiene intacta la logica critica de reservas, disponibilidad, mesas, Supabase y tests;
+- preserva la separacion soporte/admin vs duenio/local introducida en v4.7.0.
+
+## Etapa v4.9.1
+
+- fija la sidebar del Panel Local y elimina el scroll global del dashboard en desktop;
+- compacta el inicio visual para acercarlo mas a la referencia premium;
+- mantiene intacta la logica critica de reservas, disponibilidad, mesas, Supabase y tests;
+- preserva la separacion soporte/admin vs duenio/local introducida en v4.7.0.
+
+## Etapa v4.9.0
+
+- convierte `/local` en el inicio visual premium del Panel del Local;
+- acerca el dashboard principal a la referencia adjunta con sidebar, topbar, metricas, reservas de hoy, plano, actividad y accesos rapidos;
+- mantiene intactas las rutas operativas, la logica de reservas, disponibilidad, mesas, Supabase y tests;
+- preserva la separacion soporte/admin vs duenio/local introducida en v4.7.0.
+
+## Etapa v4.8.3
+
+- corrige la resolucion de `business` y `mode=support` en `/local/reservas` para evitar el falso estado de negocio inexistente;
+- mantiene el shell visual nuevo del Panel Local y la pantalla compacta de `/local/reservas`;
+- preserva la separacion entre soporte/admin y dueño/local introducida en v4.7.0;
+- sigue sin tocar la logica de reservas, disponibilidad, Supabase ni tests.
+
+## Etapa v4.8.2
+
+- corrige la resolucion de `business` en `/local/reservas` para que `mode=support` no rompa el negocio activo;
+- mantiene el shell visual nuevo del Panel Local y la pantalla compacta de `/local/reservas`;
+- preserva la separacion entre soporte/admin y dueño/local introducida en v4.7.0;
+- sigue sin tocar la logica de reservas, disponibilidad, Supabase ni tests.
+
+## Etapa v4.8.1
+
+- compacta la pantalla principal de `/local/reservas` para que entre en una sola vista tipo dashboard premium;
+- mantiene el shell visual nuevo del Panel Local con sidebar lateral y topbar limpia;
+- ajusta la composicion visual sin tocar la logica de reservas, disponibilidad, Supabase ni tests;
+- conserva la separacion entre soporte/admin y dueño/local introducida en v4.7.0;
+- prepara la base visual para redisenar el resto de las pantallas locales por etapas.
+
+## Etapa v4.8.0
+
+- inicia el nuevo shell visual del Panel Local con sidebar lateral y topbar limpia usando las imagenes adjuntas como referencia visual;
+- acerca la experiencia al estilo premium de las referencias adjuntas;
+- mantiene la logica de reservas, disponibilidad, Supabase y tests sin cambios funcionales;
+- deja la reestilizacion profunda de cada pantalla para etapas posteriores;
+- conserva la separacion entre soporte/admin y dueño/local introducida en v4.7.0.
+
+## Etapa v4.7.0
+
+- separa el modo soporte/admin del modo dueño/local en el panel local;
+- el selector de negocios queda disponible solo en soporte/admin;
+- el modo soporte/admin entra con `?mode=support` y puede cambiar de negocio;
+- el modo dueño/local usa su negocio asignado temporal y queda bloqueado a ese negocio;
+- la autenticacion real queda pendiente para una version futura;
+- la logica de reservas, disponibilidad, plano, calendario, CRM y reportes se mantiene sin cambios funcionales.
+
+## Etapa v4.6.9
+
+- agrega auditoria tecnica y regresion de disponibilidad;
+- documenta la regla oficial de mesas, horarios y solapamientos;
+- reduce el riesgo de divergencias entre calendario, web, plano y reservas;
+- deja `/local/calendario` pendiente para un rediseño visual tipo agenda/ocupacion en una etapa futura.
+
+## Etapa v4.6.8
+
+- agrega auditoria y regresion de disponibilidad;
+- blinda solapamientos de reservas y asignacion manual;
+- documenta la regla oficial de mesas y horarios;
+- reduce el riesgo de divergencias entre calendario, web, plano y reservas.
+
+## Etapa v4.6.7
+
+- separa el horario del local de la ventana de admision de reservas
+- permite definir reserva por negocio con horario propio, intervalo de slots y duracion estandar
+- evita cortar horarios publicos como si fueran `cierre - duracion`
+- mantiene la misma logica de solapamiento y ocupacion en Reservas, Plano, Calendario y la web
 
 ## Etapa v4.6.6
 

@@ -33,6 +33,40 @@ function cloneReservationRules(rules: ReservationRules | null) {
   return rules ? { ...rules } : null;
 }
 
+export function createDefaultReservationRules(businessId: string): ReservationRules {
+  return {
+    id: `rules-${businessId}`,
+    businessId,
+    slotDurationMinutes: 30,
+    maxReservationsPerSlot: 4,
+    minNoticeMinutes: 30,
+    maxDaysAhead: 14,
+    requiresConfirmation: true,
+    allowCancellation: true,
+    cancellationLimitHours: 4,
+    useBusinessHoursForReservations: true,
+    reservationOpenTime: null,
+    reservationCloseTime: null,
+    allowReservationsAfterClose: true,
+    defaultReservationDurationMinutes: 120,
+  };
+}
+
+export function mergeReservationRuleDefaults(
+  businessId: string,
+  rules: ReservationRules | null,
+) {
+  if (!rules) {
+    return null;
+  }
+
+  return {
+    ...createDefaultReservationRules(businessId),
+    ...rules,
+    businessId,
+  } satisfies ReservationRules;
+}
+
 function cloneServices(services: Service[]) {
   return services.map((service) => ({ ...service }));
 }
@@ -166,7 +200,7 @@ export function getReservationRules(businessId: string) {
     (entry) => entry.businessId === businessId,
   );
 
-  return cloneReservationRules(rules ?? null);
+  return cloneReservationRules(mergeReservationRuleDefaults(businessId, rules ?? null));
 }
 
 export function getBusinessServices(businessId: string) {
@@ -302,10 +336,7 @@ export function updateBusinessHours(businessId: string, data: BusinessHours[]) {
 
 export function updateReservationRules(businessId: string, data: ReservationRules) {
   loadStoreIfNeeded();
-  const nextRules: ReservationRules = {
-    ...data,
-    businessId,
-  };
+  const nextRules = mergeReservationRuleDefaults(businessId, data) ?? createDefaultReservationRules(businessId);
 
   reservationRulesStore = [
     ...reservationRulesStore.filter((entry) => entry.businessId !== businessId),

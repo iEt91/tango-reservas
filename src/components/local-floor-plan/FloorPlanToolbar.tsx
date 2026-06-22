@@ -12,6 +12,7 @@ type FloorPlanToolbarProps = {
   onResetBackground: () => void;
   selectedBusinessId: string;
   dataSourceLabel: string;
+  canChangeBusiness: boolean;
 };
 
 export function FloorPlanToolbar({
@@ -23,6 +24,7 @@ export function FloorPlanToolbar({
   onResetBackground,
   selectedBusinessId,
   dataSourceLabel,
+  canChangeBusiness,
 }: FloorPlanToolbarProps) {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -50,34 +52,45 @@ export function FloorPlanToolbar({
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="space-y-1">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              Negocio
-            </span>
-            {isMounted ? (
-              <select
-                value={selectedBusinessId}
-                onChange={(event) => onBusinessChange(event.target.value)}
-                className="input-base min-w-[240px]"
-              >
-                {businesses.length > 0 ? (
-                  businesses.map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {entry.name}
+          {canChangeBusiness ? (
+            <label className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                Negocio
+              </span>
+              {isMounted ? (
+                <select
+                  value={selectedBusinessId}
+                  onChange={(event) => onBusinessChange(event.target.value)}
+                  className="input-base min-w-[240px]"
+                >
+                  {businesses.length > 0 ? (
+                    businesses.map((entry) => (
+                      <option key={entry.id} value={entry.id}>
+                        {entry.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      Cargando negocios...
                     </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    Cargando negocios...
-                  </option>
-                )}
-              </select>
-            ) : (
-              <div className="input-base flex min-w-[240px] items-center text-slate-400">
-                Cargando negocios...
+                  )}
+                </select>
+              ) : (
+                <div className="input-base flex min-w-[240px] items-center text-slate-400">
+                  Cargando negocios...
+                </div>
+              )}
+            </label>
+          ) : (
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                Negocio
+              </span>
+              <div className="input-base flex min-w-[240px] items-center text-slate-100">
+                {business?.name ?? "Negocio asignado"}
               </div>
-            )}
-          </label>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-2">
             <button

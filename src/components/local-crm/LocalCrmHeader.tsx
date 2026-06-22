@@ -7,6 +7,7 @@ type LocalCrmHeaderProps = {
   selectedBusinessId: string;
   customerCount: number;
   sourceLabel: string;
+  canChangeBusiness: boolean;
 };
 
 export function LocalCrmHeader({
@@ -16,6 +17,7 @@ export function LocalCrmHeader({
   selectedBusinessId,
   customerCount,
   sourceLabel,
+  canChangeBusiness,
 }: LocalCrmHeaderProps) {
   return (
     <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-4 shadow-2xl shadow-black/20 sm:px-5 sm:py-4">
@@ -34,22 +36,33 @@ export function LocalCrmHeader({
           </p>
         </div>
 
-        <label className="space-y-1 lg:min-w-[240px] lg:text-right">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-            Negocio
-          </span>
-          <select
-            value={selectedBusinessId}
-            onChange={(event) => onBusinessChange(event.target.value)}
-            className="input-base min-w-[260px]"
-          >
-            {businesses.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {canChangeBusiness ? (
+          <label className="space-y-1 lg:min-w-[240px] lg:text-right">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+              Negocio
+            </span>
+            <select
+              value={selectedBusinessId}
+              onChange={(event) => onBusinessChange(event.target.value)}
+              className="input-base min-w-[260px]"
+            >
+              {businesses.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <div className="space-y-1 lg:min-w-[240px] lg:text-right">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+              Negocio
+            </span>
+            <div className="input-base min-w-[260px] text-slate-100">
+              {business?.name ?? "Negocio asignado"}
+            </div>
+          </div>
+        )}
       </div>
 
       {business ? (

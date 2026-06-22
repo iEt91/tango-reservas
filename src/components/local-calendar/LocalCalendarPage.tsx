@@ -39,7 +39,7 @@ import { LocalBusinessWarning } from "@/components/local/LocalBusinessWarning";
 import { LocalNoActiveBusinessesState } from "@/components/local/LocalNoActiveBusinessesState";
 import { useLocalBusinessSelection } from "@/hooks/useLocalBusinessSelection";
 import {
-  LOCAL_BUSINESS_QUERY_KEY,
+  getLocalBusinessSlugFromSearchParams,
   resolveBusinessForLocalRoute,
 } from "@/lib/local-business-routing";
 
@@ -142,7 +142,8 @@ export function LocalCalendarPage() {
   const [isMounted, setIsMounted] = useState(false);
   const dataSource = getDataSource();
   const searchParams = useSearchParams();
-  const businessQuery = searchParams.get(LOCAL_BUSINESS_QUERY_KEY)?.trim() ?? "";
+  const businessQuery = getLocalBusinessSlugFromSearchParams(searchParams);
+  const isSupportMode = searchParams.get("mode") === "support";
   const [businesses, setBusinesses] = useState<Business[]>(() =>
     dataSource === "local" ? cloneBusinesses(initialBusinesses) : [],
   );
@@ -174,7 +175,9 @@ export function LocalCalendarPage() {
   const [isResolvingRouteBusiness, setIsResolvingRouteBusiness] = useState(false);
   const selectedBusiness =
     businesses.find((business) => business.id === selectedBusinessId) ?? null;
-  const effectiveBusiness = selectedBusiness ?? resolvedRouteBusiness ?? null;
+  const effectiveBusiness = isSupportMode
+    ? selectedBusiness ?? resolvedRouteBusiness ?? null
+    : selectedBusiness;
   const effectiveBusinessId = effectiveBusiness?.id ?? "";
 
   useEffect(() => {
@@ -189,6 +192,12 @@ export function LocalCalendarPage() {
   }, []);
 
   useEffect(() => {
+    if (!isSupportMode) {
+      setResolvedRouteBusiness(null);
+      setIsResolvingRouteBusiness(false);
+      return;
+    }
+
     let cancelled = false;
 
     const syncBusinesses = async () => {
@@ -283,11 +292,13 @@ export function LocalCalendarPage() {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [businessQuery, businesses]);
+  }, [businessQuery, businesses, isSupportMode]);
 
   const {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
@@ -616,7 +627,8 @@ export function LocalCalendarPage() {
   }
 
   const shouldWaitForBusiness =
-    dataSource === "supabase" && (!selectedBusinessKey || isResolvingRouteBusiness);
+    dataSource === "supabase" &&
+    (!isSelectionReady || (canChangeBusiness && isResolvingRouteBusiness));
 
   if (shouldWaitForBusiness) {
     return (
@@ -631,6 +643,7 @@ export function LocalCalendarPage() {
       <LocalCalendarHeader
         business={effectiveBusiness}
         businesses={businesses}
+        canChangeBusiness={canChangeBusiness}
         dataSourceLabel={dataSource === "supabase" ? "Supabase" : "local/mock"}
         onBusinessChange={handleBusinessChange}
         selectedBusinessId={selectedBusinessId}

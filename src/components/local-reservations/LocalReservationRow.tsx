@@ -12,6 +12,7 @@ type LocalReservationRowProps = {
   availabilityTone?: "cyan" | "amber" | "emerald" | "rose" | "slate";
   serviceName: string;
   tableLabel: string;
+  compact?: boolean;
 };
 
 export function LocalReservationRow({
@@ -24,6 +25,7 @@ export function LocalReservationRow({
   availabilityTone,
   serviceName,
   tableLabel,
+  compact = false,
 }: LocalReservationRowProps) {
   const displayTime = reservation.reservationTime.includes(":")
     ? reservation.reservationTime.slice(0, 5)
@@ -40,14 +42,22 @@ export function LocalReservationRow({
             ? "border-cyan-400/20 bg-cyan-500/10 text-cyan-100"
             : "border-white/10 bg-slate-900/70 text-slate-200";
 
+  const rowClassName = compact
+    ? "grid gap-2 px-3 py-3 sm:px-4 xl:grid-cols-[84px_minmax(0,1fr)_248px] xl:items-start xl:gap-3"
+    : "grid gap-3 px-4 py-4 sm:px-5 xl:grid-cols-[104px_minmax(0,1fr)_304px] xl:items-start xl:gap-4";
+
   return (
-    <article className="grid gap-3 px-4 py-4 sm:px-5 xl:grid-cols-[104px_minmax(0,1fr)_304px] xl:items-start xl:gap-4">
+    <article className={rowClassName}>
       <div className="flex items-start justify-between gap-2 xl:flex-col xl:justify-start xl:gap-1">
         <div className="space-y-0.5">
-          <p className="text-[1.65rem] font-semibold tracking-tight text-white sm:text-[1.8rem]">
+          <p
+            className={`font-semibold tracking-tight text-white ${
+              compact ? "text-[1.4rem] sm:text-[1.5rem]" : "text-[1.65rem] sm:text-[1.8rem]"
+            }`}
+          >
             {displayTime}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+          <p className={`uppercase tracking-[0.18em] text-slate-400 ${compact ? "text-[9px]" : "text-[10px]"}`}>
             {reservation.partySize} personas
           </p>
         </div>
@@ -57,27 +67,27 @@ export function LocalReservationRow({
       </div>
 
       <div className="min-w-0 space-y-3">
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className={`flex flex-wrap items-center gap-2.5 ${compact ? "gap-2" : ""}`}>
           <LocalReservationStatusBadge status={reservation.status} />
-          <span className="rounded-full border border-white/10 bg-slate-900/70 px-3.5 py-1.5 text-[13px] font-medium leading-none text-slate-100 shadow-sm shadow-black/10">
+          <span className={`rounded-full border border-white/10 bg-slate-900/70 font-medium leading-none text-slate-100 shadow-sm shadow-black/10 ${compact ? "px-2.5 py-1 text-[11px]" : "px-3.5 py-1.5 text-[13px]"}`}>
             {serviceName}
           </span>
-          <span className="rounded-full border border-white/10 bg-slate-900/70 px-3.5 py-1.5 text-[13px] font-medium leading-none text-slate-100 shadow-sm shadow-black/10">
+          <span className={`rounded-full border border-white/10 bg-slate-900/70 font-medium leading-none text-slate-100 shadow-sm shadow-black/10 ${compact ? "px-2.5 py-1 text-[11px]" : "px-3.5 py-1.5 text-[13px]"}`}>
             {tableLabel}
           </span>
-          <span className="rounded-full border border-white/10 bg-slate-900/70 px-3.5 py-1.5 text-[13px] font-medium leading-none text-slate-100 shadow-sm shadow-black/10">
+          <span className={`rounded-full border border-white/10 bg-slate-900/70 font-medium leading-none text-slate-100 shadow-sm shadow-black/10 ${compact ? "px-2.5 py-1 text-[11px]" : "px-3.5 py-1.5 text-[13px]"}`}>
             {reservation.source}
           </span>
           <button
             type="button"
             onClick={() => onOpenDetail(reservation)}
-            className="rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-[13px] font-medium leading-none text-slate-100 shadow-sm shadow-black/10 transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white"
+            className={`rounded-full border border-white/10 bg-white/5 font-medium leading-none text-slate-100 shadow-sm shadow-black/10 transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white ${compact ? "px-2.5 py-1 text-[11px]" : "px-3.5 py-1.5 text-[13px]"}`}
           >
             Ver detalle
           </button>
         </div>
 
-        <div className="grid gap-x-5 gap-y-2 text-[13px] text-slate-100 sm:grid-cols-2 xl:grid-cols-2">
+        <div className={`grid gap-x-4 gap-y-1.5 text-[13px] text-slate-100 sm:grid-cols-2 xl:grid-cols-2 ${compact ? "text-[11px]" : ""}`}>
           <InfoPill label="Cliente" value={reservation.customerName} />
           <InfoPill label="Telefono" value={reservation.customerPhone} />
           <InfoPill label="Email" value={reservation.customerEmail || "Sin email"} />
@@ -89,7 +99,7 @@ export function LocalReservationRow({
         </div>
 
         {availabilityLabel ? (
-          <div className={`inline-flex flex-wrap items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-medium leading-none ${availabilityToneStyles}`}>
+          <div className={`inline-flex flex-wrap items-center gap-2 rounded-full border font-medium leading-none ${compact ? "px-2.5 py-1 text-[11px]" : "px-3.5 py-1.5 text-[13px]"} ${availabilityToneStyles}`}>
             <span>{availabilityLabel}</span>
             {availabilityReason ? (
               <span className="text-[11px] text-white/70">{availabilityReason}</span>

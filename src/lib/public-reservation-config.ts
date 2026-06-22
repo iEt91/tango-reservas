@@ -36,6 +36,11 @@ export function createDemoPublicRules(businessId: string): ReservationRules {
     requiresConfirmation: true,
     allowCancellation: true,
     cancellationLimitHours: 2,
+    useBusinessHoursForReservations: true,
+    reservationOpenTime: null,
+    reservationCloseTime: null,
+    allowReservationsAfterClose: true,
+    defaultReservationDurationMinutes: 120,
   };
 }
 
@@ -45,13 +50,19 @@ export function getPublicReservationConfig(businessId: string) {
   const rules = getReservationRules(businessId);
   const hasOpenHours = hours.some((entry) => entry.isOpen);
   const useDemoFallback = dataSource === "supabase" && (!hasOpenHours || hours.length === 0);
+  const reservationHoursNotice =
+    rules && rules.useBusinessHoursForReservations === false
+      ? `Horarios de reservas: ${rules.reservationOpenTime ?? "sin inicio"} - ${
+          rules.reservationCloseTime ?? "sin fin"
+        }.`
+      : null;
 
   return {
     hours: useDemoFallback ? createDemoPublicHours(businessId) : hours,
     rules: useDemoFallback && !rules ? createDemoPublicRules(businessId) : rules,
     notice: useDemoFallback
       ? "Horarios demo activos hasta migrar horarios comerciales a Supabase."
-      : null,
+      : reservationHoursNotice,
     usedFallback: useDemoFallback,
   };
 }

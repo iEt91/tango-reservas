@@ -7,6 +7,7 @@ type LocalReservationsHeaderProps = {
   serviceCount: number;
   onBusinessChange: (businessId: string) => void;
   selectedBusinessId: string;
+  canChangeBusiness: boolean;
 };
 
 export function LocalReservationsHeader({
@@ -15,6 +16,7 @@ export function LocalReservationsHeader({
   serviceCount,
   onBusinessChange,
   selectedBusinessId,
+  canChangeBusiness,
 }: LocalReservationsHeaderProps) {
   const dataSource = getDataSource();
   const sourceBadge =
@@ -40,22 +42,33 @@ export function LocalReservationsHeader({
           </p>
         </div>
 
-        <label className="space-y-1 lg:min-w-[240px] lg:text-right">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-            Negocio
-          </span>
-          <select
-            value={selectedBusinessId}
-            onChange={(event) => onBusinessChange(event.target.value)}
-            className="input-base min-w-[260px]"
-          >
-            {businesses.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {canChangeBusiness ? (
+          <label className="space-y-1 lg:min-w-[240px] lg:text-right">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+              Negocio
+            </span>
+            <select
+              value={selectedBusinessId}
+              onChange={(event) => onBusinessChange(event.target.value)}
+              className="input-base min-w-[260px]"
+            >
+              {businesses.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <div className="space-y-1 lg:min-w-[240px] lg:text-right">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+              Negocio
+            </span>
+            <div className="input-base min-w-[260px] text-slate-100">
+              {business?.name ?? "Negocio asignado"}
+            </div>
+          </div>
+        )}
       </div>
 
       {business ? (

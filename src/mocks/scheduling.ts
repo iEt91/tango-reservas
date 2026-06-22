@@ -84,6 +84,11 @@ export const initialReservationRules: ReservationRules[] = [
     requiresConfirmation: true,
     allowCancellation: true,
     cancellationLimitHours: 6,
+    useBusinessHoursForReservations: true,
+    reservationOpenTime: null,
+    reservationCloseTime: null,
+    allowReservationsAfterClose: true,
+    defaultReservationDurationMinutes: 120,
   },
   {
     id: "rules-barbados",
@@ -95,6 +100,11 @@ export const initialReservationRules: ReservationRules[] = [
     requiresConfirmation: true,
     allowCancellation: true,
     cancellationLimitHours: 3,
+    useBusinessHoursForReservations: true,
+    reservationOpenTime: null,
+    reservationCloseTime: null,
+    allowReservationsAfterClose: true,
+    defaultReservationDurationMinutes: 120,
   },
   {
     id: "rules-cafe-demo",
@@ -106,6 +116,11 @@ export const initialReservationRules: ReservationRules[] = [
     requiresConfirmation: false,
     allowCancellation: true,
     cancellationLimitHours: 2,
+    useBusinessHoursForReservations: true,
+    reservationOpenTime: null,
+    reservationCloseTime: null,
+    allowReservationsAfterClose: true,
+    defaultReservationDurationMinutes: 60,
   },
 ];
 

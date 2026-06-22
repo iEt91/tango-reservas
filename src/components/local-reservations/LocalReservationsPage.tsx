@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getBusinesses, subscribeBusinesses } from "@/lib/data/admin-businesses";
 import { POSTGRES_UUID_REGEX } from "@/lib/data/business-resolution";
 import { getDataSource } from "@/lib/data/dataSource";
@@ -19,30 +20,26 @@ import {
 } from "@/data/reservations";
 import { initialReservations } from "@/mocks/reservations";
 import type { Business, FloorTable, Reservation, ReservationStatus } from "@/data/types";
-import { LocalReservationsEmptyState } from "@/components/local-reservations/LocalReservationsEmptyState";
-import { LocalReservationsFilters } from "@/components/local-reservations/LocalReservationsFilters";
-import { LocalReservationsHeader } from "@/components/local-reservations/LocalReservationsHeader";
-import { LocalReservationsList } from "@/components/local-reservations/LocalReservationsList";
-import { LocalReservationsStats } from "@/components/local-reservations/LocalReservationsStats";
 import { LocalReservationDetailDrawer } from "@/components/local-reservations/LocalReservationDetailDrawer";
 import { ReservationTableAssignmentModal } from "@/components/local-reservations/ReservationTableAssignmentModal";
-import { LocalBusinessWarning } from "@/components/local/LocalBusinessWarning";
 import { LocalNoActiveBusinessesState } from "@/components/local/LocalNoActiveBusinessesState";
 import { initialBusinesses } from "@/mocks/businesses";
 import { initialServices } from "@/mocks/scheduling";
+import {
+  LocalReservationsDashboard,
+  type LocalReservationsMetricCard,
+} from "@/components/local-reservations/LocalReservationsDashboard";
 import { useLocalBusinessSelection } from "@/hooks/useLocalBusinessSelection";
-
-const SHOW_DEBUG = false;
+import {
+  buildLocalAccessHref,
+  buildLocalBusinessHref,
+  getLocalBusinessSlugFromSearchParams,
+  resolveBusinessForLocalRoute,
+  INVALID_LOCAL_BUSINESS_MESSAGE,
+} from "@/lib/local-business-routing";
 
 type ReservationScope = ReservationStatus | "all";
 type ReservationDateFilter = "all" | "today" | "tomorrow" | "week" | "custom";
-
-type MetricCard = {
-  label: string;
-  value: number | string;
-  tone?: "default" | "emerald" | "cyan" | "amber" | "rose";
-  helper?: string;
-};
 
 type GroupedReservations = {
   date: string;
@@ -239,7 +236,7 @@ export function LocalReservationsPage() {
   const [now, setNow] = useState<Date | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReservationScope>("all");
-  const [dateFilter, setDateFilter] = useState<ReservationDateFilter>("all");
+  const [dateFilter, setDateFilter] = useState<ReservationDateFilter>("today");
   const [customDate, setCustomDate] = useState("");
   const [selectedReservationId, setSelectedReservationId] = useState<string | null>(
     null,
@@ -251,11 +248,41 @@ export function LocalReservationsPage() {
     dataSource === "local" ? getInitialServicesForBusiness(initialBusinesses[0]?.id ?? "") : [],
   );
   const [floorTables, setFloorTables] = useState<FloorTable[]>([]);
+  const searchParams = useSearchParams();
+  const businessQuery = getLocalBusinessSlugFromSearchParams(searchParams);
+  const isSupportMode = searchParams.get("mode") === "support";
+  const [resolvedRouteBusiness, setResolvedRouteBusiness] = useState<Business | null>(null);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setIsMounted(true), 0);
     return () => window.clearTimeout(timeout);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncRouteBusiness = async () => {
+      if (!isSupportMode || !businessQuery) {
+        setResolvedRouteBusiness(null);
+        return;
+      }
+
+      const resolved = await resolveBusinessForLocalRoute(businessQuery);
+
+      if (!cancelled) {
+        setResolvedRouteBusiness(resolved);
+      }
+    };
+
+    const timeout = window.setTimeout(() => {
+      void syncRouteBusiness();
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [businessQuery, isSupportMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -359,11 +386,15 @@ export function LocalReservationsPage() {
     businessWarning,
     selectedBusiness,
     handleBusinessChange: handleBusinessSelectionChange,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
     setSelectedBusinessId,
   });
+
+  const effectiveBusiness = resolvedRouteBusiness ?? selectedBusiness;
 
   function handleBusinessChange(nextBusinessId: string) {
     setSelectedReservationId(null);
@@ -391,7 +422,7 @@ export function LocalReservationsPage() {
     [floorTables],
   );
 
-  const selectedBusinessKey = selectedBusiness?.id ?? "";
+  const selectedBusinessKey = effectiveBusiness?.id ?? "";
 
   const businessReservations = useMemo(() => {
     if (!selectedBusinessKey) {
@@ -515,40 +546,40 @@ export function LocalReservationsPage() {
     const cancelled = businessReservations.filter(
       (reservation) => reservation.status === "cancelled",
     ).length;
-    const completed = businessReservations.filter(
-      (reservation) => reservation.status === "completed",
-    ).length;
     const noShow = businessReservations.filter(
       (reservation) => reservation.status === "no_show",
     ).length;
-    const totalGeneral = businessReservations.length;
     const totalToday = today
       ? businessReservations.filter(
           (reservation) => reservation.reservationDate === today,
         ).length
       : 0;
     const nextReservation = getNextReservation(businessReservations, now);
+    const occupiedSeats = floorTables.reduce(
+      (sum, table) => sum + (table.status === "available" ? 0 : table.seats),
+      0,
+    );
+    const totalSeats = floorTables.reduce((sum, table) => sum + table.seats, 0);
+    const occupancyPercent = totalSeats > 0 ? Math.round((occupiedSeats / totalSeats) * 100) : 0;
 
     return {
       pending,
       confirmed,
       cancelled,
-      completed,
       noShow,
-      totalGeneral,
       totalToday,
       nextReservation,
+      occupiedSeats,
+      totalSeats,
+      occupancyPercent,
     };
-  }, [businessReservations, today, now]);
+  }, [businessReservations, floorTables, today, now]);
 
-  const metricCards: MetricCard[] = [
+  const metricCards: LocalReservationsMetricCard[] = [
     { label: "Pendientes", value: metrics.pending, tone: "amber" },
     { label: "Confirmadas", value: metrics.confirmed, tone: "emerald" },
     { label: "Canceladas", value: metrics.cancelled, tone: "rose" },
-    { label: "Completadas", value: metrics.completed, tone: "cyan" },
     { label: "No-show", value: metrics.noShow },
-    { label: "Total del dia", value: metrics.totalToday },
-    { label: "Total general", value: metrics.totalGeneral },
     {
       label: "Proxima reserva",
       value: metrics.nextReservation
@@ -585,7 +616,7 @@ export function LocalReservationsPage() {
   function handleClearFilters() {
     setSearch("");
     setStatusFilter("all");
-    setDateFilter("all");
+    setDateFilter("today");
     setCustomDate("");
   }
 
@@ -623,93 +654,157 @@ export function LocalReservationsPage() {
   const hasActiveFilters =
     search.trim().length > 0 ||
     statusFilter !== "all" ||
-    dateFilter !== "all" ||
+    dateFilter !== "today" ||
     customDate.length > 0;
 
-  const debugInfo =
-    SHOW_DEBUG && dataSource === "supabase"
-      ? {
-          businessId: selectedBusinessKey || "sin-business",
-          loadedCount: businessReservations.length,
-          visibleCount: filteredReservations.length,
-          dateFilter,
-        }
-      : null;
-
   const hasActiveBusiness = businesses.some((business) => business.status === "active");
+  const shouldWaitForBusiness =
+    dataSource === "supabase" &&
+    isSupportMode &&
+    Boolean(businessQuery) &&
+    (!isMounted || businesses.length === 0);
+  const isInvalidSupportBusiness =
+    dataSource === "supabase" &&
+    isSupportMode &&
+    Boolean(businessQuery) &&
+    businesses.length > 0 &&
+    !selectedBusiness &&
+    businessWarning === INVALID_LOCAL_BUSINESS_MESSAGE;
+
+  const supportAccessMode = searchParams.get("mode") === "support";
+  const quickActionBaseParams = supportAccessMode ? searchParams.toString() : null;
+  const quickActions = effectiveBusiness?.slug
+    ? [
+        {
+          label: "Nueva reserva",
+          href: `/${effectiveBusiness.slug}`,
+          tone: "cyan" as const,
+          description: "Abrir la web publica para tomar una reserva.",
+        },
+        {
+          label: "Abrir CRM",
+          href: supportAccessMode
+            ? buildLocalAccessHref(
+                "/local/crm",
+                effectiveBusiness.slug,
+                quickActionBaseParams,
+                "support",
+              )
+            : buildLocalBusinessHref("/local/crm", effectiveBusiness.slug, quickActionBaseParams),
+          tone: "emerald" as const,
+          description: "Revisar clientes, notas e historial.",
+        },
+        {
+          label: "Ver plano",
+          href: supportAccessMode
+            ? buildLocalAccessHref(
+                "/local/plano",
+                effectiveBusiness.slug,
+                quickActionBaseParams,
+                "support",
+              )
+            : buildLocalBusinessHref("/local/plano", effectiveBusiness.slug, quickActionBaseParams),
+          tone: "slate" as const,
+          description: "Abrir el plano y la ocupacion del salon.",
+        },
+        {
+          label: "Editar web",
+          href: supportAccessMode
+            ? buildLocalAccessHref(
+                "/local/web",
+                effectiveBusiness.slug,
+                quickActionBaseParams,
+                "support",
+              )
+            : buildLocalBusinessHref("/local/web", effectiveBusiness.slug, quickActionBaseParams),
+          tone: "violet" as const,
+          description: "Actualizar contenido publico y galeria.",
+        },
+      ]
+    : [];
+
+  if (shouldWaitForBusiness) {
+    return (
+      <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
+        Cargando negocio y reservas...
+      </section>
+    );
+  }
+
+  if (isInvalidSupportBusiness) {
+    return (
+      <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
+        <p className="text-base font-semibold text-white">Negocio no encontrado</p>
+        <p className="mt-2 leading-6 text-slate-300">
+          La ruta existe, pero no encontramos un negocio valido para ese slug.
+        </p>
+      </section>
+    );
+  }
 
   if (isMounted && businesses.length > 0 && !hasActiveBusiness) {
     return <LocalNoActiveBusinessesState />;
   }
 
   return (
-    <section className="space-y-4">
-      <LocalReservationsHeader
-        business={selectedBusiness}
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <LocalReservationsDashboard
+        business={effectiveBusiness}
         businesses={businesses}
-        serviceCount={services.length}
-        onBusinessChange={handleBusinessChange}
+        canChangeBusiness={canChangeBusiness}
         selectedBusinessId={selectedBusinessId}
-      />
-
-      <LocalBusinessWarning message={businessWarning} />
-
-      <LocalReservationsStats metricCards={metricCards} />
-
-      <LocalReservationsFilters
+        onBusinessChange={handleBusinessChange}
+        serviceCount={services.length}
+        businessWarning={businessWarning}
+        metricCards={metricCards}
+        search={search}
+        statusFilter={statusFilter}
         dateFilter={dateFilter}
         customDate={customDate}
         hasActiveFilters={hasActiveFilters}
+        resultsCount={filteredReservations.length}
         onClearFilters={handleClearFilters}
-        onClearLocalReservations={dataSource === "local" ? handleClearLocalReservations : undefined}
+        onClearLocalReservations={
+          dataSource === "local" ? handleClearLocalReservations : undefined
+        }
         onCustomDateChange={(value) => {
           setCustomDate(value);
           if (value) {
             setDateFilter("custom");
           }
         }}
-        onDateFilterChange={setDateFilter}
+        onDateFilterChange={(value) => setDateFilter(value as ReservationDateFilter)}
         onSearchChange={setSearch}
-        onStatusFilterChange={setStatusFilter}
-        resultsCount={filteredReservations.length}
-        search={search}
-        statusFilter={statusFilter}
+        onStatusFilterChange={(value) => setStatusFilter(value as ReservationScope)}
         clearLocalReservationsLabel="Limpiar reservas locales"
         hideClearLocalReservations={dataSource === "supabase"}
+        groupedReservations={groupedReservations}
+        filteredReservationsCount={filteredReservations.length}
+        availabilityByReservationId={availabilityByReservationId}
+        serviceNameById={serviceNameById}
+        tableLabelByReservationId={reservationTableLabelById}
+        onChangeStatus={handleChangeStatus}
+        onOpenAssignTable={(reservation) =>
+          setSelectedReservationForAssignmentId(reservation.id)
+        }
+        onOpenDetail={(reservation) => setSelectedReservationId(reservation.id)}
+        emptyMessage={
+          dataSource === "supabase"
+            ? "No hay reservas de Supabase que coincidan con estos filtros."
+            : "No hay reservas que coincidan con estos filtros."
+        }
+        floorTables={floorTables}
+        reservations={businessReservations}
+        today={today}
+        now={now}
+        occupancyPercent={metrics.occupancyPercent}
+        occupiedSeats={metrics.occupiedSeats}
+        totalSeats={metrics.totalSeats}
+        quickActions={quickActions}
       />
 
-      {debugInfo ? (
-        <div className="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-[11px] text-slate-400">
-          Debug Supabase: businessId={debugInfo.businessId} | cargadas={debugInfo.loadedCount} |
-          visibles={debugInfo.visibleCount} | fecha={debugInfo.dateFilter}
-        </div>
-      ) : null}
-
-      {filteredReservations.length === 0 ? (
-        <LocalReservationsEmptyState
-          onClearFilters={handleClearFilters}
-          emptyMessage={
-            dataSource === "supabase"
-              ? "No hay reservas de Supabase que coincidan con estos filtros."
-              : "No hay reservas que coincidan con estos filtros."
-          }
-        />
-      ) : (
-        <LocalReservationsList
-          groupedReservations={groupedReservations}
-          availabilityByReservationId={availabilityByReservationId}
-          onChangeStatus={handleChangeStatus}
-          onOpenAssignTable={(reservation) =>
-            setSelectedReservationForAssignmentId(reservation.id)
-          }
-          onOpenDetail={(reservation) => setSelectedReservationId(reservation.id)}
-          serviceNameById={serviceNameById}
-          tableLabelByReservationId={reservationTableLabelById}
-        />
-      )}
-
       <LocalReservationDetailDrawer
-        business={selectedBusiness}
+        business={effectiveBusiness}
         onClose={() => setSelectedReservationId(null)}
         onOpenAssignTable={(reservation) =>
           setSelectedReservationForAssignmentId(reservation.id)

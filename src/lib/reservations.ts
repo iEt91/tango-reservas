@@ -514,7 +514,8 @@ function findLiveTable(businessId: string, tableId: string) {
 function getReservationConflictReservations(reservation: Reservation) {
   const services = getBusinessServices(reservation.businessId);
   const service = services.find((entry) => entry.id === reservation.serviceId) ?? null;
-  const fallbackDurationMinutes = getReservationRules(reservation.businessId)?.slotDurationMinutes ?? 120;
+  const fallbackDurationMinutes =
+    getReservationRules(reservation.businessId)?.defaultReservationDurationMinutes ?? 120;
   const durationMinutes = getReservationDurationMinutes(reservation, service, {
     fallbackDurationMinutes,
   });
@@ -540,14 +541,19 @@ export function getActiveReservationsForSlot(
 ) {
   const reservations = dedupeReservations(getReservationsSnapshotInternal());
   const services = getBusinessServices(businessId);
-  const fallbackDurationMinutes = getReservationRules(businessId)?.slotDurationMinutes ?? 120;
+  const slotStepMinutes = Math.max(
+    1,
+    getReservationRules(businessId)?.slotDurationMinutes || 30,
+  );
+  const fallbackDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
 
   return reservations.filter(
     (reservation) =>
       reservation.businessId === businessId &&
       isReservationActiveAtSlot(reservation, date, time, {
         service: services.find((entry) => entry.id === reservation.serviceId) ?? null,
-        slotDurationMinutes: fallbackDurationMinutes,
+        slotDurationMinutes: slotStepMinutes,
         fallbackDurationMinutes,
       }),
   );
@@ -728,6 +734,12 @@ export function getAvailableTablesForSlot(
 ) {
   const tables = getTablesForBusiness(businessId);
   const services = getBusinessServices(businessId);
+  const fallbackDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
+  const slotStepMinutes = Math.max(
+    1,
+    getReservationRules(businessId)?.slotDurationMinutes || 30,
+  );
   const occupiedTableIds = new Set(
     getOccupiedTableIdsForSlotFromAvailability({
       businessId,
@@ -735,8 +747,8 @@ export function getAvailableTablesForSlot(
       time,
       reservations: getReservationsSnapshotInternal(),
       services,
-      fallbackDurationMinutes: getReservationRules(businessId)?.slotDurationMinutes ?? 120,
-      slotDurationMinutes: getReservationRules(businessId)?.slotDurationMinutes ?? 30,
+      fallbackDurationMinutes,
+      slotDurationMinutes: slotStepMinutes,
     }),
   );
 
@@ -930,7 +942,12 @@ export function getTableAvailabilitySummary(
 ) {
   const tables = getTablesForBusiness(businessId);
   const services = getBusinessServices(businessId);
-  const fallbackDurationMinutes = getReservationRules(businessId)?.slotDurationMinutes ?? 120;
+  const slotStepMinutes = Math.max(
+    1,
+    getReservationRules(businessId)?.slotDurationMinutes || 30,
+  );
+  const fallbackDurationMinutes =
+    getReservationRules(businessId)?.defaultReservationDurationMinutes ?? 120;
   const reservations =
     reservationsOverride ??
     getActiveReservationsForSlot(businessId, date, time);
@@ -950,7 +967,7 @@ export function getTableAvailabilitySummary(
       reservations: reservationsOverride ?? getReservationsSnapshotInternal(),
       services,
       fallbackDurationMinutes,
-      slotDurationMinutes: fallbackDurationMinutes,
+      slotDurationMinutes: slotStepMinutes,
     }),
   );
   const warningsByTableId: Record<string, string[]> = {};
@@ -1500,7 +1517,8 @@ export function createReservation(data: CreateReservationInput) {
         reservations,
         tables,
         services,
-        fallbackDurationMinutes: rules.slotDurationMinutes ?? 120,
+        fallbackDurationMinutes:
+          rules.defaultReservationDurationMinutes ?? 120,
       })
     : null;
 

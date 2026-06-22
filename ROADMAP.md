@@ -2,6 +2,120 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.0.7-design-lab Ajuste fino de alineacion vertical en la maqueta estatica
+
+- la tarjeta de Ocupación de hoy ya no muestra el `68%` grande a la izquierda y deja el donut a la derecha;
+- Ocupación por franja horaria pasa a ser un gráfico real con eje Y, eje X y 16 barras;
+- el canvas interno del Plano del salón se agranda para que las mesas respiren mejor;
+- la maqueta estatica sigue aislada y sin tocar la logica real.
+
+### v5.0.2-design-lab Ajuste de overflow y grafico de la maqueta estatica
+
+- se corrigen los overflows de las metricas superiores y se reorganiza su contenido;
+- la tarjeta de Próxima reserva y la de Ocupación de hoy quedan compactas y dentro de sus limites;
+- se expande la fila inferior para que Acciones rápidas quede completa;
+- se rehace el gráfico de Ocupación por franja horaria y se elimina el tooltip flotante;
+- la maqueta estatica sigue aislada y sin tocar la logica real.
+
+### v5.0.1-design-lab Ajuste de overflow de la maqueta estatica
+
+- se eliminan scrolls desktop y se compactan las metricas superiores de `/local/design-lab`;
+- la card de ocupacion mantiene el donut dentro del panel, sin overflow;
+- el CTA de "Ver todas las reservas de hoy" sube al header de la card de reservas;
+- las acciones rapidas quedan centradas y sin texto cortado;
+- la maqueta estatica sigue aislada y sin tocar la logica real.
+
+### v5.0.0-design-lab Maqueta estatica del Panel Local
+
+- se crea `/local/design-lab` como una maqueta estatica aislada basada en ingenieria inversa visual de la captura mock;
+- la pagina replica la composicion del dashboard premium sin usar Supabase ni tocar la logica real;
+- se usan componentes visuales nuevos para sidebar, topbar, metricas, tabla, plano, grafico, actividad, clientes y acciones rapidas;
+- sirve como base de referencia para migrar luego el Panel Local real por etapas.
+
+### v5.0.0 Reconstruccion visual del Panel Local
+
+- se reconstruye `/local` desde una lectura visual de la captura mock de referencia para acercarse mucho mas al dashboard premium deseado;
+- la sidebar fija, la topbar interna y la composicion de cards, tabla, plano, grafico, actividad, clientes y acciones rapidas se alinean con la referencia;
+- se mantiene intacta la logica critica y se preservan las rutas locales, `business` y `mode=support`;
+
+### v4.9.2 Rediseño visual del Panel Local
+
+- se rehace `/local` para acercarlo mucho mas a la referencia visual adjunta con sidebar fija, topbar interna y scroll vertical en el main;
+- se ajustan cards, tabla, mini plano, grafico, actividad, clientes y acciones rapidas para una composicion premium mas fiel;
+- se mantienen intactas las rutas locales, la logica critica y la separacion soporte/admin vs duenio/local;
+
+### v4.9.1 Ajuste de layout premium del Panel Local
+
+- se fija la sidebar del Panel Local y se elimina el scroll global del dashboard en desktop;
+- se compacta el inicio visual para acercarlo mas a la referencia premium;
+- se mantienen intactas las rutas locales, la logica critica y la separacion soporte/admin vs duenio/local;
+
+### v4.9.0 Inicio visual premium del Panel Local
+
+- `/local` pasa a ser el inicio visual principal del Panel del Local;
+- se acerca el dashboard al mock de referencia con sidebar, topbar, metricas, reservas, plano, actividad y accesos rapidos;
+- la logica critica de reservas, disponibilidad, mesas, Supabase y tests se mantiene intacta;
+- la separacion soporte/admin vs duenio/local sigue vigente como capa de acceso.
+
+### v4.8.3 Correccion de resolucion de negocio en Reservas
+
+- se corrige la resolucion de `business` en `/local/reservas` cuando entra `?mode=support`;
+- `mode=support` deja de contaminar el slug del negocio;
+- el panel mantiene el layout premium nuevo y sigue usando la misma logica de reservas;
+- la separacion soporte/admin vs duenio/local sigue vigente como capa de acceso.
+
+### v4.8.2 Correccion de soporte en Reservas
+
+- se corrige la resolucion de `business` en `/local/reservas` cuando entra `?mode=support`;
+- el `mode` adicional deja de contaminar la lectura del slug del negocio;
+- el panel nuevo conserva su layout premium y sigue usando la misma logica de reservas;
+- la separacion soporte/admin vs dueno/local sigue vigente como capa de acceso.
+
+### v4.8.1 Dashboard compacto del Panel Local
+
+- se compacta `/local/reservas` para que funcione como dashboard premium de una sola pantalla en desktop;
+- se mantienen el shell visual, la sidebar y la topbar nuevos sin tocar la logica critica;
+- la pantalla principal acerca la composicion visual a la referencia adjunta sin redisenar aun todas las paginas internas;
+- la separacion soporte/admin vs dueno/local sigue vigente como capa de acceso.
+
+### v4.8.0 Shell visual premium del Panel Local
+
+- se inicia el nuevo shell visual del Panel Local con sidebar lateral y topbar limpia usando las imagenes adjuntas como referencia visual
+- el objetivo es acercarse a la referencia visual sin romper la logica ni redisenar cada pantalla interna todavia
+- se mantienen las rutas locales, Supabase, disponibilidad y tests sin cambios funcionales
+- la separacion soporte/admin vs dueño/local sigue vigente como capa de acceso
+
+### v4.7.0 Separacion de acceso soporte y dueño
+
+- se separa el acceso del panel local entre soporte/admin y dueño/local
+- el selector de negocios queda habilitado solo en modo soporte/admin
+- el modo soporte/admin entra con `?mode=support` y puede navegar entre negocios
+- el modo dueño/local queda bloqueado a un negocio asignado temporal y no permite cambiar a otro negocio
+- la autenticacion real queda pendiente para una version futura
+- la logica de reservas, disponibilidad, Supabase y tests no cambia en esta entrega
+
+### v4.6.9 Auditoria tecnica y regresion de disponibilidad
+
+- se agrega un script de validacion para los casos criticos de solapamiento y horarios publicos
+- la regla oficial de mesas queda documentada para reducir divergencias futuras
+- se blindan los casos donde calendario, web, plano y reservas podian calcular distinto
+- se mantiene la UX actual sin redisenar pantallas
+- `/local/calendario` queda como deuda tecnica para un rediseno futuro tipo agenda/ocupacion
+
+### v4.6.8 Auditoria y regresion de disponibilidad
+
+- se agrega un script de validacion para los casos criticos de solapamiento y horarios publicos
+- la regla oficial de mesas queda documentada para reducir divergencias futuras
+- se blindan los casos donde calendario, web, plano y reservas podian calcular distinto
+- se mantiene la UX actual sin redisenar pantallas
+
+### v4.6.7 Horarios de reservas separados
+
+- la web publica deja de cortar horarios por `cierre - duracion`
+- `Reservas` puede usar una ventana propia de admision por negocio
+- la configuracion guarda `usar mismo horario del local`, `inicio/fin de reservas`, `intervalo de slots`, `duracion estandar` y `terminar despues del cierre`
+- la misma regla de solapamiento sigue alimentando Reservas, Plano, Calendario y la web
+
 ### v4.6.6 Disponibilidad exacta por mesa
 
 - la disponibilidad manual y la autoasignacion comparan conflictos por ID exacto de mesa

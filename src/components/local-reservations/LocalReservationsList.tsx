@@ -22,6 +22,7 @@ type LocalReservationsListProps = {
   >;
   serviceNameById: Map<string, string>;
   tableLabelByReservationId: Map<string, string>;
+  compact?: boolean;
 };
 
 export function LocalReservationsList({
@@ -32,21 +33,24 @@ export function LocalReservationsList({
   availabilityByReservationId,
   serviceNameById,
   tableLabelByReservationId,
+  compact = false,
 }: LocalReservationsListProps) {
   return (
-    <section className="space-y-4">
+    <section className={compact ? "space-y-3" : "space-y-4"}>
       {groupedReservations.map((group) => (
         <article
           key={group.date}
-          className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/5 shadow-2xl shadow-black/20"
+          className={`overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/5 shadow-2xl shadow-black/20 ${
+            compact ? "bg-white/[0.04]" : ""
+          }`}
         >
-          <header className="border-b border-white/10 px-4 py-2.5 sm:px-5">
+          <header className={`border-b border-white/10 ${compact ? "px-3 py-2" : "px-4 py-2.5 sm:px-5"}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-cyan-300/70">
                   {group.label}
                 </p>
-                <p className="mt-1 text-[11px] text-slate-400">
+                <p className={`mt-1 ${compact ? "text-[10px]" : "text-[11px]"} text-slate-400`}>
                   {group.items.length} reservas en esta fecha
                 </p>
               </div>
@@ -78,6 +82,7 @@ export function LocalReservationsList({
                 onChangeStatus={onChangeStatus}
                 onOpenAssignTable={onOpenAssignTable}
                 onOpenDetail={onOpenDetail}
+                compact={compact}
               />
             ))}
           </div>

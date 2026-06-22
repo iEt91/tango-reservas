@@ -14,10 +14,11 @@ import {
   getBusinessHours,
   getBusinessServices,
   getReservationRules,
+  createDefaultReservationRules,
   updateBusinessHours,
   updateBusinessServices,
   updateReservationRules,
-} from "@/data/scheduling";
+} from "@/lib/scheduling";
 import {
   initialBusinessHours,
   initialReservationRules,
@@ -49,17 +50,7 @@ const dayOrder: DayOfWeek[] = [
 ];
 
 function createFallbackRules(businessId: string): ReservationRules {
-  return {
-    id: `rules-${businessId}`,
-    businessId,
-    slotDurationMinutes: 30,
-    maxReservationsPerSlot: 4,
-    minNoticeMinutes: 30,
-    maxDaysAhead: 14,
-    requiresConfirmation: true,
-    allowCancellation: true,
-    cancellationLimitHours: 4,
-  };
+  return createDefaultReservationRules(businessId);
 }
 
 function normalizeHours(businessId: string, hours: BusinessHours[]) {

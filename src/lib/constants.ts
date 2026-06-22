@@ -1,2 +1,2 @@
 export const APP_NAME = "Tango Reservas";
-export const APP_VERSION = "v4.6.6";
+export const APP_VERSION = "v5.0.7-design-lab";

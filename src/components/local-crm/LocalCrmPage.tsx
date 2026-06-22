@@ -89,6 +89,8 @@ export function LocalCrmPage() {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
     selectedBusiness,
+    canChangeBusiness,
+    isSelectionReady,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
@@ -224,6 +226,7 @@ export function LocalCrmPage() {
       <LocalCrmHeader
         business={selectedBusiness}
         businesses={businesses}
+        canChangeBusiness={canChangeBusiness}
         onBusinessChange={handleBusinessChange}
         selectedBusinessId={selectedBusinessId}
         customerCount={visibleCustomersBase.length}
@@ -232,7 +235,7 @@ export function LocalCrmPage() {
 
       <LocalBusinessWarning message={businessWarning} />
 
-      {!initialized || customers === null ? (
+      {!initialized || customers === null || !isSelectionReady ? (
         <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
           Cargando CRM...
         </section>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Business } from "@/data/types";
+import { buildLocalAccessHref } from "@/lib/local-business-routing";
 
 type BusinessActionsProps = {
   business: Business;
@@ -18,6 +19,7 @@ export function BusinessActions({
 }: BusinessActionsProps) {
   const slug = encodeURIComponent(business.slug);
   const disabledLinkClass = "pointer-events-none cursor-not-allowed opacity-50";
+  const supportHref = (pathname: string) => buildLocalAccessHref(pathname, business.slug, null, "support");
 
   function renderActionLink(
     href: string,
@@ -66,12 +68,12 @@ export function BusinessActions({
         readOnly,
       )}
       {renderActionLink(
-        `/local/configuracion?business=${slug}`,
+        supportHref("/local/configuracion"),
         "Configurar",
         readOnly,
       )}
       <Link
-        href={`/local/reservas?business=${slug}`}
+        href={supportHref("/local/reservas")}
         className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
       >
         Panel local

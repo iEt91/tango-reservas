@@ -265,6 +265,7 @@ export function LocalFloorPlanPage() {
     businessWarning,
     handleBusinessChange: handleBusinessSelectionChange,
     selectedBusiness: requestedSelectedBusiness,
+    canChangeBusiness,
   } = useLocalBusinessSelection({
     businesses,
     selectedBusinessId,
@@ -307,7 +308,7 @@ export function LocalFloorPlanPage() {
     () =>
       buildFloorPlanTimeline(
         selectedBusinessDayHours,
-        selectedBusinessRules?.slotDurationMinutes ?? 30,
+        Math.max(1, selectedBusinessRules?.slotDurationMinutes || 30),
       ),
     [selectedBusinessDayHours, selectedBusinessRules],
   );
@@ -983,6 +984,7 @@ export function LocalFloorPlanPage() {
       <FloorPlanToolbar
         business={selectedBusiness}
         businesses={businesses}
+        canChangeBusiness={canChangeBusiness}
         onBusinessChange={handleBusinessChange}
         onNewTable={() => setIsCreateModalOpen(true)}
         onResetPlan={handleResetPlan}
