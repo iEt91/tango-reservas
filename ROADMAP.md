@@ -2,13 +2,12 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.0.7-design-lab Ajuste fino de alineacion vertical en la maqueta estatica
+### v5.1.0 Redisenio visual de Reservas
 
-- la tarjeta de Ocupación de hoy ya no muestra el `68%` grande a la izquierda y deja el donut a la derecha;
-- Ocupación por franja horaria pasa a ser un gráfico real con eje Y, eje X y 16 barras;
-- el canvas interno del Plano del salón se agranda para que las mesas respiren mejor;
-- la maqueta estatica sigue aislada y sin tocar la logica real.
-
+- `/local/reservas` adopta el blueprint visual de la captura "Reservas - Demuru";
+- la pagina conserva la logica real de reservas, disponibilidad, negocio y modo soporte;
+- el sistema visual premium de `/local/design-lab` sirve como base de referencia sin romper otras rutas;
+- por ahora no se redisenian Calendario, Plano, CRM, Configuracion, Menu, Web ni Reportes.
 ### v5.0.2-design-lab Ajuste de overflow y grafico de la maqueta estatica
 
 - se corrigen los overflows de las metricas superiores y se reorganiza su contenido;

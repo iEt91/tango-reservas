@@ -1,4 +1,4 @@
-﻿# Tango Reservas
+# Tango Reservas
 
 Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con tres areas bien separadas:
 
@@ -6,18 +6,21 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 - Admin Panel
 - Web del Local
 
+
+
 ## Version actual
 
-`v5.0.7-design-lab`
+`v5.1.0`
 
-Esta version ajusta `/local/design-lab` con correcciones quirurgicas de overflow, grafico horario y canvas del plano sobre la maqueta estatica de referencia, sin tocar la logica critica.
+Esta version redisenia `/local/reservas` con el blueprint visual de la captura "Reservas - Demuru", manteniendo la logica real, Supabase, `business` y `mode=support` intactos.
 
-## Etapa v5.0.7-design-lab
+## Etapa v5.1.0
 
-- corrige la tarjeta de Ocupación de hoy para que solo muestre `72 / 106 cubiertos` a la izquierda y el donut a la derecha;
-- rehace Ocupación por franja horaria como gráfico real con eje Y, eje X y 16 barras;
-- agranda el canvas interno del Plano del salón sin tocar la lógica real ni Supabase.
-
+- migra visualmente `/local/reservas` al sistema premium basado en `/local/design-lab`;
+- usa la imagen adjunta de Reservas como blueprint obligatorio;
+- mantiene la logica real de reservas y disponibilidad;
+- preserva `business` y `mode=support`;
+- no redisenia todavia Calendario, Plano, CRM, Configuracion, Menu, Web ni Reportes.
 ## Etapa v5.0.2-design-lab
 
 - corrige overflow en las metricas superiores;

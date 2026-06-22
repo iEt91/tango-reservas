@@ -26,9 +26,9 @@ import { LocalNoActiveBusinessesState } from "@/components/local/LocalNoActiveBu
 import { initialBusinesses } from "@/mocks/businesses";
 import { initialServices } from "@/mocks/scheduling";
 import {
-  LocalReservationsDashboard,
+  LocalReservationsPremiumDashboard,
   type LocalReservationsMetricCard,
-} from "@/components/local-reservations/LocalReservationsDashboard";
+} from "@/components/local-reservations/LocalReservationsPremiumDashboard";
 import { useLocalBusinessSelection } from "@/hooks/useLocalBusinessSelection";
 import {
   buildLocalAccessHref,
@@ -549,6 +549,9 @@ export function LocalReservationsPage() {
     const noShow = businessReservations.filter(
       (reservation) => reservation.status === "no_show",
     ).length;
+    const completed = businessReservations.filter(
+      (reservation) => reservation.status === "completed",
+    ).length;
     const totalToday = today
       ? businessReservations.filter(
           (reservation) => reservation.reservationDate === today,
@@ -566,6 +569,7 @@ export function LocalReservationsPage() {
       pending,
       confirmed,
       cancelled,
+      completed,
       noShow,
       totalToday,
       nextReservation,
@@ -579,15 +583,17 @@ export function LocalReservationsPage() {
     { label: "Pendientes", value: metrics.pending, tone: "amber" },
     { label: "Confirmadas", value: metrics.confirmed, tone: "emerald" },
     { label: "Canceladas", value: metrics.cancelled, tone: "rose" },
+    { label: "Completadas", value: metrics.completed, tone: "cyan" },
     { label: "No-show", value: metrics.noShow },
+    { label: "Total del día", value: metrics.totalToday, tone: "cyan" },
     {
-      label: "Proxima reserva",
+      label: "Próxima reserva",
       value: metrics.nextReservation
-        ? `${metrics.nextReservation.reservationDate} ${formatReservationTime(metrics.nextReservation.reservationTime)}`
-        : "No hay proximas reservas",
+        ? formatReservationTime(metrics.nextReservation.reservationTime)
+        : "No hay próximas reservas",
       helper: metrics.nextReservation
-        ? `${metrics.nextReservation.customerName} • ${metrics.nextReservation.status}`
-        : "Aparecera la reserva pendiente o confirmada mas cercana.",
+        ? `${metrics.nextReservation.customerName} · ${metrics.nextReservation.joinedTableLabel ?? metrics.nextReservation.tableLabel ?? "Sin mesa"} · ${metrics.nextReservation.partySize} personas`
+        : "Aparecerá la reserva pendiente o confirmada más cercana.",
     },
   ];
 
@@ -748,7 +754,7 @@ export function LocalReservationsPage() {
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden">
-      <LocalReservationsDashboard
+      <LocalReservationsPremiumDashboard
         business={effectiveBusiness}
         businesses={businesses}
         canChangeBusiness={canChangeBusiness}
