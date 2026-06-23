@@ -1468,12 +1468,13 @@ export function LocalMenuPage() {
   }
 
   return (
-    <section className="space-y-4">
-      {businesses.length > 0 && !businesses.some((business) => business.status === "active") ? (
-        <LocalNoActiveBusinessesState />
-      ) : null}
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        {businesses.length > 0 && !businesses.some((business) => business.status === "active") ? (
+          <LocalNoActiveBusinessesState />
+        ) : null}
 
-      <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 shadow-2xl shadow-black/20 sm:px-5">
+        <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 shadow-2xl shadow-black/20 sm:px-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-300/80">
@@ -1789,37 +1790,38 @@ export function LocalMenuPage() {
         </div>
       </div>
 
-      <MenuCategoryModal
-        open={categoryModal !== null}
-        mode={categoryModal?.mode ?? "create"}
-        draft={categoryModal?.draft ?? emptyCategoryDraft}
-        error={categoryError}
-        onChange={(draft) =>
-          setCategoryModal((current) =>
-            current ? { ...current, draft } : current,
-          )
-        }
-        onClose={() => {
-          setCategoryError("");
-          setCategoryModal(null);
-        }}
-        onSave={saveCategory}
-      />
+        <MenuCategoryModal
+          open={categoryModal !== null}
+          mode={categoryModal?.mode ?? "create"}
+          draft={categoryModal?.draft ?? emptyCategoryDraft}
+          error={categoryError}
+          onChange={(draft) =>
+            setCategoryModal((current) =>
+              current ? { ...current, draft } : current,
+            )
+          }
+          onClose={() => {
+            setCategoryError("");
+            setCategoryModal(null);
+          }}
+          onSave={saveCategory}
+        />
 
-      <MenuItemModal
-        open={itemModal !== null}
-        mode={itemModal?.mode ?? "create"}
-        draft={itemModal?.draft ?? createItemDraft(categories[0]?.id ?? "")}
-        categories={categories}
-        error={itemError}
-        onChange={(draft) => setItemModal((current) => (current ? { ...current, draft } : current))}
-        onClose={() => {
-          setItemError("");
-          setItemModal(null);
-        }}
-        onSave={saveItem}
-        onError={setItemError}
-      />
+        <MenuItemModal
+          open={itemModal !== null}
+          mode={itemModal?.mode ?? "create"}
+          draft={itemModal?.draft ?? createItemDraft(categories[0]?.id ?? "")}
+          categories={categories}
+          error={itemError}
+          onChange={(draft) => setItemModal((current) => (current ? { ...current, draft } : current))}
+          onClose={() => {
+            setItemError("");
+            setItemModal(null);
+          }}
+          onSave={saveItem}
+          onError={setItemError}
+        />
+      </div>
     </section>
   );
 }

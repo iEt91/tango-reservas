@@ -68,8 +68,7 @@ export function useLocalBusinessSelection({
     }
 
     return (
-      resolvedRequestedBusiness ??
-      immediateRequestedBusiness
+      resolvedRequestedBusiness ?? immediateRequestedBusiness
     );
   }, [
     businesses,

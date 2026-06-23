@@ -18,6 +18,10 @@ body {
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
+body.tango-local-app-shell {
+  overflow: hidden;
+}
+
 * {
   box-sizing: border-box;
 }

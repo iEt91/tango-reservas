@@ -108,6 +108,18 @@ function getStoreIndex(tableId: string) {
   return floorTablesStore.findIndex((table) => table.id === tableId);
 }
 
+function normalizeTableShape(shape: string | null | undefined): FloorTableShape {
+  if (shape === "round") {
+    return "round";
+  }
+
+  if (shape === "rectangular" || shape === "rectangle") {
+    return "rectangle";
+  }
+
+  return "square";
+}
+
 function normalizeTable(
   businessId: string,
   data: Partial<
@@ -129,7 +141,7 @@ function normalizeTable(
   id?: string,
 ): FloorTable {
   const timestamp = nowIso();
-  const shape = data.shape ?? "square";
+  const shape = normalizeTableShape(data.shape);
   const dimensions = normalizeTableDimensions(shape, data.width ?? 130, data.height ?? 90);
   return {
     id:

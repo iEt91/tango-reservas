@@ -1,4 +1,4 @@
-import { getDataSource } from "@/lib/data/dataSource";
+﻿import { getDataSource } from "@/lib/data/dataSource";
 import { checkSupabaseConnection } from "@/lib/data/supabase/health";
 import { hasSupabaseConfig } from "@/lib/supabase/client";
 
@@ -66,7 +66,9 @@ export default async function SupabaseCheckPage() {
             <p className="mt-3 text-sm text-slate-300">
               {health.connected
                 ? "Conexion exitosa a Supabase."
-                : health.error ?? "No fue posible verificar la conexion."}
+                : health.error
+                  ? "No fue posible verificar la conexion."
+                  : "No se pudo verificar la conexion."}
             </p>
             {health.connected && health.businessCount === 0 ? (
               <p className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-100">
@@ -169,3 +171,4 @@ export default async function SupabaseCheckPage() {
     </main>
   );
 }
+

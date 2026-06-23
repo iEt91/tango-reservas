@@ -980,114 +980,116 @@ export function LocalFloorPlanPage() {
   }
 
   return (
-    <section className="space-y-4">
-      <FloorPlanToolbar
-        business={selectedBusiness}
-        businesses={businesses}
-        canChangeBusiness={canChangeBusiness}
-        onBusinessChange={handleBusinessChange}
-        onNewTable={() => setIsCreateModalOpen(true)}
-        onResetPlan={handleResetPlan}
-        onResetBackground={handleResetBackground}
-        selectedBusinessId={selectedBusinessId}
-        dataSourceLabel={dataSourceLabel}
-      />
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <FloorPlanToolbar
+          business={selectedBusiness}
+          businesses={businesses}
+          canChangeBusiness={canChangeBusiness}
+          onBusinessChange={handleBusinessChange}
+          onNewTable={() => setIsCreateModalOpen(true)}
+          onResetPlan={handleResetPlan}
+          onResetBackground={handleResetBackground}
+          selectedBusinessId={selectedBusinessId}
+          dataSourceLabel={dataSourceLabel}
+        />
 
-      <LocalBusinessWarning message={businessWarning} />
+        <LocalBusinessWarning message={businessWarning} />
 
-      <FloorPlanStats
-        blocked={stats.blocked}
-        occupied={stats.occupied}
-        totalSeats={stats.totalSeats}
-        totalTables={stats.totalTables}
-        available={stats.available}
-        unassignedReservations={stats.unassignedReservations}
-      />
+        <FloorPlanStats
+          blocked={stats.blocked}
+          occupied={stats.occupied}
+          totalSeats={stats.totalSeats}
+          totalTables={stats.totalTables}
+          available={stats.available}
+          unassignedReservations={stats.unassignedReservations}
+        />
 
-      <FloorPlanBackgroundControls
-        background={background}
-        backgroundEditMode={backgroundEditMode}
-        isExpanded={isBackgroundControlsExpanded}
-        canToggleExpanded={Boolean(background.backgroundImage)}
-        onBackgroundImageChange={handleBackgroundImageChange}
-        onBackgroundSettingChange={handleBackgroundSettingChange}
-        onBackgroundDimensionChange={handleBackgroundDimensionChange}
-        onResetBackground={handleResetBackground}
-        onResetBackgroundTransform={handleResetBackgroundTransform}
-        onToggleExpanded={() => setIsBackgroundControlsExpanded((current) => !current)}
-        onToggleBackgroundEditMode={handleToggleBackgroundEditMode}
-        isSupabase={isSupabaseDataSource}
-      />
-
-      <FloorPlanAvailabilityPanel
-        slotOccupancy={slotOccupancy}
-        onOpenAssignTable={(reservation) =>
-          setSelectedReservationForAssignmentId(reservation.id)
-        }
-        debugInfo={
-          SHOW_DEBUG && process.env.NODE_ENV !== "production"
-            ? {
-                selectedDate,
-                selectedTime,
-                reservationsLoaded,
-                activeReservations: slotOccupancy.assignmentsByTableId
-                  ? new Set(
-                      Object.values(slotOccupancy.assignmentsByTableId)
-                        .flat()
-                        .map((reservation) => reservation.id),
-                    ).size + slotOccupancy.reservationsWithoutTable.length
-                  : 0,
-                assignedReservationsForSelectedSlot: new Set(
-                  Object.values(slotOccupancy.assignmentsByTableId)
-                    .flat()
-                    .map((reservation) => reservation.id),
-                ).size,
-                firstActiveReservationId:
-                  Object.values(slotOccupancy.assignmentsByTableId).flat()[0]?.id ?? null,
-              }
-            : null
-        }
-      />
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <FloorPlanCanvas
+        <FloorPlanBackgroundControls
           background={background}
           backgroundEditMode={backgroundEditMode}
-          backgroundSelected={backgroundSelected}
-          slotOccupancy={slotOccupancy}
-          tables={tables}
-          selectedTableId={selectedTableId}
-          canvasRef={canvasRef}
-          onSelectTable={(table) => setSelectedTableId(table.id)}
-          onPointerDownTable={handlePointerDownTable}
-          onResizePointerDownTable={handleTableResizePointerDown}
-          onBackgroundPointerDown={handleBackgroundPointerDown}
-          onBackgroundResizePointerDown={handleBackgroundResizePointerDown}
-          isTableResizeMode={isTableResizeMode}
+          isExpanded={isBackgroundControlsExpanded}
+          canToggleExpanded={Boolean(background.backgroundImage)}
+          onBackgroundImageChange={handleBackgroundImageChange}
+          onBackgroundSettingChange={handleBackgroundSettingChange}
+          onBackgroundDimensionChange={handleBackgroundDimensionChange}
+          onResetBackground={handleResetBackground}
+          onResetBackgroundTransform={handleResetBackgroundTransform}
+          onToggleExpanded={() => setIsBackgroundControlsExpanded((current) => !current)}
+          onToggleBackgroundEditMode={handleToggleBackgroundEditMode}
+          isSupabase={isSupabaseDataSource}
         />
 
-        <FloorTableEditor
-          key={selectedTable ? `${selectedTable.id}-${selectedTable.updatedAt}` : "empty"}
-          table={selectedTable}
-          isResizeMode={isTableResizeMode}
-          onClose={() => {
-            setSelectedTableId(null);
-            setIsTableResizeMode(false);
-          }}
-          onDelete={handleDeleteTable}
-          onSave={handleUpdateTable}
-          onToggleResizeMode={handleToggleTableResizeMode}
+        <FloorPlanAvailabilityPanel
+          slotOccupancy={slotOccupancy}
+          onOpenAssignTable={(reservation) =>
+            setSelectedReservationForAssignmentId(reservation.id)
+          }
+          debugInfo={
+            SHOW_DEBUG && process.env.NODE_ENV !== "production"
+              ? {
+                  selectedDate,
+                  selectedTime,
+                  reservationsLoaded,
+                  activeReservations: slotOccupancy.assignmentsByTableId
+                    ? new Set(
+                        Object.values(slotOccupancy.assignmentsByTableId)
+                          .flat()
+                          .map((reservation) => reservation.id),
+                      ).size + slotOccupancy.reservationsWithoutTable.length
+                    : 0,
+                  assignedReservationsForSelectedSlot: new Set(
+                    Object.values(slotOccupancy.assignmentsByTableId)
+                      .flat()
+                      .map((reservation) => reservation.id),
+                  ).size,
+                  firstActiveReservationId:
+                    Object.values(slotOccupancy.assignmentsByTableId).flat()[0]?.id ?? null,
+                }
+              : null
+          }
+        />
+
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <FloorPlanCanvas
+            background={background}
+            backgroundEditMode={backgroundEditMode}
+            backgroundSelected={backgroundSelected}
+            slotOccupancy={slotOccupancy}
+            tables={tables}
+            selectedTableId={selectedTableId}
+            canvasRef={canvasRef}
+            onSelectTable={(table) => setSelectedTableId(table.id)}
+            onPointerDownTable={handlePointerDownTable}
+            onResizePointerDownTable={handleTableResizePointerDown}
+            onBackgroundPointerDown={handleBackgroundPointerDown}
+            onBackgroundResizePointerDown={handleBackgroundResizePointerDown}
+            isTableResizeMode={isTableResizeMode}
+          />
+
+          <FloorTableEditor
+            key={selectedTable ? `${selectedTable.id}-${selectedTable.updatedAt}` : "empty"}
+            table={selectedTable}
+            isResizeMode={isTableResizeMode}
+            onClose={() => {
+              setSelectedTableId(null);
+              setIsTableResizeMode(false);
+            }}
+            onDelete={handleDeleteTable}
+            onSave={handleUpdateTable}
+            onToggleResizeMode={handleToggleTableResizeMode}
+          />
+        </div>
+
+        <FloorPlanOccupancyTimeline
+          date={selectedDate}
+          onDateChange={setSelectedDate}
+          onTimeChange={setSelectedTime}
+          slotOccupancy={slotOccupancy}
+          timeline={timeline}
+          selectedTime={selectedTime}
         />
       </div>
-
-      <FloorPlanOccupancyTimeline
-        date={selectedDate}
-        onDateChange={setSelectedDate}
-        onTimeChange={setSelectedTime}
-        slotOccupancy={slotOccupancy}
-        timeline={timeline}
-        selectedTime={selectedTime}
-      />
 
       {feedback ? (
         <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full border border-cyan-400/20 bg-slate-950 px-4 py-2 text-sm text-cyan-100 shadow-2xl shadow-black/40">
@@ -1104,9 +1106,7 @@ export function LocalFloorPlanPage() {
       ) : null}
 
       <ReservationTableAssignmentModal
-        key={
-          assignmentReservation?.id ?? "floor-plan-reservation-table-assignment-closed"
-        }
+        key={assignmentReservation?.id ?? "floor-plan-reservation-table-assignment-closed"}
         open={Boolean(assignmentReservation)}
         reservation={assignmentReservation}
         onAssigned={(message) => {
@@ -1118,3 +1118,4 @@ export function LocalFloorPlanPage() {
     </section>
   );
 }
+

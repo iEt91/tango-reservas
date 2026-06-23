@@ -13,15 +13,12 @@ export default function BusinessSettingsPage() {
   const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug;
   const readOnly = getDataSource() === "supabase";
   const [mounted, setMounted] = useState(false);
-  const [business, setBusiness] = useState(() => (slug ? getBusinessBySlug(slug) ?? null : null));
+  const [business, setBusiness] = useState(() => (slug ? getBusinessBySlug(slug) : null));
   const businessData = useMemo(() => business, [business]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      setBusiness((current) => {
-        const nextBusiness = slug ? getBusinessBySlug(slug) : null;
-        return nextBusiness ?? current ?? null;
-      });
+      setBusiness(() => (slug ? getBusinessBySlug(slug) : null));
       setMounted(true);
     }, 0);
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
@@ -68,18 +68,18 @@ function normalizeHours(businessId: string, hours: BusinessHours[]) {
   return dayOrder.map((dayOfWeek) => {
     const current = map.get(dayOfWeek);
 
-    return (
-      current ?? {
-        id: `${businessId}-${dayOfWeek}`,
-        businessId,
-        dayOfWeek,
-        isOpen: false,
-        openTime: "",
-        closeTime: "",
-        breakStartTime: null,
-        breakEndTime: null,
-      }
-    );
+    return current
+      ? current
+      : {
+          id: `${businessId}-${dayOfWeek}`,
+          businessId,
+          dayOfWeek,
+          isOpen: false,
+          openTime: "",
+          closeTime: "",
+          breakStartTime: null,
+          breakEndTime: null,
+        };
   });
 }
 
@@ -136,20 +136,18 @@ type ServiceModalState = {
 };
 
 function createServiceDraft(businessId: string, service?: Service): ServiceDraft {
-  const base =
-    service ??
-    ({
-      id:
-        globalThis.crypto?.randomUUID?.() ??
-        `service-${businessId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      businessId,
-      name: "",
-      description: "",
-      durationMinutes: 60,
-      capacity: 4,
-      price: null,
-      isActive: true,
-    } satisfies Service);
+  const base: Service = service ?? {
+    id:
+      globalThis.crypto?.randomUUID?.() ??
+      `service-${businessId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    businessId,
+    name: "",
+    description: "",
+    durationMinutes: 60,
+    capacity: 4,
+    price: null,
+    isActive: true,
+  };
 
   return {
     id: base.id,
@@ -183,9 +181,7 @@ export function LocalConfigurationPage() {
   const businessQuery = getLocalBusinessSlugFromSearchParams(searchParams);
 
   const selectedBusiness = useMemo(
-    () =>
-      businessOptions.find((business) => business.id === selectedBusinessId) ??
-      null,
+    () => businessOptions.find((business) => business.id === selectedBusinessId) ?? null,
     [businessOptions, selectedBusinessId],
   );
   const draftBusiness = businessDraft ?? (selectedBusiness ? toBusinessFormValues(selectedBusiness) : null);
@@ -224,8 +220,12 @@ export function LocalConfigurationPage() {
 
       if (dataSource === "supabase" && snapshot.resolvedSource !== "supabase") {
         setBusinessOptions([]);
+        const snapshotError =
+          typeof snapshot.error === "object" && snapshot.error && "message" in snapshot.error
+            ? (snapshot.error as { message?: string }).message
+            : snapshot.error;
         setLoadError(
-          snapshot.error ??
+          snapshotError ??
             snapshot.warning ??
             "No se pudo cargar la configuracion desde Supabase.",
         );
@@ -271,10 +271,7 @@ export function LocalConfigurationPage() {
     let cancelled = false;
 
     void (async () => {
-      const currentBusiness =
-        (await getBusinessById(selectedBusinessId)) ??
-        businessOptions.find((business) => business.id === selectedBusinessId) ??
-        null;
+        const currentBusiness = (await getBusinessById(selectedBusinessId)) ?? null;
 
       if (!currentBusiness || cancelled) {
         return;
@@ -588,8 +585,9 @@ export function LocalConfigurationPage() {
   }
 
   return (
-    <section className="space-y-4">
-      <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-4 shadow-2xl shadow-black/20 sm:px-5 sm:py-5">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-4 shadow-2xl shadow-black/20 sm:px-5 sm:py-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-300/80">
@@ -629,7 +627,7 @@ export function LocalConfigurationPage() {
                   Negocio
                 </span>
                 <div className="input-base text-slate-100">
-                  {selectedBusiness?.name ?? "Negocio asignado"}
+                  {selectedBusiness?.name ? "Negocio asignado" : "Negocio asignado"}
                 </div>
               </div>
             )}
@@ -661,7 +659,7 @@ export function LocalConfigurationPage() {
         ) : null}
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-4">
           <ConfigSection
             title="Datos del negocio"
@@ -850,7 +848,7 @@ export function LocalConfigurationPage() {
             <div className="space-y-3">
               <ToggleCard
                 label={draftBusiness?.autoConfirmReservations ? "Sí" : "No"}
-                checked={draftBusiness?.autoConfirmReservations ?? true}
+                checked={draftBusiness?.autoConfirmReservations ?? false}
                 onChange={(checked) =>
                   updateBusinessField("autoConfirmReservations", checked)
                 }
@@ -929,8 +927,8 @@ export function LocalConfigurationPage() {
               </div>
 
               <ToggleCard
-                label={(rules?.allowReservationsAfterClose ?? true) ? "Sí" : "No"}
-                checked={rules?.allowReservationsAfterClose ?? true}
+                label={rules?.allowReservationsAfterClose ? "Sí" : "No"}
+                checked={rules?.allowReservationsAfterClose ?? false}
                 onChange={(checked) =>
                   updateRuleField("allowReservationsAfterClose", checked)
                 }
@@ -1004,7 +1002,7 @@ export function LocalConfigurationPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <ToggleCard
                 label="Requiere confirmacion"
-                checked={rules?.requiresConfirmation ?? true}
+                checked={rules?.requiresConfirmation ?? false}
                 onChange={(checked) =>
                   setRules((current) => ({
                     ...(current ?? createFallbackRules(selectedBusinessId)),
@@ -1014,7 +1012,7 @@ export function LocalConfigurationPage() {
               />
               <ToggleCard
                 label="Permite cancelacion"
-                checked={rules?.allowCancellation ?? true}
+                checked={rules?.allowCancellation ?? false}
                 onChange={(checked) =>
                   setRules((current) => ({
                     ...(current ?? createFallbackRules(selectedBusinessId)),
@@ -1150,7 +1148,8 @@ export function LocalConfigurationPage() {
             ? "Configuración básica y servicios se guardan en Supabase. Reservas, menú, plano y reportes siguen en la capa operativa actual."
             : "Modo local. Cada negocio guarda sus propios datos, horarios, reglas y servicios en este navegador hasta conectar Supabase."}
         </p>
-      </section>
+        </section>
+      </div>
 
       {serviceModal ? (
         <div
@@ -1405,4 +1404,5 @@ function ToggleCard({ label, checked, onChange }: ToggleCardProps) {
     </label>
   );
 }
+
 

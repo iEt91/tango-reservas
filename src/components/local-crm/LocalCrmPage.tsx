@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { getDataSource } from "@/lib/data/dataSource";
@@ -44,10 +44,10 @@ function getNextCustomerLabel(customers: Customer[]) {
     )[0];
 
   if (!nextCustomer || !nextCustomer.nextReservationAt) {
-    return "No hay próximas reservas";
+    return "No hay prÃ³ximas reservas";
   }
 
-  return `${nextCustomer.name} · ${formatReservationDateTime(nextCustomer.nextReservationAt)}`;
+  return `${nextCustomer.name} Â· ${formatReservationDateTime(nextCustomer.nextReservationAt)}`;
 }
 
 export function LocalCrmPage() {
@@ -196,11 +196,11 @@ export function LocalCrmPage() {
       value: totalReservations,
     },
     {
-      label: "Último cliente activo",
+      label: "Ãšltimo cliente activo",
       value: latestCustomer ? latestCustomer.name : "Sin actividad",
     },
     {
-      label: "Próxima reserva",
+      label: "PrÃ³xima reserva",
       value: nextCustomerLabel,
     },
   ];
@@ -222,61 +222,69 @@ export function LocalCrmPage() {
   }
 
   return (
-    <section className="space-y-4">
-      <LocalCrmHeader
-        business={selectedBusiness}
-        businesses={businesses}
-        canChangeBusiness={canChangeBusiness}
-        onBusinessChange={handleBusinessChange}
-        selectedBusinessId={selectedBusinessId}
-        customerCount={visibleCustomersBase.length}
-        sourceLabel={sourceLabel}
-      />
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <LocalCrmHeader
+          business={selectedBusiness}
+          businesses={businesses}
+          canChangeBusiness={canChangeBusiness}
+          onBusinessChange={handleBusinessChange}
+          selectedBusinessId={selectedBusinessId}
+          customerCount={visibleCustomersBase.length}
+          sourceLabel={sourceLabel}
+        />
 
-      <LocalBusinessWarning message={businessWarning} />
+        <LocalBusinessWarning message={businessWarning} />
 
-      {!initialized || customers === null || !isSelectionReady ? (
-        <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
-          Cargando CRM...
-        </section>
-      ) : (
-        <>
-          <LocalCrmMetrics metricCards={metricCards} />
+        {!initialized || customers === null || !isSelectionReady ? (
+          <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
+            Cargando CRM...
+          </section>
+        ) : (
+          <>
+            <LocalCrmMetrics metricCards={metricCards} />
 
-          <LocalCrmFilters
-            filter={filter}
-            hasActiveFilters={search.trim().length > 0 || filter !== "all"}
-            onClearFilters={handleClearFilters}
-            onFilterChange={setFilter}
-            onSearchChange={setSearch}
-            resultsCount={visibleCustomers.length}
-            search={search}
-          />
-
-          {visibleCustomers.length === 0 ? (
-            <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
-              <p className="font-medium text-white">
-                No hay clientes que coincidan con estos filtros.
-              </p>
-              <p className="mt-1.5 text-xs text-slate-400">
-                Probá limpiando los filtros o cambiando de negocio.
-              </p>
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
-              >
-                Limpiar filtros
-              </button>
-            </section>
-          ) : (
-            <LocalCrmList
-              customers={visibleCustomers}
-              onOpenDetail={(customer) => setSelectedCustomerId(customer.id)}
+            <LocalCrmFilters
+              filter={filter}
+              hasActiveFilters={search.trim().length > 0 || filter !== "all"}
+              onClearFilters={handleClearFilters}
+              onFilterChange={setFilter}
+              onSearchChange={setSearch}
+              resultsCount={visibleCustomers.length}
+              search={search}
             />
-          )}
-        </>
-      )}
+
+            {visibleCustomers.length === 0 ? (
+              <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
+                <p className="font-medium text-white">
+                  No hay clientes que coincidan con estos filtros.
+                </p>
+                <p className="mt-1.5 text-xs text-slate-400">
+                  ProbÃ¡ limpiando los filtros o cambiando de negocio.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
+                >
+                  Limpiar filtros
+                </button>
+              </section>
+            ) : (
+              <LocalCrmList
+                customers={visibleCustomers}
+                onOpenDetail={(customer) => setSelectedCustomerId(customer.id)}
+              />
+            )}
+          </>
+        )}
+
+        <p className="text-xs text-slate-400">
+          {dataSource === "supabase"
+            ? "CRM conectado a Supabase. Clientes, notas y mÃ©tricas se leen y actualizan desde la base."
+            : "CRM local. Los datos se derivan de las reservas del negocio en este entorno."}
+        </p>
+      </div>
 
       <LocalCustomerDetailDrawer
         key={selectedCustomer?.id ?? "crm-customer-detail"}
@@ -286,12 +294,7 @@ export function LocalCrmPage() {
         serviceNameById={serviceNameById}
         sourceLabel={sourceLabel}
       />
-
-      <p className="text-xs text-slate-400">
-        {dataSource === "supabase"
-          ? "CRM conectado a Supabase. Clientes, notas y métricas se leen y actualizan desde la base."
-          : "CRM local. Los datos se derivan de las reservas del negocio en este entorno."}
-      </p>
     </section>
   );
 }
+

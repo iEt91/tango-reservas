@@ -123,7 +123,7 @@ function resolveReservationWindow(
     endMinutes,
     startTime,
     endTime,
-    allowReservationsAfterClose: rules.allowReservationsAfterClose ?? true,
+    allowReservationsAfterClose: rules.allowReservationsAfterClose ?? false,
   };
 }
 

@@ -126,14 +126,17 @@ export function PublicMenuSection({
     }
 
     const defaultCategory =
-      activeCategories.find((category) => activeItems.some((item) => item.categoryId === category.id)) ??
-      activeCategories[0];
+      activeCategories.find((category) =>
+        activeItems.some((item) => item.categoryId === category.id),
+      ) ?? activeCategories[0];
 
     setSelectedCategoryId(defaultCategory?.id ?? "");
   }, [activeCategories, activeItems, mounted, selectedCategoryId]);
 
   const selectedCategory =
-    activeCategories.find((category) => category.id === selectedCategoryId) ?? activeCategories[0] ?? null;
+    activeCategories.find((category) => category.id === selectedCategoryId) ??
+    activeCategories[0] ??
+    null;
 
   const selectedItems = useMemo(() => {
     if (!selectedCategory) {

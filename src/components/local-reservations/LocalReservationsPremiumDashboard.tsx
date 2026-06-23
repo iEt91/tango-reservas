@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
@@ -419,7 +419,7 @@ export function LocalReservationsPremiumDashboard({
 }: LocalReservationsPremiumDashboardProps) {
   const dataSource = getDataSource();
   const businessName = business?.name ?? "Negocio asignado";
-  const businessMeta = [business?.category, business?.city].filter(Boolean).join(" · ");
+  const businessMeta = [business?.category, business?.city].filter(Boolean).join(" Ã‚Â· ");
   const visibleReservations = groupedReservations.flatMap((group) => group.items);
   const hourGroups = useMemo(() => groupReservationsByHour(visibleReservations), [visibleReservations]);
   const agendaItems = useMemo(() => getUpcomingAgenda(reservations, now), [reservations, now]);
@@ -445,9 +445,9 @@ export function LocalReservationsPremiumDashboard({
         <div className={styles.heroLayout}>
           <div className={styles.heroCopy}>
             <p className={styles.heroKicker}>Reservas</p>
-            <h1 className={styles.heroTitle}>Reservas — {businessName}</h1>
+            <h1 className={styles.heroTitle}>Reservas Ã¢â‚¬â€ {businessName}</h1>
             <p className={styles.heroSubtitle}>
-              Gestioná tus reservas y la asignación de mesas en tiempo real.
+              GestionÃƒÂ¡ tus reservas y la asignaciÃƒÂ³n de mesas en tiempo real.
             </p>
 
             <div className={styles.heroChips}>
@@ -465,6 +465,25 @@ export function LocalReservationsPremiumDashboard({
           </div>
 
           <div className={styles.heroActions}>
+            <div className={styles.heroActionCard}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Estado</p>
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-100">
+                  Activo
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-[14px] border border-white/10 bg-slate-950/70 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Negocio</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{businessName}</p>
+                </div>
+                <div className="rounded-[14px] border border-white/10 bg-slate-950/70 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Servicios</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{serviceCount}</p>
+                </div>
+              </div>
+            </div>
+
             <div className={styles.heroActionCard}>
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -493,25 +512,6 @@ export function LocalReservationsPremiumDashboard({
                 </button>
               </div>
             </div>
-
-            <div className={styles.heroActionCard}>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Estado</p>
-                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-100">
-                  Activo
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-[14px] border border-white/10 bg-slate-950/70 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Negocio</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{businessName}</p>
-                </div>
-                <div className="rounded-[14px] border border-white/10 bg-slate-950/70 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Servicios</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{serviceCount}</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </header>
@@ -536,7 +536,7 @@ export function LocalReservationsPremiumDashboard({
 
             <div className={styles.metricFooter}>
               <span className={styles.metricHint}>Hoy</span>
-              <span className={styles.metricLink}>{card.label === "Próxima reserva" ? "Ver detalle →" : "Ver todas →"}</span>
+              <span className={styles.metricLink}>{card.label === "PrÃƒÂ³xima reserva" ? "Ver detalle Ã¢â€ â€™" : "Ver todas Ã¢â€ â€™"}</span>
             </div>
           </article>
         ))}
@@ -549,7 +549,7 @@ export function LocalReservationsPremiumDashboard({
             <input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Buscar por nombre, teléfono o email..."
+              placeholder="Buscar por nombre, telÃƒÂ©fono o email..."
               className={styles.filterInput}
             />
           </label>
@@ -579,7 +579,7 @@ export function LocalReservationsPremiumDashboard({
             >
               <option value="today">Hoy</option>
               <option value="all">Todas</option>
-              <option value="tomorrow">Mañana</option>
+              <option value="tomorrow">MaÃƒÂ±ana</option>
               <option value="week">Esta semana</option>
               <option value="custom">Personalizada</option>
             </select>
@@ -629,9 +629,9 @@ export function LocalReservationsPremiumDashboard({
             <div className={styles.panelHeaderText}>
               <div className={styles.panelEyebrow}>{formatDateLabel(today)}</div>
               <div className={styles.panelTitle}>
-                Reservas de hoy <span className="text-slate-400">— {filteredReservationsCount} reservas</span>
+                Reservas de hoy <span className="text-slate-400">Ã¢â‚¬â€ {filteredReservationsCount} reservas</span>
               </div>
-              <div className={styles.panelSubline}>Gestioná el flujo del día con vista agrupada por horario.</div>
+              <div className={styles.panelSubline}>GestionÃƒÂ¡ el flujo del dÃƒÂ­a con vista agrupada por horario.</div>
             </div>
 
             <div className={styles.panelHeaderActions}>
@@ -777,7 +777,7 @@ export function LocalReservationsPremiumDashboard({
                                   type="button"
                                   onClick={() => onOpenDetail(reservation)}
                                   className={`${styles.actionButton} ${styles.actionButtonSlate}`}
-                                  aria-label="Más opciones"
+                                  aria-label="MÃƒÂ¡s opciones"
                                 >
                                   <Icon name="ellipsis" className="h-4 w-4" />
                                 </button>
@@ -798,11 +798,11 @@ export function LocalReservationsPremiumDashboard({
           <section className={styles.rightCard}>
             <div className={styles.rightCardHeader}>
               <div className={styles.panelEyebrow}>Resumen</div>
-              <div className={styles.rightCardTitle}>Ocupación de hoy</div>
+              <div className={styles.rightCardTitle}>OcupaciÃƒÂ³n de hoy</div>
             </div>
             <div className={styles.rightCardBody}>
               <div className={styles.occupancyMain}>
-                <div className={styles.occupancyDonut} aria-label={`${occupancyPercent}% de ocupación`}>
+                <div className={styles.occupancyDonut} aria-label={`${occupancyPercent}% de ocupaciÃƒÂ³n`}>
                   <span className={styles.occupancyDonutValue}>{occupancyPercent}%</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -829,7 +829,7 @@ export function LocalReservationsPremiumDashboard({
               </div>
 
               <Link href={business?.slug ? `/local/plano?business=${business.slug}` : "/local/plano"} className={styles.rightLink}>
-                Ver plano de salón →
+                Ver plano de salÃƒÂ³n Ã¢â€ â€™
               </Link>
             </div>
           </section>
@@ -837,16 +837,16 @@ export function LocalReservationsPremiumDashboard({
           <section className={styles.rightCard}>
             <div className={styles.rightCardHeader}>
               <div className={styles.panelEyebrow}>Agenda</div>
-              <div className={styles.rightCardTitle}>Agenda rápida</div>
+              <div className={styles.rightCardTitle}>Agenda rÃƒÂ¡pida</div>
             </div>
             <div className={styles.rightCardBody}>
               <div className={styles.agendaList}>
                 {agendaItems.map((reservation, index) => {
                   const label =
                     index === 0
-                      ? "Próxima reserva"
+                      ? "PrÃƒÂ³xima reserva"
                       : reservation.notes?.toLowerCase().includes("cumple")
-                        ? "Cumpleaños"
+                        ? "CumpleaÃƒÂ±os"
                         : reservation.partySize >= 6
                           ? "Grupo grande"
                           : reservation.status === "pending"
@@ -861,7 +861,10 @@ export function LocalReservationsPremiumDashboard({
                           {label} — {reservation.customerName}
                         </div>
                         <div className={styles.agendaSub}>
-                          {tableLabelByReservationId.get(reservation.id) ?? reservation.tableLabel ?? "Sin mesa"} · {reservation.partySize} personas
+                          {tableLabelByReservationId.get(reservation.id) ??
+                            reservation.tableLabel ??
+                            "Sin mesa"}{" "}
+                          · {reservation.partySize} personas
                         </div>
                       </div>
                       <button type="button" className={styles.agendaAction} aria-label="Abrir reserva">
@@ -877,7 +880,7 @@ export function LocalReservationsPremiumDashboard({
           <section className={styles.rightCard}>
             <div className={styles.rightCardHeader}>
               <div className={styles.panelEyebrow}>Atajos</div>
-              <div className={styles.rightCardTitle}>Acciones rápidas</div>
+              <div className={styles.rightCardTitle}>Acciones rÃƒÂ¡pidas</div>
             </div>
             <div className={styles.rightCardBody}>
               <div className={styles.quickGrid}>

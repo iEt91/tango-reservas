@@ -244,12 +244,13 @@ function deriveCustomers(reservations: Reservation[], now = new Date()) {
       const nextReservation = sortedReservations.find((reservation) =>
         isFutureReservation(reservation, now),
       );
-      const override = store[entry.customerId] ?? {
-        notes: "",
-        tags: [],
-        preferences: "",
-        updatedAt: nowIso(),
-      };
+      const override =
+        store[entry.customerId] ?? {
+          notes: "",
+          tags: [],
+          preferences: "",
+          updatedAt: nowIso(),
+        };
 
       const confirmedReservations = sortedReservations.filter(
         (reservation) => reservation.status === "confirmed",
@@ -268,7 +269,11 @@ function deriveCustomers(reservations: Reservation[], now = new Date()) {
         customerKey: entry.customerKey,
         businessId: entry.businessId,
         name:
-          latestReservation?.customerName.trim() || entry.name || entry.phone || entry.email || "Sin nombre",
+          latestReservation?.customerName.trim() ||
+          entry.name ||
+          entry.phone ||
+          entry.email ||
+          "Sin nombre",
         phone: entry.phone || "Sin teléfono",
         email: entry.email,
         totalReservations: sortedReservations.length,

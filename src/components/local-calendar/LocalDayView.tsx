@@ -114,8 +114,7 @@ export function LocalDayView({
                       reservation={reservation}
                       onChangeStatus={onChangeStatus}
                       serviceName={
-                        serviceNameById.get(reservation.serviceId) ??
-                        (reservation.serviceId ? "Servicio eliminado" : "Sin servicio")
+                        serviceNameById.get(reservation.serviceId) ?? (reservation.serviceId ? "Servicio eliminado" : "Sin servicio")
                       }
                       onOpenDetail={onOpenDetail}
                     />

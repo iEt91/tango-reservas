@@ -40,8 +40,8 @@ function buildHours({
       isOpen,
       openTime: isOpen ? openTime : "",
       closeTime: isOpen ? closeTime : "",
-      breakStartTime: isOpen ? breakStartTime ?? null : null,
-      breakEndTime: isOpen ? breakEndTime ?? null : null,
+      breakStartTime: isOpen ? breakStartTime : null,
+      breakEndTime: isOpen ? breakEndTime : null,
     };
   });
 }

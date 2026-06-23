@@ -4,6 +4,8 @@
   flex: 1 1 auto;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .hero {
@@ -16,16 +18,15 @@
 }
 
 .heroLayout {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 430px);
   align-items: flex-start;
-  justify-content: space-between;
   gap: 16px;
+  min-width: 0;
 }
 
 .heroCopy {
   min-width: 0;
-  flex: 1 1 560px;
 }
 
 .heroKicker {
@@ -72,10 +73,10 @@
 
 .heroActions {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  min-width: 320px;
-  flex: 0 0 320px;
+  min-width: 0;
+  width: 100%;
 }
 
 .heroActionCard {
@@ -83,6 +84,7 @@
   background: rgba(15, 23, 42, 0.7);
   border-radius: 18px;
   padding: 14px;
+  min-width: 0;
 }
 
 .heroActionGrid {
@@ -210,7 +212,7 @@
 
 .filtersGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) 180px 180px auto auto 1fr;
+  grid-template-columns: minmax(0, 1.1fr) 160px 160px auto auto minmax(160px, 180px);
   gap: 10px;
   align-items: end;
 }
@@ -271,10 +273,11 @@
 
 .mainGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) 360px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 340px);
   gap: 14px;
   min-height: 0;
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .panel {

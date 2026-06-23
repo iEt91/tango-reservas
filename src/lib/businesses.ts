@@ -148,8 +148,8 @@ function duplicatePublicWebData(sourceBusinessId: string, targetBusinessId: stri
   if (sourceGallery.length > 0) {
     gallery.push(
       ...sourceGallery.map((item) => ({
-        ...item,
-        id:
+      ...item,
+      id:
           globalThis.crypto?.randomUUID?.() ??
           `web-gallery-${targetBusinessId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         businessId: targetBusinessId,
@@ -337,7 +337,7 @@ export function toBusinessFormValues(business: Business): BusinessFormValues {
     showLocation,
     showReservation,
     showWhatsappButton,
-    autoConfirmReservations: autoConfirmReservations ?? true,
+    autoConfirmReservations,
     status,
   };
 }
@@ -407,7 +407,7 @@ export function updateBusiness(id: string, data: BusinessFormValues) {
     ...current,
     ...data,
     autoConfirmReservations:
-      data.autoConfirmReservations ?? current.autoConfirmReservations ?? true,
+      data.autoConfirmReservations ?? current.autoConfirmReservations,
     slug,
     updatedAt: timestamp,
   };
@@ -432,7 +432,7 @@ export function archiveBusiness(id: string) {
   const updatedBusiness: Business = {
     ...businessStore[index],
     status: "inactive",
-    autoConfirmReservations: businessStore[index].autoConfirmReservations ?? true,
+    autoConfirmReservations: businessStore[index].autoConfirmReservations,
     updatedAt: timestamp,
   };
 
@@ -456,7 +456,7 @@ export function restoreBusiness(id: string) {
   const updatedBusiness: Business = {
     ...businessStore[index],
     status: "active",
-    autoConfirmReservations: businessStore[index].autoConfirmReservations ?? true,
+    autoConfirmReservations: businessStore[index].autoConfirmReservations,
     updatedAt: timestamp,
   };
 
@@ -486,7 +486,7 @@ export function duplicateBusiness(id: string) {
       `biz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: `${source.name} Copia`,
     slug,
-    autoConfirmReservations: source.autoConfirmReservations ?? true,
+    autoConfirmReservations: source.autoConfirmReservations,
     status: "draft",
     createdAt: timestamp,
     updatedAt: timestamp,

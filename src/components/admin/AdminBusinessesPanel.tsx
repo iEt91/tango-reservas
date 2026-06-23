@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -33,11 +33,11 @@ const initialFilters: BusinessFiltersState = {
   sortBy: "name",
 };
 
-const knownCities = new Set(["Pinamar", "Cariló", "Valeria del Mar", "Villa Gesell"]);
+const knownCities = new Set(["Pinamar", "CarilÃ³", "Valeria del Mar", "Villa Gesell"]);
 const knownCategories = new Set([
   "restaurante",
   "bar",
-  "cafetería",
+  "cafeterÃ­a",
   "cafe",
   "parador",
   "hotel",
@@ -85,13 +85,13 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
   const readOnly = snapshot.resolvedSource === "supabase";
   const sourceLabel = readOnly ? "Supabase" : "local/mock";
   const readOnlyMetricHelper = readOnly ? "Disponible en local/mock." : undefined;
-  const sourceNotice =
-    snapshot.warning ??
-    (snapshot.resolvedSource === "supabase"
+  const sourceNotice = snapshot.warning
+    ? snapshot.resolvedSource === "supabase"
       ? "Supabase está activo para businesses. El resto de módulos sigue en local/mock."
       : snapshot.fallbackUsed
         ? "Supabase no respondió y se usó local/mock como fallback."
-        : null);
+        : null
+    : null;
 
   const baseBusinessIds = useMemo(
     () => new Set(initialBusinesses.map((business) => business.id)),
@@ -245,7 +245,7 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
       const duplicated = await duplicateAdminBusiness(businessId);
       await refreshBusinesses(
         readOnly
-          ? `Negocio duplicado en Supabase con configuración base: ${duplicated.name}.`
+          ? `Negocio duplicado en Supabase con configuraciÃ³n base: ${duplicated.name}.`
           : `Negocio duplicado correctamente: ${duplicated.name}.`,
       );
     } catch (error) {
@@ -297,7 +297,7 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
     }
 
     if (!readOnly && baseBusinessIds.has(deleteTarget.id)) {
-      setFeedback("Este negocio base no se puede eliminar en modo mock. Podés desactivarlo.");
+      setFeedback("Este negocio base no se puede eliminar en modo mock. PodÃ©s desactivarlo.");
       handleCloseDelete();
       return;
     }
@@ -327,7 +327,7 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
                 Admin Panel
               </p>
               <h1 className="text-4xl font-semibold tracking-tight text-white">
-                Gestión central de negocios
+                GestiÃ³n central de negocios
               </h1>
               <p className="max-w-4xl text-sm leading-7 text-slate-300 sm:text-base">
                 Cargando datos del panel...
@@ -356,14 +356,14 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard label="Total negocios" value="—" />
-            <MetricCard label="Reservas mock" value="—" />
-            <MetricCard label="Pendientes mock" value="—" />
-            <MetricCard label="Con reservas hoy" value="—" />
-            <MetricCard label="Sin configurar" value="—" />
-            <MetricCard label="Activos" value="—" />
-            <MetricCard label="Borradores" value="—" />
-            <MetricCard label="Inactivos" value="—" />
+            <MetricCard label="Total negocios" value="â€”" />
+            <MetricCard label="Reservas mock" value="â€”" />
+            <MetricCard label="Pendientes mock" value="â€”" />
+            <MetricCard label="Con reservas hoy" value="â€”" />
+            <MetricCard label="Sin configurar" value="â€”" />
+            <MetricCard label="Activos" value="â€”" />
+            <MetricCard label="Borradores" value="â€”" />
+            <MetricCard label="Inactivos" value="â€”" />
           </div>
         </section>
       </WideContainer>
@@ -379,11 +379,11 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
               Admin Panel
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-white">
-              Gestión central de negocios
+              GestiÃ³n central de negocios
             </h1>
             <p className="max-w-4xl text-sm leading-7 text-slate-300 sm:text-base">
-              Gestión central de negocios, estado operativo y accesos rápidos. Todo sigue en modo
-              local/mock, listo para reemplazar la capa de datos más adelante.
+              GestiÃ³n central de negocios, estado operativo y accesos rÃ¡pidos. Todo sigue en modo
+              local/mock, listo para reemplazar la capa de datos mÃ¡s adelante.
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-100">
@@ -496,3 +496,4 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
     </WideContainer>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LocalWebPreview } from "@/components/local-web/LocalWebPreview";
@@ -62,12 +62,12 @@ const PUBLIC_TEMPLATE_OPTIONS = [
   {
     value: "compact-premium",
     label: "Premium compacto",
-    description: "MÃ¡s directa, ideal para restaurantes con foco en reservas.",
+    description: "MÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s directa, ideal para restaurantes con foco en reservas.",
   },
   {
     value: "minimal-cafe",
-    label: "CafÃ© minimalista",
-    description: "MÃ¡s liviana, pensada para cafeterÃ­as y brunch.",
+    label: "CafÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© minimalista",
+    description: "MÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s liviana, pensada para cafeterÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­as y brunch.",
   },
 ] as const;
 
@@ -232,7 +232,7 @@ function WebModal({
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-white/20 hover:text-white"
             aria-label="Cerrar modal"
           >
-            Ã—
+            ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â
           </button>
         </header>
 
@@ -267,7 +267,7 @@ function GalleryModal({
 }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewSource = draft.imageDataUrl.trim() || draft.imageUrl.trim();
-  const placeholder = draft.imagePlaceholder.trim() || getInitials(draft.title || "GalerÃ­a");
+  const placeholder = draft.imagePlaceholder.trim() || getInitials(draft.title || "GalerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a");
 
   async function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
@@ -311,11 +311,11 @@ function GalleryModal({
   return (
     <WebModal
       open={open}
-      title={mode === "create" ? "Nueva imagen de galería" : "Editar imagen de galería"}
+      title={mode === "create" ? "Nueva imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a" : "Editar imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a"}
       subtitle={
         sourceLabel === "Supabase"
-          ? "La galería pública se guarda por negocio en Supabase. Supabase Storage quedará para una fase posterior."
-          : "La galería pública se guarda por negocio en esta capa local hasta conectar Supabase."
+          ? "La galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica se guarda por negocio en Supabase. Supabase Storage quedarÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ para una fase posterior."
+          : "La galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica se guarda por negocio en esta capa local hasta conectar Supabase."
       }
       onClose={onClose}
       maxWidth="max-w-5xl"
@@ -342,7 +342,7 @@ function GalleryModal({
         <div className="grid gap-4">
           <label className="space-y-1.5">
             <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              TÃ­tulo
+              TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo
             </span>
             <input
               value={draft.title}
@@ -354,7 +354,7 @@ function GalleryModal({
 
           <label className="space-y-1.5">
             <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              Texto alt / descripción breve
+              Texto alt / descripciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n breve
             </span>
             <textarea
               value={draft.description}
@@ -439,7 +439,7 @@ function GalleryModal({
                     ...draft,
                     imageDataUrl: "",
                     imageUrl: "",
-                    imagePlaceholder: getInitials(draft.title || "GalerÃ­a"),
+                    imagePlaceholder: getInitials(draft.title || "GalerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a"),
                   })
                 }
                 className="inline-flex h-12 items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
@@ -475,13 +475,13 @@ function GalleryModal({
                 {draft.title.trim() || "Imagen de ejemplo"}
               </h4>
               <p className="line-clamp-3 text-sm leading-6 text-slate-300">
-                {draft.description.trim() || "Sin descripciÃ³n"}
+                {draft.description.trim() || "Sin descripciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n"}
               </p>
             </div>
           </div>
 
           <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-            Esta imagen se verÃ¡ en la web pÃºblica cuando estÃ© activa.
+            Esta imagen se verÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ en la web pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica cuando estÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© activa.
           </div>
         </div>
       </div>
@@ -644,7 +644,7 @@ export function LocalWebPage() {
       menuSubtitle: contentDraft.menuSubtitle,
       aboutTitle: contentDraft.aboutTitle,
       aboutText: contentDraft.aboutText,
-      presentationTitle: contentDraft.aboutTitle ?? contentDraft.presentationTitle,
+      presentationTitle: contentDraft.presentationTitle,
       presentationText: contentDraft.presentationText,
       aboutHighlights: contentDraft.aboutHighlights,
       featuredPhrase: contentDraft.featuredPhrase,
@@ -704,7 +704,7 @@ export function LocalWebPage() {
       return;
     }
 
-    if (!window.confirm("Esto va a restaurar el contenido web base del negocio seleccionado. Â¿QuerÃ©s continuar?")) {
+    if (!window.confirm("Esto va a restaurar el contenido web base del negocio seleccionado. ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿QuerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©s continuar?")) {
       return;
     }
 
@@ -782,7 +782,7 @@ export function LocalWebPage() {
 
     const title = readText(galleryModal.draft.title);
     if (!title) {
-      setGalleryError("El tÃ­tulo de la imagen es obligatorio.");
+      setGalleryError("El tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo de la imagen es obligatorio.");
       return;
     }
 
@@ -800,8 +800,8 @@ export function LocalWebPage() {
       });
       setMessage(
         dataSource === "supabase"
-          ? "Imagen de galerÃ­a guardada en Supabase."
-          : "Imagen de galerÃ­a guardada en modo local/mock.",
+          ? "Imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a guardada en Supabase."
+          : "Imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a guardada en modo local/mock.",
       );
     } else if (galleryModal.itemId) {
       await updateGalleryImage(galleryModal.itemId, {
@@ -815,8 +815,8 @@ export function LocalWebPage() {
       });
       setMessage(
         dataSource === "supabase"
-          ? "Imagen de galerÃ­a actualizada en Supabase."
-          : "Imagen de galerÃ­a actualizada en modo local/mock.",
+          ? "Imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a actualizada en Supabase."
+          : "Imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a actualizada en modo local/mock.",
       );
     }
 
@@ -847,8 +847,8 @@ export function LocalWebPage() {
     await deleteGalleryImage(item.id);
     setMessage(
       dataSource === "supabase"
-        ? "Imagen de galerÃ­a eliminada en Supabase."
-        : "Imagen de galerÃ­a eliminada en modo local/mock.",
+        ? "Imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a eliminada en Supabase."
+        : "Imagen de galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a eliminada en modo local/mock.",
     );
     await refreshSelectedBusiness();
   }
@@ -894,11 +894,11 @@ export function LocalWebPage() {
   const activeSections = contentDraft
       ? [
         contentDraft.showHero ? "Hero" : null,
-        contentDraft.showAbout ? "InformaciÃ³n del negocio" : null,
-        contentDraft.showFeaturedMenu ? "SelecciÃ³n destacada" : null,
-        contentDraft.showMenu ? "MenÃº" : null,
-        contentDraft.showGallery ? "GalerÃ­a" : null,
-        contentDraft.showLocation ? "UbicaciÃ³n" : null,
+        contentDraft.showAbout ? "InformaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n del negocio" : null,
+        contentDraft.showFeaturedMenu ? "SelecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n destacada" : null,
+        contentDraft.showMenu ? "MenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âº" : null,
+        contentDraft.showGallery ? "GalerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a" : null,
+        contentDraft.showLocation ? "UbicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n" : null,
         contentDraft.showReservation ? "Reservas" : null,
       ].filter(Boolean)
     : [];
@@ -912,7 +912,8 @@ export function LocalWebPage() {
   }
 
   if (mounted && businesses.length > 0 && !selectedBusiness) {
-    const demuruBusinessId = businesses.find((business) => business.slug === "demuru")?.id ?? "";
+    const demuruBusinessId =
+      businesses.find((business) => business.slug === "demuru")?.id ?? "";
 
     return (
       <section className="space-y-4">
@@ -922,14 +923,14 @@ export function LocalWebPage() {
             Web del negocio
           </h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">
-            No se encontró el negocio seleccionado.
+            No se encontrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³ el negocio seleccionado.
           </p>
         </section>
 
         <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-6 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
-          <p className="font-medium text-white">No se encontró el negocio seleccionado.</p>
+          <p className="font-medium text-white">No se encontrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³ el negocio seleccionado.</p>
           <p className="mt-1.5 text-xs leading-5 text-slate-400">
-            Revisá el negocio activo o volvé al admin para elegir otro local.
+            RevisÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ el negocio activo o volvÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© al admin para elegir otro local.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <a
@@ -977,8 +978,9 @@ export function LocalWebPage() {
   }
 
   return (
-    <section className="space-y-4">
-      <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 shadow-2xl shadow-black/20 sm:px-5">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-5 shadow-2xl shadow-black/20 sm:px-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-300/80">Panel del Local</p>
@@ -986,7 +988,7 @@ export function LocalWebPage() {
               Web del negocio
             </h1>
             <p className="max-w-4xl text-sm leading-6 text-slate-300">
-              EditÃ¡ textos, imagen principal, galerÃ­a, contacto y secciones activas de la web publica por negocio.
+              EditÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ textos, imagen principal, galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a, contacto y secciones activas de la web publica por negocio.
             </p>
           </div>
 
@@ -1071,7 +1073,7 @@ export function LocalWebPage() {
                 rel="noreferrer"
                 className="rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-400/30 hover:text-white"
               >
-                Ver web pÃºblica
+                Ver web pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica
               </a>
               <button
                 type="button"
@@ -1083,7 +1085,7 @@ export function LocalWebPage() {
             </div>
             <p className="text-[11px] leading-5 text-slate-400">
               {dataSource === "supabase"
-                ? "Contenido web y galería se guardan en Supabase. La web pública todavía sigue en la capa pública actual mientras se completa la migración."
+                ? "Contenido web y galerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a se guardan en Supabase. La web pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica todavÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a sigue en la capa pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica actual mientras se completa la migraciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n."
                 : "Modo local activo. Los cambios se guardan en este navegador hasta conectar Supabase."}
             </p>
           </div>
@@ -1097,7 +1099,7 @@ export function LocalWebPage() {
             Fotos activas: {activeGalleryCount}
           </span>
           <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1.5 text-xs text-slate-300">
-            MenÃº: {contentDraft.showMenu ? "Visible" : "Oculto"}
+            MenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âº: {contentDraft.showMenu ? "Visible" : "Oculto"}
           </span>
           <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1.5 text-xs text-slate-300">
             Reservas: {contentDraft.showReservation ? "Visible" : "Oculto"}
@@ -1114,13 +1116,13 @@ export function LocalWebPage() {
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="grid gap-4">
           <SectionCard
-            title="Identidad pÃºblica"
+            title="Identidad pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica"
             description="Datos visibles de la web del negocio. Todo se guarda por negocio."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  Nombre pÃºblico
+                  Nombre pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblico
                 </span>
                 <input
                   value={contentDraft.publicName ?? ""}
@@ -1130,7 +1132,7 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  SubtÃ­tulo / bajada
+                  SubtÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo / bajada
                 </span>
                 <input
                   value={contentDraft.publicSubtitle ?? ""}
@@ -1140,7 +1142,7 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  DescripciÃ³n breve
+                  DescripciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n breve
                 </span>
                 <textarea
                   value={contentDraft.publicDescription ?? ""}
@@ -1161,7 +1163,7 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  Tags / atributos pÃºblicos separados por coma
+                  Tags / atributos pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblicos separados por coma
                 </span>
                 <input
                   value={contentDraft.publicAttributesText ?? ""}
@@ -1169,12 +1171,12 @@ export function LocalWebPage() {
                     updateContentField("publicAttributesText", event.target.value)
                   }
                   className="input-base"
-                  placeholder="Cocina de autor, Reservas cuidadas, AtenciÃ³n personalizada"
+                  placeholder="Cocina de autor, Reservas cuidadas, AtenciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n personalizada"
                 />
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  Plantilla pÃºblica
+                  Plantilla pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica
                 </span>
                 <select
                   value={contentDraft.publicTemplateId ?? "restaurant-elegant"}
@@ -1195,7 +1197,7 @@ export function LocalWebPage() {
                 <p className="text-[11px] leading-5 text-slate-400">
                   {PUBLIC_TEMPLATE_OPTIONS.find(
                     (option) => option.value === (contentDraft.publicTemplateId ?? "restaurant-elegant"),
-                  )?.description ?? "ElegÃ­ una plantilla para la portada pÃºblica."}
+                  )?.description ? "ElegÃƒÆ’Ã‚Â­ una plantilla para la portada pÃƒÆ’Ã‚Âºblica." : null}
                 </p>
               </label>
               <label className="space-y-1.5">
@@ -1220,7 +1222,7 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  DirecciÃ³n
+                  DirecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n
                 </span>
                 <input
                   value={contentDraft.publicAddress ?? ""}
@@ -1240,7 +1242,7 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  TelÃ©fono
+                  TelÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©fono
                 </span>
                 <input
                   value={contentDraft.publicPhone ?? ""}
@@ -1282,13 +1284,13 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  Texto visible de ubicaciÃ³n
+                  Texto visible de ubicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n
                 </span>
                 <input
                   value={contentDraft.mapLabel ?? ""}
                   onChange={(event) => updateContentField("mapLabel", event.target.value)}
                   className="input-base"
-                  placeholder="UbicaciÃ³n"
+                  placeholder="UbicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n"
                 />
               </label>
             </div>
@@ -1296,7 +1298,7 @@ export function LocalWebPage() {
 
           <SectionCard
             title="Hero"
-            description="TÃ­tulo principal, subtÃ­tulo, frase destacada, CTA y la imagen principal pÃºblica."
+            description="TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo principal, subtÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo, frase destacada, CTA y la imagen principal pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5 sm:col-span-2">
@@ -1349,7 +1351,7 @@ export function LocalWebPage() {
                     updateContentField("heroSecondaryCtaLabel", event.target.value)
                   }
                   className="input-base"
-                  placeholder="Ver menÃº / Ver reservas"
+                  placeholder="Ver menÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âº / Ver reservas"
                 />
               </label>
               <label className="space-y-1.5">
@@ -1409,24 +1411,24 @@ export function LocalWebPage() {
           </SectionCard>
 
           <SectionCard
-            title="SelecciÃ³n de platos"
-            description="TÃ­tulo y subtÃ­tulo visibles para los platos destacados que se toman desde /local/menu."
+            title="SelecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n de platos"
+            description="TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo y subtÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo visibles para los platos destacados que se toman desde /local/menu."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  TÃ­tulo destacado
+                  TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo destacado
                 </span>
                 <input
                   value={contentDraft.menuTitle ?? ""}
                   onChange={(event) => updateContentField("menuTitle", event.target.value)}
                   className="input-base"
-                  placeholder="SelecciÃ³n destacada"
+                  placeholder="SelecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n destacada"
                 />
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  SubtÃ­tulo destacado
+                  SubtÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo destacado
                 </span>
                 <textarea
                   value={contentDraft.menuSubtitle ?? ""}
@@ -1439,13 +1441,13 @@ export function LocalWebPage() {
           </SectionCard>
 
                     <SectionCard
-            title="InformaciÃ³n del negocio"
+            title="InformaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n del negocio"
             description="Texto principal, texto secundario y etiquetas visibles para contar mejor la propuesta."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  TÃ­tulo de secciÃ³n
+                  TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo de secciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n
                 </span>
                 <input
                   value={contentDraft.aboutTitle ?? ""}
@@ -1523,12 +1525,12 @@ export function LocalWebPage() {
               </label>
 
               <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-xs uppercase tracking-[0.18em] text-slate-400">
-                UbicaciÃ³n y contacto
+                UbicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n y contacto
               </div>
 
               <label className="space-y-1.5">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  TÃ­tulo ubicaciÃ³n
+                  TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo ubicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n
                 </span>
                 <input
                   value={contentDraft.locationTitle}
@@ -1538,7 +1540,7 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  Texto ubicaciÃ³n
+                  Texto ubicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n
                 </span>
                 <input
                   value={contentDraft.locationText}
@@ -1630,13 +1632,13 @@ export function LocalWebPage() {
               </label>
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                  Texto visible de ubicaciÃ³n
+                  Texto visible de ubicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n
                 </span>
                 <input
                   value={contentDraft.mapLabel ?? ""}
                   onChange={(event) => updateContentField("mapLabel", event.target.value)}
                   className="input-base"
-                  placeholder="UbicaciÃ³n"
+                  placeholder="UbicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n"
                 />
               </label>
             </div>
@@ -1644,19 +1646,19 @@ export function LocalWebPage() {
 
           <SectionCard
             title="Secciones activas"
-            description="Si una secciÃ³n se desactiva acÃ¡, no se muestra en la web pÃºblica."
+            description="Si una secciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n se desactiva acÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡, no se muestra en la web pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica."
           >
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {[
                 ["showHero", "Hero"],
-                ["showAbout", "InformaciÃ³n del negocio"],
-                ["showFeaturedMenu", "SelecciÃ³n destacada"],
-                ["showMenu", "MenÃº"],
-                ["showGallery", "GalerÃ­a"],
-                ["showLocation", "UbicaciÃ³n"],
+                ["showAbout", "InformaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n del negocio"],
+                ["showFeaturedMenu", "SelecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n destacada"],
+                ["showMenu", "MenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âº"],
+                ["showGallery", "GalerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a"],
+                ["showLocation", "UbicaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n"],
                 ["showReservation", "Reservas"],
-                ["showWhatsappButton", "BotÃ³n WhatsApp"],
-                ["showEmailButton", "BotÃ³n email"],
+                ["showWhatsappButton", "BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n WhatsApp"],
+                ["showEmailButton", "BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n email"],
                 ["showSocials", "Redes sociales"],
               ].map(([key, label]) => (
                 <label
@@ -1676,12 +1678,12 @@ export function LocalWebPage() {
           </SectionCard>
 
           <SectionCard
-            title="GalerÃ­a dinÃ¡mica"
-            description="ImÃ¡genes activas/inactivas por negocio. Pueden venir por URL o subidas localmente."
+            title="GalerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a dinÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡mica"
+            description="ImÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡genes activas/inactivas por negocio. Pueden venir por URL o subidas localmente."
           >
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm text-slate-300">
-                {galleryItems.length} imÃ¡genes cargadas Â· {activeGalleryCount} activas
+                {galleryItems.length} imÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡genes cargadas ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· {activeGalleryCount} activas
               </div>
               <button
                 type="button"
@@ -1787,7 +1789,7 @@ export function LocalWebPage() {
                 })
               ) : (
                 <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/60 px-4 py-8 text-sm text-slate-300">
-                  TodavÃ­a no hay imÃ¡genes cargadas para este negocio.
+                  TodavÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a no hay imÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡genes cargadas para este negocio.
                 </div>
               )}
             </div>
@@ -1795,7 +1797,7 @@ export function LocalWebPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.35rem] border border-white/10 bg-slate-950/60 p-4">
             <div className="text-sm text-slate-300">
-              Guarda primero y despuÃ©s revisa la vista pÃºblica o restaura la demo base si hace falta.
+              Guarda primero y despuÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©s revisa la vista pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica o restaura la demo base si hace falta.
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -1823,7 +1825,7 @@ export function LocalWebPage() {
                 <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-300/80">
                   Preview web
                 </p>
-                <h2 className="text-sm font-semibold text-white">CÃ³mo se verÃ¡ la web pÃºblica</h2>
+                <h2 className="text-sm font-semibold text-white">CÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³mo se verÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ la web pÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºblica</h2>
                 <p className="max-w-3xl text-xs leading-5 text-slate-300">
                   Esta vista usa el contenido editado ahora mismo, sin hardcodear textos del negocio.
                 </p>
@@ -1844,22 +1846,23 @@ export function LocalWebPage() {
         </div>
       </div>
 
-      <GalleryModal
-        open={Boolean(galleryModal)}
-        mode={galleryModal?.mode ?? "create"}
-        draft={galleryModal?.draft ?? createGalleryDraft()}
-      error={galleryError}
-      onChange={(draft) =>
-        setGalleryModal((current) => (current ? { ...current, draft, error: "" } : current))
-      }
-      onClose={() => {
-          setGalleryModal(null);
-          setGalleryError("");
-      }}
-      onSave={saveGalleryItem}
-      onError={setGalleryError}
-      sourceLabel={sourceLabel}
-    />
-  </section>
-);
+        <GalleryModal
+          open={Boolean(galleryModal)}
+          mode={galleryModal?.mode ?? "create"}
+          draft={galleryModal?.draft ?? createGalleryDraft()}
+          error={galleryError}
+          onChange={(draft) =>
+            setGalleryModal((current) => (current ? { ...current, draft, error: "" } : current))
+          }
+          onClose={() => {
+            setGalleryModal(null);
+            setGalleryError("");
+          }}
+          onSave={saveGalleryItem}
+          onError={setGalleryError}
+          sourceLabel={sourceLabel}
+        />
+      </div>
+    </section>
+  );
 }

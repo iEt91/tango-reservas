@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -223,7 +223,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
   const checklist = business
     ? [
         {
-          label: "Datos básicos completos",
+          label: "Datos bÃ¡sicos completos",
           complete:
             Boolean(business.name.trim()) &&
             Boolean(business.slug.trim()) &&
@@ -238,7 +238,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
             Boolean(business.whatsapp.trim()) &&
             Boolean(business.email.trim()) &&
             Boolean(business.address.trim()),
-          missing: "Faltan teléfono, WhatsApp, email o dirección.",
+          missing: "Faltan telÃ©fono, WhatsApp, email o direcciÃ³n.",
         },
         {
           label: "Servicios activos",
@@ -256,17 +256,17 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
           missing: "Faltan reglas de reserva.",
         },
         {
-          label: "Menú cargado",
+          label: "MenÃº cargado",
           complete: Boolean(menuSummary && menuSummary.totalCategories > 0 && menuSummary.totalItems > 0),
-          missing: "El menú todavía no tiene categorías o items activos.",
+          missing: "El menÃº todavÃ­a no tiene categorÃ­as o items activos.",
         },
         {
-          label: "Web pública preparada",
+          label: "Web pÃºblica preparada",
           complete:
             Boolean(webContent?.heroTitle?.trim()) &&
             Boolean(webContent?.publicDescription?.trim()) &&
             Boolean(webContent?.showHero || webContent?.showAbout || webContent?.showGallery),
-          missing: "Faltan datos básicos de la web pública.",
+          missing: "Faltan datos bÃ¡sicos de la web pÃºblica.",
         },
         {
           label: "Plano creado",
@@ -284,15 +284,15 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
         },
         {
           href: buildLocalAccessHref("/local/configuracion", business.slug, null, "support"),
-          label: "Configuración",
+          label: "ConfiguraciÃ³n",
         },
-        { href: buildLocalAccessHref("/local/menu", business.slug, null, "support"), label: "Menú" },
+        { href: buildLocalAccessHref("/local/menu", business.slug, null, "support"), label: "MenÃº" },
         { href: buildLocalAccessHref("/local/plano", business.slug, null, "support"), label: "Plano" },
         {
           href: buildLocalAccessHref("/local/reportes", business.slug, null, "support"),
           label: "Reportes",
         },
-        { href: `/${encodeURIComponent(business.slug)}`, label: "Ver web pública" },
+        { href: `/${encodeURIComponent(business.slug)}`, label: "Ver web pÃºblica" },
       ]
     : [];
 
@@ -356,7 +356,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-white">{business.name}</h1>
             <p className="mt-2 text-sm text-slate-300">
-              {business.slug} · {business.category} · {business.city}
+              {business.slug} Â· {business.category} Â· {business.city}
             </p>
           </div>
 
@@ -373,7 +373,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
               rel="noreferrer"
               className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
             >
-              Ver web pública
+              Ver web pÃºblica
             </Link>
             <Link
               href={buildLocalAccessHref("/local/reservas", business.slug, null, "support")}
@@ -416,7 +416,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
 
         {sourceIsSupabase ? (
           <div className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-            Supabase está activo para businesses. El resto de módulos sigue en local/mock.
+            Supabase estÃ¡ activo para businesses. El resto de mÃ³dulos sigue en local/mock.
           </div>
         ) : null}
 
@@ -442,11 +442,11 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
             <StatCard label="No-show" value={reservationCounts.no_show} />
             <StatCard label="Completadas" value={reservationCounts.completed} />
             <StatCard label="Reservas hoy" value={reservationsToday} />
-            <StatCard label="Última actividad" value={formatActivity(stats.lastActivityAt)} />
+            <StatCard label="Ãšltima actividad" value={formatActivity(stats.lastActivityAt)} />
             <StatCard
-              label="Configuración"
+              label="ConfiguraciÃ³n"
               value={setupStatus.complete ? "Completo" : "Incompleto"}
-              helper={setupStatus.complete ? "Sin faltantes" : setupStatus.missing.join(" · ")}
+              helper={setupStatus.complete ? "Sin faltantes" : setupStatus.missing.join(" Â· ")}
             />
           </div>
         </section>
@@ -454,10 +454,10 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
             <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
-              Checklist de configuración
+              Checklist de configuraciÃ³n
             </p>
             <h2 className="mt-2 text-xl font-semibold text-white">
-              Estado de configuración del negocio
+              Estado de configuraciÃ³n del negocio
             </h2>
 
             <div className="mt-4 grid gap-3">
@@ -493,7 +493,7 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
 
           <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
             <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
-              Accesos rápidos
+              Accesos rÃ¡pidos
             </p>
             <h2 className="mt-2 text-xl font-semibold text-white">Entradas directas</h2>
 
@@ -551,3 +551,5 @@ export function AdminBusinessDetailPanel({ slug }: AdminBusinessDetailPanelProps
     </main>
   );
 }
+
+

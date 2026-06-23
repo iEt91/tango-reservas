@@ -376,7 +376,7 @@ function JoinedTableVisualItem({
   onPointerDown,
   onResizePointerDown,
 }: JoinedTableVisualItemProps) {
-  const activeReservation = slotReservations[0] ?? null;
+      const activeReservation = slotReservations[0] ?? null;
   const statusStyles: Record<FloorTable["status"], string> = {
     available: "border-emerald-400/30 bg-emerald-500/15 text-emerald-100",
     occupied: "border-rose-400/30 bg-rose-500/15 text-rose-100",

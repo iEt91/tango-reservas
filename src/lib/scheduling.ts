@@ -127,7 +127,7 @@ function readJSON<T>(storageKey: string) {
     }
 
     const parsed = JSON.parse(raw) as T;
-    return parsed ?? null;
+    return parsed;
   } catch {
     return null;
   }

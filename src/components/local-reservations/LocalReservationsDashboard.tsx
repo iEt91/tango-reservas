@@ -226,7 +226,7 @@ export function LocalReservationsDashboard({
   occupiedSeats,
   totalSeats,
   quickActions,
-}: LocalReservationsDashboardProps) {
+  }: LocalReservationsDashboardProps) {
   const dataSource = getDataSource();
   const businessName = business?.name ?? "Negocio asignado";
   const businessMeta = [business?.category, business?.city].filter(Boolean).join(" · ");

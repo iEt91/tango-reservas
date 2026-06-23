@@ -75,7 +75,7 @@ function mapTemplateToThemeId(templateId: string | null | undefined): Business["
 export function mapSupabaseBusinessToBusiness(row: SupabaseBusinessRow): Business {
   const defaults = getEmptyBusinessFormValues();
   const createdAt = row.created_at ?? new Date(0).toISOString();
-  const updatedAt = row.updated_at ?? row.created_at ?? new Date(0).toISOString();
+  const updatedAt = row.updated_at ?? createdAt;
 
   return {
     ...defaults,
@@ -174,8 +174,8 @@ export async function loadAdminBusinessesSnapshot(
 
       const fallbackBusinesses = getLocalBusinesses();
       const warning = result.error
-        ? `Supabase falló y se usó local/mock como fallback: ${result.error.message}`
-        : "Supabase falló y se usó local/mock como fallback.";
+        ? `Supabase fallÃ³ y se usÃ³ local/mock como fallback: ${result.error.message}`
+        : "Supabase fallÃ³ y se usÃ³ local/mock como fallback.";
 
       console.warn("[admin-businesses] Supabase fallback to local/mock", result.error);
 
@@ -195,7 +195,7 @@ export async function loadAdminBusinessesSnapshot(
       fallbackUsed: false,
       warning:
         result.businesses.length === 0
-          ? "Supabase responde, pero public.businesses no devolvió registros."
+          ? "Supabase responde, pero public.businesses no devolviÃ³ registros."
           : null,
       error: null,
       businesses: result.businesses.map(mapSupabaseBusinessToBusiness),
@@ -232,7 +232,7 @@ export function subscribeBusinesses(listener: () => void) {
 
 function mapAdminMutationBusiness(business: Business | null) {
   if (!business) {
-    throw new Error("No se pudo completar la operación sobre el negocio.");
+    throw new Error("No se pudo completar la operaciÃ³n sobre el negocio.");
   }
 
   return business;
@@ -251,8 +251,8 @@ export async function createAdminBusiness(data: BusinessFormValues) {
       await deleteSupabaseBusiness(business.id).catch(() => undefined);
       throw new Error(
         error instanceof Error
-          ? `Se creó el negocio, pero falló la configuración base: ${error.message}`
-          : "Se creó el negocio, pero falló la configuración base.",
+          ? `Se creÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base: ${error.message}`
+          : "Se creÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base.",
       );
     }
 
@@ -294,8 +294,8 @@ export async function duplicateAdminBusiness(id: string) {
       await deleteSupabaseBusiness(business.id).catch(() => undefined);
       throw new Error(
         error instanceof Error
-          ? `Se duplicó el negocio, pero falló la configuración base: ${error.message}`
-          : "Se duplicó el negocio, pero falló la configuración base.",
+          ? `Se duplicÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base: ${error.message}`
+          : "Se duplicÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base.",
       );
     }
 
@@ -318,7 +318,7 @@ export async function deleteAdminBusiness(id: string) {
   if (!result.success) {
     throw new Error(
       result.reason === "protected"
-        ? "Este negocio base no se puede eliminar en modo mock. Podés desactivarlo."
+        ? "Este negocio base no se puede eliminar en modo mock. PodÃ©s desactivarlo."
         : "No pudimos eliminar el negocio.",
     );
   }
@@ -337,7 +337,7 @@ export async function setAdminBusinessStatus(id: string, status: Business["statu
   const current = getLocalBusinessById(id);
 
   if (!current) {
-    throw new Error("No se encontró el negocio para actualizar.");
+    throw new Error("No se encontrÃ³ el negocio para actualizar.");
   }
 
   if (status === "inactive") {
@@ -355,3 +355,4 @@ export async function setAdminBusinessStatus(id: string, status: Business["statu
     }),
   );
 }
+

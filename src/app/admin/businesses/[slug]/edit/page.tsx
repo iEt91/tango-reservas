@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -103,7 +103,7 @@ export default function EditBusinessPage() {
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-white">Editar negocio</h1>
             <p className="mt-2 text-sm text-slate-300">
-              Este formulario guarda el negocio en {sourceLabel}. El resto de módulos sigue en la
+              Este formulario guarda el negocio en {sourceLabel}. El resto de mÃ³dulos sigue en la
               capa local/mock actual.
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function EditBusinessPage() {
         <BusinessForm
           key={business.id}
           mode="edit"
-          initialValues={initialValues ?? toBusinessFormValues(business)}
+          initialValues={toBusinessFormValues(business)}
           onSubmit={(values) => (slug ? updateAdminBusiness(business.id, values) : null)}
           modeLabel={modeLabel}
           successContextLabel={sourceLabel}
@@ -127,3 +127,4 @@ export default function EditBusinessPage() {
     </main>
   );
 }
+

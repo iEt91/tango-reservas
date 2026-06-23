@@ -1,6 +1,1 @@
-import { getSupabaseClient } from "./client";
-import { getSupabaseServerClient } from "./server";
-
-export function getSupabaseReadClient() {
-  return getSupabaseServerClient() ?? getSupabaseClient();
-}
+import { getSupabaseClient } from "./client"; import { getSupabaseServerClient } from "./server";  export function getSupabaseReadClient() {   return getSupabaseServerClient() ?? getSupabaseClient(); }

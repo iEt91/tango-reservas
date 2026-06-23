@@ -1,4 +1,4 @@
-import { PublicBusinessRenderer } from "@/components/themes/PublicBusinessRenderer";
+﻿import { PublicBusinessRenderer } from "@/components/themes/PublicBusinessRenderer";
 import { getDataSource } from "@/lib/data/dataSource";
 import { getPublicWebPageDataBySlug } from "@/lib/data/publicWeb";
 import { getBusinessBySlug, getBusinessSlugs } from "@/data/businesses";
@@ -66,3 +66,4 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
   return <PublicBusinessRenderer business={business} publicDataSource="local" />;
 }
+

@@ -115,8 +115,7 @@ export function LocalWeekView({
                               compact
                               reservation={reservation}
                               serviceName={
-                                serviceNameById.get(reservation.serviceId) ??
-                                (reservation.serviceId ? "Servicio eliminado" : "Sin servicio")
+                                serviceNameById.get(reservation.serviceId) ?? (reservation.serviceId ? "Servicio eliminado" : "Sin servicio")
                               }
                               onChangeStatus={onChangeStatus}
                               onOpenDetail={onOpenDetail}
@@ -204,8 +203,7 @@ export function LocalWeekView({
                               compact
                               reservation={reservation}
                               serviceName={
-                                serviceNameById.get(reservation.serviceId) ??
-                                (reservation.serviceId ? "Servicio eliminado" : "Sin servicio")
+                                serviceNameById.get(reservation.serviceId) ?? (reservation.serviceId ? "Servicio eliminado" : "Sin servicio")
                               }
                               onChangeStatus={onChangeStatus}
                               onOpenDetail={onOpenDetail}

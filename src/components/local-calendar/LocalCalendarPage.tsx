@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -176,7 +176,7 @@ export function LocalCalendarPage() {
   const selectedBusiness =
     businesses.find((business) => business.id === selectedBusinessId) ?? null;
   const effectiveBusiness = isSupportMode
-    ? selectedBusiness ?? resolvedRouteBusiness ?? null
+    ? resolvedRouteBusiness ?? selectedBusiness
     : selectedBusiness;
   const effectiveBusinessId = effectiveBusiness?.id ?? "";
 
@@ -410,7 +410,7 @@ export function LocalCalendarPage() {
       slots: visibleSlots,
       message:
           visibleSlots.length === 0
-          ? "No hay reservas que coincidan con estos filtros. Probá cambiando la búsqueda, el estado o el servicio."
+          ? "No hay reservas que coincidan con estos filtros. ProbÃ¡ cambiando la bÃºsqueda, el estado o el servicio."
           : daySchedule.message,
     };
   }, [activeCalendarFilters, daySchedule]);
@@ -434,7 +434,7 @@ export function LocalCalendarPage() {
         slots: visibleSlots,
         message:
           visibleSlots.length === 0
-            ? "No hay reservas que coincidan con estos filtros. Probá cambiando la búsqueda, el estado o el servicio."
+            ? "No hay reservas que coincidan con estos filtros. ProbÃ¡ cambiando la bÃºsqueda, el estado o el servicio."
             : dayScheduleItem.message,
       };
     });
@@ -474,8 +474,7 @@ export function LocalCalendarPage() {
   const detailReservation =
     selectedReservationId == null
       ? null
-      : businessReservations.find((reservation) => reservation.id === selectedReservationId) ??
-        null;
+      : businessReservations.find((reservation) => reservation.id === selectedReservationId) ?? null;
 
   const daySummary = useMemo(() => {
     if (!daySchedule?.isOpen) {
@@ -639,83 +638,85 @@ export function LocalCalendarPage() {
   }
 
   return (
-    <section className="space-y-4">
-      <LocalCalendarHeader
-        business={effectiveBusiness}
-        businesses={businesses}
-        canChangeBusiness={canChangeBusiness}
-        dataSourceLabel={dataSource === "supabase" ? "Supabase" : "local/mock"}
-        onBusinessChange={handleBusinessChange}
-        selectedBusinessId={selectedBusinessId}
-        serviceCount={services.length}
-      />
+    <section className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <LocalCalendarHeader
+          business={effectiveBusiness}
+          businesses={businesses}
+          canChangeBusiness={canChangeBusiness}
+          dataSourceLabel={dataSource === "supabase" ? "Supabase" : "local/mock"}
+          onBusinessChange={handleBusinessChange}
+          selectedBusinessId={selectedBusinessId}
+          serviceCount={services.length}
+        />
 
-      <LocalBusinessWarning message={businessWarning} />
+        <LocalBusinessWarning message={businessWarning} />
 
-      {!isMounted || !selectedDate ? (
-        <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
-          Cargando calendario...
-        </section>
-      ) : (
-        <>
-          <SummaryStrip cards={viewMode === "day" ? daySummary ?? [] : weekSummary ?? []} />
+        {!isMounted || !selectedDate ? (
+          <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
+            Cargando calendario...
+          </section>
+        ) : (
+          <>
+            <SummaryStrip cards={viewMode === "day" ? daySummary ?? [] : weekSummary ?? []} />
 
-          <LocalCalendarControls
-            currentDateValue={currentDateValue}
-            onDateChange={handleDateChange}
-            onViewModeChange={handleViewModeChange}
-            selectedDate={selectedDate}
-            viewMode={viewMode}
-          />
+            <LocalCalendarControls
+              currentDateValue={currentDateValue}
+              onDateChange={handleDateChange}
+              onViewModeChange={handleViewModeChange}
+              selectedDate={selectedDate}
+              viewMode={viewMode}
+            />
 
-          <CalendarFilters
-            search={search}
-            serviceFilter={serviceFilter}
-            services={services}
-            statusFilter={statusFilter}
-            visibleReservationCount={visibleReservationCount}
-            onSearchChange={setSearch}
-            onServiceFilterChange={handleServiceFilterChange}
-            onStatusFilterChange={handleStatusFilterChange}
-          />
+            <CalendarFilters
+              search={search}
+              serviceFilter={serviceFilter}
+              services={services}
+              statusFilter={statusFilter}
+              visibleReservationCount={visibleReservationCount}
+              onSearchChange={setSearch}
+              onServiceFilterChange={handleServiceFilterChange}
+              onStatusFilterChange={handleStatusFilterChange}
+            />
 
-          {viewMode === "day" ? (
-            visibleDaySchedule ? (
-              <LocalDayView
-                daySchedule={visibleDaySchedule}
+            {viewMode === "day" ? (
+              visibleDaySchedule ? (
+                <LocalDayView
+                  daySchedule={visibleDaySchedule}
+                  onChangeStatus={handleChangeStatus}
+                  onOpenDetail={handleReservationOpen}
+                  serviceNameById={serviceNameById}
+                  showOnlySlotsWithReservations={activeCalendarFilters}
+                />
+              ) : (
+                <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
+                  Todavia no hay configuracion de horarios para mostrar.
+                </section>
+              )
+            ) : visibleWeekSchedule ? (
+              <LocalWeekView
+                daySchedules={visibleWeekSchedule.daySchedules}
                 onChangeStatus={handleChangeStatus}
                 onOpenDetail={handleReservationOpen}
                 serviceNameById={serviceNameById}
                 showOnlySlotsWithReservations={activeCalendarFilters}
+                slotTimes={visibleWeekSchedule.slotTimes}
+                weekLabel={visibleWeekSchedule.label}
               />
             ) : (
               <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
                 Todavia no hay configuracion de horarios para mostrar.
               </section>
-            )
-          ) : visibleWeekSchedule ? (
-            <LocalWeekView
-              daySchedules={visibleWeekSchedule.daySchedules}
-              onChangeStatus={handleChangeStatus}
-              onOpenDetail={handleReservationOpen}
-              serviceNameById={serviceNameById}
-              showOnlySlotsWithReservations={activeCalendarFilters}
-              slotTimes={visibleWeekSchedule.slotTimes}
-              weekLabel={visibleWeekSchedule.label}
-            />
-          ) : (
-            <section className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300 shadow-2xl shadow-black/20 sm:px-5">
-              Todavia no hay configuracion de horarios para mostrar.
-            </section>
-          )}
+            )}
 
-          <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400 shadow-2xl shadow-black/20 sm:px-5">
-            Mostrando {viewMode === "day" ? "dia" : "semana"} con filtros de estado,
-            busqueda y servicio. El calendario comparte la misma capa de datos que
-            Reservas y Plano.
-          </section>
-        </>
-      )}
+            <section className="rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400 shadow-2xl shadow-black/20 sm:px-5">
+              Mostrando {viewMode === "day" ? "dia" : "semana"} con filtros de estado,
+              busqueda y servicio. El calendario comparte la misma capa de datos que
+              Reservas y Plano.
+            </section>
+          </>
+        )}
+      </div>
 
       <LocalReservationDetailDrawer
         business={effectiveBusiness}
@@ -738,3 +739,4 @@ export function LocalCalendarPage() {
     </section>
   );
 }
+
