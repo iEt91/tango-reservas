@@ -10,9 +10,21 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.1.2-reservas`
+`v5.1.4-reservas-lab`
 
-Esta version compacta `/local/reservas` para acercarla mas al blueprint `2-reservas.png`: elimina la card vertical de fecha, sube header y metricas, compacta filtros y listado, y mantiene la logica real, Supabase, `business` y `mode=support` intactos.
+Esta version compacta el listado de `/local/reservas-lab` para que la tabla, las acciones y el panel derecho entren mejor en la referencia visual `2-reservas.png`, sin tocar la ruta real de reservas.
+
+## Etapa v5.1.4-reservas-lab
+
+- `/local/reservas-lab` compacta el listado de reservas y lo transforma en una tabla horizontal realista;
+- las acciones quedan alineadas a la derecha en una sola linea y el panel derecho se ve completo;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y sin tocar la ruta operativa `/local/reservas`.
+
+## Etapa v5.1.3-reservas-lab
+
+- `/local/reservas-lab` reproduce visualmente el blueprint `2-reservas.png` en forma aislada;
+- la pantalla usa mock data hardcodeada y no conecta la logica real, Supabase, `business` ni `mode=support`;
+- `/local/reservas` queda intacta y sigue siendo la pantalla operativa real.
 
 ## Etapa v5.1.2-reservas
 

@@ -2,6 +2,18 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.1.4-reservas-lab Tabla compacta del laboratorio de reservas
+
+- `/local/reservas-lab` compacta el listado de reservas para verse como una tabla horizontal realista;
+- las acciones quedan alineadas a la derecha en una sola linea y el panel derecho se ve completo;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y no toca la ruta operativa `/local/reservas`.
+
+### v5.1.3-reservas-lab Reserva visual aislada
+
+- se crea `/local/reservas-lab` como maqueta visual aislada del blueprint `2-reservas.png`;
+- la pagina usa mock data fija y no toca la logica real, Supabase ni la ruta operativa `/local/reservas`;
+- la version visible del sistema sube a `v5.1.3-reservas-lab`.
+
 ### v5.1.2-reservas Ajuste estructural visual en Reservas
 
 - `/local/reservas` se alinea mas al blueprint `2-reservas.png`;

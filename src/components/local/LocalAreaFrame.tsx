@@ -27,7 +27,12 @@ export function LocalAreaFrame({ children }: LocalAreaFrameProps) {
     };
   }, [pathname]);
 
-  if (pathname === "/local" || pathname === "/local/" || pathname.startsWith("/local/design-lab")) {
+  if (
+    pathname === "/local" ||
+    pathname === "/local/" ||
+    pathname.startsWith("/local/design-lab") ||
+    pathname.startsWith("/local/reservas-lab")
+  ) {
     return <>{children}</>;
   }
 
