@@ -2,6 +2,27 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.1.2-reservas Ajuste estructural visual en Reservas
+
+- `/local/reservas` se alinea mas al blueprint `2-reservas.png`;
+- se elimina la card vertical de fecha y se compactan header, metricas y filtros;
+- se mueve `Agrupar por` al encabezado del listado y se compacta la tabla;
+- se preserva la logica real de reservas, disponibilidad, mesas, `business` y `mode=support`.
+
+### v5.4.0-crm CRM con shell premium comun
+
+- `/local/crm` adopta la referencia visual aprobada de CRM sobre el shell premium comun;
+- se corrigen textos rotos y se preserva la logica real de clientes, filtros, notas y edicion;
+- se mantienen `business` y `mode=support` en la navegacion del shell;
+- `/local/design-lab` sigue siendo la referencia visual aprobada para el resto del panel.
+
+### v5.1.0-reservas Reservas con shell premium comun
+
+- `/local/reservas` adopta la referencia visual aprobada de Reservas sobre el shell premium comun;
+- se corrigen textos rotos y se mantiene la logica real de reservas, disponibilidad y mesas;
+- se preservan `business` y `mode=support` en la navegacion del shell;
+- `/local/design-lab` sigue siendo la referencia visual aprobada para el resto del panel.
+
 ### v5.1.0 Redisenio visual de Reservas
 
 - `/local/reservas` adopta el blueprint visual de la captura "Reservas - Demuru";

@@ -167,6 +167,39 @@ function getBusinessBadgeText(dataSource: string) {
   return dataSource === "supabase" ? "Fuente de datos: Supabase" : "Fuente de datos: Local";
 }
 
+function getMetricIconName(label: string): "calendar" | "clock" | "check" | "users" | "x" {
+  if (label === "Confirmadas" || label === "Completadas") {
+    return "check";
+  }
+  if (label === "Canceladas") {
+    return "x";
+  }
+  if (label === "No-show") {
+    return "users";
+  }
+  if (label === "Total del día") {
+    return "calendar";
+  }
+  if (label === "Próxima reserva") {
+    return "clock";
+  }
+
+  return "clock";
+}
+
+function getQuickActionIconName(label: string): "plus" | "users" | "map" | "lock" {
+  if (label === "Nueva reserva") {
+    return "plus";
+  }
+  if (label === "Walk-in") {
+    return "users";
+  }
+  if (label === "Asignar mesas") {
+    return "map";
+  }
+  return "lock";
+}
+
 function groupReservationsByHour(reservations: Reservation[]) {
   const groups = new Map<string, Reservation[]>();
 
@@ -210,8 +243,7 @@ function getUpcomingAgenda(reservations: Reservation[], now: Date | null) {
 }
 
 function QuickIcon({ label }: { label: string }) {
-  const initial = label.trim().charAt(0).toUpperCase();
-  return <span className="text-[14px] font-bold">{initial}</span>;
+  return <Icon name={getQuickActionIconName(label)} className="h-4 w-4" />;
 }
 
 function Icon({
@@ -419,13 +451,11 @@ export function LocalReservationsPremiumDashboard({
 }: LocalReservationsPremiumDashboardProps) {
   const dataSource = getDataSource();
   const businessName = business?.name ?? "Negocio asignado";
-  const businessMeta = [business?.category, business?.city].filter(Boolean).join(" Ã‚Â· ");
+  const businessCategory = business?.category ?? "Restaurante de autor";
+  const businessCity = business?.city ?? "Pinamar";
   const visibleReservations = groupedReservations.flatMap((group) => group.items);
   const hourGroups = useMemo(() => groupReservationsByHour(visibleReservations), [visibleReservations]);
   const agendaItems = useMemo(() => getUpcomingAgenda(reservations, now), [reservations, now]);
-
-  const visibleCount = filteredReservationsCount || resultsCount;
-  const todayReservations = reservations.filter((reservation) => reservation.reservationDate === today);
 
   const tableRows = useMemo(() => {
     return visibleReservations.sort((left, right) => {
@@ -444,17 +474,18 @@ export function LocalReservationsPremiumDashboard({
       <header className={styles.hero}>
         <div className={styles.heroLayout}>
           <div className={styles.heroCopy}>
-            <p className={styles.heroKicker}>Reservas</p>
-            <h1 className={styles.heroTitle}>Reservas Ã¢â‚¬â€ {businessName}</h1>
+            <div className={styles.heroTitleRow}>
+              <h1 className={styles.heroTitle}>Reservas — {businessName}</h1>
+              <Icon name="calendar" className="h-5 w-5 text-cyan-300" />
+            </div>
             <p className={styles.heroSubtitle}>
-              GestionÃƒÂ¡ tus reservas y la asignaciÃƒÂ³n de mesas en tiempo real.
+              Gestioná tus reservas y la asignación de mesas en tiempo real.
             </p>
 
             <div className={styles.heroChips}>
-              <span className={styles.chip}>{businessMeta || "Negocio activo"}</span>
+              <span className={styles.chip}>{businessCategory}</span>
+              <span className={styles.chip}>{businessCity}</span>
               <span className={styles.chip}>{getBusinessBadgeText(dataSource)}</span>
-              <span className={styles.chip}>{serviceCount} servicios</span>
-              <span className={styles.chip}>{visibleCount} resultados visibles</span>
             </div>
 
             {businessWarning ? (
@@ -464,54 +495,27 @@ export function LocalReservationsPremiumDashboard({
             ) : null}
           </div>
 
-          <div className={styles.heroActions}>
-            <div className={styles.heroActionCard}>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Estado</p>
-                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-100">
-                  Activo
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-[14px] border border-white/10 bg-slate-950/70 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Negocio</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{businessName}</p>
-                </div>
-                <div className="rounded-[14px] border border-white/10 bg-slate-950/70 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Servicios</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{serviceCount}</p>
-                </div>
-              </div>
-            </div>
+          <div
+            className={styles.dateControls}
+            title={`${serviceCount} servicios · ${resultsCount} resultados visibles`}
+          >
+            <button type="button" className={styles.dateSelect}>
+              <Icon name="calendar" className="h-4 w-4 text-cyan-300" />
+              <span>{formatDateLabel(today)}</span>
+              <Icon name="chevron-down" className="h-4 w-4 text-slate-400" />
+            </button>
 
-            <div className={styles.heroActionCard}>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
-                    Fecha
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-white">{formatDateLabel(today)}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button type="button" className={styles.heroButtonAlt} onClick={() => onDateFilterChange("today")}>Hoy</button>
-                  <button type="button" className={styles.heroButton} aria-label="Anterior">
-                    <Icon name="chevron-left" className="h-4 w-4" />
-                  </button>
-                  <button type="button" className={styles.heroButton} aria-label="Siguiente">
-                    <Icon name="chevron-right" className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+            <button type="button" className={styles.todayButton} onClick={() => onDateFilterChange("today")}>
+              Hoy
+            </button>
 
-              <div className={styles.heroActionGrid}>
-                <button type="button" onClick={onClearFilters} className={styles.heroButton}>
-                  Limpiar filtros
-                </button>
-                <button type="button" className={styles.heroButtonAlt}>
-                  Filtros
-                </button>
-              </div>
-            </div>
+            <button type="button" className={styles.arrowButton} aria-label="Día anterior">
+              <Icon name="chevron-left" className="h-4 w-4" />
+            </button>
+
+            <button type="button" className={styles.arrowButton} aria-label="Día siguiente">
+              <Icon name="chevron-right" className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -521,7 +525,7 @@ export function LocalReservationsPremiumDashboard({
           <article key={card.label} className={styles.metricCard}>
             <div className={styles.metricHeader}>
               <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${colorForTone(card.tone)}`}>
-                <Icon name="clock" className="h-4 w-4" />
+                <Icon name={getMetricIconName(card.label)} className="h-4 w-4" />
               </span>
               <div className={styles.metricLabel}>{card.label}</div>
             </div>
@@ -531,12 +535,12 @@ export function LocalReservationsPremiumDashboard({
                 <span className={styles.metricValue}>{card.value}</span>
                 {typeof card.value === "number" ? <span className={styles.metricUnit}>reservas</span> : null}
               </div>
-              {card.helper ? <div className="mt-1 text-[11px] text-slate-400">{card.helper}</div> : null}
+              {card.helper ? <div className={styles.metricHelper}>{card.helper}</div> : null}
             </div>
 
             <div className={styles.metricFooter}>
               <span className={styles.metricHint}>Hoy</span>
-              <span className={styles.metricLink}>{card.label === "PrÃƒÂ³xima reserva" ? "Ver detalle Ã¢â€ â€™" : "Ver todas Ã¢â€ â€™"}</span>
+              <span className={styles.metricLink}>{card.label === "Próxima reserva" ? "Ver detalle →" : "Ver todas →"}</span>
             </div>
           </article>
         ))}
@@ -549,7 +553,7 @@ export function LocalReservationsPremiumDashboard({
             <input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Buscar por nombre, telÃƒÂ©fono o email..."
+              placeholder="Buscar por nombre, teléfono o email..."
               className={styles.filterInput}
             />
           </label>
@@ -579,7 +583,7 @@ export function LocalReservationsPremiumDashboard({
             >
               <option value="today">Hoy</option>
               <option value="all">Todas</option>
-              <option value="tomorrow">MaÃƒÂ±ana</option>
+              <option value="tomorrow">Mañana</option>
               <option value="week">Esta semana</option>
               <option value="custom">Personalizada</option>
             </select>
@@ -592,8 +596,6 @@ export function LocalReservationsPremiumDashboard({
           <button type="button" onClick={onClearFilters} className={styles.filterButton}>
             Limpiar filtros
           </button>
-
-          <div className={styles.filterHint}>Agrupar por: Horario</div>
         </div>
 
         {dateFilter === "custom" ? (
@@ -626,17 +628,16 @@ export function LocalReservationsPremiumDashboard({
       <section className={styles.mainGrid}>
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
-            <div className={styles.panelHeaderText}>
+              <div className={styles.panelHeaderText}>
               <div className={styles.panelEyebrow}>{formatDateLabel(today)}</div>
               <div className={styles.panelTitle}>
-                Reservas de hoy <span className="text-slate-400">Ã¢â‚¬â€ {filteredReservationsCount} reservas</span>
+                Reservas de hoy <span className="text-slate-400">— {filteredReservationsCount} reservas</span>
               </div>
-              <div className={styles.panelSubline}>GestionÃƒÂ¡ el flujo del dÃƒÂ­a con vista agrupada por horario.</div>
+              <div className={styles.panelSubline}>Gestioná el flujo del día con vista agrupada por horario.</div>
             </div>
 
             <div className={styles.panelHeaderActions}>
-              <span className={styles.pill}>{filteredReservationsCount} visibles</span>
-              <span className={styles.pill}>{todayReservations.length} hoy</span>
+              <span className={styles.panelGroupLabel}>Agrupar por:</span>
               <select className={`${styles.pill} !h-[30px]`} defaultValue="Horario" aria-label="Agrupar por">
                 <option>Horario</option>
               </select>
@@ -675,13 +676,16 @@ export function LocalReservationsPremiumDashboard({
                     <div>
                       {group.items.map((reservation) => {
                         const availability = availabilityByReservationId.get(reservation.id);
+                        const isDemoReservation = Boolean(reservation.isDemo);
                         const tableLabel =
                           tableLabelByReservationId.get(reservation.id) ??
                           reservation.joinedTableLabel ??
                           reservation.tableLabel ??
                           "Sin mesa";
                         const serviceName =
-                          serviceNameById.get(reservation.serviceId) ?? "Sin servicio";
+                          (isDemoReservation
+                            ? "Almuerzo"
+                            : serviceNameById.get(reservation.serviceId) ?? "Sin servicio");
                         const statusTone = getStatusTone(reservation.status);
 
                         return (
@@ -733,14 +737,24 @@ export function LocalReservationsPremiumDashboard({
                                   <>
                                     <button
                                       type="button"
-                                      onClick={() => onChangeStatus(reservation.id, "confirmed")}
+                                      disabled={isDemoReservation}
+                                      onClick={
+                                        isDemoReservation
+                                          ? undefined
+                                          : () => onChangeStatus(reservation.id, "confirmed")
+                                      }
                                       className={`${styles.actionButton} ${styles.actionButtonStrong}`}
                                     >
                                       Confirmar
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => onChangeStatus(reservation.id, "cancelled")}
+                                      disabled={isDemoReservation}
+                                      onClick={
+                                        isDemoReservation
+                                          ? undefined
+                                          : () => onChangeStatus(reservation.id, "cancelled")
+                                      }
                                       className={`${styles.actionButton} ${styles.actionButtonRose}`}
                                     >
                                       Cancelar
@@ -750,14 +764,22 @@ export function LocalReservationsPremiumDashboard({
                                   <>
                                     <button
                                       type="button"
-                                      onClick={() => onOpenAssignTable(reservation)}
+                                      disabled={isDemoReservation}
+                                      onClick={
+                                        isDemoReservation ? undefined : () => onOpenAssignTable(reservation)
+                                      }
                                       className={`${styles.actionButton} ${styles.actionButtonStrong}`}
                                     >
                                       {reservation.joinedTableLabel || reservation.tableLabel ? "Cambiar mesa" : "Asignar mesa"}
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => onChangeStatus(reservation.id, "completed")}
+                                      disabled={isDemoReservation}
+                                      onClick={
+                                        isDemoReservation
+                                          ? undefined
+                                          : () => onChangeStatus(reservation.id, "completed")
+                                      }
                                       className={styles.actionButton}
                                     >
                                       Completar
@@ -766,18 +788,20 @@ export function LocalReservationsPremiumDashboard({
                                 ) : (
                                   <button
                                     type="button"
-                                    onClick={() => onOpenDetail(reservation)}
+                                    disabled={isDemoReservation}
+                                    onClick={isDemoReservation ? undefined : () => onOpenDetail(reservation)}
                                     className={styles.actionButton}
                                   >
                                     Ver detalle
                                   </button>
-                                )}
+                                  )}
 
                                 <button
                                   type="button"
-                                  onClick={() => onOpenDetail(reservation)}
+                                  disabled={isDemoReservation}
+                                  onClick={isDemoReservation ? undefined : () => onOpenDetail(reservation)}
                                   className={`${styles.actionButton} ${styles.actionButtonSlate}`}
-                                  aria-label="MÃƒÂ¡s opciones"
+                                  aria-label="Más opciones"
                                 >
                                   <Icon name="ellipsis" className="h-4 w-4" />
                                 </button>
@@ -798,11 +822,11 @@ export function LocalReservationsPremiumDashboard({
           <section className={styles.rightCard}>
             <div className={styles.rightCardHeader}>
               <div className={styles.panelEyebrow}>Resumen</div>
-              <div className={styles.rightCardTitle}>OcupaciÃƒÂ³n de hoy</div>
+              <div className={styles.rightCardTitle}>Ocupación de hoy</div>
             </div>
             <div className={styles.rightCardBody}>
               <div className={styles.occupancyMain}>
-                <div className={styles.occupancyDonut} aria-label={`${occupancyPercent}% de ocupaciÃƒÂ³n`}>
+                <div className={styles.occupancyDonut} aria-label={`${occupancyPercent}% de ocupación`}>
                   <span className={styles.occupancyDonutValue}>{occupancyPercent}%</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -829,7 +853,7 @@ export function LocalReservationsPremiumDashboard({
               </div>
 
               <Link href={business?.slug ? `/local/plano?business=${business.slug}` : "/local/plano"} className={styles.rightLink}>
-                Ver plano de salÃƒÂ³n Ã¢â€ â€™
+                Ver plano de salón →
               </Link>
             </div>
           </section>
@@ -837,16 +861,16 @@ export function LocalReservationsPremiumDashboard({
           <section className={styles.rightCard}>
             <div className={styles.rightCardHeader}>
               <div className={styles.panelEyebrow}>Agenda</div>
-              <div className={styles.rightCardTitle}>Agenda rÃƒÂ¡pida</div>
+              <div className={styles.rightCardTitle}>Agenda rápida</div>
             </div>
             <div className={styles.rightCardBody}>
               <div className={styles.agendaList}>
                 {agendaItems.map((reservation, index) => {
                   const label =
                     index === 0
-                      ? "PrÃƒÂ³xima reserva"
+                      ? "Próxima reserva"
                       : reservation.notes?.toLowerCase().includes("cumple")
-                        ? "CumpleaÃƒÂ±os"
+                        ? "Cumpleaños"
                         : reservation.partySize >= 6
                           ? "Grupo grande"
                           : reservation.status === "pending"
@@ -880,13 +904,13 @@ export function LocalReservationsPremiumDashboard({
           <section className={styles.rightCard}>
             <div className={styles.rightCardHeader}>
               <div className={styles.panelEyebrow}>Atajos</div>
-              <div className={styles.rightCardTitle}>Acciones rÃƒÂ¡pidas</div>
+              <div className={styles.rightCardTitle}>Acciones rápidas</div>
             </div>
             <div className={styles.rightCardBody}>
               <div className={styles.quickGrid}>
                 {quickActions.map((action) => (
                   <Link key={action.label} href={action.href} className={`${styles.quickTile} ${getQuickActionTone(action.tone)}`}>
-                    <div className="flex items-center justify-between gap-2">
+                    <div className={styles.quickTileTop}>
                       <span className={styles.quickIcon}>
                         <QuickIcon label={action.label} />
                       </span>

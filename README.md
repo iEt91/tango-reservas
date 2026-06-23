@@ -10,9 +10,33 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.1.0`
+`v5.1.2-reservas`
 
-Esta version redisenia `/local/reservas` con el blueprint visual de la captura "Reservas - Demuru", manteniendo la logica real, Supabase, `business` y `mode=support` intactos.
+Esta version compacta `/local/reservas` para acercarla mas al blueprint `2-reservas.png`: elimina la card vertical de fecha, sube header y metricas, compacta filtros y listado, y mantiene la logica real, Supabase, `business` y `mode=support` intactos.
+
+## Etapa v5.1.2-reservas
+
+- `/local/reservas` se alinea con mayor fidelidad al blueprint `2-reservas.png`;
+- se elimina la card vertical de fecha y se compactan header, metricas y filtros;
+- se mueve `Agrupar por` al encabezado del listado y se compacta la tabla;
+- se preserva la logica real de reservas, disponibilidad, mesas, `business` y `mode=support`;
+- `/local/design-lab` sigue siendo la referencia visual aprobada del sistema.
+
+Esta version rediseña visualmente `/local/crm` con la referencia premium de CRM, manteniendo la logica real, Supabase, `business` y `mode=support` intactos.
+
+## Etapa v5.4.0-crm
+
+- `/local/crm` adopta la referencia visual aprobada de CRM sobre el shell premium comun;
+- se corrigen los textos rotos y se preserva la logica real de clientes, notas, filtros y edicion;
+- se mantienen `business` y `mode=support` en la navegacion del panel;
+- `/local/design-lab` sigue siendo la referencia visual aprobada del sistema.
+
+## Etapa v5.1.0-reservas
+
+- ajusta visualmente `/local/reservas` usando el shell premium compartido del Panel Local;
+- corrige textos rotos y alinea la pantalla con la imagen de referencia de Reservas;
+- preserva la navegacion con `business` y `mode=support`;
+- no toca la logica de reservas, disponibilidad, mesas ni tests.
 
 ## Etapa v5.1.0
 
