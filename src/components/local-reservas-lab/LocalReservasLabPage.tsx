@@ -496,148 +496,149 @@ export function LocalReservasLabPage() {
           ))}
         </section>
 
-        <section className={styles.filtersBar} aria-label="Filtros de reservas">
-          <div className={styles.filtersGrid}>
-            <label className={styles.filterField}>
-              <span className={styles.srOnly}>Buscar</span>
-              <input
-                className={styles.filterInput}
-                type="text"
-                value="Buscar por nombre, teléfono o email..."
-                readOnly
-                aria-label="Buscar por nombre, teléfono o email"
-              />
-            </label>
+        <div className={styles.workspaceGrid}>
+          <div className={styles.leftColumn}>
+            <section className={styles.filtersBar} aria-label="Filtros de reservas">
+              <div className={styles.filtersGrid}>
+                <label className={styles.filterField}>
+                  <span className={styles.srOnly}>Buscar</span>
+                  <input
+                    className={styles.filterInput}
+                    type="text"
+                    value="Buscar por nombre, teléfono o email..."
+                    readOnly
+                    aria-label="Buscar por nombre, teléfono o email"
+                  />
+                </label>
 
-            <button type="button" className={styles.filterSelect}>
-              <span>Todos</span>
-              <Icon name="chevronDown" className={styles.selectChevron} />
-            </button>
-
-            <button type="button" className={styles.filterSelect}>
-              <span>22/05/2026</span>
-              <Icon name="chevronDown" className={styles.selectChevron} />
-            </button>
-
-            <button type="button" className={styles.filterButton}>
-              + Fecha personalizada
-            </button>
-
-            <button type="button" className={styles.filterButtonSecondary}>
-              Limpiar filtros
-            </button>
-          </div>
-        </section>
-
-        <section className={styles.mainGrid}>
-          <article className={styles.reservationPanel}>
-            <div className={styles.reservationPanelHeader}>
-              <div className={styles.reservationPanelTitleWrap}>
-                <div className={styles.reservationPanelDate}>Jueves, 22 de mayo de 2026</div>
-                <div className={styles.reservationPanelCount}>31 reservas</div>
-              </div>
-
-              <div className={styles.reservationPanelActions}>
-                <span className={styles.groupByLabel}>Agrupar por:</span>
-                <button type="button" className={styles.groupByButton}>
-                  Horario
+                <button type="button" className={styles.filterSelect}>
+                  <span>Todos</span>
                   <Icon name="chevronDown" className={styles.selectChevron} />
                 </button>
+
+                <button type="button" className={styles.filterSelect}>
+                  <span>22/05/2026</span>
+                  <Icon name="chevronDown" className={styles.selectChevron} />
+                </button>
+
+                <button type="button" className={styles.filterButton}>
+                  + Fecha personalizada
+                </button>
+
+                <button type="button" className={styles.filterButtonSecondary}>
+                  Limpiar filtros
+                </button>
               </div>
-            </div>
+            </section>
 
-            <div className={styles.reservationTableHeader}>
-              <span>Hora</span>
-              <span>Cliente</span>
-              <span>Personas</span>
-              <span>Estado</span>
-              <span>Servicio</span>
-              <span>Mesa</span>
-              <span>Contacto / Nota</span>
-              <span>Acciones</span>
-            </div>
-
-            <div className={styles.reservationListBody}>
-              {reservationGroups.map((group) => (
-                <div key={group.hour}>
-                  <div className={styles.hourGroupHeader}>
-                    <span className={styles.hourGroupTime}>{group.hour}</span>
-                    <span className={styles.hourGroupCount}>{group.count} reservas</span>
-                  </div>
-
-                  {group.rows.map((row) => (
-                    <div key={row.id} className={styles.reservationRow}>
-                      <div className={styles.timeCell}>
-                        <span className={styles.timeValue}>{row.time}</span>
-                      </div>
-
-                      <div className={styles.clientCell}>
-                        <div className={styles.clientName}>{row.client}</div>
-                        <div className={styles.clientMeta}>{row.people} personas</div>
-                      </div>
-
-                      <div className={styles.peopleCell}>{row.people}</div>
-
-                      <div className={styles.statusCell}>
-                        <span className={styles.statusBadge} data-tone={statusTone(row.status)}>
-                          {statusLabel(row.status)}
-                        </span>
-                      </div>
-
-                      <div className={styles.serviceCell}>{row.service}</div>
-
-                      <div className={styles.tableCell}>{row.table}</div>
-
-                      <div className={styles.noteCell}>{row.contactOrNote}</div>
-
-                      <div className={styles.actionsCell}>
-                        {row.actions.map((action) => (
-                          <button
-                            key={`${row.id}-${action}`}
-                            type="button"
-                            className={styles.rowAction}
-                            data-tone={actionTone(action)}
-                          >
-                            {action}
-                          </button>
-                        ))}
-                        <button type="button" className={styles.moreButton} aria-label="Más acciones">
-                          <Icon name="more" className={styles.moreIcon} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+            <article className={styles.reservationPanel}>
+              <div className={styles.reservationPanelHeader}>
+                <div className={styles.reservationPanelTitleWrap}>
+                  <div className={styles.reservationPanelDate}>Jueves, 22 de mayo de 2026</div>
+                  <div className={styles.reservationPanelCount}>31 reservas</div>
                 </div>
-              ))}
-            </div>
-          </article>
 
-          <aside className={styles.sidePanel}>
+                <div className={styles.reservationPanelActions}>
+                  <span className={styles.groupByLabel}>Agrupar por:</span>
+                  <button type="button" className={styles.groupByButton}>
+                    Horario
+                    <Icon name="chevronDown" className={styles.selectChevron} />
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles.reservationTableHeader}>
+                <span>Hora</span>
+                <span>Cliente</span>
+                <span>Personas</span>
+                <span>Estado</span>
+                <span>Servicio</span>
+                <span>Mesa</span>
+                <span>Contacto / Nota</span>
+                <span>Acciones</span>
+              </div>
+
+              <div className={styles.reservationListBody}>
+                {reservationGroups.map((group) => (
+                  <div key={group.hour}>
+                    <div className={styles.hourGroupHeader}>
+                      <span className={styles.hourGroupTime}>{group.hour}</span>
+                      <span className={styles.hourGroupCount}>{group.count} reservas</span>
+                    </div>
+
+                    {group.rows.map((row) => (
+                      <div key={row.id} className={styles.reservationRow}>
+                        <div className={styles.timeCell}>
+                          <span className={styles.timeValue}>{row.time}</span>
+                        </div>
+
+                        <div className={styles.clientCell}>
+                          <div className={styles.clientName}>{row.client}</div>
+                          <div className={styles.clientMeta}>{row.people} personas</div>
+                        </div>
+
+                        <div className={styles.peopleCell}>{row.people}</div>
+
+                        <div className={styles.statusCell}>
+                          <span className={styles.statusBadge} data-tone={statusTone(row.status)}>
+                            {statusLabel(row.status)}
+                          </span>
+                        </div>
+
+                        <div className={styles.serviceCell}>{row.service}</div>
+
+                        <div className={styles.tableCell}>{row.table}</div>
+
+                        <div className={styles.noteCell}>{row.contactOrNote}</div>
+
+                        <div className={styles.actionsCell}>
+                          {row.actions.map((action) => (
+                            <button
+                              key={`${row.id}-${action}`}
+                              type="button"
+                              className={styles.rowAction}
+                              data-tone={actionTone(action)}
+                            >
+                              {action}
+                            </button>
+                          ))}
+                          <button type="button" className={styles.moreButton} aria-label="Más acciones">
+                            <Icon name="more" className={styles.moreIcon} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+
+          <aside className={styles.rightColumn}>
             <section className={`${styles.sideCard} ${styles.occupancyCard}`}>
               <div className={styles.sideCardHeader}>
                 <div className={styles.sideCardEyebrow}>RESUMEN</div>
                 <h3 className={styles.sideCardTitle}>Ocupación de hoy</h3>
               </div>
 
-              <div className={styles.occupancyContent}>
-                <div className={styles.occupancyMain}>
+              <div className={styles.occupancyBody}>
+                <div className={styles.occupancyDonutBlock}>
                   <div className={styles.occupancyDonut} aria-label="78 por ciento de ocupación">
                     <span>78%</span>
                   </div>
+                  <strong className={styles.occupancyMainValue}>104 / 134 cubiertos</strong>
+                  <span className={styles.occupancyToday}>Hoy</span>
+                </div>
 
-                  <div className={styles.occupancyCopy}>
-                    <div className={styles.occupancyMainValue}>104 / 134 cubiertos</div>
-                    <div className={styles.occupancyLegend}>
-                      {occupancyStates.map((state) => (
-                        <div key={state.label} className={styles.legendRow}>
-                          <span className={styles.legendDot} data-tone={state.tone} />
-                          <span className={styles.legendLabel}>{state.label}</span>
-                          <span className={styles.legendValue}>{state.value}</span>
-                          <span className={styles.legendPercent}>{state.percent}</span>
-                        </div>
-                      ))}
+                <div className={styles.occupancyStates}>
+                  {occupancyStates.map((state) => (
+                    <div key={state.label} className={styles.occupancyStateRow}>
+                      <span className={styles.occupancyDot} data-tone={state.tone} />
+                      <span className={styles.occupancyStateLabel}>{state.label}</span>
+                      <span className={styles.occupancyStateValue}>{state.value}</span>
+                      <span className={styles.occupancyStatePercent}>{state.percent}</span>
                     </div>
-                  </div>
+                  ))}
                 </div>
 
                 <button type="button" className={styles.occupancyCta}>
@@ -647,7 +648,7 @@ export function LocalReservasLabPage() {
               </div>
             </section>
           </aside>
-        </section>
+        </div>
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ function formatBusinessLabel(slug: string) {
   const normalized = slug.trim();
 
   if (!normalized) {
-    return "Negocio actual";
+    return "Demuru";
   }
 
   return normalized
@@ -105,7 +105,7 @@ export function LocalPremiumShell({ children }: LocalPremiumShellProps) {
     return queryString ? `${pathname}?${queryString}` : pathname;
   })();
 
-  const webHref = currentBusinessSlug ? `/${currentBusinessSlug}` : "/";
+  const webHref = currentBusinessSlug ? `/${currentBusinessSlug}` : "/demuru";
 
   const navItems = navigation.map((item) => {
     const href = isSupportMode

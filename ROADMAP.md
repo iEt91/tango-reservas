@@ -2,7 +2,7 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.1.5-reservas-lab Shell bueno y ocupacion completa del laboratorio
+### v5.1.6-reservas-lab-fix Shell bueno y ocupacion completa del laboratorio
 
 - `/local/reservas-lab` reutiliza el sidebar y la topbar buenos de `/local?business=demuru`;
 - se corrige la burbuja de notificaciones, se quitan los chips del header y se agranda `Ocupación de hoy`;
