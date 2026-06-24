@@ -2,6 +2,12 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.1.5-reservas-lab Shell bueno y ocupacion completa del laboratorio
+
+- `/local/reservas-lab` reutiliza el sidebar y la topbar buenos de `/local?business=demuru`;
+- se corrige la burbuja de notificaciones, se quitan los chips del header y se agranda `Ocupación de hoy`;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y no toca la ruta operativa `/local/reservas`.
+
 ### v5.1.4-reservas-lab Tabla compacta del laboratorio de reservas
 
 - `/local/reservas-lab` compacta el listado de reservas para verse como una tabla horizontal realista;

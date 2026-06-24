@@ -10,9 +10,15 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.1.4-reservas-lab`
+`v5.1.5-reservas-lab`
 
-Esta version compacta el listado de `/local/reservas-lab` para que la tabla, las acciones y el panel derecho entren mejor en la referencia visual `2-reservas.png`, sin tocar la ruta real de reservas.
+Esta version alinea `/local/reservas-lab` con el shell bueno de `/local?business=demuru`, corrige la burbuja de notificaciones, mejora la card de ocupacion y mantiene el laboratorio visual aislado.
+
+## Etapa v5.1.5-reservas-lab
+
+- `/local/reservas-lab` reutiliza el sidebar y la topbar premium del dashboard bueno;
+- se corrige la burbuja de notificaciones, se quitan los chips del header y se mejora `Ocupación de hoy`;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y sin tocar la ruta operativa `/local/reservas`.
 
 ## Etapa v5.1.4-reservas-lab
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { APP_NAME, APP_VERSION } from "@/lib/constants";
+import { APP_VERSION } from "@/lib/constants";
 import designLabStyles from "@/components/design-lab/TangoDesignLabDashboard.module.css";
 
 type LocalSidebarNavItem = {
@@ -121,8 +121,8 @@ export function LocalSidebar({
           <span>T</span>
         </div>
         <div className={designLabStyles.logoText}>
-          <div className={designLabStyles.logoTitle}>{APP_NAME.toUpperCase()}</div>
-          <div className={designLabStyles.logoSub}>PANEL LOCAL</div>
+          <div className={designLabStyles.logoTitle}>TANGO</div>
+          <div className={designLabStyles.logoSub}>RESERVAS</div>
         </div>
       </div>
 
@@ -135,9 +135,7 @@ export function LocalSidebar({
           >
             <SidebarIcon
               name={item.icon}
-              className={`${designLabStyles.navIcon} ${
-                item.active ? "text-cyan-300" : "text-slate-300"
-              }`}
+              className={`${designLabStyles.navIcon} ${item.active ? "text-cyan-300" : "text-slate-300"}`}
             />
             <span>{item.label}</span>
           </Link>

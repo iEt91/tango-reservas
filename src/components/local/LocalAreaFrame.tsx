@@ -30,8 +30,7 @@ export function LocalAreaFrame({ children }: LocalAreaFrameProps) {
   if (
     pathname === "/local" ||
     pathname === "/local/" ||
-    pathname.startsWith("/local/design-lab") ||
-    pathname.startsWith("/local/reservas-lab")
+    pathname.startsWith("/local/design-lab")
   ) {
     return <>{children}</>;
   }
