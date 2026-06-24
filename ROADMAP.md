@@ -2,6 +2,12 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.2.0-calendario-lab Laboratorio visual aislado de Calendario
+
+- se crea `/local/calendario-lab` como maqueta visual aislada basada en la captura de Calendario;
+- la pagina reutiliza el shell premium comun del Panel del Local y activa `Calendario` en la sidebar;
+- el calendario mensual, la agenda del dia, las metricas y el panel lateral usan mock data fija sin tocar la ruta real `/local/calendario`.
+
 ### v5.1.6-reservas-lab-fix Shell bueno y ocupacion completa del laboratorio
 
 - `/local/reservas-lab` reutiliza el sidebar y la topbar buenos de `/local?business=demuru`;

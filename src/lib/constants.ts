@@ -1,2 +1,2 @@
 export const APP_NAME = "Tango Reservas";
-export const APP_VERSION = "v5.1.6-reservas-lab-fix";
+export const APP_VERSION = "v5.2.0-calendario-lab";

@@ -10,9 +10,15 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.1.6-reservas-lab-fix`
+`v5.2.0-calendario-lab`
 
-Esta version alinea `/local/reservas-lab` con el shell bueno de `/local?business=demuru`, corrige la burbuja de notificaciones, mejora la card de ocupacion y mantiene el laboratorio visual aislado.
+Esta version crea `/local/calendario-lab` como laboratorio visual aislado, reutilizando el shell premium bueno y reconstruyendo la pantalla Calendario con mock data fija.
+
+## Etapa v5.2.0-calendario-lab
+
+- `/local/calendario-lab` se crea como maqueta visual aislada del blueprint de Calendario;
+- la pagina reutiliza el shell premium comun de `/local?business=demuru` y activa `Calendario` en la sidebar;
+- se usa mock data fija para calendario mensual, agenda del dia, metricas y panel lateral, sin tocar `/local/calendario` real.
 
 ## Etapa v5.1.6-reservas-lab-fix
 

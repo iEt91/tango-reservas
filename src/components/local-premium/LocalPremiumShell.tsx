@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -58,6 +58,10 @@ function isActiveRoute(pathname: string, href: string) {
   }
 
   if (href === "/local/reservas" && pathname.startsWith("/local/reservas-lab")) {
+    return true;
+  }
+
+  if (href === "/local/calendario" && pathname.startsWith("/local/calendario-lab")) {
     return true;
   }
 
@@ -145,3 +149,4 @@ export function LocalPremiumShell({ children }: LocalPremiumShellProps) {
     </div>
   );
 }
+
