@@ -10,15 +10,27 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.2.0-calendario-lab`
+`v5.3.2-plano-lab`
 
-Esta version crea `/local/calendario-lab` como laboratorio visual aislado, reutilizando el shell premium bueno y reconstruyendo la pantalla Calendario con mock data fija.
+Esta version reubica las metricas del salon justo debajo del canvas y deja `Ocupacion por horario` como bloque full-width inferior, manteniendo el laboratorio separado de `/local/plano`.
 
-## Etapa v5.2.0-calendario-lab
+## Etapa v5.3.2-plano-lab
 
-- `/local/calendario-lab` se crea como maqueta visual aislada del blueprint de Calendario;
-- la pagina reutiliza el shell premium comun de `/local?business=demuru` y activa `Calendario` en la sidebar;
-- se usa mock data fija para calendario mensual, agenda del dia, metricas y panel lateral, sin tocar `/local/calendario` real.
+- `/local/plano-lab` reubica las metricas del salon dentro del bloque principal;
+- la seccion `Ocupacion por horario` queda debajo de todo como bloque full-width;
+- se mantiene el shell premium comun y no se toca la ruta real `/local/plano`.
+
+## Etapa v5.3.0-plano-lab
+
+- `/local/plano-lab` reconstruye visualmente el blueprint de Plano con mesas mock, canvas, panel de mesa seleccionada y ocupacion por horario;
+- la pagina reutiliza el shell premium comun de `/local?business=demuru` y no toca `/local/plano` real;
+- se mantiene la separacion entre laboratorio visual y logica real del plano.
+
+## Etapa v5.2.1-calendario-lab
+
+- `/local/calendario-lab` mantiene la maqueta visual aislada del blueprint de Calendario;
+- la agenda del dia usa 17 slots fijos de 08:00 a 24:00 y agrupa reservas mock por franja de 60 minutos;
+- se conserva el shell premium comun de `/local?business=demuru`, sin tocar `/local/calendario` real.
 
 ## Etapa v5.1.6-reservas-lab-fix
 

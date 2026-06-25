@@ -2,11 +2,23 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.2.0-calendario-lab Laboratorio visual aislado de Calendario
+### v5.3.2-plano-lab Ajuste compacto del laboratorio de Plano
 
-- se crea `/local/calendario-lab` como maqueta visual aislada basada en la captura de Calendario;
-- la pagina reutiliza el shell premium comun del Panel del Local y activa `Calendario` en la sidebar;
-- el calendario mensual, la agenda del dia, las metricas y el panel lateral usan mock data fija sin tocar la ruta real `/local/calendario`.
+- `/local/plano-lab` reubica las metricas del salon dentro del bloque principal;
+- `Ocupacion por horario` queda justo debajo de las metricas inferiores y el layout se compacta;
+- se mantiene el laboratorio visual aislado sin tocar la ruta real `/local/plano`.
+
+### v5.3.0-plano-lab Laboratorio visual del plano
+
+- `/local/plano-lab` reconstruye visualmente el blueprint de Plano como maqueta aislada;
+- se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/plano`;
+- se usan mesas mock, panel de seleccion, metricas y ocupacion por horario sin conectar logica real.
+
+### v5.2.1-calendario-lab Ajuste de agenda del laboratorio de Calendario
+
+- `/local/calendario-lab` sigue siendo una maqueta visual aislada basada en la captura de Calendario;
+- la agenda del dia usa slots fijos de 08:00 a 24:00 y agrupa reservas mock por franja horaria de 60 minutos;
+- se conserva el shell premium comun del Panel del Local y no se toca la ruta real `/local/calendario`.
 
 ### v5.1.6-reservas-lab-fix Shell bueno y ocupacion completa del laboratorio
 
