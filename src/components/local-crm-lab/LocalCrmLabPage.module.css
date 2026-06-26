@@ -244,9 +244,10 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
+  align-self: stretch;
   display: grid;
-  grid-template-rows: 186px 274px 124px;
-  gap: 8px;
+  grid-template-rows: 170px minmax(0, 1fr) 128px;
+  gap: 12px;
   overflow: hidden;
 }
 
@@ -626,10 +627,10 @@
 }
 
 .profilePanel {
-  height: 186px;
-  min-height: 186px;
-  max-height: 186px;
-  padding: 16px 16px 12px;
+  height: 170px;
+  min-height: 170px;
+  max-height: 170px;
+  padding: 14px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background:
@@ -637,8 +638,8 @@
     linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 15, 28, 0.97));
   overflow: hidden;
   display: grid;
-  grid-template-rows: 88px 1fr;
-  gap: 10px;
+  grid-template-rows: 86px 1fr;
+  gap: 8px;
 }
 
 .profileMainRow {
@@ -740,8 +741,8 @@
 
 .profileActions {
   display: grid;
-  grid-template-rows: repeat(3, 31px);
-  gap: 7px;
+  grid-template-rows: repeat(3, 26px);
+  gap: 4px;
   justify-items: stretch;
   min-width: 0;
 }
@@ -749,11 +750,11 @@
 .whatsappButton,
 .primaryActionButton,
 .secondaryActionButton {
-  height: 31px;
-  min-height: 31px;
-  border-radius: 9px;
+  height: 26px;
+  min-height: 26px;
+  border-radius: 8px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 750;
   line-height: 1;
   white-space: nowrap;
 }
@@ -785,16 +786,16 @@
   margin-top: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 7px;
+  gap: 6px;
   overflow: hidden;
 }
 
 .profileStat {
-  min-height: 56px;
-  padding: 8px 8px 7px;
+  min-height: 50px;
+  padding: 7px 8px;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.1);
-  background: rgba(2, 6, 23, 0.36);
+  background: rgba(2, 6, 23, 0.34);
   display: grid;
   gap: 3px;
   align-content: start;
@@ -818,7 +819,7 @@
 }
 
 .profileStatValue {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.12;
   font-weight: 800;
   color: #f8fafc;
@@ -837,11 +838,10 @@
   font-size: 11px;
 }
 
+.rightMiddleGrid,
 .rightDetailsGrid {
   min-height: 0;
-  height: 274px;
-  min-height: 274px;
-  max-height: 274px;
+  height: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr 1.18fr;
   gap: 0;
@@ -852,33 +852,46 @@
 }
 
 .rightBottomGrid {
-  height: 124px;
-  min-height: 124px;
-  max-height: 124px;
+  height: 128px;
+  min-height: 128px;
+  max-height: 128px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
   overflow: hidden;
 }
 
-.rightBottomGrid .detailCard {
+.bottomInfoCard {
+  min-width: 0;
+  min-height: 0;
+  height: 128px;
+  padding: 11px 12px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.13);
   background: rgba(15, 23, 42, 0.72);
-  padding: 10px 12px;
   overflow: hidden;
-  border-right: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottomInfoCard h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.1;
+  font-weight: 850;
+  color: #f8fafc;
 }
 
 .detailCard {
   min-width: 0;
   min-height: 0;
-  padding: 13px 12px;
+  height: 100%;
+  padding: 12px;
   overflow: hidden;
   border-right: 1px solid rgba(148, 163, 184, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
 }
 
 .detailCard:last-child {
@@ -909,7 +922,7 @@
 
 .detailList {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .detailDivider {
@@ -918,9 +931,17 @@
   background: rgba(148, 163, 184, 0.08);
 }
 
+.detailStack {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .detailGroup {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .detailLabel {
@@ -931,7 +952,7 @@
 }
 
 .detailValue {
-  font-size: 12px;
+  font-size: 11px;
   color: #e2e8f0;
   font-weight: 700;
   line-height: 1.35;
@@ -988,13 +1009,13 @@
 .simpleList {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
 }
 
 .listPill {
   display: inline-flex;
   align-items: center;
-  padding: 0.35rem 0.6rem;
+  padding: 0.3rem 0.55rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(2, 6, 23, 0.32);
@@ -1010,10 +1031,89 @@
   color: #bbf7d0;
 }
 
+.activityCardBody {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.activityList {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  gap: 8px;
+}
+
+.activityFooterButton,
+.historyFooterButton {
+  margin-top: auto;
+  height: 30px;
+  min-height: 30px;
+  border-radius: 10px;
+}
+
+.historyCardBody {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.historyList {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.historyFooterButton {
+  height: 26px;
+  min-height: 26px;
+  border-radius: 9px;
+}
+
+.bottomInfoBody {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.consumptionList {
+  display: grid;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.consumptionItem {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+  min-width: 0;
+}
+
+.consumptionItem span,
+.consumptionItem strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailMiniIcon {
+  width: 14px;
+  height: 14px;
+  color: #67e8f9;
+  margin-top: 1px;
+}
+
 .activityTimeline {
   position: relative;
-  height: 214px;
-  max-height: 214px;
+  height: 100%;
+  max-height: none;
   overflow: hidden;
   display: grid;
   gap: 8px;
@@ -1214,8 +1314,8 @@
   }
 
   .rightColumn {
-    grid-template-rows: 180px 268px 120px;
-    gap: 8px;
+    grid-template-rows: 170px minmax(0, 1fr) 128px;
+    gap: 10px;
   }
 
   .metricGrid {
@@ -1276,22 +1376,16 @@
   }
 
   .profilePanel {
-    height: 180px;
-    min-height: 180px;
-    max-height: 180px;
-    padding: 11px;
-  }
-
-  .rightDetailsGrid {
-    height: 268px;
-    min-height: 268px;
-    max-height: 268px;
+    height: 170px;
+    min-height: 170px;
+    max-height: 170px;
+    padding: 10px;
   }
 
   .rightBottomGrid {
-    height: 120px;
-    min-height: 120px;
-    max-height: 120px;
+    height: 128px;
+    min-height: 128px;
+    max-height: 128px;
   }
 
   .detailCard {
@@ -1322,9 +1416,21 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .rightMiddleGrid,
   .rightDetailsGrid,
   .rightBottomGrid {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .rightColumn {
+    grid-template-rows: auto;
+  }
+
+  .profilePanel,
+  .bottomInfoCard {
     height: auto;
     min-height: 0;
     max-height: none;

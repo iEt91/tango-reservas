@@ -659,7 +659,7 @@ export function LocalCrmLabPage() {
               </div>
             </section>
 
-            <section className={styles.rightDetailsGrid}>
+            <section className={styles.rightMiddleGrid}>
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
                 <h3>Preferencias</h3>
                 <div className={styles.detailList}>
@@ -681,110 +681,129 @@ export function LocalCrmLabPage() {
 
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
                 <h3>Alergias e intolerancias</h3>
-                <div className={styles.simpleList}>
-                  {customerAllergies.map((allergy) => (
-                    <span key={allergy} className={styles.listPill}>
-                      {allergy}
-                    </span>
-                  ))}
-                </div>
-                <div className={styles.detailDivider} />
-                <div className={styles.detailGroup}>
-                  <span className={styles.detailLabel}>Preferencias dietarias</span>
+                <div className={styles.detailStack}>
                   <div className={styles.simpleList}>
-                  {customerDietary.map((item) => (
-                    <span key={item} className={styles.listPill}>
-                      {item}
-                    </span>
-                  ))}
+                    {customerAllergies.map((allergy) => (
+                      <span key={allergy} className={styles.listPill}>
+                        {allergy}
+                      </span>
+                    ))}
                   </div>
-                </div>
-                <div className={styles.detailDivider} />
-                <div className={styles.detailGroup}>
-                  <span className={styles.detailLabel}>Forma de contacto preferida</span>
-                  <div className={styles.simpleList}>
-                  <span className={`${styles.listPill} ${styles.whatsAppPill}`}>WhatsApp</span>
+                  <div className={styles.detailDivider} />
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Preferencias dietarias</span>
+                    <div className={styles.simpleList}>
+                      {customerDietary.map((item) => (
+                        <span key={item} className={styles.listPill}>
+                          {item}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className={styles.detailDivider} />
-                <div className={styles.detailGroup}>
-                  <span className={styles.detailLabel}>Canal y antigüedad</span>
-                  <div className={styles.metaGrid}>
-                  <div>
-                    <span>Canal de origen</span>
-                    <strong>Instagram</strong>
+                  <div className={styles.detailDivider} />
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Forma de contacto preferida</span>
+                    <div className={styles.simpleList}>
+                      <span className={`${styles.listPill} ${styles.whatsAppPill}`}>WhatsApp</span>
+                    </div>
                   </div>
-                  <div>
-                    <span>Cliente desde</span>
-                    <strong>Febrero 2025</strong>
-                  </div>
+                  <div className={styles.detailDivider} />
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Canal y antigüedad</span>
+                    <div className={styles.metaGrid}>
+                      <div>
+                        <span>Canal de origen</span>
+                        <strong>Instagram</strong>
+                      </div>
+                      <div>
+                        <span>Cliente desde</span>
+                        <strong>Febrero 2025</strong>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </article>
 
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
                 <h3>Actividad reciente</h3>
-                <div className={styles.activityTimeline}>
-                  {visibleCustomerActivity.map((item) => (
-                    <div key={`${item.date}-${item.title}`} className={styles.activityItem}>
-                      <span className={styles.activityDot} />
-                      <div className={styles.activityContent}>
-                        <time>{item.date}</time>
-                        <strong>{item.title}</strong>
-                        <span>{item.note}</span>
+                <div className={styles.activityCardBody}>
+                  <div className={styles.activityList}>
+                    {visibleCustomerActivity.map((item) => (
+                      <div key={`${item.date}-${item.title}`} className={styles.activityItem}>
+                        <span className={styles.activityDot} />
+                        <div className={styles.activityContent}>
+                          <time>{item.date}</time>
+                          <strong>{item.title}</strong>
+                          <span>{item.note}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <button type="button" className={styles.activityFooterButton}>
+                    Ver toda la actividad
+                  </button>
                 </div>
-                <button type="button" className={styles.linkButton}>
-                  Ver toda la actividad
-                </button>
               </article>
             </section>
 
             <section className={styles.rightBottomGrid}>
-              <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardCompact}`}>
+              <article className={`${styles.card} ${styles.bottomInfoCard}`}>
                 <h3>Historial de reservas (8)</h3>
-                <div className={styles.historyTable}>
-                  <div className={styles.historyHeader}>
-                    <span>FECHA</span>
-                    <span>HORA</span>
-                    <span>MESA</span>
-                    <span>GASTO</span>
-                  </div>
-                  {customerHistory.map((item) => (
-                    <div key={`${item.date}-${item.time}`} className={styles.compactRow}>
-                      <span>{item.date}</span>
-                      <span>{item.time}</span>
-                      <span>{item.table}</span>
-                      <strong>{item.spend}</strong>
+                <div className={styles.historyCardBody}>
+                  <div className={styles.historyList}>
+                    <div className={styles.historyTable}>
+                      <div className={styles.historyHeader}>
+                        <span>FECHA</span>
+                        <span>HORA</span>
+                        <span>MESA</span>
+                        <span>GASTO</span>
+                      </div>
+                      {customerHistory.map((item) => (
+                        <div key={`${item.date}-${item.time}`} className={styles.compactRow}>
+                          <span>{item.date}</span>
+                          <span>{item.time}</span>
+                          <span>{item.table}</span>
+                          <strong>{item.spend}</strong>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  <button type="button" className={styles.historyFooterButton}>
+                    Ver todas las reservas
+                  </button>
                 </div>
-                <button type="button" className={styles.linkButton}>
-                  Ver todas las reservas
-                </button>
               </article>
 
-              <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardCompact}`}>
+              <article className={`${styles.card} ${styles.bottomInfoCard}`}>
                 <h3>Consumos y preferencias</h3>
-                <div className={styles.detailList}>
-                  <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Vino preferido</span>
-                    <strong className={styles.detailValue}>Malbec de la Casa</strong>
+                <div className={styles.bottomInfoBody}>
+                  <div className={styles.consumptionList}>
+                    <div className={styles.consumptionItem}>
+                      <LabIcon name="notes" className={styles.detailMiniIcon} />
+                      <div>
+                        <span>Vino preferido</span>
+                        <strong>Malbec de la Casa</strong>
+                      </div>
+                    </div>
+                    <div className={styles.consumptionItem}>
+                      <LabIcon name="notes" className={styles.detailMiniIcon} />
+                      <div>
+                        <span>Plato favorito</span>
+                        <strong>Ravioles de cordero</strong>
+                      </div>
+                    </div>
+                    <div className={styles.consumptionItem}>
+                      <LabIcon name="notes" className={styles.detailMiniIcon} />
+                      <div>
+                        <span>Bebida preferida</span>
+                        <strong>Agua con gas</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Plato favorito</span>
-                    <strong className={styles.detailValue}>Ravioles de cordero</strong>
-                  </div>
-                  <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Bebida preferida</span>
-                    <strong className={styles.detailValue}>Agua con gas</strong>
-                  </div>
+                  <button type="button" className={styles.historyFooterButton}>
+                    Ver más preferencias
+                  </button>
                 </div>
-                <button type="button" className={styles.linkButton}>
-                  Ver más preferencias
-                </button>
               </article>
             </section>
           </aside>
