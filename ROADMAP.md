@@ -2,6 +2,12 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.0-configuracion-lab Laboratorio visual de configuracion
+
+- `/local/configuracion-lab` recrea visualmente la referencia de Configuracion del negocio como maqueta aislada;
+- se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/configuracion`;
+- se usan datos mock visuales para negocio, reservas, horarios, servicios, web publica, notificaciones y barra de acciones.
+
 ### v4.9-crm-lab Ajuste final de la columna derecha de CRM lab
 
 - `/local/crm-lab` quita el panel inferior duplicado de Consumos y preferencias, extiende los tres paneles derechos hasta el fondo y deja filtros limpios sin doble contenedor;

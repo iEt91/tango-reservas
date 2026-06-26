@@ -73,6 +73,10 @@ function isActiveRoute(pathname: string, href: string) {
     return true;
   }
 
+  if (href === "/local/configuracion" && pathname.startsWith("/local/configuracion-lab")) {
+    return true;
+  }
+
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

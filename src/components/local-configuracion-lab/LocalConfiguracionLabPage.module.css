@@ -1,0 +1,936 @@
+.page {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  color: #f8fafc;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+}
+
+.sectionNav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 2px 2px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sectionNav::-webkit-scrollbar {
+  display: none;
+}
+
+.navItem {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.navItemActive {
+  color: #67e8f9;
+  border-bottom-color: #22d3ee;
+}
+
+.navIcon {
+  width: 17px;
+  height: 17px;
+  color: currentColor;
+}
+
+.heroCard,
+.card,
+.footerBar {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
+  box-shadow: 0 18px 38px rgba(2, 6, 23, 0.2);
+}
+
+.heroCard {
+  min-height: 112px;
+  border-radius: 18px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.heroLeft {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.heroBadge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  background: rgba(8, 47, 73, 0.5);
+}
+
+.heroBadge svg,
+.panelHeaderIcon svg,
+.navIcon svg,
+.iconButton svg,
+.footerShield svg,
+.previewButton svg,
+.channelBadge svg,
+.notificationIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.heroText {
+  min-width: 0;
+}
+
+.heroTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.heroTitleRow h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+
+.heroSpark {
+  color: #22d3ee;
+  font-size: 20px;
+}
+
+.heroText p {
+  margin: 8px 0 0;
+  max-width: 760px;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.heroRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 320px;
+}
+
+.heroBusinessAvatarWrap {
+  width: 66px;
+  height: 66px;
+  flex: 0 0 auto;
+}
+
+.heroBusinessAvatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.35);
+}
+
+.heroBusinessMeta {
+  min-width: 0;
+}
+
+.heroBusinessName {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.heroBusinessType {
+  margin-top: 4px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.heroBusinessBottom {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.heroLocation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.heroLocation svg {
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  background: rgba(22, 163, 74, 0.14);
+  color: #86efac;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.primaryGrid,
+.secondaryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.card {
+  border-radius: 16px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.businessCard,
+.hoursCard,
+.servicesCard,
+.webCard,
+.reservationsCard,
+.notificationsCard {
+  min-height: 360px;
+}
+
+.servicesCard,
+.webCard,
+.notificationsCard {
+  min-height: 266px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panelHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.panelHeaderTitle h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 850;
+}
+
+.panelHeaderAction {
+  min-width: 0;
+}
+
+.panelHeaderIcon {
+  width: 19px;
+  height: 19px;
+  color: #22d3ee;
+  flex: 0 0 auto;
+}
+
+.headerActionButton,
+.fieldSelect,
+.reservationSelect,
+.rangeButton,
+.previewButton,
+.footerSecondaryButton,
+.footerPrimaryButton,
+.specialScheduleLink,
+.iconButton {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.78);
+  color: #e2e8f0;
+}
+
+.headerActionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fieldCard {
+  display: grid;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.fieldInput,
+.fieldSelect,
+.reservationSelect,
+.rangeButton,
+.timePill,
+.previewButton,
+.footerSecondaryButton,
+.footerPrimaryButton {
+  min-height: 36px;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+
+.fieldInput {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(2, 6, 23, 0.46);
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.fieldSelect,
+.reservationSelect,
+.timePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fieldSelect svg,
+.reservationSelect svg,
+.timePill svg {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  flex: 0 0 auto;
+}
+
+.reservationStack {
+  display: grid;
+  gap: 10px;
+}
+
+.toggleRow,
+.reservationSelectRow,
+.reservationRangeCard,
+.notificationRow {
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(2, 6, 23, 0.3);
+}
+
+.toggleRow,
+.reservationSelectRow,
+.reservationRangeCard {
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.toggleCopy {
+  min-width: 0;
+}
+
+.toggleCopy strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.toggleCopy span {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.switch {
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(148, 163, 184, 0.2);
+  padding: 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+}
+
+.switchOn {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.96), rgba(14, 165, 233, 0.92));
+  border-color: rgba(34, 211, 238, 0.28);
+  justify-content: flex-end;
+}
+
+.switchThumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #f8fafc;
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.18);
+}
+
+.reservationSelect {
+  width: 134px;
+  flex: 0 0 auto;
+}
+
+.reservationRangeCard {
+  align-items: flex-start;
+}
+
+.reservationRangeCard strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.reservationRangeCard span {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.rangeButton {
+  width: 150px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-right: 10px;
+}
+
+.hoursTable {
+  display: grid;
+  gap: 8px;
+}
+
+.hoursHeader,
+.hoursRow {
+  display: grid;
+  grid-template-columns: 88px 1fr 1fr 1.35fr 24px;
+  gap: 8px;
+  align-items: center;
+}
+
+.hoursHeader {
+  color: #94a3b8;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.hoursDay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hoursDay .switch {
+  width: 34px;
+  height: 18px;
+}
+
+.hoursDay .switchThumb {
+  width: 12px;
+  height: 12px;
+}
+
+.breakGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  min-width: 0;
+}
+
+.timePill {
+  padding: 0 10px;
+}
+
+.timePillMuted {
+  opacity: 0.92;
+}
+
+.iconButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.iconButton svg {
+  width: 13px;
+  height: 13px;
+}
+
+.specialScheduleLink {
+  margin-top: 4px;
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: #67e8f9;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.serviceTable {
+  display: grid;
+  gap: 8px;
+}
+
+.serviceHeader,
+.serviceRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) 88px 88px 86px 72px;
+  gap: 8px;
+  align-items: center;
+}
+
+.serviceHeader {
+  color: #94a3b8;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.serviceRow {
+  min-height: 54px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.serviceMain {
+  min-width: 0;
+}
+
+.serviceMain strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.15;
+  color: #f8fafc;
+}
+
+.serviceMain span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: #94a3b8;
+}
+
+.stateBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.stateActive {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+}
+
+.stateInactive {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.24);
+}
+
+.actionCluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moreDots {
+  font-size: 18px;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.webLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+  gap: 14px;
+  min-width: 0;
+}
+
+.webSettings {
+  display: grid;
+  gap: 10px;
+}
+
+.messageField {
+  display: grid;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.messageField span {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.messageField textarea {
+  width: 100%;
+  min-height: 108px;
+  resize: none;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.46);
+  color: #f8fafc;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.messageField strong {
+  justify-self: end;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.previewCard {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.previewLabel {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.previewImage {
+  position: relative;
+  height: 164px;
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 60% 22%, rgba(253, 230, 138, 0.32), transparent 28%),
+    linear-gradient(180deg, rgba(27, 40, 64, 0.96), rgba(8, 15, 28, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.previewGlow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 25%, rgba(251, 191, 36, 0.45), transparent 30%),
+    radial-gradient(circle at 50% 75%, rgba(34, 211, 238, 0.1), transparent 40%);
+}
+
+.previewSky {
+  position: absolute;
+  inset: 0 0 45% 0;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.3), rgba(17, 24, 39, 0));
+}
+
+.previewWindow {
+  position: absolute;
+  left: 10%;
+  top: 18%;
+  width: 80%;
+  height: 38%;
+  border-radius: 16px;
+  border: 1px solid rgba(253, 230, 138, 0.16);
+  background: rgba(15, 23, 42, 0.36);
+  box-shadow: inset 0 -18px 30px rgba(251, 191, 36, 0.16);
+}
+
+.previewWater {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  background:
+    linear-gradient(180deg, rgba(8, 15, 28, 0), rgba(15, 23, 42, 0.76)),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.32), rgba(34, 211, 238, 0.22));
+}
+
+.previewButton {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.previewButton svg {
+  width: 14px;
+  height: 14px;
+}
+
+.previewHint {
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: center;
+}
+
+.notificationsList {
+  display: grid;
+  gap: 10px;
+}
+
+.notificationRow {
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notificationMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.notificationIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  background: rgba(8, 47, 73, 0.34);
+  flex: 0 0 auto;
+}
+
+.notificationCopy {
+  min-width: 0;
+}
+
+.notificationCopy strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.notificationCopy span {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.channelGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.channelBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 6, 23, 0.26);
+}
+
+.channelBadge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.footerBar {
+  min-height: 72px;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.footerMessage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #cbd5e1;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.footerShield {
+  width: 20px;
+  height: 20px;
+  color: #22c55e;
+  flex: 0 0 auto;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.footerSecondaryButton,
+.footerPrimaryButton {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footerPrimaryButton {
+  border-color: rgba(34, 211, 238, 0.28);
+  color: #e0f2fe;
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.8), rgba(8, 47, 73, 0.9));
+}
+
+@media (max-width: 1440px) {
+  .heroCard {
+    padding: 20px;
+  }
+
+  .heroTitleRow h1 {
+    font-size: 27px;
+  }
+
+  .primaryGrid,
+  .secondaryGrid {
+    gap: 10px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .businessCard,
+  .hoursCard,
+  .servicesCard,
+  .webCard,
+  .reservationsCard,
+  .notificationsCard {
+    min-height: 334px;
+  }
+
+  .servicesCard,
+  .webCard,
+  .notificationsCard {
+    min-height: 248px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .primaryGrid,
+  .secondaryGrid,
+  .webLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footerBar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footerActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
