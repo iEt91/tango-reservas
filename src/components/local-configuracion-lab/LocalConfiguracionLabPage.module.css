@@ -242,8 +242,8 @@
 .servicesCard,
 .webCard,
 .notificationsCard {
-  min-height: 245px;
-  max-height: 245px;
+  min-height: 258px;
+  max-height: 258px;
 }
 
 .panelHeader {
@@ -251,7 +251,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .panelHeaderTitle {
@@ -366,7 +366,7 @@
 
 .reservationStack {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .toggleRow,
@@ -381,7 +381,7 @@
 .reservationSelectRow,
 .reservationRangeCard {
   border-radius: 14px;
-  padding: 10px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -395,16 +395,16 @@
 .toggleCopy strong {
   display: block;
   color: #f8fafc;
-  font-size: 12px;
-  line-height: 1.15;
+  font-size: 11.5px;
+  line-height: 1.1;
 }
 
 .toggleCopy span {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   color: #94a3b8;
-  font-size: 10px;
-  line-height: 1.2;
+  font-size: 9.5px;
+  line-height: 1.15;
 }
 
 .switch {
@@ -435,7 +435,7 @@
 }
 
 .reservationSelect {
-  width: 124px;
+  width: 114px;
   flex: 0 0 auto;
 }
 
@@ -446,20 +446,20 @@
 .reservationRangeCard strong {
   display: block;
   color: #f8fafc;
-  font-size: 12px;
-  line-height: 1.15;
+  font-size: 11.5px;
+  line-height: 1.1;
 }
 
 .reservationRangeCard span {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   color: #94a3b8;
-  font-size: 10px;
-  line-height: 1.2;
+  font-size: 9.5px;
+  line-height: 1.15;
 }
 
 .rangeButton {
-  width: 140px;
+  width: 132px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -476,8 +476,8 @@
 .hoursHeader,
 .hoursRow {
   display: grid;
-  grid-template-columns: 82px 88px 88px 154px 26px;
-  gap: 6px;
+  grid-template-columns: 104px 82px 82px 132px 24px;
+  column-gap: 10px;
   align-items: center;
 }
 
@@ -495,7 +495,7 @@
   gap: 8px;
   min-width: 0;
   color: #e2e8f0;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 
@@ -509,6 +509,11 @@
   height: 12px;
 }
 
+.hoursDayLabel {
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .breakGroup {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -518,9 +523,9 @@
 
 .timePill {
   padding: 0 8px;
-  min-height: 30px;
-  height: 30px;
-  font-size: 12px;
+  min-height: 28px;
+  height: 28px;
+  font-size: 11.5px;
 }
 
 .timePillMuted {
@@ -563,22 +568,22 @@
 .serviceHeader,
 .serviceRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) 88px 88px 86px 72px;
-  gap: 8px;
+  grid-template-columns: minmax(0, 2.15fr) 74px 74px 72px 56px;
+  gap: 6px;
   align-items: center;
 }
 
 .serviceHeader {
   color: #94a3b8;
-  font-size: 9px;
+  font-size: 8.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 800;
 }
 
 .serviceRow {
-  min-height: 42px;
-  padding: 8px 0;
+  min-height: 40px;
+  padding: 6px 0;
   border-top: 1px solid rgba(148, 163, 184, 0.08);
 }
 
@@ -588,17 +593,23 @@
 
 .serviceMain strong {
   display: block;
-  font-size: 12px;
-  line-height: 1.15;
+  font-size: 11.5px;
+  line-height: 1.1;
   color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .serviceMain span {
   display: block;
-  margin-top: 3px;
-  font-size: 10px;
-  line-height: 1.2;
+  margin-top: 2px;
+  font-size: 9.5px;
+  line-height: 1.15;
   color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stateBadge {
@@ -638,61 +649,62 @@
 
 .webLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) 170px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 10px;
   min-width: 0;
+  align-items: start;
 }
 
 .webSettings {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .messageField {
   display: grid;
-  gap: 6px;
-  padding-top: 2px;
+  gap: 4px;
+  padding-top: 0;
 }
 
 .messageField span {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #94a3b8;
 }
 
 .messageField textarea {
   width: 100%;
-  min-height: 68px;
-  height: 68px;
+  min-height: 52px;
+  height: 52px;
   resize: none;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 12px;
   background: rgba(2, 6, 23, 0.46);
   color: #f8fafc;
-  padding: 10px 12px;
-  font-size: 12px;
-  line-height: 1.35;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.25;
 }
 
 .messageField strong {
   justify-self: end;
   color: #94a3b8;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .previewCard {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   align-content: start;
 }
 
 .previewLabel {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #94a3b8;
 }
 
 .previewImage {
   position: relative;
-  height: 92px;
+  height: 78px;
   border-radius: 16px;
   overflow: hidden;
   background:
@@ -744,7 +756,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 12px;
+  min-height: 28px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -755,23 +768,23 @@
 
 .previewHint {
   color: #94a3b8;
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
 }
 
 .notificationsList {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .notificationRow {
   border-radius: 14px;
-  padding: 10px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 42px;
+  min-height: 40px;
 }
 
 .notificationMain {
@@ -782,8 +795,8 @@
 }
 
 .notificationIcon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -800,28 +813,28 @@
 .notificationCopy strong {
   display: block;
   color: #f8fafc;
-  font-size: 12px;
-  line-height: 1.15;
+  font-size: 11.5px;
+  line-height: 1.1;
 }
 
 .notificationCopy span {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   color: #94a3b8;
-  font-size: 10px;
-  line-height: 1.25;
+  font-size: 9.5px;
+  line-height: 1.15;
 }
 
 .channelGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
 .channelBadge {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -831,8 +844,8 @@
 }
 
 .channelBadge svg {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 .footerBar {
@@ -919,7 +932,7 @@
   .servicesCard,
   .webCard,
   .notificationsCard {
-    min-height: 248px;
+    min-height: 258px;
   }
 }
 

@@ -537,7 +537,7 @@ export function LocalConfiguracionLabPage() {
                     >
                       <span className={styles.switchThumb} />
                     </button>
-                    <span>{row.day}</span>
+                    <span className={styles.hoursDayLabel}>{row.day}</span>
                   </div>
                   <TimePill value={row.open} />
                   <TimePill value={row.close} />
