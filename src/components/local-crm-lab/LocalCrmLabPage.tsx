@@ -32,12 +32,6 @@ type CustomerRow = {
   selected?: boolean;
 };
 
-type ActivityItem = {
-  date: string;
-  title: string;
-  note: string;
-};
-
 const crmMetrics: MetricCard[] = [
   { title: "Total clientes", value: "1.248", subtitle: "+28 este mes", footer: "Ver todos →", tone: "cyan" },
   { title: "Clientes VIP", value: "186", subtitle: "15% del total", footer: "Ver todos →", tone: "amber" },
@@ -166,33 +160,29 @@ const crmCustomers: CustomerRow[] = [
     visits: "7",
     spend: "$ 64.800",
   },
-];
-
-const customerActivity: ActivityItem[] = [
   {
-    date: "22/05/2026 13:00",
-    title: "Reserva confirmada",
-    note: "Mesa 5 · 2 personas",
+    id: "lucia",
+    name: "Lucía Fernández",
+    initials: "LF",
+    tags: ["Frecuente"],
+    contact: "+54 9 11 7788 9900",
+    email: "lucia.fernandez@gmail.com",
+    lastVisit: "09/05/2026",
+    nextReservation: "26/05/2026 21:30 · Mesa 11",
+    visits: "6",
+    spend: "$ 58.400",
   },
   {
-    date: "15/05/2026 21:45",
-    title: "Completó reserva",
-    note: "Mesa 8 · 2 personas",
-  },
-  {
-    date: "10/05/2026 14:20",
-    title: "Canceló reserva",
-    note: "Mesa 3 · 2 personas",
-  },
-  {
-    date: "05/05/2026 19:10",
-    title: "Dejó una reseña",
-    note: "⭐⭐⭐⭐⭐",
-  },
-  {
-    date: "01/05/2026 18:30",
-    title: "Nueva reserva",
-    note: "Mesa 6 · 2 personas",
+    id: "martin",
+    name: "Martín Sosa",
+    initials: "MS",
+    tags: ["VIP"],
+    contact: "+54 9 11 9900 1122",
+    email: "martin.sosa@gmail.com",
+    lastVisit: "14/05/2026",
+    nextReservation: "—",
+    visits: "10",
+    spend: "$ 84.900",
   },
 ];
 
@@ -209,10 +199,19 @@ const customerDietary = ["Vegetariana", "Sin gluten"];
 const customerHistory = [
   { date: "15/05/2026", time: "21:00", table: "Mesa 8", spend: "$ 95.600" },
   { date: "01/05/2026", time: "21:30", table: "Mesa 6", spend: "$ 91.200" },
+  { date: "20/04/2026", time: "20:15", table: "Mesa 4", spend: "$ 89.500" },
+  { date: "12/04/2026", time: "19:30", table: "Mesa 2", spend: "$ 76.800" },
 ];
 
 const visibleCustomerPreferences = customerPreferences.slice(0, 3);
-const visibleCustomerActivity = customerActivity.slice(0, 4);
+const visibleCustomers = crmCustomers.slice(0, 10);
+const visibleCustomerHistory = customerHistory.slice(0, 4);
+const customerConsumption = [
+  { label: "Vino preferido", value: "Malbec de la Casa" },
+  { label: "Plato favorito", value: "Ravioles de cordero" },
+  { label: "Bebida preferida", value: "Agua con gas" },
+  { label: "Notas", value: "Cliente muy detallista. Prefiere atención discreta y ambiente tranquilo." },
+];
 function LabIcon({
   name,
   className = "",
@@ -523,10 +522,10 @@ export function LocalCrmLabPage() {
               </div>
 
               <div className={styles.customerRows}>
-                {crmCustomers.map((customer) => (
-                  <article
-                    key={customer.id}
-                    className={`${styles.customerRow} ${customer.selected ? styles.customerRowSelected : ''}`}
+              {visibleCustomers.map((customer) => (
+                <article
+                  key={customer.id}
+                  className={`${styles.customerRow} ${customer.selected ? styles.customerRowSelected : ''}`}
                   >
                     <div className={styles.customerCell}>
                       <div className={styles.customerAvatar}>{customer.initials}</div>
@@ -566,31 +565,31 @@ export function LocalCrmLabPage() {
 
               <div className={styles.tableFooter}>
                 <div className={styles.pagination}>
-                <span>Mostrando 1 a 8 de 1.248 clientes</span>
-                <div className={styles.paginationControls}>
-                  <button type="button" className={styles.paginationButton}>
-                    &lt;
+                  <span>Mostrando 1 a 10 de 1.248 clientes</span>
+                  <div className={styles.paginationControls}>
+                    <button type="button" className={styles.paginationButton}>
+                      &lt;
+                    </button>
+                    <button type="button" className={`${styles.paginationButton} ${styles.paginationButtonActive}`}>
+                      1
+                    </button>
+                    <button type="button" className={styles.paginationButton}>
+                      2
+                    </button>
+                    <button type="button" className={styles.paginationButton}>
+                      3
+                    </button>
+                    <span className={styles.paginationDots}>...</span>
+                    <button type="button" className={styles.paginationButton}>
+                      156
+                    </button>
+                    <button type="button" className={styles.paginationButton}>
+                      &gt;
+                    </button>
+                  </div>
+                  <button type="button" className={styles.pageSizeButton}>
+                    10 por página
                   </button>
-                  <button type="button" className={`${styles.paginationButton} ${styles.paginationButtonActive}`}>
-                    1
-                  </button>
-                  <button type="button" className={styles.paginationButton}>
-                    2
-                  </button>
-                  <button type="button" className={styles.paginationButton}>
-                    3
-                  </button>
-                  <span className={styles.paginationDots}>...</span>
-                  <button type="button" className={styles.paginationButton}>
-                    156
-                  </button>
-                  <button type="button" className={styles.paginationButton}>
-                    &gt;
-                  </button>
-                </div>
-                <button type="button" className={styles.pageSizeButton}>
-                  8 por página
-                </button>
                 </div>
               </div>
             </section>
@@ -628,10 +627,10 @@ export function LocalCrmLabPage() {
                 </div>
               </div>
 
-              <div className={styles.profileStatsGrid}>
-                <div className={styles.profileStat}>
-                  <LabIcon name="birthday" className={styles.profileStatIcon} />
-                  <span className={styles.profileStatLabel}>Cumpleaños</span>
+                <div className={styles.profileStats}>
+                  <div className={styles.profileStat}>
+                    <LabIcon name="birthday" className={styles.profileStatIcon} />
+                    <span className={styles.profileStatLabel}>Cumpleaños</span>
                   <strong className={styles.profileStatValue}>12 de agosto</strong>
                 </div>
                 <div className={styles.profileStat}>
@@ -642,10 +641,10 @@ export function LocalCrmLabPage() {
                 <div className={styles.profileStat}>
                   <LabIcon name="calendar" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Próxima reserva</span>
-                  <strong className={`${styles.profileStatValue} ${styles.profileStatValueMultiline}`}>
-                    22/05/2026 · 13:00 · Mesa 5
-                  </strong>
-                </div>
+                    <strong className={`${styles.profileStatValue} ${styles.profileStatValueMultiline}`}>
+                      22/05/2026 · 13:00 · Mesa 5
+                    </strong>
+                  </div>
                 <div className={styles.profileStat}>
                   <LabIcon name="users" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Visitas</span>
@@ -725,29 +724,6 @@ export function LocalCrmLabPage() {
               </article>
 
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <h3>Actividad reciente</h3>
-                <div className={styles.activityCardBody}>
-                  <div className={styles.activityList}>
-                    {visibleCustomerActivity.map((item) => (
-                      <div key={`${item.date}-${item.title}`} className={styles.activityItem}>
-                        <span className={styles.activityDot} />
-                        <div className={styles.activityContent}>
-                          <time>{item.date}</time>
-                          <strong>{item.title}</strong>
-                          <span>{item.note}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button type="button" className={styles.activityFooterButton}>
-                    Ver toda la actividad
-                  </button>
-                </div>
-              </article>
-            </section>
-
-            <section className={styles.rightBottomGrid}>
-              <article className={`${styles.card} ${styles.bottomInfoCard}`}>
                 <h3>Historial de reservas (8)</h3>
                 <div className={styles.historyCardBody}>
                   <div className={styles.historyList}>
@@ -758,7 +734,7 @@ export function LocalCrmLabPage() {
                         <span>MESA</span>
                         <span>GASTO</span>
                       </div>
-                      {customerHistory.map((item) => (
+                      {visibleCustomerHistory.map((item) => (
                         <div key={`${item.date}-${item.time}`} className={styles.compactRow}>
                           <span>{item.date}</span>
                           <span>{item.time}</span>
@@ -773,36 +749,34 @@ export function LocalCrmLabPage() {
                   </button>
                 </div>
               </article>
+            </section>
 
-              <article className={`${styles.card} ${styles.bottomInfoCard}`}>
+            <section className={`${styles.card} ${styles.rightBottomWide}`}>
+              <article className={styles.consumptionWideCard}>
                 <h3>Consumos y preferencias</h3>
-                <div className={styles.bottomInfoBody}>
+                <div className={styles.consumptionWideGrid}>
                   <div className={styles.consumptionList}>
-                    <div className={styles.consumptionItem}>
-                      <LabIcon name="notes" className={styles.detailMiniIcon} />
-                      <div>
-                        <span>Vino preferido</span>
-                        <strong>Malbec de la Casa</strong>
+                    {customerConsumption.slice(0, 3).map((item) => (
+                      <div key={item.label} className={styles.consumptionItem}>
+                        <LabIcon name="notes" className={styles.detailMiniIcon} />
+                        <div>
+                          <span>{item.label}</span>
+                          <strong>{item.value}</strong>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                  <div className={styles.bottomPreferencesBlock}>
+                    <span className={styles.detailLabel}>Notas y señales</span>
+                    <div className={styles.bottomPreferenceList}>
+                      <span className={styles.listPill}>Amante del vino</span>
+                      <span className={styles.listPill}>Veggie friendly</span>
+                      <span className={styles.listPill}>Viajero frecuente</span>
                     </div>
-                    <div className={styles.consumptionItem}>
-                      <LabIcon name="notes" className={styles.detailMiniIcon} />
-                      <div>
-                        <span>Plato favorito</span>
-                        <strong>Ravioles de cordero</strong>
-                      </div>
-                    </div>
-                    <div className={styles.consumptionItem}>
-                      <LabIcon name="notes" className={styles.detailMiniIcon} />
-                      <div>
-                        <span>Bebida preferida</span>
-                        <strong>Agua con gas</strong>
-                      </div>
+                    <div className={styles.bottomNote}>
+                      Cliente muy detallista. Prefiere atención discreta y ambiente tranquilo.
                     </div>
                   </div>
-                  <button type="button" className={styles.historyFooterButton}>
-                    Ver más preferencias
-                  </button>
                 </div>
               </article>
             </section>
