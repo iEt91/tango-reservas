@@ -10,13 +10,13 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.4.4-crm-lab`
+`v5.4.5-crm-lab`
 
-Esta version compacta verticalmente el laboratorio visual de CRM en `/local/crm-lab`, manteniendo el shell premium comun de `/local?business=demuru` y mock data local.
+Esta version refina la tarjeta derecha de cliente en `/local/crm-lab`, con mejor jerarquia visual, mini-cards y una actividad reciente en forma de timeline.
 
-## Etapa v5.4.4-crm-lab
+## Etapa v5.4.5-crm-lab
 
-- `/local/crm-lab` compacta la pantalla premium de CRM para que entren completos los paneles derechos y la tabla de clientes;
+- `/local/crm-lab` refina la ficha derecha del cliente seleccionado con mejor jerarquia visual y mas aire interno;
 - se reutiliza el shell premium comun de `/local?business=demuru` y no se toca la ruta real `/local/crm`;
 - la pantalla sigue usando mock data local y no conecta Supabase ni logica real.
 

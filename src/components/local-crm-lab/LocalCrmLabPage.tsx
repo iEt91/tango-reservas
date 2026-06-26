@@ -598,26 +598,31 @@ export function LocalCrmLabPage() {
 
           <aside className={styles.rightColumn}>
             <section className={`${styles.card} ${styles.profilePanel}`}>
-              <div className={styles.profileTop}>
+              <div className={styles.profileMainRow}>
                 <div className={styles.profileIdentity}>
                   <div className={styles.profileAvatar}>{selectedCustomer?.initials}</div>
-                  <div>
-                    <div className={styles.profileName}>{selectedCustomer?.name}</div>
-                    <span className={`${styles.customerTag} ${styles.tagAmber}`}>VIP</span>
-                    <div className={styles.profileContact}>{selectedCustomer?.contact}</div>
-                    <div className={styles.profileContact}>{selectedCustomer?.email}</div>
+                  <div className={styles.profileText}>
+                    <div className={styles.profileNameRow}>
+                      <h2 className={styles.profileName}>{selectedCustomer?.name}</h2>
+                      <button type="button" className={styles.iconGhostButton} aria-label="Más opciones">
+                        ⋯
+                      </button>
+                    </div>
+                    <span className={styles.vipBadge}>VIP</span>
+                    <p className={styles.profileContactLine}>{selectedCustomer?.contact}</p>
+                    <p className={styles.profileContactLine}>{selectedCustomer?.email}</p>
                   </div>
                 </div>
 
                 <div className={styles.profileActions}>
-                  <button type="button" className={styles.whatsAppButton}>
+                  <button type="button" className={styles.whatsappButton}>
                     <LabIcon name="whatsapp" className={styles.actionIcon} />
                     Enviar WhatsApp
                   </button>
-                  <button type="button" className={styles.primaryButton}>
+                  <button type="button" className={styles.primaryActionButton}>
                     Crear reserva
                   </button>
-                  <button type="button" className={styles.secondaryButton}>
+                  <button type="button" className={styles.secondaryActionButton}>
                     Editar cliente
                   </button>
                 </div>
@@ -627,53 +632,53 @@ export function LocalCrmLabPage() {
                 <div className={styles.profileStat}>
                   <LabIcon name="birthday" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Cumpleaños</span>
-                  <strong>12 de agosto</strong>
+                  <strong className={styles.profileStatValue}>12 de agosto</strong>
                 </div>
                 <div className={styles.profileStat}>
                   <LabIcon name="clock" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Última visita</span>
-                  <strong>15/05/2026</strong>
+                  <strong className={styles.profileStatValue}>15/05/2026</strong>
                 </div>
                 <div className={styles.profileStat}>
                   <LabIcon name="calendar" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Próxima reserva</span>
-                  <strong>22/05/2026 13:00 · Mesa 5</strong>
+                  <strong className={styles.profileStatValue}>22/05/2026 · 13:00 · Mesa 5</strong>
                 </div>
                 <div className={styles.profileStat}>
                   <LabIcon name="users" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Visitas</span>
-                  <strong>8</strong>
+                  <strong className={styles.profileStatValue}>8</strong>
                 </div>
                 <div className={styles.profileStat}>
                   <LabIcon name="spend" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Gasto promedio</span>
-                  <strong>$ 92.300</strong>
+                  <strong className={styles.profileStatValue}>$ 92.300</strong>
                 </div>
               </div>
             </section>
 
             <section className={styles.rightDetailsGrid}>
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <div className={styles.detailTitle}>Preferencias</div>
+                <h3>Preferencias</h3>
                 <div className={styles.detailList}>
                   {visibleCustomerPreferences.map((item) => (
-                    <div key={item.label} className={styles.detailRow}>
-                      <span>{item.label}</span>
-                      <strong>{item.value}</strong>
+                    <div key={item.label} className={styles.detailGroup}>
+                      <span className={styles.detailLabel}>{item.label}</span>
+                      <strong className={styles.detailValue}>{item.value}</strong>
                     </div>
                   ))}
-                  <div className={styles.tagCloud}>
-                    <span className={styles.tagPurple}>Aniversario</span>
-                    <span className={styles.tagBlue}>Cumpleaños</span>
-                    <span className={styles.tagGold}>Amante del vino</span>
-                    <span className={styles.tagGreen}>Veggie friendly</span>
-                    <span className={styles.tagBrown}>Viajero frecuente</span>
+                  <div className={styles.tagList}>
+                    <span className={`${styles.tagPill} ${styles.tagPurple}`}>Aniversario</span>
+                    <span className={`${styles.tagPill} ${styles.tagBlue}`}>Cumpleaños</span>
+                    <span className={`${styles.tagPill} ${styles.tagGold}`}>Amante del vino</span>
+                    <span className={`${styles.tagPill} ${styles.tagGreen}`}>Veggie friendly</span>
+                    <span className={`${styles.tagPill} ${styles.tagBrown}`}>Viajero frecuente</span>
                   </div>
                 </div>
               </article>
 
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <div className={styles.detailTitle}>Alergias e intolerancias</div>
+                <h3>Alergias e intolerancias</h3>
                 <div className={styles.simpleList}>
                   {customerAllergies.map((allergy) => (
                     <span key={allergy} className={styles.listPill}>
@@ -682,22 +687,27 @@ export function LocalCrmLabPage() {
                   ))}
                 </div>
                 <div className={styles.detailDivider} />
-                <div className={styles.detailTitleSmall}>Preferencias dietarias</div>
-                <div className={styles.simpleList}>
+                <div className={styles.detailGroup}>
+                  <span className={styles.detailLabel}>Preferencias dietarias</span>
+                  <div className={styles.simpleList}>
                   {customerDietary.map((item) => (
                     <span key={item} className={styles.listPill}>
                       {item}
                     </span>
                   ))}
+                  </div>
                 </div>
                 <div className={styles.detailDivider} />
-                <div className={styles.detailTitleSmall}>Forma de contacto preferida</div>
-                <div className={styles.simpleList}>
+                <div className={styles.detailGroup}>
+                  <span className={styles.detailLabel}>Forma de contacto preferida</span>
+                  <div className={styles.simpleList}>
                   <span className={`${styles.listPill} ${styles.whatsAppPill}`}>WhatsApp</span>
+                  </div>
                 </div>
                 <div className={styles.detailDivider} />
-                <div className={styles.detailTitleSmall}>Canal y antigüedad</div>
-                <div className={styles.metaGrid}>
+                <div className={styles.detailGroup}>
+                  <span className={styles.detailLabel}>Canal y antigüedad</span>
+                  <div className={styles.metaGrid}>
                   <div>
                     <span>Canal de origen</span>
                     <strong>Instagram</strong>
@@ -706,16 +716,18 @@ export function LocalCrmLabPage() {
                     <span>Cliente desde</span>
                     <strong>Febrero 2025</strong>
                   </div>
+                  </div>
                 </div>
               </article>
 
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <div className={styles.detailTitle}>Actividad reciente</div>
-                <div className={styles.activityList}>
+                <h3>Actividad reciente</h3>
+                <div className={styles.activityTimeline}>
                   {visibleCustomerActivity.map((item) => (
-                    <div key={`${item.date}-${item.title}`} className={styles.activityRow}>
-                      <div className={styles.activityDate}>{item.date}</div>
-                      <div>
+                    <div key={`${item.date}-${item.title}`} className={styles.activityItem}>
+                      <span className={styles.activityDot} />
+                      <div className={styles.activityContent}>
+                        <time>{item.date}</time>
                         <strong>{item.title}</strong>
                         <span>{item.note}</span>
                       </div>
@@ -730,7 +742,7 @@ export function LocalCrmLabPage() {
 
             <section className={styles.rightBottomGrid}>
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardCompact}`}>
-                <div className={styles.detailTitle}>Historial de reservas (8)</div>
+                <h3>Historial de reservas (8)</h3>
                 <div className={styles.historyTable}>
                   <div className={styles.historyHeader}>
                     <span>FECHA</span>
@@ -739,11 +751,11 @@ export function LocalCrmLabPage() {
                     <span>GASTO</span>
                   </div>
                   {customerHistory.map((item) => (
-                    <div key={`${item.date}-${item.time}`} className={styles.historyRow}>
+                    <div key={`${item.date}-${item.time}`} className={styles.compactRow}>
                       <span>{item.date}</span>
                       <span>{item.time}</span>
                       <span>{item.table}</span>
-                      <span>{item.spend}</span>
+                      <strong>{item.spend}</strong>
                     </div>
                   ))}
                 </div>
@@ -753,19 +765,19 @@ export function LocalCrmLabPage() {
               </article>
 
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardCompact}`}>
-                <div className={styles.detailTitle}>Consumos y preferencias</div>
+                <h3>Consumos y preferencias</h3>
                 <div className={styles.detailList}>
-                  <div className={styles.detailRow}>
-                    <span>Vino preferido</span>
-                    <strong>Malbec de la Casa</strong>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Vino preferido</span>
+                    <strong className={styles.detailValue}>Malbec de la Casa</strong>
                   </div>
-                  <div className={styles.detailRow}>
-                    <span>Plato favorito</span>
-                    <strong>Ravioles de cordero</strong>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Plato favorito</span>
+                    <strong className={styles.detailValue}>Ravioles de cordero</strong>
                   </div>
-                  <div className={styles.detailRow}>
-                    <span>Bebida preferida</span>
-                    <strong>Agua con gas</strong>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Bebida preferida</span>
+                    <strong className={styles.detailValue}>Agua con gas</strong>
                   </div>
                 </div>
                 <button type="button" className={styles.linkButton}>

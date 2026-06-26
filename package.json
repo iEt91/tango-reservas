@@ -1,6 +1,6 @@
 {
   "name": "tango-reservas",
-  "version": "5.4.4-crm-lab",
+  "version": "5.4.5-crm-lab",
   "private": true,
   "scripts": {
     "dev": "next dev",

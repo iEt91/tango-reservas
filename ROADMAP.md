@@ -2,9 +2,9 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.4.4-crm-lab Laboratorio visual de CRM
+### v5.4.5-crm-lab Refino visual de la ficha derecha de CRM
 
-- `/local/crm-lab` compacta verticalmente la pantalla de CRM para que entren completos los paneles derechos;
+- `/local/crm-lab` refina la tarjeta derecha del cliente seleccionado con jerarquia visual premium;
 - se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/crm`;
 - la pantalla usa mock data local para clientes, detalle y actividad sin conectar Supabase.
 

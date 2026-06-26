@@ -9,7 +9,7 @@
   height: calc(100vh - 56px);
   max-height: calc(100vh - 56px);
   overflow: hidden;
-  padding: 12px 24px 6px;
+  padding: 12px 24px 30px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -245,8 +245,8 @@
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-rows: 164px minmax(0, 1fr) 112px;
-  gap: 4px;
+  grid-template-rows: 172px 270px 118px;
+  gap: 8px;
   overflow: hidden;
 }
 
@@ -626,78 +626,153 @@
 }
 
 .profilePanel {
-  height: 164px;
-  min-height: 164px;
-  max-height: 164px;
-  padding: 8px;
+  height: 172px;
+  min-height: 172px;
+  max-height: 172px;
+  padding: 14px 14px 10px;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(8, 15, 28, 0.96));
   overflow: hidden;
   display: grid;
-  grid-template-rows: 70px 1fr;
-  gap: 8px;
+  grid-template-rows: 82px 1fr;
+  gap: 9px;
 }
 
-.profileTop {
+.profileMainRow {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) 148px;
+  gap: 12px;
   align-items: start;
 }
 
 .profileIdentity {
-  display: flex;
-  gap: 12px;
   min-width: 0;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+}
+
+.profileText {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .profileAvatar {
-  width: 46px;
-  height: 46px;
+  width: 58px;
+  height: 58px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.22), rgba(8, 47, 73, 0.72));
-  border: 1px solid rgba(34, 211, 238, 0.26);
-  color: #f8fafc;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 850;
+  color: #e0faff;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(34, 211, 238, 0.38), transparent 36%),
+    linear-gradient(135deg, rgba(14, 116, 144, 0.95), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.12);
+}
+
+.profileNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profileNameRow h2,
+.profileName {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iconGhostButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 6, 23, 0.35);
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
   flex: 0 0 auto;
 }
 
-.profileName {
-  font-size: 14px;
-  font-weight: 850;
-  color: #f8fafc;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.vipBadge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
-.profileContact {
-  margin-top: 1px;
-  font-size: 10px;
-  color: #94a3b8;
-  min-width: 0;
+.profileContactLine {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.1;
+  color: #9fb3c8;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .profileActions {
   display: grid;
-  gap: 3px;
+  grid-template-rows: repeat(3, 28px);
+  gap: 6px;
   justify-items: stretch;
   min-width: 0;
 }
 
-.whatsAppButton {
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.2);
+.whatsappButton,
+.primaryActionButton,
+.secondaryActionButton {
+  height: 28px;
+  min-height: 28px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.whatsappButton {
   color: #bbf7d0;
+  background: rgba(22, 163, 74, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.primaryActionButton {
+  color: #dff7ff;
+  background: rgba(14, 165, 233, 0.18);
+  border: 1px solid rgba(14, 165, 233, 0.38);
+}
+
+.secondaryActionButton {
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .actionIcon {
@@ -705,34 +780,25 @@
   height: 14px;
 }
 
-.profileActions button {
-  height: 25px;
-  font-size: 10px;
-}
-
 .profileStatsGrid {
   margin-top: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  gap: 6px;
   overflow: hidden;
 }
 
 .profileStat {
   min-height: 52px;
-  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 7px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
   background: rgba(2, 6, 23, 0.34);
-  padding: 3px;
   display: grid;
   gap: 3px;
   align-content: start;
   min-width: 0;
   overflow: hidden;
-}
-
-.profileStat:last-child {
-  border-right: 0;
 }
 
 .profileStatIcon {
@@ -742,36 +808,48 @@
 }
 
 .profileStatLabel {
-  font-size: 9px;
-  color: #94a3b8;
-}
-
-.profileStat strong {
-  font-size: 11px;
-  line-height: 1.2;
-  color: #f8fafc;
-  font-weight: 800;
-  min-width: 0;
+  font-size: 10px;
+  line-height: 1;
+  color: #8aa0b8;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.profileStatValue {
+  font-size: 11px;
+  line-height: 1.12;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.profileStat strong {
+  font-size: 11px;
+}
+
 .rightDetailsGrid {
   min-height: 0;
-  height: 100%;
+  height: 270px;
+  min-height: 270px;
+  max-height: 270px;
   display: grid;
-  grid-template-columns: 1fr 1fr 1.15fr;
+  grid-template-columns: 1fr 1fr 1.18fr;
   gap: 0;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  background: rgba(15, 23, 42, 0.7);
   overflow: hidden;
 }
 
 .rightBottomGrid {
-  height: 112px;
-  min-height: 112px;
-  max-height: 112px;
+  height: 118px;
+  min-height: 118px;
+  max-height: 118px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -780,9 +858,9 @@
 
 .rightBottomGrid .detailCard {
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.13);
   background: rgba(15, 23, 42, 0.72);
-  padding: 6px;
+  padding: 10px 11px;
   overflow: hidden;
   border-right: 0;
 }
@@ -790,7 +868,7 @@
 .detailCard {
   min-width: 0;
   min-height: 0;
-  padding: 6px;
+  padding: 12px;
   overflow: hidden;
   border-right: 1px solid rgba(148, 163, 184, 0.1);
   display: flex;
@@ -826,26 +904,28 @@
 
 .detailList {
   display: grid;
-  gap: 5px;
+  gap: 7px;
 }
 
 .detailDivider {
   height: 1px;
-  margin: 1px 0;
+  margin: 2px 0;
   background: rgba(148, 163, 184, 0.08);
 }
 
-.detailRow {
+.detailGroup {
   display: grid;
-  gap: 2px;
+  gap: 3px;
 }
 
-.detailRow span {
+.detailLabel {
+  display: block;
   font-size: 10px;
+  line-height: 1;
   color: #94a3b8;
 }
 
-.detailRow strong {
+.detailValue {
   font-size: 11px;
   color: #e2e8f0;
   font-weight: 700;
@@ -853,26 +933,25 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.tagCloud {
+.tagList {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   padding-top: 2px;
 }
 
-.tagPurple,
-.tagBlue,
-.tagGold,
-.tagGreen,
-.tagBrown {
+.tagPill {
   display: inline-flex;
   align-items: center;
-  padding: 0.34rem 0.55rem;
+  min-height: 20px;
+  padding: 0 8px;
   border-radius: 999px;
   font-size: 9px;
   font-weight: 800;
+  line-height: 1;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
@@ -926,47 +1005,74 @@
   color: #bbf7d0;
 }
 
-.activityList {
-  display: grid;
-  gap: 4px;
-  max-height: 100%;
+.activityTimeline {
+  position: relative;
+  height: 210px;
+  max-height: 210px;
   overflow: hidden;
-  flex: 1 1 auto;
+  display: grid;
+  gap: 8px;
+  padding-left: 12px;
 }
 
-.activityRow {
+.activityTimeline::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.activityItem {
+  position: relative;
+  min-height: 42px;
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  min-height: 34px;
+  gap: 2px;
   overflow: hidden;
 }
 
-.activityDate {
-  font-size: 9px;
-  color: #94a3b8;
-  white-space: nowrap;
+.activityDot {
+  position: absolute;
+  left: -11px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
 }
 
-.activityRow strong {
-  display: block;
-  font-size: 11px;
-  color: #f8fafc;
-  font-weight: 800;
+.activityContent {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: grid;
+  gap: 2px;
 }
 
-.activityRow span {
+.activityContent time {
   font-size: 10px;
-  color: #94a3b8;
-  min-width: 0;
+  line-height: 1;
+  color: #8aa0b8;
+}
+
+.activityContent strong {
+  font-size: 11px;
+  line-height: 1.12;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.activityContent span {
+  font-size: 10px;
+  line-height: 1.12;
+  color: #9fb3c8;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .noteText {
@@ -1033,7 +1139,7 @@
   color: #64748b;
 }
 
-.historyRow {
+.compactRow {
   padding: 3px 7px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.08);
@@ -1042,7 +1148,8 @@
   color: #e2e8f0;
 }
 
-.historyRow span:last-child {
+.compactRow span:last-child,
+.compactRow strong:last-child {
   color: #cbd5e1;
 }
 
@@ -1067,7 +1174,12 @@
 .customerSpend,
 .segmentPill,
 .detailCard,
-.activityRow {
+.activityItem,
+.profileMainRow,
+.profileText,
+.profileNameRow,
+.profileContactLine,
+.iconGhostButton {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1075,7 +1187,8 @@
 
 .customerName,
 .contactRow,
-.profileName {
+.profileName,
+.profileContactLine {
   white-space: nowrap;
 }
 
@@ -1095,7 +1208,7 @@
   }
 
   .rightColumn {
-    grid-template-rows: 176px minmax(0, 1fr) 132px;
+    grid-template-rows: 172px 270px 118px;
     gap: 8px;
   }
 
@@ -1157,20 +1270,26 @@
   }
 
   .profilePanel {
-    height: 176px;
-    min-height: 176px;
-    max-height: 176px;
-    padding: 11px;
+    height: 172px;
+    min-height: 172px;
+    max-height: 172px;
+    padding: 10px;
+  }
+
+  .rightDetailsGrid {
+    height: 270px;
+    min-height: 270px;
+    max-height: 270px;
   }
 
   .rightBottomGrid {
-    height: 132px;
-    min-height: 132px;
-    max-height: 132px;
+    height: 118px;
+    min-height: 118px;
+    max-height: 118px;
   }
 
   .detailCard {
-    padding: 9px;
+    padding: 10px;
   }
 }
 
