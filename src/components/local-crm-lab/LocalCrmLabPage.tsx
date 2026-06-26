@@ -201,17 +201,13 @@ const customerHistory = [
   { date: "01/05/2026", time: "21:30", table: "Mesa 6", spend: "$ 91.200" },
   { date: "20/04/2026", time: "20:15", table: "Mesa 4", spend: "$ 89.500" },
   { date: "12/04/2026", time: "19:30", table: "Mesa 2", spend: "$ 76.800" },
+  { date: "05/04/2026", time: "22:00", table: "Mesa 10", spend: "$ 74.300" },
+  { date: "28/03/2026", time: "20:30", table: "Mesa 7", spend: "$ 88.900" },
 ];
 
 const visibleCustomerPreferences = customerPreferences.slice(0, 3);
 const visibleCustomers = crmCustomers.slice(0, 10);
-const visibleCustomerHistory = customerHistory.slice(0, 4);
-const customerConsumption = [
-  { label: "Vino preferido", value: "Malbec de la Casa" },
-  { label: "Plato favorito", value: "Ravioles de cordero" },
-  { label: "Bebida preferida", value: "Agua con gas" },
-  { label: "Notas", value: "Cliente muy detallista. Prefiere atención discreta y ambiente tranquilo." },
-];
+const visibleCustomerHistory = customerHistory.slice(0, 6);
 function LabIcon({
   name,
   className = "",
@@ -483,26 +479,20 @@ export function LocalCrmLabPage() {
                 />
               </div>
 
-              <div className={styles.filterControl}>
-                <button type="button" className={styles.selectButton}>
-                  <span>Segmento</span>
-                  <strong>Todos</strong>
-                </button>
-              </div>
+              <button type="button" className={styles.filterControl}>
+                <span className={styles.filterLabel}>Segmento</span>
+                <strong className={styles.filterValue}>Todos ▼</strong>
+              </button>
 
-              <div className={styles.filterControl}>
-                <button type="button" className={styles.selectButton}>
-                  <span>Visitas</span>
-                  <strong>Todas</strong>
-                </button>
-              </div>
+              <button type="button" className={styles.filterControl}>
+                <span className={styles.filterLabel}>Vistas</span>
+                <strong className={styles.filterValue}>Todas ▼</strong>
+              </button>
 
-              <div className={styles.filterControl}>
-                <button type="button" className={styles.selectButton}>
-                  <span>Ordenar por</span>
-                  <strong>Más recientes</strong>
-                </button>
-              </div>
+              <button type="button" className={styles.filterControl}>
+                <span className={styles.filterLabel}>Ordenar por</span>
+                <strong className={styles.filterValue}>Más recientes ▼</strong>
+              </button>
 
               <button type="button" className={styles.secondaryButton}>
                 <LabIcon name="filter" className={styles.filterIcon} />
@@ -631,31 +621,31 @@ export function LocalCrmLabPage() {
                   <div className={styles.profileStat}>
                     <LabIcon name="birthday" className={styles.profileStatIcon} />
                     <span className={styles.profileStatLabel}>Cumpleaños</span>
-                  <strong className={styles.profileStatValue}>12 de agosto</strong>
-                </div>
-                <div className={styles.profileStat}>
-                  <LabIcon name="clock" className={styles.profileStatIcon} />
-                  <span className={styles.profileStatLabel}>Última visita</span>
-                  <strong className={styles.profileStatValue}>15/05/2026</strong>
-                </div>
-                <div className={styles.profileStat}>
-                  <LabIcon name="calendar" className={styles.profileStatIcon} />
-                  <span className={styles.profileStatLabel}>Próxima reserva</span>
+                    <strong className={styles.profileStatValue}>12 de agosto</strong>
+                  </div>
+                  <div className={styles.profileStat}>
+                    <LabIcon name="clock" className={styles.profileStatIcon} />
+                    <span className={styles.profileStatLabel}>Última visita</span>
+                    <strong className={styles.profileStatValue}>15/05/2026</strong>
+                  </div>
+                  <div className={styles.profileStat}>
+                    <LabIcon name="calendar" className={styles.profileStatIcon} />
+                    <span className={styles.profileStatLabel}>Próxima reserva</span>
                     <strong className={`${styles.profileStatValue} ${styles.profileStatValueMultiline}`}>
                       22/05/2026 · 13:00 · Mesa 5
                     </strong>
                   </div>
-                <div className={styles.profileStat}>
-                  <LabIcon name="users" className={styles.profileStatIcon} />
-                  <span className={styles.profileStatLabel}>Visitas</span>
-                  <strong className={styles.profileStatValue}>8</strong>
+                  <div className={styles.profileStat}>
+                    <LabIcon name="users" className={styles.profileStatIcon} />
+                    <span className={styles.profileStatLabel}>Visitas</span>
+                    <strong className={styles.profileStatValue}>8</strong>
+                  </div>
+                  <div className={styles.profileStat}>
+                    <LabIcon name="spend" className={styles.profileStatIcon} />
+                    <span className={styles.profileStatLabel}>Gasto promedio</span>
+                    <strong className={styles.profileStatValue}>$ 92.300</strong>
+                  </div>
                 </div>
-                <div className={styles.profileStat}>
-                  <LabIcon name="spend" className={styles.profileStatIcon} />
-                  <span className={styles.profileStatLabel}>Gasto promedio</span>
-                  <strong className={styles.profileStatValue}>$ 92.300</strong>
-                </div>
-              </div>
             </section>
 
             <section className={styles.rightMiddleGrid}>
@@ -747,36 +737,6 @@ export function LocalCrmLabPage() {
                   <button type="button" className={styles.historyFooterButton}>
                     Ver todas las reservas
                   </button>
-                </div>
-              </article>
-            </section>
-
-            <section className={`${styles.card} ${styles.rightBottomWide}`}>
-              <article className={styles.consumptionWideCard}>
-                <h3>Consumos y preferencias</h3>
-                <div className={styles.consumptionWideGrid}>
-                  <div className={styles.consumptionList}>
-                    {customerConsumption.slice(0, 3).map((item) => (
-                      <div key={item.label} className={styles.consumptionItem}>
-                        <LabIcon name="notes" className={styles.detailMiniIcon} />
-                        <div>
-                          <span>{item.label}</span>
-                          <strong>{item.value}</strong>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className={styles.bottomPreferencesBlock}>
-                    <span className={styles.detailLabel}>Notas y señales</span>
-                    <div className={styles.bottomPreferenceList}>
-                      <span className={styles.listPill}>Amante del vino</span>
-                      <span className={styles.listPill}>Veggie friendly</span>
-                      <span className={styles.listPill}>Viajero frecuente</span>
-                    </div>
-                    <div className={styles.bottomNote}>
-                      Cliente muy detallista. Prefiere atención discreta y ambiente tranquilo.
-                    </div>
-                  </div>
                 </div>
               </article>
             </section>

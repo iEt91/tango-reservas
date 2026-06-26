@@ -2,9 +2,9 @@
 
 ## Etapa 1 - Panel del Local
 
-### v4.8-crm-lab Refino visual final de CRM lab
+### v4.9-crm-lab Ajuste final de la columna derecha de CRM lab
 
-- `/local/crm-lab` ajusta la tabla izquierda, simplifica filtros, mejora la ficha derecha de Valeria del Mar, reemplaza Actividad reciente por Historial de reservas y deja Consumos y preferencias ocupando todo el ancho inferior;
+- `/local/crm-lab` quita el panel inferior duplicado de Consumos y preferencias, extiende los tres paneles derechos hasta el fondo y deja filtros limpios sin doble contenedor;
 - se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/crm`;
 - la pantalla usa mock data local para clientes, detalle y actividad sin conectar Supabase.
 
