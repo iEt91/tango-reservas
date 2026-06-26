@@ -642,7 +642,9 @@ export function LocalCrmLabPage() {
                 <div className={styles.profileStat}>
                   <LabIcon name="calendar" className={styles.profileStatIcon} />
                   <span className={styles.profileStatLabel}>Próxima reserva</span>
-                  <strong className={styles.profileStatValue}>22/05/2026 · 13:00 · Mesa 5</strong>
+                  <strong className={`${styles.profileStatValue} ${styles.profileStatValueMultiline}`}>
+                    22/05/2026 · 13:00 · Mesa 5
+                  </strong>
                 </div>
                 <div className={styles.profileStat}>
                   <LabIcon name="users" className={styles.profileStatIcon} />
