@@ -210,6 +210,9 @@ const customerHistory = [
   { date: "15/05/2026", time: "21:00", table: "Mesa 8", spend: "$ 95.600" },
   { date: "01/05/2026", time: "21:30", table: "Mesa 6", spend: "$ 91.200" },
 ];
+
+const visibleCustomerPreferences = customerPreferences.slice(0, 3);
+const visibleCustomerActivity = customerActivity.slice(0, 4);
 function LabIcon({
   name,
   className = "",
@@ -653,7 +656,7 @@ export function LocalCrmLabPage() {
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
                 <div className={styles.detailTitle}>Preferencias</div>
                 <div className={styles.detailList}>
-                  {customerPreferences.map((item) => (
+                  {visibleCustomerPreferences.map((item) => (
                     <div key={item.label} className={styles.detailRow}>
                       <span>{item.label}</span>
                       <strong>{item.value}</strong>
@@ -709,7 +712,7 @@ export function LocalCrmLabPage() {
               <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
                 <div className={styles.detailTitle}>Actividad reciente</div>
                 <div className={styles.activityList}>
-                  {customerActivity.map((item) => (
+                  {visibleCustomerActivity.map((item) => (
                     <div key={`${item.date}-${item.title}`} className={styles.activityRow}>
                       <div className={styles.activityDate}>{item.date}</div>
                       <div>

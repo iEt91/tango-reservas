@@ -9,10 +9,10 @@
   height: calc(100vh - 56px);
   max-height: calc(100vh - 56px);
   overflow: hidden;
-  padding: 14px 24px 8px;
+  padding: 12px 24px 6px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   color: #f8fafc;
 }
 
@@ -22,7 +22,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 24px;
-  min-height: 58px;
+  min-height: 56px;
   min-width: 0;
 }
 
@@ -120,10 +120,10 @@
 }
 
 .metricGrid {
-  flex: 0 0 112px;
+  flex: 0 0 108px;
   display: grid;
   grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -131,9 +131,9 @@
 }
 
 .metricCard {
-  height: 112px;
-  min-height: 112px;
-  padding: 11px;
+  height: 108px;
+  min-height: 108px;
+  padding: 10px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.92));
@@ -225,7 +225,7 @@
   max-width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 520px;
-  gap: 12px;
+  gap: 10px;
   align-items: stretch;
   overflow: hidden;
 }
@@ -236,7 +236,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow: hidden;
 }
 
@@ -245,8 +245,8 @@
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-rows: 168px minmax(0, 1fr) 120px;
-  gap: 6px;
+  grid-template-rows: 164px minmax(0, 1fr) 112px;
+  gap: 4px;
   overflow: hidden;
 }
 
@@ -256,7 +256,7 @@
   flex-wrap: nowrap;
   gap: 8px;
   min-width: 0;
-  flex: 0 0 34px;
+  flex: 0 0 32px;
   overflow: hidden;
 }
 
@@ -264,7 +264,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 32px;
+  height: 30px;
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.12);
@@ -305,12 +305,12 @@
   gap: 8px;
   align-items: center;
   min-width: 0;
-  flex: 0 0 38px;
+  flex: 0 0 36px;
   overflow: hidden;
 }
 
 .filterControl {
-  height: 36px;
+  height: 34px;
   border-radius: 12px;
   padding: 0 12px;
   display: flex;
@@ -340,7 +340,7 @@
 
 .selectButton {
   width: 100%;
-  height: 36px;
+  height: 34px;
   border-radius: 12px;
   padding: 0 12px;
   display: flex;
@@ -418,9 +418,9 @@
     minmax(84px, 0.52fr);
   gap: 8px;
   align-items: center;
-  min-height: 49px;
-  height: 49px;
-  padding: 6px 14px;
+  min-height: 47px;
+  height: 47px;
+  padding: 5px 14px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.07);
   min-width: 0;
 }
@@ -574,8 +574,8 @@
 }
 
 .tableFooter {
-  flex: 0 0 40px;
-  height: 40px;
+  flex: 0 0 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   padding: 0 16px;
@@ -626,24 +626,24 @@
 }
 
 .profilePanel {
-  height: 168px;
-  min-height: 168px;
-  max-height: 168px;
-  padding: 9px;
+  height: 164px;
+  min-height: 164px;
+  max-height: 164px;
+  padding: 8px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
   overflow: hidden;
   display: grid;
-  grid-template-rows: 78px 1fr;
-  gap: 10px;
+  grid-template-rows: 70px 1fr;
+  gap: 8px;
 }
 
 .profileTop {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 144px;
-  gap: 5px;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 4px;
   align-items: start;
 }
 
@@ -654,8 +654,8 @@
 }
 
 .profileAvatar {
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -668,7 +668,7 @@
 }
 
 .profileName {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 850;
   color: #f8fafc;
   min-width: 0;
@@ -706,8 +706,8 @@
 }
 
 .profileActions button {
-  height: 26px;
-  font-size: 11px;
+  height: 25px;
+  font-size: 10px;
 }
 
 .profileStatsGrid {
@@ -720,10 +720,10 @@
 }
 
 .profileStat {
-  min-height: 54px;
+  min-height: 52px;
   border-right: 1px solid rgba(148, 163, 184, 0.1);
   background: rgba(2, 6, 23, 0.34);
-  padding: 4px;
+  padding: 3px;
   display: grid;
   gap: 3px;
   align-content: start;
@@ -742,12 +742,12 @@
 }
 
 .profileStatLabel {
-  font-size: 10px;
+  font-size: 9px;
   color: #94a3b8;
 }
 
 .profileStat strong {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.2;
   color: #f8fafc;
   font-weight: 800;
@@ -769,12 +769,12 @@
 }
 
 .rightBottomGrid {
-  height: 120px;
-  min-height: 120px;
-  max-height: 120px;
+  height: 112px;
+  min-height: 112px;
+  max-height: 112px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
 }
 
@@ -782,7 +782,7 @@
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(15, 23, 42, 0.72);
-  padding: 7px;
+  padding: 6px;
   overflow: hidden;
   border-right: 0;
 }
@@ -790,7 +790,7 @@
 .detailCard {
   min-width: 0;
   min-height: 0;
-  padding: 7px;
+  padding: 6px;
   overflow: hidden;
   border-right: 1px solid rgba(148, 163, 184, 0.1);
   display: flex;
@@ -811,7 +811,7 @@
 }
 
 .detailTitle {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 850;
   color: #f8fafc;
   margin-bottom: 0;
@@ -819,14 +819,14 @@
 
 .detailTitleSmall {
   margin-bottom: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #f8fafc;
 }
 
 .detailList {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .detailDivider {
@@ -841,12 +841,12 @@
 }
 
 .detailRow span {
-  font-size: 11px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .detailRow strong {
-  font-size: 12px;
+  font-size: 11px;
   color: #e2e8f0;
   font-weight: 700;
   line-height: 1.35;
@@ -858,7 +858,7 @@
 .tagCloud {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   padding-top: 2px;
 }
 
@@ -871,7 +871,7 @@
   align-items: center;
   padding: 0.34rem 0.55rem;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
@@ -904,18 +904,18 @@
 .simpleList {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .listPill {
   display: inline-flex;
   align-items: center;
-  padding: 0.36rem 0.65rem;
+  padding: 0.3rem 0.55rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(2, 6, 23, 0.32);
   color: #e2e8f0;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   min-width: 0;
   overflow: hidden;
@@ -928,7 +928,7 @@
 
 .activityList {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   max-height: 100%;
   overflow: hidden;
   flex: 1 1 auto;
@@ -939,19 +939,19 @@
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 10px;
   align-items: start;
-  min-height: 36px;
+  min-height: 34px;
   overflow: hidden;
 }
 
 .activityDate {
-  font-size: 10px;
+  font-size: 9px;
   color: #94a3b8;
   white-space: nowrap;
 }
 
 .activityRow strong {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   color: #f8fafc;
   font-weight: 800;
   min-width: 0;
@@ -961,7 +961,7 @@
 }
 
 .activityRow span {
-  font-size: 11px;
+  font-size: 10px;
   color: #94a3b8;
   min-width: 0;
   overflow: hidden;
@@ -971,13 +971,13 @@
 
 .noteText {
   margin: 0 0 10px;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.5;
   color: #cbd5e1;
 }
 
 .linkButton {
-  height: 34px;
+  height: 32px;
   border-radius: 10px;
   padding: 0 12px;
   justify-content: center;
@@ -989,19 +989,19 @@
 .metaGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .metaGrid span {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   color: #94a3b8;
 }
 
 .metaGrid strong {
   display: block;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 11px;
   color: #e2e8f0;
   min-width: 0;
   overflow: hidden;
@@ -1011,7 +1011,7 @@
 
 .historyTable {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -1026,7 +1026,7 @@
 }
 
 .historyHeader {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1034,11 +1034,11 @@
 }
 
 .historyRow {
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.08);
   background: rgba(2, 6, 23, 0.3);
-  font-size: 11px;
+  font-size: 10px;
   color: #e2e8f0;
 }
 
