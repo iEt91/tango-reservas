@@ -1,24 +1,27 @@
 .page {
-  min-height: 100%;
+  min-height: calc(100vh - 56px);
   min-width: 0;
   overflow-x: hidden;
   color: #f8fafc;
+  padding: 18px 28px 14px;
 }
 
 .content {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 4px;
+  gap: 14px;
+  padding-top: 0;
 }
 
 .pageHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
-  gap: 24px;
+  gap: 20px;
   min-width: 0;
+  min-height: auto;
+  margin-bottom: 0;
 }
 
 .pageHeading {
@@ -48,13 +51,6 @@
   width: 18px;
   height: 18px;
   color: #38bdf8;
-}
-
-.pageSubtitle {
-  max-width: 680px;
-  font-size: 14px;
-  line-height: 1.45;
-  color: #94a3b8;
 }
 
 .headerControls {
@@ -129,17 +125,15 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .rightColumn {
   min-width: 0;
   display: flex;
   flex-direction: column;
-}
-
-.rightColumn > * {
-  min-height: 624px;
+  align-self: stretch;
+  height: 100%;
 }
 
 .planToolbar {
@@ -247,7 +241,7 @@
 
 .floorCanvas {
   position: relative;
-  height: 390px;
+  height: 360px;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-top: 0;
@@ -472,11 +466,14 @@
 }
 
 .selectedPanel {
-  min-height: 624px;
-  padding: 18px;
+  height: 100%;
+  min-height: 555px;
+  padding: 16px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(15, 23, 42, 0.86);
+  display: flex;
+  flex-direction: column;
 }
 
 .selectedPanelHeader {
@@ -484,6 +481,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 8px;
 }
 
 .selectedPanelEyebrow {
@@ -517,40 +515,65 @@
 }
 
 .selectedForm {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  min-height: 0;
 }
 
-.formField {
+.selectedFieldsRow {
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 10px;
+  align-items: end;
+}
+
+.selectedField {
+  display: grid;
+  gap: 5px;
   font-size: 12px;
   color: #94a3b8;
 }
 
-.formField span {
+.selectedField span {
+  font-size: 11px;
+  line-height: 1;
+  color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.formField input,
+.selectedField input,
 .selectField {
-  height: 36px;
+  height: 34px;
   width: 100%;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(2, 6, 23, 0.35);
   color: #f8fafc;
-  padding: 0 12px;
-  font-size: 13px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .capacityControl {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 36px;
-  gap: 8px;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  gap: 6px;
+  align-items: center;
+}
+
+.capacityControl button {
+  width: 30px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.86);
+  color: #cbd5e1;
+  font-weight: 800;
 }
 
 .smallControlButton {
@@ -569,9 +592,15 @@
   gap: 10px;
 }
 
+.twoColumnFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .sliderField {
   display: grid;
-  gap: 8px;
+  gap: 5px;
 }
 
 .sliderTrack {
@@ -598,11 +627,18 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 2px;
+  margin-top: 8px;
+}
+
+.selectedPanelActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: auto;
 }
 
 .dangerButton {
-  height: 38px;
+  height: 36px;
   border-radius: 10px;
   color: #fca5a5;
   background: rgba(127, 29, 29, 0.18);
@@ -612,15 +648,15 @@
 .statsRow {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 220px;
-  gap: 10px;
+  gap: 8px;
   align-items: stretch;
-  height: 112px;
-  min-height: 112px;
+  height: 92px;
+  min-height: 92px;
 }
 
 .occupancyCard {
-  min-height: 112px;
-  padding: 16px;
+  min-height: 96px;
+  padding: 10px 12px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(8, 15, 28, 0.94));
@@ -630,33 +666,33 @@
 .occupancyHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: 12px;
   align-items: center;
 }
 
 .occupancyEyebrow {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #e2e8f0;
 }
 
 .occupancyTitle {
-  margin-top: 10px;
-  font-size: 31px;
+  margin-top: 6px;
+  font-size: 24px;
   line-height: 1;
   font-weight: 800;
   color: #f8fafc;
 }
 
 .occupancyMeta {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 2px;
+  font-size: 11px;
   color: #94a3b8;
 }
 
 .occupancyDonut {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -667,7 +703,7 @@
 .occupancyDonut::after {
   content: "";
   position: absolute;
-  inset: 9px;
+  inset: 8px;
   border-radius: inherit;
   background: #0b1626;
 }
@@ -675,7 +711,7 @@
 .occupancyDonut span {
   position: relative;
   z-index: 1;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
   color: #f8fafc;
 }
@@ -683,13 +719,13 @@
 .floorStatsGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .floorStatCard {
-  min-height: 112px;
-  padding: 14px 12px;
+  min-height: 96px;
+  padding: 10px 12px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(8, 15, 28, 0.94));
@@ -703,8 +739,8 @@
 
 .floorStatIcon {
   grid-row: 1 / span 3;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -740,62 +776,73 @@
 }
 
 .floorStatValue {
-  font-size: 25px;
+  font-size: 22px;
   line-height: 1;
   font-weight: 800;
   letter-spacing: -0.04em;
   color: #f8fafc;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .floorStatSubtitle {
-  font-size: 12px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .summaryCard {
-  min-height: 112px;
-  padding: 16px;
+  min-height: 92px;
+  padding: 10px 12px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(8, 15, 28, 0.94));
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
   display: grid;
-  align-content: center;
-  gap: 22px;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12px;
 }
 
-.summaryCardBlock {
+.capacityCard {
   display: grid;
-  gap: 4px;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.capacityMetric {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
 }
 
 .summaryCardLabel {
-  font-size: 12px;
+  font-size: 10px;
   color: #cbd5e1;
 }
 
-.summaryCardValueRow {
+.inlineMetric {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .summaryCardValue {
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.04em;
 }
 
 .summaryCardMeta {
-  font-size: 12px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .hourlySection {
-  min-height: 112px;
-  padding: 16px;
+  min-height: 108px;
+  margin-top: 0;
+  padding: 12px 16px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(8, 15, 28, 0.94));
@@ -937,6 +984,14 @@
 
   .statsRow {
     grid-template-columns: 190px minmax(0, 1fr) 190px;
+  }
+
+  .summaryCard {
+    grid-template-columns: 1fr;
+  }
+
+  .capacityCard {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -35,7 +35,6 @@ type MetricCard = {
   value: string;
   eyebrow?: string;
   subtitle: string;
-  detail?: string;
   link?: string;
   icon: IconName;
   tone: MetricTone;
@@ -52,21 +51,22 @@ type CalendarDay = {
   dots: CalendarTone[];
 };
 
-type AgendaItem = {
-  time: string;
-  table: string;
-  people: string;
-  name: string;
-  tone: AgendaTone;
-  note?: string;
-};
-
 type UpcomingReservation = {
   time: string;
   table: string;
   people: string;
   name: string;
   tone: AgendaTone;
+};
+
+type AgendaReservation = {
+  id: string;
+  time: string;
+  client: string;
+  pax: number;
+  table: string;
+  status: AgendaTone;
+  note?: string;
 };
 
 const metrics: MetricCard[] = [
@@ -150,41 +150,141 @@ const upcomingReservations: UpcomingReservation[] = [
   { time: "21:00", table: "Mesa 2", people: "2 pers.", name: "Diego & Laura", tone: "confirmed" },
 ];
 
-const agendaItems: AgendaItem[] = [
-  { time: "08:00", table: "Mesa 2", people: "2 pers.", name: "Desayuno privado", tone: "confirmed" },
-  { time: "10:00", table: "Mesa 4", people: "2 pers.", name: "María & Bruno", tone: "pending" },
-  { time: "10:00", table: "Mesa 6", people: "4 pers.", name: "Mesa compartida", tone: "confirmed" },
-  { time: "11:00", table: "Mesa 1", people: "2 pers.", name: "Valeria del Mar", tone: "confirmed" },
-  { time: "13:00", table: "Mesa 5", people: "2 pers.", name: "Ana García", tone: "confirmed" },
+const agendaHours = [
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
+  "23:00",
+  "24:00",
+] as const;
+
+const agendaReservations: AgendaReservation[] = [
   {
+    id: "r-1300-1",
     time: "13:00",
-    table: "Mesa 8",
-    people: "4 pers.",
-    name: "Juan Martín López",
-    tone: "confirmed",
+    client: "Ana García",
+    pax: 2,
+    table: "Mesa 5",
+    status: "confirmed",
+    note: "Almuerzo",
   },
-  { time: "13:30", table: "Mesa 12", people: "2 pers.", name: "Valeria del Mar", tone: "pending" },
-  { time: "14:00", table: "Mesa 3", people: "3 pers.", name: "María Eugenia Ruiz", tone: "confirmed" },
-  { time: "14:00", table: "Mesa 8", people: "6 pers.", name: "Grupo de amigos", tone: "confirmed" },
-  { time: "15:00", table: "Mesa 7", people: "2 pers.", name: "Carlos Rojas", tone: "confirmed" },
-  { time: "15:00", table: "Mesa 9", people: "4 pers.", name: "Roberto Álvarez", tone: "special" },
-  { time: "17:00", table: "Mesa 12", people: "2 pers.", name: "Diego & Laura", tone: "confirmed" },
-  { time: "18:00", table: "Mesa 3", people: "6 pers.", name: "Grupo de amigos", tone: "pending" },
-  { time: "18:00", table: "Mesa 7", people: "2 pers.", name: "Sofía Beltrán", tone: "pending" },
-  { time: "20:00", table: "Mesa 9", people: "4 pers.", name: "Roberto Álvarez", tone: "special" },
-  { time: "20:00", table: "Mesa 2", people: "2 pers.", name: "Diego & Laura", tone: "confirmed" },
-  { time: "21:00", table: "Mesa 1", people: "2 pers.", name: "Ana García", tone: "confirmed" },
-  { time: "23:00", table: "Mesa 6", people: "2 pers.", name: "Cierre de salón", tone: "pending" },
+  {
+    id: "r-1315-1",
+    time: "13:15",
+    client: "Juan Martín López",
+    pax: 4,
+    table: "Mesa 8",
+    status: "confirmed",
+    note: "Ventana",
+  },
+  {
+    id: "r-1330-1",
+    time: "13:30",
+    client: "Federico Paredes",
+    pax: 4,
+    table: "Mesa 7",
+    status: "pending",
+    note: "Confirmar ubicación",
+  },
+  {
+    id: "r-1430-1",
+    time: "14:30",
+    client: "Valeria del Mar",
+    pax: 2,
+    table: "Mesa 12",
+    status: "pending",
+    note: "Cumpleaños",
+  },
+  {
+    id: "r-1600-1",
+    time: "16:00",
+    client: "Carlos Rojas",
+    pax: 2,
+    table: "Mesa 7",
+    status: "confirmed",
+    note: "Sin notas",
+  },
+  {
+    id: "r-1615-1",
+    time: "16:15",
+    client: "María Eugenia Ruiz",
+    pax: 3,
+    table: "Mesa 3",
+    status: "special",
+    note: "Cumpleaños",
+  },
+  {
+    id: "r-1645-1",
+    time: "16:45",
+    client: "Grupo de amigos",
+    pax: 6,
+    table: "Mesa 1",
+    status: "pending",
+    note: "Mesa amplia",
+  },
+  {
+    id: "r-1830-1",
+    time: "18:30",
+    client: "Roberto Álvarez",
+    pax: 4,
+    table: "Mesa 9",
+    status: "risk",
+    note: "Riesgo no-show",
+  },
+  {
+    id: "r-1900-1",
+    time: "19:00",
+    client: "Diego & Laura",
+    pax: 2,
+    table: "Mesa 2",
+    status: "confirmed",
+    note: "Cena",
+  },
+  {
+    id: "r-2115-1",
+    time: "21:15",
+    client: "Sofía Beltrán",
+    pax: 2,
+    table: "Mesa 6",
+    status: "confirmed",
+    note: "Terraza",
+  },
+  {
+    id: "r-2130-1",
+    time: "21:30",
+    client: "Pablo & Julieta",
+    pax: 2,
+    table: "Mesa 10",
+    status: "special",
+    note: "Aniversario",
+  },
 ];
 
-const agendaHours = Array.from({ length: 17 }, (_, index) => `${String(index + 8).padStart(2, "0")}:00`);
+function getHourSlot(time: string) {
+  const [rawHour] = time.split(":");
+  const hour = Number(rawHour);
 
-const agendaItemsByHour = agendaItems.reduce<Record<string, AgendaItem[]>>((acc, item) => {
-  if (!acc[item.time]) {
-    acc[item.time] = [];
+  if (Number.isNaN(hour)) {
+    return "00:00";
   }
 
-  acc[item.time].push(item);
+  return `${String(hour).padStart(2, "0")}:00`;
+}
+
+const reservationsBySlot = agendaHours.reduce<Record<string, AgendaReservation[]>>((acc, hour) => {
+  acc[hour] = agendaReservations.filter((reservation) => getHourSlot(reservation.time) === hour);
   return acc;
 }, {});
 
@@ -236,8 +336,7 @@ function createCalendarDays() {
     const isCurrentMonth = date.getMonth() === 4;
     const selected = date.getFullYear() === 2026 && date.getMonth() === 4 && date.getDate() === 22;
     const stats =
-      statsByDay.get(dayNumber) ??
-      {
+      statsByDay.get(dayNumber) ?? {
         reservations: Math.max(2, Math.min(9, (dayNumber % 7) + 2)),
         seats: Math.max(6, Math.min(30, ((dayNumber * 3) % 24) + 6)),
         dots: dayNumber % 3 === 0 ? ["blue", "amber"] : ["blue", "green"],
@@ -442,29 +541,31 @@ function formatDayLabel(date: string) {
 }
 
 export function LocalCalendarioLabPage() {
-  const [expandedHour, setExpandedHour] = useState<string | null>("13:00");
+  const [expandedSlots, setExpandedSlots] = useState<string[]>(["13:00"]);
   const selectedDate = "2026-05-22";
   const selectedDateLabel = formatDayLabel(selectedDate);
-  const agendaStatusLabelMap: Record<AgendaTone, string> = {
+  const statusLabelMap: Record<AgendaTone, string> = {
     confirmed: "Confirmada",
     pending: "Pendiente",
     special: "Especial",
-    risk: "Riesgo no-show",
+    risk: "Riesgo",
   };
-  const agendaStatusClassMap: Record<AgendaTone, string> = {
-    confirmed: styles.statusConfirmada,
-    pending: styles.statusPendiente,
-    special: styles.statusEspecial,
-    risk: styles.statusRiesgo,
+  const statusClassMap: Record<AgendaTone, string> = {
+    confirmed: styles.status_confirmada,
+    pending: styles.status_pendiente,
+    special: styles.status_especial,
+    risk: styles.status_riesgo,
   };
 
-  const toggleHour = (hour: string) => {
-    const hourItems = agendaItemsByHour[hour] ?? [];
-    if (hourItems.length <= 1) {
+  const toggleSlot = (hour: string) => {
+    const hourReservations = reservationsBySlot[hour] ?? [];
+    if (hourReservations.length <= 1) {
       return;
     }
 
-    setExpandedHour((current) => (current === hour ? null : hour));
+    setExpandedSlots((current) =>
+      current.includes(hour) ? current.filter((slot) => slot !== hour) : [...current, hour],
+    );
   };
 
   return (
@@ -619,82 +720,93 @@ export function LocalCalendarioLabPage() {
 
             <div className={styles.agendaList}>
               {agendaHours.map((hour) => {
-                const items = agendaItemsByHour[hour] ?? [];
-                const hasMultiple = items.length > 1;
-                const expanded = expandedHour === hour && hasMultiple;
-                const firstItem = items[0];
+                const reservations = reservationsBySlot[hour] ?? [];
+                const count = reservations.length;
+                const hasReservations = count > 0;
+                const hasMultiple = count > 1;
+                const expanded = expandedSlots.includes(hour);
+                const first = reservations[0];
 
                 return (
                   <article
                     key={hour}
-                    className={`${styles.agendaSlot} ${hasMultiple ? styles.agendaSlotMultiple : ''}`}
+                    className={[
+                      styles.agendaSlot,
+                      hasReservations ? styles.agendaSlotWithReservation : "",
+                      hasMultiple ? styles.agendaSlotMultiple : "",
+                      expanded ? styles.agendaSlotExpanded : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   >
                     <button
                       type="button"
                       className={styles.agendaSlotButton}
-                      onClick={() => toggleHour(hour)}
                       disabled={!hasMultiple}
+                      onClick={() => hasMultiple && toggleSlot(hour)}
                     >
-                      <div className={styles.agendaSlotHeader}>
-                        <span className={styles.agendaTime}>{hour}</span>
+                      <span className={styles.agendaTime}>{hour}</span>
 
-                        <span className={styles.agendaSlotMain}>
-                          {!items.length ? (
-                            <>
-                              <span className={`${styles.agendaSlotTitle} ${styles.agendaEmpty}`}>
-                                Sin reservas programadas
-                              </span>
-                              <span className={styles.agendaSlotMeta}>Agenda libre</span>
-                            </>
-                          ) : hasMultiple ? (
-                            <>
-                              <span className={styles.agendaSlotTitle}>{items.length} reservas</span>
-                              <span className={styles.agendaSlotMeta}>
-                                {firstItem?.name} + {items.length - 1} m?s
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span className={styles.agendaSlotTitle}>{firstItem?.name}</span>
-                              <span className={styles.agendaSlotMeta}>
-                                {firstItem?.table} ? {firstItem?.people} ?{' '}
-                                {firstItem ? agendaStatusLabelMap[firstItem.tone] : ''}
-                              </span>
-                            </>
-                          )}
+                      <span className={styles.agendaSlotContent}>
+                        {!hasReservations ? (
+                          <span className={styles.agendaEmpty}>Sin reservas</span>
+                        ) : hasMultiple ? (
+                          <>
+                            <strong>{count} reservas</strong>
+                            <small>
+                              {first?.client} + {count - 1} más
+                            </small>
+                          </>
+                        ) : (
+                          <>
+                            <strong>
+                              {first?.time} · {first?.client}
+                            </strong>
+                            <small>
+                              {first?.table} · {first?.pax} pax · {statusLabelMap[first?.status ?? "confirmed"]}
+                            </small>
+                          </>
+                        )}
+                      </span>
+
+                      {hasMultiple ? (
+                        <span className={styles.agendaMultipleBadge}>
+                          {expanded ? "Ocultar" : "Ver detalle"}
                         </span>
+                      ) : hasReservations ? (
+                        <span className={styles.agendaPax}>{first?.pax} pax</span>
+                      ) : (
+                        <span />
+                      )}
 
-                        <span className={styles.agendaSlotBadge}>
-                          {!items.length
-                            ? 'Libre'
-                            : hasMultiple
-                              ? expanded
-                                ? 'Ocultar'
-                                : 'Ver detalle'
-                              : '1 reserva'}
+                      {hasMultiple ? (
+                        <LabIcon
+                          name={expanded ? "chevronDown" : "chevronRight"}
+                          className={styles.agendaSlotChevron}
+                        />
+                      ) : hasReservations ? (
+                        <span className={`${styles.agendaStatus} ${statusClassMap[first?.status ?? "confirmed"]}`}>
+                          {statusLabelMap[first?.status ?? "confirmed"]}
                         </span>
-
-                        {hasMultiple ? (
-                          <LabIcon
-                            name={expanded ? 'chevronDown' : 'chevronRight'}
-                            className={styles.agendaSlotChevron}
-                          />
-                        ) : null}
-                      </div>
+                      ) : (
+                        <span />
+                      )}
                     </button>
 
-                    {expanded ? (
-                      <div className={styles.agendaExpanded}>
-                        {items.map((item) => (
-                          <div key={`${item.time}-${item.name}-${item.table}`} className={styles.agendaExpandedItem}>
+                    {hasMultiple && expanded ? (
+                      <div className={styles.agendaExpandedList}>
+                        {reservations.map((reservation) => (
+                          <div key={reservation.id} className={styles.agendaExpandedItem}>
                             <div>
-                              <div className={styles.agendaExpandedName}>{item.name}</div>
-                              <div className={styles.agendaExpandedMeta}>
-                                {item.table} ? {item.people}
-                              </div>
+                              <strong>
+                                {reservation.time} · {reservation.client}
+                              </strong>
+                              <small>
+                                {reservation.table} · {reservation.pax} pax · {reservation.note}
+                              </small>
                             </div>
-                            <span className={`${styles.agendaStatus} ${agendaStatusClassMap[item.tone]}`}>
-                              {agendaStatusLabelMap[item.tone]}
+                            <span className={`${styles.agendaStatus} ${statusClassMap[reservation.status]}`}>
+                              {statusLabelMap[reservation.status]}
                             </span>
                           </div>
                         ))}
@@ -724,6 +836,7 @@ export function LocalCalendarioLabPage() {
               </span>
             </footer>
           </section>
+
           <aside className={styles.sideColumn}>
             <section className={styles.sidePanel}>
               <div className={styles.sideHeader}>
@@ -739,7 +852,7 @@ export function LocalCalendarioLabPage() {
                       <div className={styles.sideItemTop}>
                         <span>{item.table}</span>
                         <span>·</span>
-                        <span>·</span>
+                        <span>{item.people}</span>
                       </div>
                       <div className={styles.sideItemName}>{item.name}</div>
                     </div>

@@ -361,9 +361,6 @@ export function LocalPlanoLabPage() {
             <h1 className={styles.pageTitle}>
               Plano del salón <LabIcon name="target" className={styles.pageSpark} />
             </h1>
-            <p className={styles.pageSubtitle}>
-              Diseñá, organizá y administra las mesas de tu restaurante.
-            </p>
           </div>
 
           <div className={styles.headerControls}>
@@ -529,18 +526,18 @@ export function LocalPlanoLabPage() {
                 ))}
               </div>
 
-              <section className={styles.summaryCard}>
-                <div className={styles.summaryCardBlock}>
-                  <div className={styles.summaryCardLabel}>Capacidad total</div>
-                  <div className={styles.summaryCardValueRow}>
+              <section className={`${styles.summaryCard} ${styles.capacityCard}`}>
+                <div className={styles.capacityMetric}>
+                  <span className={styles.summaryCardLabel}>Capacidad total</span>
+                  <div className={styles.inlineMetric}>
                     <span className={styles.summaryCardValue}>108</span>
                     <span className={styles.summaryCardMeta}>cubiertos</span>
                   </div>
                 </div>
 
-                <div className={styles.summaryCardBlock}>
-                  <div className={styles.summaryCardLabel}>Mesas activas</div>
-                  <div className={styles.summaryCardValueRow}>
+                <div className={styles.capacityMetric}>
+                  <span className={styles.summaryCardLabel}>Mesas activas</span>
+                  <div className={styles.inlineMetric}>
                     <span className={styles.summaryCardValue}>16</span>
                     <span className={styles.summaryCardMeta}>de 17</span>
                   </div>
@@ -561,62 +558,66 @@ export function LocalPlanoLabPage() {
               </div>
 
               <div className={styles.selectedForm}>
-                <label className={styles.formField}>
-                  <span>Nombre de la mesa</span>
-                  <input value="Mesa 6" readOnly />
-                </label>
+                <div className={styles.selectedFieldsRow}>
+                  <label className={styles.selectedField}>
+                    <span>Nombre de la mesa</span>
+                    <input value="Mesa 6" readOnly />
+                  </label>
 
-                <label className={styles.formField}>
-                  <span>Capacidad (personas)</span>
-                  <div className={styles.capacityControl}>
-                    <button type="button" className={styles.smallControlButton}>
-                      -
+                  <label className={styles.selectedField}>
+                    <span>Capacidad</span>
+                    <div className={styles.capacityControl}>
+                      <button type="button" className={styles.smallControlButton}>
+                        -
+                      </button>
+                      <input value="6" readOnly />
+                      <button type="button" className={styles.smallControlButton}>
+                        +
+                      </button>
+                    </div>
+                  </label>
+                </div>
+
+                <div className={styles.twoColumnFields}>
+                  <label className={styles.selectedField}>
+                    <span>Forma</span>
+                    <button type="button" className={styles.selectField}>
+                      <span>Redonda</span>
+                      <LabIcon name="chevronDown" className={styles.controlChevron} />
                     </button>
-                    <input value="6" readOnly />
-                    <button type="button" className={styles.smallControlButton}>
-                      +
+                  </label>
+
+                  <label className={styles.selectedField}>
+                    <span>Estado</span>
+                    <button type="button" className={styles.selectField}>
+                      <span>Reservada</span>
+                      <LabIcon name="chevronDown" className={styles.controlChevron} />
                     </button>
-                  </div>
-                </label>
-
-                <label className={styles.formField}>
-                  <span>Forma</span>
-                  <button type="button" className={styles.selectField}>
-                    <span>Redonda</span>
-                    <LabIcon name="chevronDown" className={styles.controlChevron} />
-                  </button>
-                </label>
-
-                <label className={styles.formField}>
-                  <span>Estado</span>
-                  <button type="button" className={styles.selectField}>
-                    <span>Reservada</span>
-                    <LabIcon name="chevronDown" className={styles.controlChevron} />
-                  </button>
-                </label>
+                  </label>
+                </div>
 
                 <div className={styles.doubleFields}>
-                  <label className={styles.formField}>
+                  <label className={styles.selectedField}>
                     <span>Ancho</span>
                     <input value="120 cm" readOnly />
                   </label>
-                  <label className={styles.formField}>
+                  <label className={styles.selectedField}>
                     <span>Alto</span>
                     <input value="120 cm" readOnly />
                   </label>
                 </div>
 
-                <label className={styles.formField}>
+                <label className={styles.selectedField}>
                   <span>Rotación</span>
                   <div className={styles.sliderField}>
-                    <span>0?</span>
+                    <span>0°</span>
                     <div className={styles.sliderTrack}>
                       <span className={styles.sliderThumb} />
                     </div>
                   </div>
                 </label>
 
-                <label className={styles.formField}>
+                <label className={styles.selectedField}>
                   <span>Radio de esquinas</span>
                   <div className={styles.sliderField}>
                     <span>60 px</span>
@@ -626,7 +627,7 @@ export function LocalPlanoLabPage() {
                   </div>
                 </label>
 
-                <div className={styles.panelActions}>
+                <div className={styles.selectedPanelActions}>
                   <button type="button" className={styles.primaryButton}>
                     Guardar cambios
                   </button>

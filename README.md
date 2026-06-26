@@ -10,15 +10,15 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.3.2-plano-lab`
+`v5.4.3-crm-lab`
 
-Esta version reubica las metricas del salon justo debajo del canvas y deja `Ocupacion por horario` como bloque full-width inferior, manteniendo el laboratorio separado de `/local/plano`.
+Esta version crea el laboratorio visual de CRM en `/local/crm-lab`, con mock data local y el shell premium comun de `/local?business=demuru`.
 
-## Etapa v5.3.2-plano-lab
+## Etapa v5.4.3-crm-lab
 
-- `/local/plano-lab` reubica las metricas del salon dentro del bloque principal;
-- la seccion `Ocupacion por horario` queda debajo de todo como bloque full-width;
-- se mantiene el shell premium comun y no se toca la ruta real `/local/plano`.
+- `/local/crm-lab` replica la pantalla premium de CRM con tabla de clientes, panel de detalle y tarjetas de metrics;
+- se reutiliza el shell premium comun de `/local?business=demuru` y no se toca la ruta real `/local/crm`;
+- la pantalla usa mock data local y no conecta Supabase ni logica real.
 
 ## Etapa v5.3.0-plano-lab
 

@@ -1,0 +1,1207 @@
+:global(*) {
+  box-sizing: border-box;
+}
+
+.page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: calc(100vh - 56px);
+  max-height: calc(100vh - 56px);
+  overflow: hidden;
+  padding: 14px 24px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #f8fafc;
+}
+
+.pageHeader {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+  min-height: 58px;
+  min-width: 0;
+}
+
+.pageHeading {
+  min-width: 0;
+}
+
+.pageEyebrow {
+  margin: 0 0 5px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  color: #cbd5e1;
+  opacity: 0.92;
+}
+
+.pageTitle {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+
+.pageIcon {
+  font-size: 18px;
+}
+
+.pageSubtitle {
+  margin-top: 6px;
+  max-width: 780px;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #94a3b8;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.primaryButton,
+.secondaryButton,
+.whatsAppButton,
+.filterControl,
+.selectButton,
+.paginationButton,
+.pageSizeButton,
+.linkButton {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.74);
+  color: #e2e8f0;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.primaryButton,
+.secondaryButton,
+.whatsAppButton,
+.pageSizeButton,
+.linkButton {
+  height: 38px;
+  border-radius: 12px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.primaryButton {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.16), rgba(8, 47, 73, 0.7));
+  border-color: rgba(34, 211, 238, 0.22);
+  color: #e0f2fe;
+}
+
+.secondaryButton {
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.plusIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.metricGrid {
+  flex: 0 0 112px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.metricCard {
+  height: 112px;
+  min-height: 112px;
+  padding: 11px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.92));
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.metricIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.82);
+}
+
+.metricIconSvg {
+  width: 17px;
+  height: 17px;
+}
+
+.toneCyan {
+  color: #22d3ee;
+}
+
+.toneEmerald {
+  color: #22c55e;
+}
+
+.toneAmber {
+  color: #f59e0b;
+}
+
+.toneRose {
+  color: #ef4444;
+}
+
+.toneViolet {
+  color: #a78bfa;
+}
+
+.metricLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2e8f0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metricValue {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.metricSubtitle {
+  margin-top: -2px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.metricFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.metricLink {
+  color: #67e8f9;
+  white-space: nowrap;
+}
+
+.crmMainGrid {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 520px;
+  gap: 12px;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.leftColumn {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.rightColumn {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 168px minmax(0, 1fr) 120px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.segmentTabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+  flex: 0 0 34px;
+  overflow: hidden;
+}
+
+.segmentTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.segmentTab strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #f8fafc;
+  font-size: 11px;
+}
+
+.segmentTabActive {
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(8, 47, 73, 0.72);
+  color: #f8fafc;
+}
+
+.segmentTabActive strong {
+  background: rgba(34, 211, 238, 0.16);
+  color: #cffafe;
+}
+
+.filtersBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 124px 124px 140px 96px;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  flex: 0 0 38px;
+  overflow: hidden;
+}
+
+.filterControl {
+  height: 36px;
+  border-radius: 12px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterSearch {
+  padding-left: 12px;
+}
+
+.filterSearch input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 12px;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+  flex: 0 0 auto;
+}
+
+.selectButton {
+  width: 100%;
+  height: 36px;
+  border-radius: 12px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.selectButton span {
+  color: #94a3b8;
+}
+
+.selectButton strong {
+  color: #f8fafc;
+}
+
+.card {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.2);
+}
+
+.customerTableCard {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tableHeader {
+  flex: 0 0 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns:
+    minmax(170px, 1.25fr)
+    minmax(150px, 1fr)
+    minmax(80px, 0.58fr)
+    minmax(82px, 0.58fr)
+    minmax(126px, 0.85fr)
+    minmax(46px, 0.32fr)
+    minmax(84px, 0.52fr);
+  gap: 8px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  align-items: center;
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.customerRows {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.customerRow {
+  display: grid;
+  grid-template-columns:
+    minmax(170px, 1.25fr)
+    minmax(150px, 1fr)
+    minmax(80px, 0.58fr)
+    minmax(82px, 0.58fr)
+    minmax(126px, 0.85fr)
+    minmax(46px, 0.32fr)
+    minmax(84px, 0.52fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 49px;
+  height: 49px;
+  padding: 6px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.07);
+  min-width: 0;
+}
+
+.customerRowSelected {
+  background: rgba(8, 47, 73, 0.44);
+  box-shadow: inset 3px 0 0 rgba(34, 211, 238, 0.9);
+}
+
+.customerCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.customerAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.22), rgba(8, 47, 73, 0.72));
+  border: 1px solid rgba(34, 211, 238, 0.24);
+  color: #cffafe;
+  font-size: 11px;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.customerNameBlock {
+  min-width: 0;
+}
+
+.customerNameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.customerName {
+  font-size: 14px;
+  font-weight: 800;
+  color: #f8fafc;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customerTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tagAmber {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.26);
+}
+
+.tagEmerald {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.tagRose {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.tagCyan {
+  color: #67e8f9;
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.24);
+}
+
+.tagSlate {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.customerContact {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: #cbd5e1;
+}
+
+.contactRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contactIcon {
+  width: 14px;
+  height: 14px;
+  color: #34d399;
+  flex: 0 0 auto;
+}
+
+.customerSegment,
+.customerMeta,
+.customerVisits,
+.customerSpend {
+  font-size: 12px;
+  color: #e2e8f0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customerMeta {
+  color: #94a3b8;
+}
+
+.segmentPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(8, 47, 73, 0.55);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  color: #cffafe;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tableFooter {
+  flex: 0 0 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.pagination {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.paginationButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paginationButtonActive {
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(8, 47, 73, 0.72);
+  color: #f8fafc;
+}
+
+.paginationDots {
+  color: #64748b;
+}
+
+.pageSizeButton {
+  min-width: 96px;
+  justify-self: end;
+}
+
+.profilePanel {
+  height: 168px;
+  min-height: 168px;
+  max-height: 168px;
+  padding: 9px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 78px 1fr;
+  gap: 10px;
+}
+
+.profileTop {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 144px;
+  gap: 5px;
+  align-items: start;
+}
+
+.profileIdentity {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profileAvatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.22), rgba(8, 47, 73, 0.72));
+  border: 1px solid rgba(34, 211, 238, 0.26);
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.profileName {
+  font-size: 15px;
+  font-weight: 850;
+  color: #f8fafc;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileContact {
+  margin-top: 1px;
+  font-size: 10px;
+  color: #94a3b8;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileActions {
+  display: grid;
+  gap: 3px;
+  justify-items: stretch;
+  min-width: 0;
+}
+
+.whatsAppButton {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #bbf7d0;
+}
+
+.actionIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.profileActions button {
+  height: 26px;
+  font-size: 11px;
+}
+
+.profileStatsGrid {
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  overflow: hidden;
+}
+
+.profileStat {
+  min-height: 54px;
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(2, 6, 23, 0.34);
+  padding: 4px;
+  display: grid;
+  gap: 3px;
+  align-content: start;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.profileStat:last-child {
+  border-right: 0;
+}
+
+.profileStatIcon {
+  width: 14px;
+  height: 14px;
+  color: #67e8f9;
+}
+
+.profileStatLabel {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.profileStat strong {
+  font-size: 12px;
+  line-height: 1.2;
+  color: #f8fafc;
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rightDetailsGrid {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.72);
+  overflow: hidden;
+}
+
+.rightBottomGrid {
+  height: 120px;
+  min-height: 120px;
+  max-height: 120px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.rightBottomGrid .detailCard {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.72);
+  padding: 7px;
+  overflow: hidden;
+  border-right: 0;
+}
+
+.detailCard {
+  min-width: 0;
+  min-height: 0;
+  padding: 7px;
+  overflow: hidden;
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailCard:last-child {
+  border-right: 0;
+}
+
+.detailCardCompact {
+  min-height: 0;
+}
+
+.detailCardTall {
+  min-height: 0;
+}
+
+.detailTitle {
+  font-size: 13px;
+  font-weight: 850;
+  color: #f8fafc;
+  margin-bottom: 0;
+}
+
+.detailTitleSmall {
+  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.detailList {
+  display: grid;
+  gap: 6px;
+}
+
+.detailDivider {
+  height: 1px;
+  margin: 1px 0;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.detailRow {
+  display: grid;
+  gap: 2px;
+}
+
+.detailRow span {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.detailRow strong {
+  font-size: 12px;
+  color: #e2e8f0;
+  font-weight: 700;
+  line-height: 1.35;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.tagPurple,
+.tagBlue,
+.tagGold,
+.tagGreen,
+.tagBrown {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.34rem 0.55rem;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.tagPurple {
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.tagBlue {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.14);
+}
+
+.tagGold {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.tagGreen {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.tagBrown {
+  color: #fdba74;
+  background: rgba(180, 83, 9, 0.14);
+}
+
+.simpleList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.listPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.36rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 6, 23, 0.32);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.whatsAppPill {
+  color: #bbf7d0;
+}
+
+.activityList {
+  display: grid;
+  gap: 5px;
+  max-height: 100%;
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+.activityRow {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 36px;
+  overflow: hidden;
+}
+
+.activityDate {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.activityRow strong {
+  display: block;
+  font-size: 12px;
+  color: #f8fafc;
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityRow span {
+  font-size: 11px;
+  color: #94a3b8;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noteText {
+  margin: 0 0 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.linkButton {
+  height: 34px;
+  border-radius: 10px;
+  padding: 0 12px;
+  justify-content: center;
+  color: #67e8f9;
+  background: rgba(8, 47, 73, 0.22);
+  flex: 0 0 auto;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metaGrid span {
+  display: block;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.metaGrid strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #e2e8f0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyTable {
+  display: grid;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.historyHeader,
+.historyRow {
+  display: grid;
+  grid-template-columns: 92px 58px minmax(0, 1fr) 72px;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.historyHeader {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.historyRow {
+  padding: 4px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  background: rgba(2, 6, 23, 0.3);
+  font-size: 11px;
+  color: #e2e8f0;
+}
+
+.historyRow span:last-child {
+  color: #cbd5e1;
+}
+
+.detailCard:nth-of-type(1),
+.detailCard:nth-of-type(2),
+.detailCard:nth-of-type(3),
+.detailCard:nth-of-type(4),
+.detailCard:nth-of-type(5),
+.detailCard:nth-of-type(6),
+.detailCard:nth-of-type(7),
+.detailCard:nth-of-type(8) {
+  min-height: 0;
+}
+
+.profileName,
+.profileContact,
+.customerName,
+.contactRow,
+.customerMeta,
+.customerSegment,
+.customerVisits,
+.customerSpend,
+.segmentPill,
+.detailCard,
+.activityRow {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customerName,
+.contactRow,
+.profileName {
+  white-space: nowrap;
+}
+
+@media (max-width: 1440px) {
+  .page {
+    padding: 18px 18px 12px;
+    gap: 10px;
+  }
+
+  .pageTitle {
+    font-size: 26px;
+  }
+
+  .crmMainGrid {
+    grid-template-columns: minmax(0, 1fr) 450px;
+    gap: 12px;
+  }
+
+  .rightColumn {
+    grid-template-rows: 176px minmax(0, 1fr) 132px;
+    gap: 8px;
+  }
+
+  .metricGrid {
+    flex-basis: 108px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .metricCard {
+    height: 108px;
+    min-height: 108px;
+    padding: 11px;
+  }
+
+  .metricValue {
+    font-size: 24px;
+  }
+
+  .segmentTabs {
+    flex-basis: 34px;
+  }
+
+  .filtersBar {
+    flex-basis: 38px;
+    grid-template-columns: minmax(0, 1fr) 112px 112px 126px 88px;
+    gap: 7px;
+  }
+
+  .customerRow {
+    height: 49px;
+    min-height: 49px;
+    padding: 6px 12px;
+  }
+
+  .tableHeader {
+    height: 38px;
+    flex-basis: 38px;
+    padding: 0 12px;
+  }
+
+  .tableFooter {
+    height: 40px;
+    flex-basis: 40px;
+    padding: 0 12px;
+  }
+
+  .tableHeader,
+  .customerRow {
+    grid-template-columns:
+      minmax(150px, 1.15fr)
+      minmax(130px, 0.95fr)
+      minmax(70px, 0.5fr)
+      minmax(72px, 0.5fr)
+      minmax(105px, 0.72fr)
+      minmax(40px, 0.28fr)
+      minmax(72px, 0.45fr);
+    gap: 6px;
+  }
+
+  .profilePanel {
+    height: 176px;
+    min-height: 176px;
+    max-height: 176px;
+    padding: 11px;
+  }
+
+  .rightBottomGrid {
+    height: 132px;
+    min-height: 132px;
+    max-height: 132px;
+  }
+
+  .detailCard {
+    padding: 9px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .crmMainGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .rightColumn {
+    order: 2;
+    max-width: 100%;
+    grid-template-rows: auto;
+  }
+
+  .leftColumn {
+    order: 1;
+  }
+
+  .filtersBar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rightDetailsGrid,
+  .rightBottomGrid {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+}

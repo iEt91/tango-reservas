@@ -65,6 +65,14 @@ function isActiveRoute(pathname: string, href: string) {
     return true;
   }
 
+  if (href === "/local/plano" && pathname.startsWith("/local/plano-lab")) {
+    return true;
+  }
+
+  if (href === "/local/crm" && pathname.startsWith("/local/crm-lab")) {
+    return true;
+  }
+
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

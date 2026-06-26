@@ -2,11 +2,11 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.3.2-plano-lab Ajuste compacto del laboratorio de Plano
+### v5.4.3-crm-lab Laboratorio visual de CRM
 
-- `/local/plano-lab` reubica las metricas del salon dentro del bloque principal;
-- `Ocupacion por horario` queda justo debajo de las metricas inferiores y el layout se compacta;
-- se mantiene el laboratorio visual aislado sin tocar la ruta real `/local/plano`.
+- `/local/crm-lab` replica visualmente la pantalla de CRM como laboratorio aislado;
+- se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/crm`;
+- la pantalla usa mock data local para clientes, detalle y actividad sin conectar Supabase.
 
 ### v5.3.0-plano-lab Laboratorio visual del plano
 
