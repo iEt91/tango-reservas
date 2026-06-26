@@ -10,9 +10,15 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.0-configuracion-lab`
+`v5.1-configuracion-lab`
 
-Esta version crea `/local/configuracion-lab` como laboratorio visual aislado para la configuracion del negocio, replicando la referencia premium con datos mock y sin tocar la ruta real `/local/configuracion`.
+Esta version compacta `/local/configuracion-lab`, elimina la navegacion horizontal interna del body y acerca el layout al blueprint premium de Configuracion del negocio.
+
+## Etapa v5.1-configuracion-lab
+
+- `/local/configuracion-lab` elimina la navegacion horizontal interna duplicada del body;
+- se compactan hero, tarjetas, formularios, horarios, servicios, web publica, notificaciones y footer para acercarse mas a la referencia;
+- la pantalla sigue siendo un laboratorio visual aislado con datos mock y sin tocar la ruta real `/local/configuracion`.
 
 ## Etapa v5.0-configuracion-lab
 

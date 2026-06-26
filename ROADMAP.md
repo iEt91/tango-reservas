@@ -2,6 +2,12 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.1-configuracion-lab Compactacion visual del laboratorio de configuracion
+
+- `/local/configuracion-lab` elimina la navegacion horizontal interna del body y compacta el hero;
+- se ajustan alturas y gaps de las tarjetas para acercar la vista al blueprint de Configuracion del negocio;
+- la pantalla sigue siendo una maqueta aislada con datos mock y no toca la ruta real `/local/configuracion`.
+
 ### v5.0-configuracion-lab Laboratorio visual de configuracion
 
 - `/local/configuracion-lab` recrea visualmente la referencia de Configuracion del negocio como maqueta aislada;

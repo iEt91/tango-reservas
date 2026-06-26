@@ -1,13 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./LocalConfiguracionLabPage.module.css";
 
-type NavItem = {
-  key: string;
-  label: string;
-  icon: IconName;
-  active?: boolean;
-};
-
 type FieldPair = {
   label: string;
   value: string;
@@ -57,17 +50,6 @@ type IconName =
   | "image"
   | "menu"
   | "chart";
-
-const navItems: NavItem[] = [
-  { key: "reservas", label: "Reservas", icon: "calendar" },
-  { key: "calendario", label: "Calendario", icon: "clock" },
-  { key: "plano", label: "Plano", icon: "desktop" },
-  { key: "crm", label: "CRM", icon: "menu" },
-  { key: "configuracion", label: "Configuración", icon: "settings", active: true },
-  { key: "menu", label: "Menú", icon: "service" },
-  { key: "web", label: "Web", icon: "globe" },
-  { key: "reportes", label: "Reportes", icon: "chart" },
-];
 
 const businessFields: FieldPair[] = [
   { label: "Nombre del negocio", value: "Demuru" },
@@ -447,20 +429,6 @@ export function LocalConfiguracionLabPage() {
   return (
     <main className={styles.page}>
       <div className={styles.content}>
-        <nav className={styles.sectionNav} aria-label="Secciones del local">
-          {navItems.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`${styles.navItem} ${item.active ? styles.navItemActive : ""}`}
-            >
-              <span className={styles.navIcon}>
-                <Icon name={item.icon} />
-              </span>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
 
         <header className={styles.heroCard}>
           <div className={styles.heroLeft}>
