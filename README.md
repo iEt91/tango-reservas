@@ -10,14 +10,14 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.2-configuracion-lab`
+`v5.4-configuracion-lab`
 
 Esta version compacta `/local/configuracion-lab`, ajusta Horarios comerciales y hace visibles los contenidos de Reservas, Web publica y Notificaciones.
 
-## Etapa v5.2-configuracion-lab
+## Etapa v5.4-configuracion-lab
 
-- `/local/configuracion-lab` elimina la navegacion horizontal interna duplicada del body;
-- se ajustan columnas, filas y alturas para evitar overlaps y contenido cortado en Horarios comerciales, Reservas, Web publica y Notificaciones;
+- `/local/configuracion-lab` normaliza el layout interno de las cards con header/body y fija alturas trabajables por fila;
+- se eliminan cortes, overlaps y scrolls internos innecesarios en Horarios comerciales, Reservas, Web publica y Notificaciones;
 - la pantalla sigue siendo un laboratorio visual aislado con datos mock y sin tocar la ruta real `/local/configuracion`.
 
 ## Etapa v5.0-configuracion-lab

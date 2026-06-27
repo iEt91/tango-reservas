@@ -430,7 +430,7 @@ export function LocalConfiguracionLabPage() {
     <main className={styles.page}>
       <div className={styles.content}>
 
-        <header className={styles.heroCard}>
+        <header className={styles.configHero}>
           <div className={styles.heroLeft}>
             <span className={styles.heroBadge}>
               <Icon name="settings" />
@@ -469,223 +469,243 @@ export function LocalConfiguracionLabPage() {
           </div>
         </header>
 
-        <section className={styles.primaryGrid}>
+        <section className={styles.topRow}>
           <article className={`${styles.card} ${styles.businessCard}`}>
-            <SectionHeader icon="building" title="Datos del negocio" />
-            <div className={styles.fieldGrid}>
-              {businessFields.map((field) => (
-                <FieldCard key={field.label} field={field} />
-              ))}
+            <header className={styles.cardHeader}>
+              <SectionHeader icon="building" title="Datos del negocio" />
+            </header>
+            <div className={styles.cardBody}>
+              <div className={styles.businessForm}>
+                {businessFields.map((field) => (
+                  <FieldCard key={field.label} field={field} />
+                ))}
+              </div>
             </div>
           </article>
 
           <article className={`${styles.card} ${styles.reservationsCard}`}>
-            <SectionHeader icon="calendar" title="Reservas" />
-            <div className={styles.reservationStack}>
-              {reservationSettings.map((setting) =>
-                setting.kind === "toggle" ? (
-                  <ToggleRow
-                    key={setting.label}
-                    label={setting.label}
-                    description={setting.description}
-                    checked={Boolean(setting.checked)}
-                  />
-                ) : (
-                  <div key={setting.label} className={styles.reservationSelectRow}>
-                    <div className={styles.toggleCopy}>
-                      <strong>{setting.label}</strong>
-                      <span>{setting.description}</span>
+            <header className={styles.cardHeader}>
+              <SectionHeader icon="calendar" title="Reservas" />
+            </header>
+            <div className={styles.cardBody}>
+              <div className={styles.reservationSettingsList}>
+                {reservationSettings.map((setting) =>
+                  setting.kind === "toggle" ? (
+                    <ToggleRow
+                      key={setting.label}
+                      label={setting.label}
+                      description={setting.description}
+                      checked={Boolean(setting.checked)}
+                    />
+                  ) : (
+                    <div key={setting.label} className={styles.settingRow}>
+                      <div className={styles.settingText}>
+                        <strong className={styles.settingTitle}>{setting.label}</strong>
+                        <span className={styles.settingDescription}>{setting.description}</span>
+                      </div>
+                      <button type="button" className={styles.settingSelect}>
+                        <span>{setting.value}</span>
+                        <Icon name="chevronDown" />
+                      </button>
                     </div>
-                    <button type="button" className={styles.reservationSelect}>
-                      <span>{setting.value}</span>
-                      <Icon name="chevronDown" />
-                    </button>
-                  </div>
-                ),
-              )}
+                  ),
+                )}
 
-              <div className={styles.reservationRangeCard}>
-                <div>
-                  <strong>Horarios de admisión de reservas</strong>
-                  <span>Definí el rango horario en el que se pueden reservar</span>
+                <div className={styles.admissionBox}>
+                  <div className={styles.settingText}>
+                    <strong className={styles.settingTitle}>Horarios de admisi?n de reservas</strong>
+                    <span className={styles.settingDescription}>Defin? el rango horario en el que se pueden reservar</span>
+                  </div>
+                  <button type="button" className={styles.admissionValue}>
+                    <span>08:00 - 22:00</span>
+                    <Icon name="edit" />
+                  </button>
                 </div>
-                <button type="button" className={styles.rangeButton}>
-                  <span>08:00 - 22:00</span>
-                  <Icon name="edit" />
-                </button>
               </div>
             </div>
           </article>
 
           <article className={`${styles.card} ${styles.hoursCard}`}>
-            <SectionHeader icon="clock" title="Horarios comerciales" />
-            <div className={styles.hoursTable}>
-              <div className={styles.hoursHeader}>
-                <span>DÍA</span>
-                <span>APERTURA</span>
-                <span>CIERRE</span>
-                <span>DESCANSO</span>
-              </div>
-
-              {commercialHours.map((row) => (
-                <div key={row.day} className={styles.hoursRow}>
-                  <div className={styles.hoursDay}>
-                    <button
-                      type="button"
-                      className={`${styles.switch} ${styles.switchOn}`}
-                      aria-pressed="true"
-                    >
-                      <span className={styles.switchThumb} />
-                    </button>
-                    <span className={styles.hoursDayLabel}>{row.day}</span>
-                  </div>
-                  <TimePill value={row.open} />
-                  <TimePill value={row.close} />
-                  <div className={styles.breakGroup}>
-                    <TimePill value={row.breakStart} muted />
-                    <TimePill value={row.breakEnd} muted />
-                  </div>
-                  <button type="button" className={styles.iconButton} aria-label={`Eliminar horario de ${row.day}`}>
-                    <Icon name="trash" />
-                  </button>
+            <header className={styles.cardHeader}>
+              <SectionHeader icon="clock" title="Horarios comerciales" />
+            </header>
+            <div className={styles.cardBody}>
+              <div className={styles.hoursTable}>
+                <div className={styles.hoursHeader}>
+                  <span>D?A</span>
+                  <span>APERTURA</span>
+                  <span>CIERRE</span>
+                  <span>DESCANSO</span>
                 </div>
-              ))}
 
-              <button type="button" className={styles.specialScheduleLink}>
-                + Agregar horario especial
-              </button>
+                {commercialHours.map((row) => (
+                  <div key={row.day} className={styles.hoursRow}>
+                    <div className={styles.hoursDay}>
+                      <button
+                        type="button"
+                        className={`${styles.switch} ${styles.switchOn}`}
+                        aria-pressed="true"
+                      >
+                        <span className={styles.switchThumb} />
+                      </button>
+                      <span className={styles.dayName}>{row.day}</span>
+                    </div>
+                    <TimePill value={row.open} />
+                    <TimePill value={row.close} />
+                    <div className={styles.breakRange}>
+                      <TimePill value={row.breakStart} muted />
+                      <TimePill value={row.breakEnd} muted />
+                    </div>
+                    <button type="button" className={styles.trashButton} aria-label={`Eliminar horario de ${row.day}`}>
+                      <Icon name="trash" />
+                    </button>
+                  </div>
+                ))}
+
+                <button type="button" className={styles.specialHoursButton}>
+                  + Agregar horario especial
+                </button>
+              </div>
             </div>
           </article>
         </section>
-
-        <section className={styles.secondaryGrid}>
+        <section className={styles.bottomRow}>
           <article className={`${styles.card} ${styles.servicesCard}`}>
-            <SectionHeader
-              icon="service"
-              title="Servicios"
-              action={
-                <button type="button" className={styles.headerActionButton}>
-                  <Icon name="plus" />
-                  Nuevo servicio
-                </button>
-              }
-            />
+            <header className={styles.cardHeader}>
+              <SectionHeader
+                icon="service"
+                title="Servicios"
+                action={
+                  <button type="button" className={styles.newServiceButton}>
+                    <Icon name="plus" />
+                    Nuevo servicio
+                  </button>
+                }
+              />
+            </header>
 
-            <div className={styles.serviceTable}>
-              <div className={styles.serviceHeader}>
-                <span>SERVICIO</span>
-                <span>DURACIÓN</span>
-                <span>CAPACIDAD</span>
-                <span>ESTADO</span>
-                <span>ACCIONES</span>
-              </div>
-
-              {services.map((service) => (
-                <div key={service.title} className={styles.serviceRow}>
-                  <div className={styles.serviceMain}>
-                    <strong>{service.title}</strong>
-                    <span>{service.subtitle}</span>
-                  </div>
-                  <span>{service.duration}</span>
-                  <span>{service.capacity}</span>
-                  <span className={`${styles.stateBadge} ${service.active ? styles.stateActive : styles.stateInactive}`}>
-                    {service.active ? "Activo" : "Inactivo"}
-                  </span>
-                  <div className={styles.actionCluster}>
-                    <button type="button" className={styles.iconButton} aria-label={`Editar ${service.title}`}>
-                      <Icon name="edit" />
-                    </button>
-                    <button type="button" className={styles.iconButton} aria-label={`Más acciones de ${service.title}`}>
-                      <span className={styles.moreDots}>···</span>
-                    </button>
-                  </div>
+            <div className={styles.cardBody}>
+              <div className={styles.servicesTable}>
+                <div className={styles.serviceHeader}>
+                  <span>SERVICIO</span>
+                  <span>DURACI?N</span>
+                  <span>CAPACIDAD</span>
+                  <span>ESTADO</span>
+                  <span>ACCIONES</span>
                 </div>
-              ))}
+
+                {services.map((service) => (
+                  <div key={service.title} className={styles.serviceRow}>
+                    <div className={styles.serviceMain}>
+                      <strong className={styles.serviceName}>{service.title}</strong>
+                      <span className={styles.serviceDescription}>{service.subtitle}</span>
+                    </div>
+                    <span>{service.duration}</span>
+                    <span>{service.capacity}</span>
+                    <span className={`${styles.stateBadge} ${service.active ? styles.stateActive : styles.stateInactive}`}>
+                      {service.active ? "Activo" : "Inactivo"}
+                    </span>
+                    <div className={styles.actionCluster}>
+                      <button type="button" className={styles.iconButton} aria-label={`Editar ${service.title}`}>
+                        <Icon name="edit" />
+                      </button>
+                      <button type="button" className={styles.iconButton} aria-label={`M?s acciones de ${service.title}`}>
+                        <span className={styles.moreDots}>???</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </article>
 
           <article className={`${styles.card} ${styles.webCard}`}>
-            <SectionHeader icon="globe" title="Web pública" />
-            <div className={styles.webLayout}>
-              <div className={styles.webSettings}>
-                <ToggleRow
-                  label="Mostrar menú en la web"
-                  description="Publicar menú actual en el sitio"
-                  checked
-                />
-                <ToggleRow
-                  label="Mostrar botón de WhatsApp"
-                  description="Mostrar contacto directo en la web"
-                  checked
-                />
-                <ToggleRow
-                  label="Recibir reservas desde la web"
-                  description="Habilitar formulario de reservas online"
-                  checked
-                />
-
-                <label className={styles.messageField}>
-                  <span>Mensaje de bienvenida</span>
-                  <textarea
-                    value="Bienvenidos a Demuru, restaurante de autor en Pinamar. Una experiencia única frente al mar."
-                    readOnly
-                    rows={4}
+            <header className={styles.cardHeader}>
+              <SectionHeader icon="globe" title="Web p?blica" />
+            </header>
+            <div className={styles.cardBody}>
+              <div className={styles.publicWebLayout}>
+                <div className={styles.publicWebSettings}>
+                  <ToggleRow
+                    label="Mostrar men? en la web"
+                    description="Publicar men? actual en el sitio"
+                    checked
                   />
-                  <strong>85/200</strong>
-                </label>
-              </div>
+                  <ToggleRow
+                    label="Mostrar bot?n de WhatsApp"
+                    description="Mostrar contacto directo en la web"
+                    checked
+                  />
+                  <ToggleRow
+                    label="Recibir reservas desde la web"
+                    description="Habilitar formulario de reservas online"
+                    checked
+                  />
 
-              <div className={styles.previewCard}>
-                <div className={styles.previewLabel}>Imagen de portada</div>
-                <div className={styles.previewImage}>
-                  <div className={styles.previewGlow} />
-                  <div className={styles.previewSky} />
-                  <div className={styles.previewWindow} />
-                  <div className={styles.previewWater} />
+                  <label className={styles.messageField}>
+                    <span>Mensaje de bienvenida</span>
+                    <textarea
+                      value="Bienvenidos a Demuru, restaurante de autor en Pinamar. Una experiencia ?nica frente al mar."
+                      readOnly
+                      rows={4}
+                    />
+                    <strong className={styles.characterCount}>85/200</strong>
+                  </label>
                 </div>
-                <button type="button" className={styles.previewButton}>
-                  <Icon name="image" />
-                  Cambiar imagen
-                </button>
-                <span className={styles.previewHint}>Recomendado: 1920x1080px</span>
+
+                <div className={styles.publicWebPreview}>
+                  <div className={styles.previewLabel}>Imagen de portada</div>
+                  <div className={styles.coverPreview}>
+                    <div className={styles.previewGlow} />
+                    <div className={styles.previewSky} />
+                    <div className={styles.previewWindow} />
+                    <div className={styles.previewWater} />
+                  </div>
+                  <button type="button" className={styles.changeImageButton}>
+                    <Icon name="image" />
+                    Cambiar imagen
+                  </button>
+                  <span className={styles.previewHint}>Recomendado: 1920x1080px</span>
+                </div>
               </div>
             </div>
           </article>
 
           <article className={`${styles.card} ${styles.notificationsCard}`}>
-            <SectionHeader icon="bell" title="Notificaciones" />
-            <div className={styles.notificationsList}>
-              {notifications.map((item) => (
-                <div key={item.title} className={styles.notificationRow}>
-                  <div className={styles.notificationMain}>
+            <header className={styles.cardHeader}>
+              <SectionHeader icon="bell" title="Notificaciones" />
+            </header>
+            <div className={styles.cardBody}>
+              <div className={styles.notificationList}>
+                {notifications.map((item) => (
+                  <div key={item.title} className={styles.notificationRow}>
                     <span className={styles.notificationIcon}>
                       <Icon name="bell" />
                     </span>
                     <div className={styles.notificationCopy}>
-                      <strong>{item.title}</strong>
-                      <span>{item.description}</span>
+                      <strong className={styles.notificationTitle}>{item.title}</strong>
+                      <span className={styles.notificationDescription}>{item.description}</span>
+                    </div>
+                    <div className={styles.notificationChannels}>
+                      <span className={styles.channelBadge}>
+                        <Icon name="mail" />
+                      </span>
+                      <button type="button" className={`${styles.channelToggle} ${styles.switchOn}`} aria-pressed="true">
+                        <span className={styles.channelToggleKnob} />
+                      </button>
+                      <span className={styles.channelBadge}>
+                        <Icon name="whatsapp" />
+                      </span>
+                      <button type="button" className={`${styles.channelToggle} ${styles.switchOn}`} aria-pressed="true">
+                        <span className={styles.channelToggleKnob} />
+                      </button>
                     </div>
                   </div>
-                  <div className={styles.channelGroup}>
-                    <span className={styles.channelBadge}>
-                      <Icon name="mail" />
-                    </span>
-                    <button type="button" className={`${styles.switch} ${styles.switchOn}`} aria-pressed="true">
-                      <span className={styles.switchThumb} />
-                    </button>
-                    <span className={styles.channelBadge}>
-                      <Icon name="whatsapp" />
-                    </span>
-                    <button type="button" className={`${styles.switch} ${styles.switchOn}`} aria-pressed="true">
-                      <span className={styles.switchThumb} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </article>
         </section>
-
         <footer className={styles.footerBar}>
           <div className={styles.footerMessage}>
             <span className={styles.footerShield}>

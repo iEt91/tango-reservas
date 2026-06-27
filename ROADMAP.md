@@ -2,10 +2,10 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.2-configuracion-lab Ajuste de overflow del laboratorio de configuracion
+### v5.4-configuracion-lab Normalizacion de cards del laboratorio de configuracion
 
-- `/local/configuracion-lab` elimina la navegacion horizontal interna del body y corrige overlaps de Horarios comerciales;
-- se compactan Reservas, Web publica y Notificaciones para mostrar todo el contenido visible sin cortes;
+- `/local/configuracion-lab` normaliza cards con header/body, iguala alturas por fila y evita cortes internos;
+- se compactan Reservas, Web publica y Notificaciones para mostrar todo el contenido visible sin scroll interno innecesario;
 - la pantalla sigue siendo una maqueta aislada con datos mock y no toca la ruta real `/local/configuracion`.
 
 ### v5.0-configuracion-lab Laboratorio visual de configuracion

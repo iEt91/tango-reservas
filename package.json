@@ -1,6 +1,6 @@
 {
   "name": "tango-reservas",
-  "version": "5.2.0-configuracion-lab",
+  "version": "5.4.0-configuracion-lab",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -60,7 +60,7 @@
   color: currentColor;
 }
 
-.heroCard,
+.configHero,
 .card,
 .footerBar {
   border: 1px solid rgba(148, 163, 184, 0.12);
@@ -70,10 +70,14 @@
   box-shadow: 0 18px 38px rgba(2, 6, 23, 0.2);
 }
 
-.heroCard {
-  min-height: 100px;
-  border-radius: 18px;
-  padding: 18px 22px;
+.configHero {
+  min-height: 56px;
+  border-radius: 0;
+  padding: 0;
+  margin: 0 0 10px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -219,14 +223,16 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .card {
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px;
   min-width: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .businessCard,
@@ -235,15 +241,20 @@
 .webCard,
 .reservationsCard,
 .notificationsCard {
-  min-height: 330px;
-  max-height: 330px;
+  min-height: 320px;
+  max-height: 320px;
 }
 
 .servicesCard,
 .webCard,
 .notificationsCard {
-  min-height: 258px;
-  max-height: 258px;
+  min-height: 245px;
+  max-height: 245px;
+}
+
+.reservationsCard {
+  min-height: 320px;
+  max-height: 320px;
 }
 
 .panelHeader {
@@ -252,6 +263,31 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
+}
+
+.cardHeader {
+  flex: 0 0 auto;
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardBodyScrollable {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cardBodyScrollable::-webkit-scrollbar {
+  display: none;
 }
 
 .panelHeaderTitle {
@@ -366,7 +402,7 @@
 
 .reservationStack {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .toggleRow,
@@ -381,11 +417,12 @@
 .reservationSelectRow,
 .reservationRangeCard {
   border-radius: 14px;
-  padding: 8px 10px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  min-height: 32px;
 }
 
 .toggleCopy {
@@ -395,21 +432,21 @@
 .toggleCopy strong {
   display: block;
   color: #f8fafc;
-  font-size: 11.5px;
-  line-height: 1.1;
+  font-size: 10.5px;
+  line-height: 1.05;
 }
 
 .toggleCopy span {
   display: block;
   margin-top: 2px;
   color: #94a3b8;
-  font-size: 9.5px;
-  line-height: 1.15;
+  font-size: 8.5px;
+  line-height: 1.05;
 }
 
 .switch {
-  width: 48px;
-  height: 26px;
+  width: 44px;
+  height: 24px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   background: rgba(148, 163, 184, 0.2);
@@ -427,8 +464,8 @@
 }
 
 .switchThumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
   background: #f8fafc;
   box-shadow: 0 2px 8px rgba(2, 6, 23, 0.18);
@@ -437,6 +474,9 @@
 .reservationSelect {
   width: 114px;
   flex: 0 0 auto;
+  min-height: 24px;
+  height: 24px;
+  font-size: 10.5px;
 }
 
 .reservationRangeCard {
@@ -446,16 +486,16 @@
 .reservationRangeCard strong {
   display: block;
   color: #f8fafc;
-  font-size: 11.5px;
-  line-height: 1.1;
+  font-size: 10.5px;
+  line-height: 1.05;
 }
 
 .reservationRangeCard span {
   display: block;
   margin-top: 2px;
   color: #94a3b8;
-  font-size: 9.5px;
-  line-height: 1.15;
+  font-size: 8.5px;
+  line-height: 1.1;
 }
 
 .rangeButton {
@@ -466,6 +506,9 @@
   justify-content: space-between;
   gap: 8px;
   padding-right: 10px;
+  min-height: 24px;
+  height: 24px;
+  font-size: 10.5px;
 }
 
 .hoursTable {
@@ -649,15 +692,18 @@
 
 .webLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 138px;
+  gap: 6px;
   min-width: 0;
   align-items: start;
+  height: 100%;
+  min-height: 0;
 }
 
 .webSettings {
   display: grid;
-  gap: 6px;
+  gap: 4px;
+  min-height: 0;
 }
 
 .messageField {
@@ -667,44 +713,45 @@
 }
 
 .messageField span {
-  font-size: 10.5px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .messageField textarea {
   width: 100%;
-  min-height: 52px;
-  height: 52px;
+  min-height: 40px;
+  height: 40px;
   resize: none;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 12px;
   background: rgba(2, 6, 23, 0.46);
   color: #f8fafc;
-  padding: 8px 10px;
-  font-size: 11px;
-  line-height: 1.25;
+  padding: 5px 8px;
+  font-size: 10px;
+  line-height: 1.1;
 }
 
 .messageField strong {
   justify-self: end;
   color: #94a3b8;
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .previewCard {
   display: grid;
-  gap: 8px;
+  gap: 5px;
   align-content: start;
+  min-height: 0;
 }
 
 .previewLabel {
-  font-size: 10.5px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .previewImage {
   position: relative;
-  height: 78px;
+  height: 60px;
   border-radius: 16px;
   overflow: hidden;
   background:
@@ -756,8 +803,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 28px;
-  font-size: 11px;
+  min-height: 24px;
+  height: 24px;
+  font-size: 10.5px;
   font-weight: 700;
 }
 
@@ -768,35 +816,36 @@
 
 .previewHint {
   color: #94a3b8;
-  font-size: 10px;
+  font-size: 9.5px;
   text-align: center;
 }
 
 .notificationsList {
   display: grid;
-  gap: 6px;
+  gap: 4px;
+  min-height: 0;
 }
 
 .notificationRow {
   border-radius: 14px;
-  padding: 8px 10px;
-  display: flex;
+  padding: 4px 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 40px;
+  gap: 6px;
+  min-height: 34px;
 }
 
 .notificationMain {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 7px;
   min-width: 0;
 }
 
 .notificationIcon {
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -808,33 +857,40 @@
 
 .notificationCopy {
   min-width: 0;
+  padding-right: 2px;
 }
 
 .notificationCopy strong {
   display: block;
   color: #f8fafc;
-  font-size: 11.5px;
-  line-height: 1.1;
+  font-size: 10.5px;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .notificationCopy span {
   display: block;
-  margin-top: 2px;
+  margin-top: 1px;
   color: #94a3b8;
-  font-size: 9.5px;
-  line-height: 1.15;
+  font-size: 8.5px;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .channelGroup {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   flex: 0 0 auto;
 }
 
 .channelBadge {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -849,13 +905,15 @@
 }
 
 .footerBar {
-  min-height: 58px;
+  height: 56px;
+  min-height: 56px;
   border-radius: 16px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  margin-top: 10px;
 }
 
 .footerMessage {
@@ -902,48 +960,432 @@
   background: linear-gradient(180deg, rgba(14, 165, 233, 0.8), rgba(8, 47, 73, 0.9));
 }
 
+.topRow,
+.bottomRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.14fr);
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.topRow {
+  height: 410px;
+  min-height: 410px;
+  max-height: 410px;
+}
+
+.bottomRow {
+  height: 320px;
+  min-height: 320px;
+  max-height: 320px;
+}
+
+.topRow > *,
+.bottomRow > * {
+  min-width: 0;
+  height: 100%;
+}
+
+.card {
+  height: 100%;
+  min-height: 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.businessCard,
+.reservationsCard,
+.hoursCard,
+.servicesCard,
+.webCard,
+.notificationsCard {
+  min-height: 0;
+  max-height: none;
+}
+
+.cardHeader {
+  margin-bottom: 8px;
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.businessForm {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 10px;
+  align-content: start;
+}
+
+.reservationSettingsList {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 5px;
+  align-content: stretch;
+}
+
+.settingRow,
+.admissionBox {
+  min-height: 32px;
+  padding: 4px 7px;
+  border-radius: 9px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.settingText {
+  min-width: 0;
+}
+
+.settingTitle {
+  margin: 0;
+  font-size: 10.8px;
+  line-height: 1.08;
+  color: #f8fafc;
+}
+
+.settingDescription {
+  margin-top: 1px;
+  font-size: 9.2px;
+  line-height: 1.08;
+  color: #8fb1c8;
+}
+
+.settingSelect,
+.admissionValue {
+  height: 25px;
+  min-height: 25px;
+  min-width: 88px;
+  padding: 0 7px;
+  border-radius: 8px;
+  font-size: 10.8px;
+}
+
+.toggle {
+  width: 36px;
+  height: 20px;
+}
+
+.toggleKnob {
+  width: 16px;
+  height: 16px;
+}
+
+.admissionBox {
+  min-height: 38px;
+}
+
+.admissionIcon {
+  width: 28px;
+  height: 28px;
+}
+
+.hoursCard .cardBody {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hoursTable {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 5px;
+  align-content: start;
+}
+
+.hoursHeader,
+.hoursRow {
+  display: grid;
+  grid-template-columns: 96px 76px 76px 124px 24px;
+  align-items: center;
+  column-gap: 9px;
+  min-width: 0;
+}
+
+.hoursHeader {
+  height: 18px;
+  min-height: 18px;
+}
+
+.hoursRow {
+  min-height: 25px;
+}
+
+.dayName {
+  white-space: nowrap;
+  min-width: 0;
+  font-size: 11.3px;
+  line-height: 1;
+}
+
+.timeSelect,
+.hoursSelect {
+  height: 25px;
+  min-height: 25px;
+  padding: 0 6px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.breakRange {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  min-width: 0;
+}
+
+.trashButton {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+}
+
+.specialHoursButton {
+  height: 24px;
+  margin-top: 5px;
+  font-size: 11px;
+}
+
+.servicesCard .cardBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  justify-content: space-between;
+}
+
+.servicesTable {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 0;
+  align-content: start;
+}
+
+.serviceRow {
+  min-height: 38px;
+  padding: 6px 0;
+}
+
+.serviceName {
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.serviceDescription {
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.newServiceButton {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.publicWebCard .cardBody {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.publicWebLayout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 145px;
+  gap: 8px;
+}
+
+.publicWebSettings {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.webOptionRow {
+  min-height: 29px;
+  padding: 3px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.webOptionTitle {
+  font-size: 10.8px;
+  line-height: 1.08;
+}
+
+.webOptionDescription {
+  font-size: 9.2px;
+  line-height: 1.08;
+  margin-top: 1px;
+}
+
+.publicWebPreview {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coverPreview {
+  height: 64px;
+  min-height: 64px;
+  border-radius: 10px;
+}
+
+.changeImageButton {
+  height: 25px;
+  min-height: 25px;
+  font-size: 10.8px;
+  border-radius: 8px;
+}
+
+.welcomeTextarea {
+  height: 45px;
+  min-height: 45px;
+  max-height: 45px;
+  padding: 6px 8px;
+  font-size: 10.3px;
+  line-height: 1.12;
+  resize: none;
+}
+
+.characterCount {
+  font-size: 9.5px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.notificationsCard .cardBody {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notificationList {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 5px;
+  align-content: stretch;
+}
+
+.notificationRow {
+  min-height: 34px;
+  padding: 4px 7px;
+  border-radius: 9px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.notificationIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+.notificationTitle {
+  font-size: 10.8px;
+  line-height: 1.08;
+}
+
+.notificationDescription {
+  font-size: 9.2px;
+  line-height: 1.08;
+  margin-top: 1px;
+}
+
+.notificationChannels {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.channelToggle {
+  width: 31px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.96), rgba(14, 165, 233, 0.92));
+  padding: 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.channelToggleKnob {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #f8fafc;
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.18);
+}
+
+.footerBar {
+  flex: 0 0 auto;
+  height: 54px;
+  min-height: 54px;
+  padding: 8px 14px;
+  margin-top: 0;
+}
+
 @media (max-width: 1440px) {
-  .heroCard {
-    padding: 20px;
+  .configHero {
+    min-height: 56px;
   }
 
   .heroTitleRow h1 {
     font-size: 27px;
   }
 
-  .primaryGrid,
-  .secondaryGrid {
+  .topRow,
+  .bottomRow {
     gap: 10px;
   }
 
   .card {
-    padding: 16px;
+    padding: 14px;
   }
 
-  .businessCard,
-  .hoursCard,
-  .servicesCard,
-  .webCard,
-  .reservationsCard,
-  .notificationsCard {
-    min-height: 334px;
+  .topRow {
+    height: 410px;
+    min-height: 410px;
+    max-height: 410px;
   }
 
-  .servicesCard,
-  .webCard,
-  .notificationsCard {
-    min-height: 258px;
+  .bottomRow {
+    height: 320px;
+    min-height: 320px;
+    max-height: 320px;
   }
 }
 
 @media (max-width: 1200px) {
-  .primaryGrid,
-  .secondaryGrid,
-  .webLayout {
+  .topRow,
+  .bottomRow,
+  .publicWebLayout {
     grid-template-columns: 1fr;
   }
 
-  .heroCard {
+  .configHero {
     flex-direction: column;
     align-items: flex-start;
   }
