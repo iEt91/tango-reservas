@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -31,8 +31,8 @@ const navigation: LocalNavigationItem[] = [
   { href: "/local/calendario", label: "Calendario", icon: "book" },
   { href: "/local/plano", label: "Plano", icon: "map" },
   { href: "/local/crm", label: "CRM", icon: "users" },
-  { href: "/local/configuracion", label: "Configuracion", icon: "settings" },
-  { href: "/local/menu", label: "Menu", icon: "menu" },
+  { href: "/local/configuracion", label: "Configuración", icon: "settings" },
+  { href: "/local/menu", label: "Menú", icon: "menu" },
   { href: "/local/web", label: "Web", icon: "globe" },
   { href: "/local/reportes", label: "Reportes", icon: "chart" },
 ];
@@ -41,7 +41,7 @@ function formatBusinessLabel(slug: string) {
   const normalized = slug.trim();
 
   if (!normalized) {
-    return "Negocio actual";
+    return "Demuru";
   }
 
   return normalized
@@ -55,6 +55,26 @@ function formatBusinessLabel(slug: string) {
 function isActiveRoute(pathname: string, href: string) {
   if (href === "/local") {
     return pathname === href;
+  }
+
+  if (href === "/local/reservas" && pathname.startsWith("/local/reservas-lab")) {
+    return true;
+  }
+
+  if (href === "/local/calendario" && pathname.startsWith("/local/calendario-lab")) {
+    return true;
+  }
+
+  if (href === "/local/plano" && pathname.startsWith("/local/plano-lab")) {
+    return true;
+  }
+
+  if (href === "/local/crm" && pathname.startsWith("/local/crm-lab")) {
+    return true;
+  }
+
+  if (href === "/local/configuracion" && pathname.startsWith("/local/configuracion-lab")) {
+    return true;
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -101,7 +121,7 @@ export function LocalPremiumShell({ children }: LocalPremiumShellProps) {
     return queryString ? `${pathname}?${queryString}` : pathname;
   })();
 
-  const webHref = currentBusinessSlug ? `/${currentBusinessSlug}` : "/";
+  const webHref = currentBusinessSlug ? `/${currentBusinessSlug}` : "/demuru";
 
   const navItems = navigation.map((item) => {
     const href = isSupportMode
@@ -141,3 +161,4 @@ export function LocalPremiumShell({ children }: LocalPremiumShellProps) {
     </div>
   );
 }
+
