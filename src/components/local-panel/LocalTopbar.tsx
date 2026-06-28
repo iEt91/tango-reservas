@@ -93,11 +93,7 @@ export function LocalTopbar({
           </Link>
         ) : null}
 
-        <button
-          type="button"
-          className={designLabStyles.notification}
-          aria-label="Notificaciones"
-        >
+        <button type="button" className={designLabStyles.notification} aria-label="Notificaciones">
           <TopbarIcon name="bell" className="h-4 w-4" />
           <span className={designLabStyles.badge}>3</span>
         </button>

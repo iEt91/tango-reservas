@@ -10,9 +10,57 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 ## Version actual
 
-`v5.1.2-reservas`
+`v5.6-configuracion-lab`
 
-Esta version compacta `/local/reservas` para acercarla mas al blueprint `2-reservas.png`: elimina la card vertical de fecha, sube header y metricas, compacta filtros y listado, y mantiene la logica real, Supabase, `business` y `mode=support` intactos.
+Esta version compacta `/local/configuracion-lab`, ajusta Horarios comerciales y hace visibles los contenidos de Reservas, Web publica y Notificaciones.
+
+## Etapa v5.6-configuracion-lab
+
+- `/local/configuracion-lab` corrige íconos desproporcionados y textos rotos en el laboratorio de configuración;
+- se mantienen las alturas trabajables por fila y se compactan Reservas, Web pública y Notificaciones sin scroll interno visible;
+- la pantalla sigue siendo un laboratorio visual aislado con datos mock y sin tocar la ruta real `/local/configuracion`.
+
+## Etapa v5.0-configuracion-lab
+
+- `/local/configuracion-lab` replica el layout premium de Configuracion del negocio con hero, tarjetas de datos, reservas, horarios, servicios, web publica, notificaciones y barra de acciones;
+- se reutiliza el shell premium comun de `/local?business=demuru` y se mantiene la ruta real `/local/configuracion` intacta;
+- la pantalla usa datos mock visuales y no conecta Supabase ni logica real.
+
+## Etapa v4.9-crm-lab
+
+- `/local/crm-lab` elimina el panel inferior duplicado de consumos, estira la columna derecha hasta el fondo y simplifica los filtros Segmento, Vistas y Ordenar por;
+- se reutiliza el shell premium comun de `/local?business=demuru` y no se toca la ruta real `/local/crm`;
+- la pantalla sigue usando mock data local y no conecta Supabase ni logica real.
+
+## Etapa v5.3.0-plano-lab
+
+- `/local/plano-lab` reconstruye visualmente el blueprint de Plano con mesas mock, canvas, panel de mesa seleccionada y ocupacion por horario;
+- la pagina reutiliza el shell premium comun de `/local?business=demuru` y no toca `/local/plano` real;
+- se mantiene la separacion entre laboratorio visual y logica real del plano.
+
+## Etapa v5.2.1-calendario-lab
+
+- `/local/calendario-lab` mantiene la maqueta visual aislada del blueprint de Calendario;
+- la agenda del dia usa 17 slots fijos de 08:00 a 24:00 y agrupa reservas mock por franja de 60 minutos;
+- se conserva el shell premium comun de `/local?business=demuru`, sin tocar `/local/calendario` real.
+
+## Etapa v5.1.6-reservas-lab-fix
+
+- `/local/reservas-lab` reutiliza el sidebar y la topbar premium del dashboard bueno;
+- se corrige la burbuja de notificaciones, se quitan los chips del header y se mejora `Ocupación de hoy`;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y sin tocar la ruta operativa `/local/reservas`.
+
+## Etapa v5.1.4-reservas-lab
+
+- `/local/reservas-lab` compacta el listado de reservas y lo transforma en una tabla horizontal realista;
+- las acciones quedan alineadas a la derecha en una sola linea y el panel derecho se ve completo;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y sin tocar la ruta operativa `/local/reservas`.
+
+## Etapa v5.1.3-reservas-lab
+
+- `/local/reservas-lab` reproduce visualmente el blueprint `2-reservas.png` en forma aislada;
+- la pantalla usa mock data hardcodeada y no conecta la logica real, Supabase, `business` ni `mode=support`;
+- `/local/reservas` queda intacta y sigue siendo la pantalla operativa real.
 
 ## Etapa v5.1.2-reservas
 

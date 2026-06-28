@@ -2,6 +2,54 @@
 
 ## Etapa 1 - Panel del Local
 
+### v5.6-configuracion-lab Correccion de iconos y textos del laboratorio de configuracion
+
+- `/local/configuracion-lab` corrige íconos desproporcionados y textos rotos, manteniendo cards compactas con header/body;
+- se mantienen Reservas, Web pública y Notificaciones visibles dentro de alturas trabajables por fila;
+- la pantalla sigue siendo una maqueta aislada con datos mock y no toca la ruta real `/local/configuracion`.
+
+### v5.0-configuracion-lab Laboratorio visual de configuracion
+
+- `/local/configuracion-lab` recrea visualmente la referencia de Configuracion del negocio como maqueta aislada;
+- se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/configuracion`;
+- se usan datos mock visuales para negocio, reservas, horarios, servicios, web publica, notificaciones y barra de acciones.
+
+### v4.9-crm-lab Ajuste final de la columna derecha de CRM lab
+
+- `/local/crm-lab` quita el panel inferior duplicado de Consumos y preferencias, extiende los tres paneles derechos hasta el fondo y deja filtros limpios sin doble contenedor;
+- se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/crm`;
+- la pantalla usa mock data local para clientes, detalle y actividad sin conectar Supabase.
+
+### v5.3.0-plano-lab Laboratorio visual del plano
+
+- `/local/plano-lab` reconstruye visualmente el blueprint de Plano como maqueta aislada;
+- se reutiliza el shell premium comun de `/local?business=demuru` sin tocar la ruta real `/local/plano`;
+- se usan mesas mock, panel de seleccion, metricas y ocupacion por horario sin conectar logica real.
+
+### v5.2.1-calendario-lab Ajuste de agenda del laboratorio de Calendario
+
+- `/local/calendario-lab` sigue siendo una maqueta visual aislada basada en la captura de Calendario;
+- la agenda del dia usa slots fijos de 08:00 a 24:00 y agrupa reservas mock por franja horaria de 60 minutos;
+- se conserva el shell premium comun del Panel del Local y no se toca la ruta real `/local/calendario`.
+
+### v5.1.6-reservas-lab-fix Shell bueno y ocupacion completa del laboratorio
+
+- `/local/reservas-lab` reutiliza el sidebar y la topbar buenos de `/local?business=demuru`;
+- se corrige la burbuja de notificaciones, se quitan los chips del header y se agranda `Ocupación de hoy`;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y no toca la ruta operativa `/local/reservas`.
+
+### v5.1.4-reservas-lab Tabla compacta del laboratorio de reservas
+
+- `/local/reservas-lab` compacta el listado de reservas para verse como una tabla horizontal realista;
+- las acciones quedan alineadas a la derecha en una sola linea y el panel derecho se ve completo;
+- la pantalla sigue siendo una maqueta visual aislada con mock data fija y no toca la ruta operativa `/local/reservas`.
+
+### v5.1.3-reservas-lab Reserva visual aislada
+
+- se crea `/local/reservas-lab` como maqueta visual aislada del blueprint `2-reservas.png`;
+- la pagina usa mock data fija y no toca la logica real, Supabase ni la ruta operativa `/local/reservas`;
+- la version visible del sistema sube a `v5.1.3-reservas-lab`.
+
 ### v5.1.2-reservas Ajuste estructural visual en Reservas
 
 - `/local/reservas` se alinea mas al blueprint `2-reservas.png`;
