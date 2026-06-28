@@ -2,10 +2,10 @@
 
 ## Etapa 1 - Panel del Local
 
-### v5.4-configuracion-lab Normalizacion de cards del laboratorio de configuracion
+### v5.6-configuracion-lab Correccion de iconos y textos del laboratorio de configuracion
 
-- `/local/configuracion-lab` normaliza cards con header/body, iguala alturas por fila y evita cortes internos;
-- se compactan Reservas, Web publica y Notificaciones para mostrar todo el contenido visible sin scroll interno innecesario;
+- `/local/configuracion-lab` corrige íconos desproporcionados y textos rotos, manteniendo cards compactas con header/body;
+- se mantienen Reservas, Web pública y Notificaciones visibles dentro de alturas trabajables por fila;
 - la pantalla sigue siendo una maqueta aislada con datos mock y no toca la ruta real `/local/configuracion`.
 
 ### v5.0-configuracion-lab Laboratorio visual de configuracion

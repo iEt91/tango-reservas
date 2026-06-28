@@ -365,7 +365,7 @@ function SectionHeader({
     <div className={styles.panelHeader}>
       <div className={styles.panelHeaderTitle}>
         <span className={styles.panelHeaderIcon}>
-          <Icon name={icon} />
+          <Icon name={icon} className={styles.iconMd} />
         </span>
         <h2>{title}</h2>
       </div>
@@ -381,7 +381,7 @@ function FieldCard({ field }: { field: FieldPair }) {
       {field.type === "select" ? (
         <button type="button" className={styles.fieldSelect}>
           <span>{field.value}</span>
-          <Icon name="chevronDown" />
+          <Icon name="chevronDown" className={styles.selectIcon} />
         </button>
       ) : (
         <div className={styles.fieldInput}>{field.value}</div>
@@ -420,7 +420,7 @@ function TimePill({ value, muted = false }: { value: string; muted?: boolean }) 
   return (
     <button type="button" className={`${styles.timePill} ${muted ? styles.timePillMuted : ""}`}>
       <span>{value}</span>
-      <Icon name="chevronDown" />
+      <Icon name="chevronDown" className={styles.selectIcon} />
     </button>
   );
 }
@@ -505,7 +505,7 @@ export function LocalConfiguracionLabPage() {
                       </div>
                       <button type="button" className={styles.settingSelect}>
                         <span>{setting.value}</span>
-                        <Icon name="chevronDown" />
+                        <Icon name="chevronDown" className={styles.selectIcon} />
                       </button>
                     </div>
                   ),
@@ -513,12 +513,12 @@ export function LocalConfiguracionLabPage() {
 
                 <div className={styles.admissionBox}>
                   <div className={styles.settingText}>
-                    <strong className={styles.settingTitle}>Horarios de admisi?n de reservas</strong>
-                    <span className={styles.settingDescription}>Defin? el rango horario en el que se pueden reservar</span>
+                    <strong className={styles.settingTitle}>Horarios de admisión de reservas</strong>
+                    <span className={styles.settingDescription}>Definí el rango horario en el que se pueden reservar</span>
                   </div>
                   <button type="button" className={styles.admissionValue}>
                     <span>08:00 - 22:00</span>
-                    <Icon name="edit" />
+                    <Icon name="edit" className={styles.selectIcon} />
                   </button>
                 </div>
               </div>
@@ -532,7 +532,7 @@ export function LocalConfiguracionLabPage() {
             <div className={styles.cardBody}>
               <div className={styles.hoursTable}>
                 <div className={styles.hoursHeader}>
-                  <span>D?A</span>
+                  <span>DÍA</span>
                   <span>APERTURA</span>
                   <span>CIERRE</span>
                   <span>DESCANSO</span>
@@ -577,7 +577,7 @@ export function LocalConfiguracionLabPage() {
                 title="Servicios"
                 action={
                   <button type="button" className={styles.newServiceButton}>
-                    <Icon name="plus" />
+                    <Icon name="plus" className={styles.newServiceIcon} />
                     Nuevo servicio
                   </button>
                 }
@@ -588,7 +588,7 @@ export function LocalConfiguracionLabPage() {
               <div className={styles.servicesTable}>
                 <div className={styles.serviceHeader}>
                   <span>SERVICIO</span>
-                  <span>DURACI?N</span>
+                  <span>DURACIÓN</span>
                   <span>CAPACIDAD</span>
                   <span>ESTADO</span>
                   <span>ACCIONES</span>
@@ -607,10 +607,10 @@ export function LocalConfiguracionLabPage() {
                     </span>
                     <div className={styles.actionCluster}>
                       <button type="button" className={styles.iconButton} aria-label={`Editar ${service.title}`}>
-                        <Icon name="edit" />
+                        <Icon name="edit" className={styles.iconSm} />
                       </button>
-                      <button type="button" className={styles.iconButton} aria-label={`M?s acciones de ${service.title}`}>
-                        <span className={styles.moreDots}>???</span>
+                      <button type="button" className={styles.iconButton} aria-label={`Más acciones de ${service.title}`}>
+                        <span className={styles.moreDots}>⋯</span>
                       </button>
                     </div>
                   </div>
@@ -621,18 +621,18 @@ export function LocalConfiguracionLabPage() {
 
           <article className={`${styles.card} ${styles.webCard}`}>
             <header className={styles.cardHeader}>
-              <SectionHeader icon="globe" title="Web p?blica" />
+              <SectionHeader icon="globe" title="Web pública" />
             </header>
             <div className={styles.cardBody}>
               <div className={styles.publicWebLayout}>
                 <div className={styles.publicWebSettings}>
                   <ToggleRow
-                    label="Mostrar men? en la web"
-                    description="Publicar men? actual en el sitio"
+                    label="Mostrar menú en la web"
+                    description="Publicar menú actual en el sitio"
                     checked
                   />
                   <ToggleRow
-                    label="Mostrar bot?n de WhatsApp"
+                    label="Mostrar botón de WhatsApp"
                     description="Mostrar contacto directo en la web"
                     checked
                   />
@@ -645,7 +645,7 @@ export function LocalConfiguracionLabPage() {
                   <label className={styles.messageField}>
                     <span>Mensaje de bienvenida</span>
                     <textarea
-                      value="Bienvenidos a Demuru, restaurante de autor en Pinamar. Una experiencia ?nica frente al mar."
+                      value="Bienvenidos a Demuru, restaurante de autor en Pinamar. Una experiencia única frente al mar."
                       readOnly
                       rows={4}
                     />
@@ -662,7 +662,7 @@ export function LocalConfiguracionLabPage() {
                     <div className={styles.previewWater} />
                   </div>
                   <button type="button" className={styles.changeImageButton}>
-                    <Icon name="image" />
+                    <Icon name="image" className={styles.changeImageIcon} />
                     Cambiar imagen
                   </button>
                   <span className={styles.previewHint}>Recomendado: 1920x1080px</span>
@@ -680,7 +680,7 @@ export function LocalConfiguracionLabPage() {
                 {notifications.map((item) => (
                   <div key={item.title} className={styles.notificationRow}>
                     <span className={styles.notificationIcon}>
-                      <Icon name="bell" />
+                      <Icon name="bell" className={styles.iconSm} />
                     </span>
                     <div className={styles.notificationCopy}>
                       <strong className={styles.notificationTitle}>{item.title}</strong>
@@ -688,13 +688,13 @@ export function LocalConfiguracionLabPage() {
                     </div>
                     <div className={styles.notificationChannels}>
                       <span className={styles.channelBadge}>
-                        <Icon name="mail" />
+                        <Icon name="mail" className={styles.iconSm} />
                       </span>
                       <button type="button" className={`${styles.channelToggle} ${styles.switchOn}`} aria-pressed="true">
                         <span className={styles.channelToggleKnob} />
                       </button>
                       <span className={styles.channelBadge}>
-                        <Icon name="whatsapp" />
+                        <Icon name="whatsapp" className={styles.iconSm} />
                       </span>
                       <button type="button" className={`${styles.channelToggle} ${styles.switchOn}`} aria-pressed="true">
                         <span className={styles.channelToggleKnob} />
