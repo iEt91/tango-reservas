@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { LocalWebPage } from "@/components/local-web/LocalWebPage";
+import { V2WebPage } from "./v2-web-page";
 
-export default function LocalWebPageRoute() {
-  return (
-    <Suspense fallback={null}>
-      <LocalWebPage />
-    </Suspense>
-  );
+export default function WebPage() {
+  return <V2WebPage />;
 }

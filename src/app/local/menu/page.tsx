@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { LocalMenuPage } from "@/components/local-menu/LocalMenuPage";
+import { V2MenuPage } from "./v2-menu-page";
 
-export default function LocalMenuRoutePage() {
-  return (
-    <Suspense fallback={null}>
-      <LocalMenuPage />
-    </Suspense>
-  );
+export default function MenuPage() {
+  return <V2MenuPage />;
 }

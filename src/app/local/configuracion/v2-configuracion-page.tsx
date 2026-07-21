@@ -1,0 +1,926 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Bell,
+  CalendarClock,
+  Clock3,
+  ExternalLink,
+  Globe2,
+  MapPin,
+  Save,
+  ShoppingBag,
+  SlidersHorizontal,
+  UsersRound,
+} from "lucide-react";
+import { V2AppShell } from "@/components/v2/v2-app-shell";
+import { V2Badge } from "@/components/v2/v2-badge";
+import { V2Button } from "@/components/v2/v2-button";
+import { V2Card } from "@/components/v2/v2-card";
+import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
+import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  v2BusinessHours,
+  v2DeliverySettings,
+  v2LocalSettings,
+  v2LocalUsers,
+  v2NotificationSettings,
+  v2ReservationSettings,
+} from "@/lib/v2/v2-mock-data";
+
+
+const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
+const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
+const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
+const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
+
+type V2BusinessHourSlot = {
+  open: string;
+  close: string;
+};
+
+type V2BusinessHourConfig = {
+  day: string;
+  open: string;
+  close: string;
+  enabled: boolean;
+  slots: V2BusinessHourSlot[];
+};
+
+type V2PublicWebQuickConfig = {
+  showMenu: boolean;
+  showReservations: boolean;
+  showDelivery: boolean;
+  showGallery: boolean;
+  showMap: boolean;
+};
+
+type V2LocalConfigState = {
+  businessName: string;
+  businessType: string;
+  publicUrl: string;
+  status: "active" | "draft" | "paused";
+  description: string;
+  address: string;
+  phone: string;
+  whatsapp: string;
+  instagram: string;
+  email: string;
+  timezone: string;
+  businessHours: V2BusinessHourConfig[];
+  reservationEnabled: boolean;
+  standardDurationMinutes: number;
+  confirmationMode: "manual" | "automatic";
+  defaultReservationStatus: "pending" | "confirmed";
+  minimumNoticeHours: number;
+  bookingWindowDays: number;
+  maxPeoplePerSlot: number;
+  allowReservationsWithoutTable: boolean;
+  autoAssignReservationTables: boolean;
+  allowTableCombinations: boolean;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  estimatedDeliveryMinutes: number;
+  fixedDeliveryCost: number;
+  minimumOrder: number;
+  paymentMethods: string;
+  coverageZones: string;
+  notifyNewReservations: boolean;
+  notifyNewDeliveries: boolean;
+  notifyLowStock: boolean;
+  notifyDailySummary: boolean;
+  birthdayReminderEnabled: boolean;
+  birthdayReminderDays: number;
+};
+
+function normalizeNumber(value: unknown, fallback: number) {
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : fallback;
+}
+
+const TIME_SELECT_OPTIONS = Array.from({ length: 48 }, (_, index) => {
+  const totalMinutes = index * 30;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+});
+
+function normalizeTimeToSelectOption(value: string, fallback: string) {
+  if (TIME_SELECT_OPTIONS.includes(value)) return value;
+
+  return fallback;
+}
+
+function normalizeBusinessHourSlots(
+  item: Partial<V2BusinessHourConfig>
+): V2BusinessHourSlot[] {
+  const fallbackSlots = [
+    {
+      open: normalizeTimeToSelectOption(item.open ?? "12:00", "12:00"),
+      close: normalizeTimeToSelectOption(item.close ?? "00:00", "00:00"),
+    },
+  ];
+
+  const rawSlots =
+    Array.isArray(item.slots) && item.slots.length > 0 ? item.slots : fallbackSlots;
+
+  return rawSlots.slice(0, 2).map((slot) => ({
+    open: normalizeTimeToSelectOption(slot.open, "12:00"),
+    close: normalizeTimeToSelectOption(slot.close, "00:00"),
+  }));
+}
+
+function normalizeBusinessHour(item: Partial<V2BusinessHourConfig>): V2BusinessHourConfig {
+  const slots = normalizeBusinessHourSlots(item);
+
+  return {
+    day: item.day ?? "",
+    open: slots[0]?.open ?? "12:00",
+    close: slots[0]?.close ?? "00:00",
+    enabled: Boolean(item.enabled),
+    slots,
+  };
+}
+
+function formatBusinessHourSlots(item: V2BusinessHourConfig) {
+  if (!item.enabled) return "Cerrado";
+
+  return item.slots.map((slot) => `${slot.open}–${slot.close}`).join(" / ");
+}
+
+function getDefaultConfig(): V2LocalConfigState {
+  return {
+    businessName: v2LocalSettings.businessName,
+    businessType: v2LocalSettings.businessType,
+    publicUrl: v2LocalSettings.publicUrl,
+    status: v2LocalSettings.status as V2LocalConfigState["status"],
+    description: v2LocalSettings.description,
+    address: v2LocalSettings.address,
+    phone: v2LocalSettings.phone,
+    whatsapp: v2LocalSettings.whatsapp,
+    instagram: v2LocalSettings.instagram,
+    email: v2LocalSettings.email,
+    timezone: v2LocalSettings.timezone,
+    businessHours: v2BusinessHours.map((item) =>
+      normalizeBusinessHour({
+        day: item.day,
+        open: item.open,
+        close: item.close,
+        enabled: item.enabled,
+      })
+    ),
+    reservationEnabled: Boolean(v2ReservationSettings.enabled),
+    standardDurationMinutes: normalizeNumber(v2ReservationSettings.standardDurationMinutes, 120),
+    confirmationMode: v2ReservationSettings.confirmationMode === "automatic" ? "automatic" : "manual",
+    defaultReservationStatus: v2ReservationSettings.confirmationMode === "automatic" ? "confirmed" : "pending",
+    minimumNoticeHours: normalizeNumber(v2ReservationSettings.minimumNoticeHours, 2),
+    bookingWindowDays: normalizeNumber(v2ReservationSettings.bookingWindowDays, 14),
+    maxPeoplePerSlot: normalizeNumber(v2ReservationSettings.maxPeoplePerSlot, 40),
+    allowReservationsWithoutTable: false,
+    autoAssignReservationTables: true,
+    allowTableCombinations: true,
+    deliveryEnabled: Boolean(v2DeliverySettings.enabled),
+    pickupEnabled: Boolean(v2DeliverySettings.pickupEnabled),
+    estimatedDeliveryMinutes: normalizeNumber(v2DeliverySettings.estimatedMinutes, 45),
+    fixedDeliveryCost: normalizeNumber(v2DeliverySettings.fixedDeliveryCost, 0),
+    minimumOrder: normalizeNumber(v2DeliverySettings.minimumOrder, 0),
+    paymentMethods: v2DeliverySettings.paymentMethods.join(", "),
+    coverageZones: v2DeliverySettings.coverageZones.join(", "),
+    notifyNewReservations: Boolean(v2NotificationSettings.newReservations),
+    notifyNewDeliveries: Boolean(v2NotificationSettings.newDeliveries),
+    notifyLowStock: Boolean(v2NotificationSettings.lowStock),
+    notifyDailySummary: Boolean(v2NotificationSettings.dailySummary),
+    birthdayReminderEnabled: true,
+    birthdayReminderDays: 7,
+  };
+}
+
+function readConfigFromStorage() {
+  if (typeof window === "undefined") return getDefaultConfig();
+
+  try {
+    const rawValue = window.localStorage.getItem(LOCAL_CONFIG_STORAGE_KEY);
+    if (!rawValue) return getDefaultConfig();
+
+    const parsedConfig = JSON.parse(rawValue) as Partial<V2LocalConfigState>;
+    const defaultConfig = getDefaultConfig();
+
+    return {
+      ...defaultConfig,
+      ...parsedConfig,
+      allowReservationsWithoutTable:
+        parsedConfig.allowReservationsWithoutTable ?? defaultConfig.allowReservationsWithoutTable,
+      autoAssignReservationTables:
+        parsedConfig.autoAssignReservationTables ?? defaultConfig.autoAssignReservationTables,
+      allowTableCombinations:
+        parsedConfig.allowTableCombinations ?? defaultConfig.allowTableCombinations,
+      businessHours: (parsedConfig.businessHours ?? defaultConfig.businessHours).map((item) =>
+        normalizeBusinessHour(item)
+      ),
+    };
+  } catch {
+    return getDefaultConfig();
+  }
+}
+
+function writeConfigToStorage(value: V2LocalConfigState) {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(LOCAL_CONFIG_STORAGE_KEY, JSON.stringify(value));
+  window.dispatchEvent(new Event(LOCAL_CONFIG_EVENT));
+}
+
+function getDefaultPublicWebQuickConfig(): V2PublicWebQuickConfig {
+  return {
+    showMenu: true,
+    showReservations: true,
+    showDelivery: true,
+    showGallery: true,
+    showMap: true,
+  };
+}
+
+function readPublicWebQuickConfig(): V2PublicWebQuickConfig {
+  if (typeof window === "undefined") return getDefaultPublicWebQuickConfig();
+
+  try {
+    const rawValue = window.localStorage.getItem(WEB_CONFIG_STORAGE_KEY);
+    const parsedConfig = rawValue ? JSON.parse(rawValue) : {};
+    const defaultConfig = getDefaultPublicWebQuickConfig();
+
+    return {
+      showMenu: parsedConfig.showMenu ?? defaultConfig.showMenu,
+      showReservations: parsedConfig.showReservations ?? defaultConfig.showReservations,
+      showDelivery: parsedConfig.showDelivery ?? defaultConfig.showDelivery,
+      showGallery: parsedConfig.showGallery ?? defaultConfig.showGallery,
+      showMap: parsedConfig.showMap ?? defaultConfig.showMap,
+    };
+  } catch {
+    return getDefaultPublicWebQuickConfig();
+  }
+}
+
+function writePublicWebQuickConfig(value: V2PublicWebQuickConfig) {
+  if (typeof window === "undefined") return;
+
+  let existingConfig = {};
+
+  try {
+    const rawValue = window.localStorage.getItem(WEB_CONFIG_STORAGE_KEY);
+    existingConfig = rawValue ? JSON.parse(rawValue) : {};
+  } catch {
+    existingConfig = {};
+  }
+
+  window.localStorage.setItem(
+    WEB_CONFIG_STORAGE_KEY,
+    JSON.stringify({
+      ...existingConfig,
+      ...value,
+    })
+  );
+  window.dispatchEvent(new Event(WEB_CONFIG_EVENT));
+}
+
+function booleanSelectValue(value: boolean) {
+  return value ? "enabled" : "disabled";
+}
+
+function booleanFromSelect(value: string) {
+  return value === "enabled";
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
+  const labels = {
+    owner: "Dueño",
+    manager: "Encargado",
+    staff: "Empleado",
+    support: "Soporte",
+  };
+
+  return labels[role];
+}
+
+export function V2ConfiguracionPage() {
+  const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
+  const [publicWebConfig, setPublicWebConfig] = useState<V2PublicWebQuickConfig>(() =>
+    getDefaultPublicWebQuickConfig()
+  );
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+
+  useEffect(() => {
+    setConfig(readConfigFromStorage());
+    setPublicWebConfig(readPublicWebQuickConfig());
+  }, []);
+
+  const openDays = useMemo(
+    () => config.businessHours.filter((item) => item.enabled),
+    [config.businessHours]
+  );
+  const closedDays = useMemo(
+    () => config.businessHours.filter((item) => !item.enabled),
+    [config.businessHours]
+  );
+  const enabledNotifications = [
+    config.notifyNewReservations,
+    config.notifyNewDeliveries,
+    config.notifyLowStock,
+    config.notifyDailySummary,
+    config.birthdayReminderEnabled,
+  ].filter(Boolean).length;
+
+  function updateConfig<K extends keyof V2LocalConfigState>(
+    field: K,
+    value: V2LocalConfigState[K]
+  ) {
+    setConfig((current) => ({ ...current, [field]: value }));
+    setSaveStatus("idle");
+  }
+
+  function updatePublicWebConfig<K extends keyof V2PublicWebQuickConfig>(
+    field: K,
+    value: V2PublicWebQuickConfig[K]
+  ) {
+    setPublicWebConfig((current) => ({ ...current, [field]: value }));
+    setSaveStatus("idle");
+  }
+
+  function updateBusinessHour(
+    day: string,
+    field: "enabled",
+    value: boolean
+  ) {
+    setConfig((current) => ({
+      ...current,
+      businessHours: current.businessHours.map((item) =>
+        item.day === day ? normalizeBusinessHour({ ...item, [field]: value }) : item
+      ),
+    }));
+    setSaveStatus("idle");
+  }
+
+  function updateBusinessHourSlot(
+    day: string,
+    slotIndex: number,
+    field: keyof V2BusinessHourSlot,
+    value: string
+  ) {
+    setConfig((current) => ({
+      ...current,
+      businessHours: current.businessHours.map((item) => {
+        if (item.day !== day) return item;
+
+        const nextSlots = normalizeBusinessHourSlots(item);
+        nextSlots[slotIndex] = {
+          ...nextSlots[slotIndex],
+          [field]: value,
+        };
+
+        return normalizeBusinessHour({ ...item, slots: nextSlots });
+      }),
+    }));
+    setSaveStatus("idle");
+  }
+
+  function addBusinessHourSlot(day: string) {
+    setConfig((current) => ({
+      ...current,
+      businessHours: current.businessHours.map((item) => {
+        if (item.day !== day) return item;
+
+        const currentSlots = normalizeBusinessHourSlots(item);
+        if (currentSlots.length >= 2) return item;
+
+        return normalizeBusinessHour({
+          ...item,
+          slots: [...currentSlots, { open: "19:00", close: "00:00" }],
+        });
+      }),
+    }));
+    setSaveStatus("idle");
+  }
+
+  function removeBusinessHourSlot(day: string, slotIndex: number) {
+    setConfig((current) => ({
+      ...current,
+      businessHours: current.businessHours.map((item) => {
+        if (item.day !== day) return item;
+
+        const nextSlots = normalizeBusinessHourSlots(item).filter((_, index) => index !== slotIndex);
+
+        return normalizeBusinessHour({
+          ...item,
+          slots: nextSlots.length > 0 ? nextSlots : [{ open: "12:00", close: "00:00" }],
+        });
+      }),
+    }));
+    setSaveStatus("idle");
+  }
+
+  function saveConfig() {
+    const normalizedHours = config.businessHours.map((item) => normalizeBusinessHour(item));
+
+    const nextConfig = { ...config, businessHours: normalizedHours };
+    setConfig(nextConfig);
+    writeConfigToStorage(nextConfig);
+    writePublicWebQuickConfig(publicWebConfig);
+    setSaveStatus("saved");
+  }
+
+  return (
+    <V2AppShell>
+      <div className="flex h-full min-h-0 flex-col">
+        <V2PageHeader
+          title="Configuración"
+          description="Configurá los datos, reglas operativas y permisos del local."
+          actions={
+            <>
+              <V2Button variant="secondary" icon={<ExternalLink size={17} />}>
+                Ver sitio público
+              </V2Button>
+              {saveStatus === "saved" ? <V2Badge tone="green">Cambios guardados</V2Badge> : null}
+              <V2Button variant="primary" icon={<Save size={17} />} onClick={saveConfig}>
+                Guardar cambios
+              </V2Button>
+            </>
+          }
+        />
+
+        <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 overflow-hidden xl:grid-cols-[1fr_340px]">
+          <div className="min-h-0 overflow-y-auto pr-1 pb-2">
+            <div className="space-y-4 pb-2">
+              <div className="sticky top-0 z-20 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  <a href="#config-datos" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Datos</a>
+                  <a href="#config-contacto" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Contacto</a>
+                  <a href="#config-horarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Horarios</a>
+                  <a href="#config-reservas" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Reservas</a>
+                  <a href="#config-envios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Envíos</a>
+                  <a href="#config-web-publica" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Web pública</a>
+                  <a href="#config-notificaciones" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Notificaciones</a>
+                  <a href="#config-usuarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Usuarios</a>
+                  <a href="#config-sistema" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Sistema</a>
+                </div>
+              </div>
+
+              <div id="config-datos" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                    <Globe2 size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-950">Datos del negocio</h2>
+                    <p className="mt-1 text-sm text-slate-500">Información principal que identifica al local dentro del panel y la web pública.</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <V2Field label="Nombre del negocio">
+                    <V2Input value={config.businessName} onChange={(event) => updateConfig("businessName", event.target.value)} />
+                  </V2Field>
+                  <V2Field label="Rubro">
+                    <V2Select value={config.businessType} onChange={(event) => updateConfig("businessType", event.target.value)}>
+                      <option value="restaurant">Restaurante</option>
+                      <option value="professional">Profesional</option>
+                      <option value="beauty">Belleza / estética</option>
+                      <option value="other">Otro rubro</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="URL pública">
+                    <V2Input value={config.publicUrl} onChange={(event) => updateConfig("publicUrl", event.target.value)} />
+                  </V2Field>
+                  <V2Field label="Estado del local">
+                    <V2Select value={config.status} onChange={(event) => updateConfig("status", event.target.value as V2LocalConfigState["status"])}>
+                      <option value="active">Activo</option>
+                      <option value="draft">Borrador</option>
+                      <option value="paused">Pausado</option>
+                    </V2Select>
+                  </V2Field>
+                  <div className="md:col-span-2">
+                    <V2Field label="Descripción breve">
+                      <V2Textarea value={config.description} onChange={(event) => updateConfig("description", event.target.value)} />
+                    </V2Field>
+                  </div>
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-contacto" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-950">Contacto público</h2>
+                    <p className="mt-1 text-sm text-slate-500">Datos visibles para clientes y usados en reservas, envíos y web.</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <V2Field label="Dirección"><V2Input value={config.address} onChange={(event) => updateConfig("address", event.target.value)} /></V2Field>
+                  <V2Field label="Teléfono"><V2Input value={config.phone} onChange={(event) => updateConfig("phone", event.target.value)} /></V2Field>
+                  <V2Field label="WhatsApp"><V2Input value={config.whatsapp} onChange={(event) => updateConfig("whatsapp", event.target.value)} /></V2Field>
+                  <V2Field label="Instagram"><V2Input value={config.instagram} onChange={(event) => updateConfig("instagram", event.target.value)} /></V2Field>
+                  <V2Field label="Email"><V2Input value={config.email} onChange={(event) => updateConfig("email", event.target.value)} /></V2Field>
+                  <V2Field label="Zona horaria"><V2Input value={config.timezone} onChange={(event) => updateConfig("timezone", event.target.value)} /></V2Field>
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-horarios" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                      <Clock3 size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-slate-950">Horarios comerciales</h2>
+                      <p className="mt-1 text-sm text-slate-500">Definen la disponibilidad base para reservas y pedidos.</p>
+                    </div>
+                  </div>
+                  <V2Badge tone="blue">{openDays.length} días abiertos</V2Badge>
+                </div>
+
+                <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
+                  {config.businessHours.map((item) => {
+                    const slots = normalizeBusinessHourSlots(item);
+
+                    return (
+                      <div key={item.day} className="border-b border-slate-100 px-4 py-3 text-sm last:border-b-0">
+                        <div className="grid grid-cols-[120px_1fr_110px] items-start gap-3">
+                          <div className="pt-2">
+                            <p className="font-semibold text-slate-950">{item.day}</p>
+                            <p className="mt-1 text-xs text-slate-500">{formatBusinessHourSlots(item)}</p>
+                          </div>
+
+                          <div className="space-y-2">
+                            {slots.map((slot, slotIndex) => (
+                              <div key={`${item.day}-slot-${slotIndex}`} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
+                                <V2Select
+                                  value={normalizeTimeToSelectOption(slot.open, "12:00")}
+                                  disabled={!item.enabled}
+                                  onChange={(event) =>
+                                    updateBusinessHourSlot(item.day, slotIndex, "open", event.target.value)
+                                  }
+                                >
+                                  {TIME_SELECT_OPTIONS.map((time) => (
+                                    <option key={`${item.day}-open-${slotIndex}-${time}`} value={time}>
+                                      {time}
+                                    </option>
+                                  ))}
+                                </V2Select>
+                                <V2Select
+                                  value={normalizeTimeToSelectOption(slot.close, "00:00")}
+                                  disabled={!item.enabled}
+                                  onChange={(event) =>
+                                    updateBusinessHourSlot(item.day, slotIndex, "close", event.target.value)
+                                  }
+                                >
+                                  {TIME_SELECT_OPTIONS.map((time) => (
+                                    <option key={`${item.day}-close-${slotIndex}-${time}`} value={time}>
+                                      {time}
+                                    </option>
+                                  ))}
+                                </V2Select>
+                                {slotIndex === 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => addBusinessHourSlot(item.day)}
+                                    disabled={!item.enabled || slots.length >= 2}
+                                    className="h-9 rounded-xl border border-emerald-200 px-3 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                  >
+                                    + Tramo
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeBusinessHourSlot(item.day, slotIndex)}
+                                    className="h-9 rounded-xl border border-red-200 px-3 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                                  >
+                                    Quitar
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          <V2Select
+                            value={booleanSelectValue(item.enabled)}
+                            onChange={(event) => updateBusinessHour(item.day, "enabled", booleanFromSelect(event.target.value))}
+                          >
+                            <option value="enabled">Abierto</option>
+                            <option value="disabled">Cerrado</option>
+                          </V2Select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-reservas" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+                    <CalendarClock size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-950">Reglas de reservas</h2>
+                    <p className="mt-1 text-sm text-slate-500">Parámetros para calcular disponibilidad y validar reservas.</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <V2Field label="Reservas online">
+                    <V2Select value={booleanSelectValue(config.reservationEnabled)} onChange={(event) => updateConfig("reservationEnabled", booleanFromSelect(event.target.value))}>
+                      <option value="enabled">Activadas</option>
+                      <option value="disabled">Desactivadas</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Duración estándar">
+                    <V2Select value={String(config.standardDurationMinutes)} onChange={(event) => updateConfig("standardDurationMinutes", Number(event.target.value))}>
+                      <option value="60">60 minutos</option>
+                      <option value="90">90 minutos</option>
+                      <option value="120">120 minutos</option>
+                      <option value="150">150 minutos</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Confirmación">
+                    <V2Select value={config.confirmationMode} onChange={(event) => updateConfig("confirmationMode", event.target.value as V2LocalConfigState["confirmationMode"])}>
+                      <option value="manual">Manual</option>
+                      <option value="automatic">Automática</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Estado inicial">
+                    <V2Select
+                      value={config.defaultReservationStatus}
+                      onChange={(event) => updateConfig("defaultReservationStatus", event.target.value as V2LocalConfigState["defaultReservationStatus"])}
+                    >
+                      <option value="pending">Pendiente</option>
+                      <option value="confirmed">Confirmada</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Permitir sin mesa">
+                    <V2Select
+                      value={booleanSelectValue(config.allowReservationsWithoutTable)}
+                      onChange={(event) => updateConfig("allowReservationsWithoutTable", booleanFromSelect(event.target.value))}
+                    >
+                      <option value="enabled">Permitido</option>
+                      <option value="disabled">Bloquear</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Asignación automática de mesa">
+                    <V2Select
+                      value={booleanSelectValue(config.autoAssignReservationTables)}
+                      onChange={(event) => updateConfig("autoAssignReservationTables", booleanFromSelect(event.target.value))}
+                    >
+                      <option value="enabled">Activada</option>
+                      <option value="disabled">Desactivada</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Permitir unir mesas">
+                    <V2Select
+                      value={booleanSelectValue(config.allowTableCombinations)}
+                      onChange={(event) => updateConfig("allowTableCombinations", booleanFromSelect(event.target.value))}
+                    >
+                      <option value="enabled">Permitido</option>
+                      <option value="disabled">Bloquear</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Anticipación mínima"><V2Input type="number" value={config.minimumNoticeHours} onChange={(event) => updateConfig("minimumNoticeHours", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Días hacia adelante"><V2Input type="number" value={config.bookingWindowDays} onChange={(event) => updateConfig("bookingWindowDays", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Capacidad máxima por horario"><V2Input type="number" value={config.maxPeoplePerSlot} onChange={(event) => updateConfig("maxPeoplePerSlot", Number(event.target.value))} /></V2Field>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Campos obligatorios</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {v2ReservationSettings.requiredFields.map((field) => <V2Badge key={field} tone="blue">{field}</V2Badge>)}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Campos opcionales</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {v2ReservationSettings.optionalFields.map((field) => <V2Badge key={field} tone="slate">{field}</V2Badge>)}
+                    </div>
+                  </div>
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-envios" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700"><ShoppingBag size={20} /></div>
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-950">Envíos y retiro</h2>
+                    <p className="mt-1 text-sm text-slate-500">Reglas comerciales para pedidos por teléfono, WhatsApp y retiro en local.</p>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <V2Field label="Envíos"><V2Select value={booleanSelectValue(config.deliveryEnabled)} onChange={(event) => updateConfig("deliveryEnabled", booleanFromSelect(event.target.value))}><option value="enabled">Activados</option><option value="disabled">Desactivados</option></V2Select></V2Field>
+                  <V2Field label="Retiro en local"><V2Select value={booleanSelectValue(config.pickupEnabled)} onChange={(event) => updateConfig("pickupEnabled", booleanFromSelect(event.target.value))}><option value="enabled">Activado</option><option value="disabled">Desactivado</option></V2Select></V2Field>
+                  <V2Field label="Tiempo estimado"><V2Input type="number" value={config.estimatedDeliveryMinutes} onChange={(event) => updateConfig("estimatedDeliveryMinutes", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Costo fijo de envío"><V2Input type="number" value={config.fixedDeliveryCost} onChange={(event) => updateConfig("fixedDeliveryCost", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Pedido mínimo"><V2Input type="number" value={config.minimumOrder} onChange={(event) => updateConfig("minimumOrder", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Métodos de pago"><V2Input value={config.paymentMethods} onChange={(event) => updateConfig("paymentMethods", event.target.value)} /></V2Field>
+                </div>
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <V2Field label="Zonas de cobertura">
+                    <V2Input
+                      value={config.coverageZones}
+                      onChange={(event) => updateConfig("coverageZones", event.target.value)}
+                    />
+                  </V2Field>
+                  <p className="mt-2 text-xs text-slate-500">Separá zonas por coma.</p>
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-web-publica" className="scroll-mt-20">
+                <V2Card>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                      <Globe2 size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-slate-950">Web pública</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Controles rápidos de publicación y visibilidad general. El contenido comercial se edita desde /local/web.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    <V2Field label="Estado de la web">
+                      <V2Select value={config.status} onChange={(event) => updateConfig("status", event.target.value as V2LocalConfigState["status"])}>
+                        <option value="active">Publicada</option>
+                        <option value="draft">Borrador</option>
+                        <option value="paused">Pausada</option>
+                      </V2Select>
+                    </V2Field>
+                    <V2Field label="URL pública">
+                      <V2Input value={config.publicUrl} onChange={(event) => updateConfig("publicUrl", event.target.value)} />
+                    </V2Field>
+                    <V2Field label="Reservas en web">
+                      <V2Select value={booleanSelectValue(publicWebConfig.showReservations)} onChange={(event) => updatePublicWebConfig("showReservations", booleanFromSelect(event.target.value))}>
+                        <option value="enabled">Mostrar</option>
+                        <option value="disabled">Ocultar</option>
+                      </V2Select>
+                    </V2Field>
+                    <V2Field label="Menú en web">
+                      <V2Select value={booleanSelectValue(publicWebConfig.showMenu)} onChange={(event) => updatePublicWebConfig("showMenu", booleanFromSelect(event.target.value))}>
+                        <option value="enabled">Mostrar</option>
+                        <option value="disabled">Ocultar</option>
+                      </V2Select>
+                    </V2Field>
+                    <V2Field label="Pedidos en web">
+                      <V2Select value={booleanSelectValue(publicWebConfig.showDelivery)} onChange={(event) => updatePublicWebConfig("showDelivery", booleanFromSelect(event.target.value))}>
+                        <option value="enabled">Mostrar</option>
+                        <option value="disabled">Ocultar</option>
+                      </V2Select>
+                    </V2Field>
+                    <V2Field label="Galería">
+                      <V2Select value={booleanSelectValue(publicWebConfig.showGallery)} onChange={(event) => updatePublicWebConfig("showGallery", booleanFromSelect(event.target.value))}>
+                        <option value="enabled">Mostrar</option>
+                        <option value="disabled">Ocultar</option>
+                      </V2Select>
+                    </V2Field>
+                    <V2Field label="Mapa / ubicación">
+                      <V2Select value={booleanSelectValue(publicWebConfig.showMap)} onChange={(event) => updatePublicWebConfig("showMap", booleanFromSelect(event.target.value))}>
+                        <option value="enabled">Mostrar</option>
+                        <option value="disabled">Ocultar</option>
+                      </V2Select>
+                    </V2Field>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+                    <strong>Separación correcta:</strong> Configuración controla si una función está habilitada. /local/web controla textos, imágenes, portada y menú público.
+                  </div>
+                </V2Card>
+              </div>
+
+              <div id="config-notificaciones" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700"><Bell size={20} /></div>
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-950">Notificaciones</h2>
+                    <p className="mt-1 text-sm text-slate-500">Alertas internas del panel. WhatsApp queda planteado para automatizaciones futuras.</p>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Nuevas reservas</p><p className="mt-1 text-sm text-slate-500">{config.notifyNewReservations ? "Activado" : "Desactivado"}</p></div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Nuevos pedidos</p><p className="mt-1 text-sm text-slate-500">{config.notifyNewDeliveries ? "Activado" : "Desactivado"}</p></div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Stock bajo</p><p className="mt-1 text-sm text-slate-500">{config.notifyLowStock ? "Activado" : "Desactivado"}</p></div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Resumen diario</p><p className="mt-1 text-sm text-slate-500">{config.notifyDailySummary ? "Activado" : "Desactivado"}</p></div>
+                </div>
+                <div className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+                  <V2Field label="Recordatorio de cumpleaños">
+                    <V2Select
+                      value={booleanSelectValue(config.birthdayReminderEnabled)}
+                      onChange={(event) => updateConfig("birthdayReminderEnabled", booleanFromSelect(event.target.value))}
+                    >
+                      <option value="enabled">Activado</option>
+                      <option value="disabled">Desactivado</option>
+                    </V2Select>
+                  </V2Field>
+                  <V2Field label="Avisar con días de anticipación">
+                    <V2Input
+                      type="number"
+                      min={0}
+                      value={config.birthdayReminderDays}
+                      onChange={(event) => updateConfig("birthdayReminderDays", Number(event.target.value))}
+                    />
+                  </V2Field>
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-usuarios" className="scroll-mt-20">
+                <V2Card>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700"><UsersRound size={20} /></div>
+                    <div>
+                      <h2 className="text-base font-semibold text-slate-950">Usuarios y permisos</h2>
+                      <p className="mt-1 text-sm text-slate-500">Base para diferenciar dueño, encargado, empleados y soporte.</p>
+                    </div>
+                  </div>
+                  <V2Button variant="secondary">Invitar usuario</V2Button>
+                </div>
+                <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
+                  {v2LocalUsers.map((user) => (
+                    <div key={user.id} className="grid grid-cols-[1fr_180px_120px] items-center gap-4 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0">
+                      <div><p className="font-semibold text-slate-950">{user.name}</p><p className="mt-1 text-xs text-slate-500">{user.email}</p></div>
+                      <p className="text-slate-600">{roleLabel(user.role)}</p>
+                      <div className="flex justify-end"><V2Badge tone={user.role === "support" ? "purple" : "green"}>{user.status}</V2Badge></div>
+                    </div>
+                  ))}
+                </div>
+                </V2Card>
+              </div>
+
+              <div id="config-sistema" className="scroll-mt-20">
+                <V2Card>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                      <SlidersHorizontal size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-slate-950">Sistema</h2>
+                      <p className="mt-1 text-sm text-slate-500">Información técnica visible del sistema.</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Versión actual</p>
+                    <p className="mt-1 text-lg font-bold text-slate-950">{v2LocalSettings.version}</p>
+                  </div>
+                </V2Card>
+              </div>
+            </div>
+          </div>
+
+          <aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden pb-2">
+            <V2Card className="shrink-0">
+              <h2 className="text-base font-semibold text-slate-950">Estado del local</h2>
+              <div className="mt-4"><V2Badge tone={config.status === "active" ? "green" : config.status === "paused" ? "red" : "slate"}>{config.status === "active" ? "Activo" : config.status === "paused" ? "Pausado" : "Borrador"}</V2Badge><p className="mt-3 text-sm leading-6 text-slate-500">{config.reservationEnabled ? "El local acepta reservas según las reglas configuradas." : "Las reservas online están desactivadas."}</p></div>
+              <div className="mt-5 space-y-3 border-t border-slate-200 pt-4 text-sm text-slate-600">
+                <p><strong className="text-slate-950">Última actualización:</strong> {v2LocalSettings.lastUpdated}</p>
+                <p><strong className="text-slate-950">Zona horaria:</strong> Buenos Aires</p>
+                <p><strong className="text-slate-950">Versión:</strong> {v2LocalSettings.version}</p>
+              </div>
+            </V2Card>
+
+            <V2Card className="min-h-0 flex-1 overflow-hidden">
+              <h2 className="text-base font-semibold text-slate-950">Resumen operativo</h2>
+              <div className="mt-4 grid h-[calc(100%-2.25rem)] content-start gap-3 overflow-y-auto pr-1 text-sm">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Horarios</p><p className="mt-1 font-semibold text-slate-950">{openDays.length} abiertos / {closedDays.length} cerrados</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Reservas</p><p className="mt-1 font-semibold text-slate-950">{config.standardDurationMinutes} min · {config.bookingWindowDays} días visibles</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Envíos</p><p className="mt-1 font-semibold text-slate-950">{formatCurrency(config.fixedDeliveryCost)} costo fijo</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Web pública</p><p className="mt-1 font-semibold text-slate-950">{config.status === "active" ? "Publicada" : config.status === "paused" ? "Pausada" : "Borrador"} · {publicWebConfig.showReservations ? "reservas visibles" : "reservas ocultas"}</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alertas</p><p className="mt-1 font-semibold text-slate-950">{enabledNotifications} activas</p></div>
+              </div>
+            </V2Card>
+
+          </aside>
+        </div>
+      </div>
+    </V2AppShell>
+  );
+}

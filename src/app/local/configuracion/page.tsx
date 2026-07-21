@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { LocalConfigurationPage } from "@/components/local-configuration/LocalConfigurationPage";
+import { V2ConfiguracionPage } from "./v2-configuracion-page";
 
-export default function LocalConfiguracionPage() {
-  return (
-    <Suspense fallback={null}>
-      <LocalConfigurationPage />
-    </Suspense>
-  );
+export default function Page() {
+  return <V2ConfiguracionPage />;
 }

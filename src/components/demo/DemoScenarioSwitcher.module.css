@@ -1,0 +1,109 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(34, 211, 238, 0.08), transparent 42%),
+    rgba(2, 6, 23, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 28px rgba(2, 6, 23, 0.18);
+}
+
+.button {
+  height: 26px;
+  min-width: 56px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: #8ba4bd;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.button:hover {
+  color: #e0f2fe;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #64748b;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+}
+
+.green .dot {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+
+.amber .dot {
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+.red .dot {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.active {
+  color: #f8fafc;
+  border-color: rgba(34, 211, 238, 0.26);
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(8, 15, 28, 0.88)),
+    rgba(15, 23, 42, 0.84);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(34, 211, 238, 0.12);
+}
+
+.active.green {
+  border-color: rgba(34, 197, 94, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(34, 197, 94, 0.13);
+}
+
+.active.amber {
+  border-color: rgba(245, 158, 11, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(245, 158, 11, 0.13);
+}
+
+.active.red {
+  border-color: rgba(239, 68, 68, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(239, 68, 68, 0.13);
+}
+
+@media (max-width: 1200px) {
+  .wrapper {
+    display: none;
+  }
+}

@@ -1,10 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import designLabStyles from "@/components/design-lab/TangoDesignLabDashboard.module.css";
 
 type LocalTopbarProps = {
   businessLabel: string;
   isSupportMode: boolean;
   supportHref: string;
+  rightActions?: ReactNode;
 };
 
 function TopbarIcon({
@@ -69,6 +71,7 @@ export function LocalPremiumTopbar({
   businessLabel,
   isSupportMode,
   supportHref,
+  rightActions,
 }: LocalTopbarProps) {
   return (
     <header className={designLabStyles.topbar}>
@@ -101,6 +104,8 @@ export function LocalPremiumTopbar({
             Salir de soporte
           </Link>
         ) : null}
+
+        {rightActions}
 
         <button type="button" className={designLabStyles.notification} aria-label="Notificaciones">
           <div style={{ position: "relative" }}>

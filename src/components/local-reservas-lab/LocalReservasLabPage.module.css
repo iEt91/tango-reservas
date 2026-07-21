@@ -1,7 +1,17 @@
+:global(*) {
+  box-sizing: border-box;
+}
+
 .page {
-  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: calc(100vh - 56px);
+  max-height: calc(100vh - 56px);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  color: #f8fafc;
 }
 
 .content {
@@ -9,290 +19,418 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 12px 24px 24px;
 }
 
 .pageHeader {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 24px;
-  height: 112px;
+  min-height: 56px;
 }
 
 .pageHeading {
   min-width: 0;
 }
 
-.pageEyebrow {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.34em;
-  color: #67e8f9;
-}
-
 .pageTitle {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 30px;
+  gap: 8px;
+  font-size: 28px;
   line-height: 1.05;
-  font-weight: 700;
+  font-weight: 850;
   letter-spacing: -0.03em;
-  color: #f8fafc;
 }
 
 .pageTitleIcon {
   width: 18px;
   height: 18px;
-  color: #38bdf8;
+  color: #22d3ee;
+  flex: 0 0 18px;
 }
 
 .pageSubtitle {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.35;
+  margin: 6px 0 0;
+  max-width: 760px;
+  font-size: 13px;
+  line-height: 1.25;
   color: #94a3b8;
 }
 
 .dateControls {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 10px;
-  height: 40px;
+}
+
+.dateSelect,
+.todayButton,
+.arrowButton,
+.filterInput,
+.filterSelect,
+.filterButton,
+.filterButtonSecondary,
+.groupByButton,
+.rowAction,
+.moreButton,
+.selectedActionPrimary,
+.selectedActionSecondary,
+.selectedActionDanger {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .dateSelect,
 .todayButton,
 .arrowButton {
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(15, 23, 42, 0.72);
-  color: #e2e8f0;
+  height: 38px;
+  border-radius: 12px;
+}
+
+.dateSelect {
+  min-width: 248px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.todayButton {
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.arrowButton {
+  width: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.16s ease, background-color 0.16s ease;
 }
 
 .dateSelect:hover,
 .todayButton:hover,
-.arrowButton:hover {
-  border-color: rgba(34, 211, 238, 0.28);
-  background: rgba(15, 23, 42, 0.84);
-}
-
-.dateSelect {
-  min-width: 242px;
-  padding: 0 14px;
-  gap: 10px;
-  justify-content: flex-start;
-  font-size: 13px;
-  font-weight: 600;
+.arrowButton:hover,
+.filterSelect:hover,
+.filterButton:hover,
+.filterButtonSecondary:hover,
+.groupByButton:hover,
+.rowAction:hover,
+.moreButton:hover,
+.selectedActionPrimary:hover,
+.selectedActionSecondary:hover,
+.selectedActionDanger:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(15, 23, 42, 0.88);
 }
 
 .dateIcon,
 .dateChevron,
 .arrowIcon,
-.sideCtaIcon,
-.quickActionArrowIcon,
-.agendaButtonIcon,
-.selectChevron {
+.selectChevron,
+.metricIconSvg,
+.moreIcon {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
 }
 
-.todayButton {
-  width: 68px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.arrowButton {
-  width: 40px;
-}
-
-.metricsGrid {
+.topMetricsRow {
+  flex: 0 0 108px;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 12px;
-  height: 128px;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: 10px;
+  min-width: 0;
+  align-items: stretch;
 }
 
-.metricCard {
+.metricsGrid,
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
   min-width: 0;
-  height: 128px;
-  min-height: 128px;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(8, 15, 28, 0.92));
-  box-shadow: 0 16px 32px rgba(2, 6, 23, 0.22);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   overflow: hidden;
 }
 
-.metricHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.metricCard {
+  position: relative;
   min-width: 0;
+  height: 108px;
+  min-height: 108px;
+  padding: 12px 12px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  column-gap: 10px;
+  row-gap: 4px;
+  overflow: hidden;
+}
+
+.metricCardamber {
+  border-color: rgba(245, 158, 11, 0.24);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(245, 158, 11, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.96));
+}
+
+.metricCardemerald {
+  border-color: rgba(34, 197, 94, 0.24);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 197, 94, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.96));
+}
+
+.metricCardrose {
+  border-color: rgba(244, 63, 94, 0.24);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(244, 63, 94, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.96));
+}
+
+.metricCardcyan {
+  border-color: rgba(34, 211, 238, 0.24);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.96));
+}
+
+.metricCardviolet {
+  border-color: rgba(167, 139, 250, 0.24);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(167, 139, 250, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.96));
+}
+
+.metricCardslate {
+  border-color: rgba(148, 163, 184, 0.18);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(148, 163, 184, 0.12), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.96));
+}
+
+.metricCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 45%);
 }
 
 .metricIcon {
-  width: 30px;
-  height: 30px;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  flex: 0 0 30px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(15, 23, 42, 0.82);
 }
 
-.metricIconSvg {
-  width: 14px;
-  height: 14px;
-}
-
-.metricTitle {
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: normal;
-  text-transform: none;
-  color: #e2e8f0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.metricIcon[data-tone="amber"] {
+.toneAmber {
   color: #f59e0b;
-  background: rgba(120, 53, 15, 0.18);
   border-color: rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.1);
 }
 
-.metricIcon[data-tone="emerald"] {
+.toneEmerald {
   color: #22c55e;
-  background: rgba(6, 95, 70, 0.18);
   border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.1);
 }
 
-.metricIcon[data-tone="rose"] {
+.toneRose {
   color: #fb7185;
-  background: rgba(136, 19, 55, 0.18);
-  border-color: rgba(244, 114, 182, 0.28);
+  border-color: rgba(244, 63, 94, 0.28);
+  background: rgba(244, 63, 94, 0.1);
 }
 
-.metricIcon[data-tone="cyan"] {
+.toneCyan {
   color: #22d3ee;
-  background: rgba(8, 47, 73, 0.22);
-  border-color: rgba(34, 211, 238, 0.24);
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.1);
 }
 
-.metricIcon[data-tone="violet"] {
-  color: #c084fc;
-  background: rgba(76, 29, 149, 0.18);
-  border-color: rgba(168, 85, 247, 0.28);
+.toneViolet {
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.28);
+  background: rgba(167, 139, 250, 0.1);
 }
 
-.metricIcon[data-tone="slate"] {
+.toneSlate {
   color: #cbd5e1;
 }
 
-.metricValueRow {
+.metricLabel {
+  align-self: end;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.1;
+  font-weight: 750;
+  color: #cbd5e1;
+  white-space: normal;
+}
+
+.metricValue {
+  grid-column: 2;
+  align-self: start;
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: baseline;
+  gap: 5px;
   min-width: 0;
 }
 
-.metricValueRow strong {
-  font-size: 30px;
+.metricValue strong {
+  font-size: 26px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 850;
   letter-spacing: -0.04em;
   color: #f8fafc;
 }
 
-.metricValueRow span {
+.metricValue span {
   min-width: 0;
-  font-size: 11px;
-  line-height: 1.2;
+  font-size: 10.5px;
+  line-height: 1.15;
+  color: #94a3b8;
+  white-space: normal;
+  overflow: hidden;
+}
+
+.metricSubtitle {
+  grid-column: 2;
+  font-size: 10.5px;
+  line-height: 1.15;
   color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.metricHelper {
-  min-width: 0;
-  font-size: 11px;
-  line-height: 1.25;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.metricFooter,
+.metricLink {
+  display: none;
 }
 
-.metricFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  color: #94a3b8;
-}
-
-.metricFooter a {
-  color: #67e8f9;
-  white-space: nowrap;
-}
-
-.workspaceGrid {
+.metricSummaryCard {
+  height: 108px;
+  min-height: 108px;
+  padding: 12px;
+  border-color: rgba(34, 211, 238, 0.18);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.14), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 14px;
-  margin-top: 14px;
+  align-content: start;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.metricSummaryHeader {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8aa0b8;
+}
+
+.metricSummaryValue {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.metricSummaryValue strong {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: #f8fafc;
+}
+
+.metricSummaryValue span {
+  font-size: 11px;
+  line-height: 1.1;
+  color: #cbd5e1;
+}
+
+.metricSummaryMeta,
+.metricSummaryExtra {
+  margin: 0;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.15;
+  color: #94a3b8;
+}
+
+.workspaceGrid,
+.crmMainGrid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 430px;
+  gap: 10px;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .leftColumn {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .rightColumn {
   min-width: 0;
-  height: 562px;
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 146px;
+  gap: 10px;
+  overflow: hidden;
 }
 
 .filtersBar {
-  width: 100%;
-  height: 50px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.9);
+  flex: 0 0 38px;
+  min-height: 38px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .filtersGrid {
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) 150px 150px 164px 132px;
-  gap: 10px;
+  grid-template-columns: minmax(300px, 1fr) 132px 132px 150px 122px;
+  gap: 9px;
   align-items: center;
 }
 
@@ -305,17 +443,9 @@
 .filterButton,
 .filterButtonSecondary,
 .groupByButton {
-  height: 38px;
+  height: 34px;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(6, 11, 22, 0.96);
-  color: #e2e8f0;
-  font-size: 13px;
-  transition: border-color 0.16s ease, background-color 0.16s ease;
-}
-
-.filterInput::placeholder {
-  color: #64748b;
+  font-size: 12px;
 }
 
 .filterInput {
@@ -325,23 +455,19 @@
   outline: none;
 }
 
-.filterInput:focus,
-.filterSelect:hover,
-.filterButton:hover,
-.filterButtonSecondary:hover,
-.groupByButton:hover {
-  border-color: rgba(34, 211, 238, 0.28);
+.filterInput::placeholder {
+  color: #64748b;
 }
 
 .filterSelect,
 .filterButton,
 .filterButtonSecondary,
 .groupByButton {
-  width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  gap: 8px;
+  padding: 0 12px;
 }
 
 .filterButton,
@@ -357,27 +483,32 @@
   color: #cbd5e1;
 }
 
-.selectChevron {
-  color: #94a3b8;
+.card,
+.reservationPanel,
+.sideCard {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.94));
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.2);
 }
 
-.reservationPanel {
-  height: 500px;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.9);
+.reservationPanel,
+.reservationTableCard {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  overflow: hidden;
 }
 
 .reservationPanelHeader {
-  height: 54px;
+  flex: 0 0 46px;
+  height: 46px;
   padding: 0 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
 
@@ -390,15 +521,14 @@
 
 .reservationPanelDate {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 750;
   color: #f8fafc;
-  white-space: nowrap;
 }
 
-.reservationPanelCount {
+.reservationPanelCount,
+.groupByLabel {
   font-size: 12px;
   color: #94a3b8;
-  white-space: nowrap;
 }
 
 .reservationPanelActions {
@@ -407,68 +537,91 @@
   gap: 8px;
 }
 
-.groupByLabel {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
 .groupByButton {
-  width: auto;
   min-width: 102px;
-  gap: 8px;
-  justify-content: center;
-  padding: 0 12px;
 }
 
-.reservationTableHeader {
-  height: 34px;
+.reservationTableHeader,
+.tableHeader,
+.reservationRow {
   display: grid;
-  grid-template-columns: 72px minmax(160px, 1.35fr) 82px 112px 96px 100px minmax(150px, 1fr) 156px;
+  grid-template-columns:
+    76px
+    minmax(220px, 1.5fr)
+    120px
+    110px
+    minmax(210px, 1fr)
+    170px;
+  gap: 8px;
   align-items: center;
-  padding: 0 14px;
+  min-width: 0;
+}
+
+.reservationTableHeader,
+.tableHeader {
+  flex: 0 0 38px;
+  height: 38px;
+  padding: 0 16px;
   font-size: 10px;
+  font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #64748b;
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-.reservationListBody {
-  min-height: 0;
+.reservationListBody,
+.reservationRows {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-right: 4px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.34) transparent;
+  scrollbar-color: rgba(34, 211, 238, 0.9) rgba(15, 23, 42, 0.52);
 }
 
-.reservationListBody::-webkit-scrollbar {
+.reservationListBody::-webkit-scrollbar,
+.reservationRows::-webkit-scrollbar {
   width: 8px;
 }
 
-.reservationListBody::-webkit-scrollbar-track {
-  background: transparent;
+.reservationListBody::-webkit-scrollbar-track,
+.reservationRows::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.52);
+  border-radius: 999px;
 }
 
-.reservationListBody::-webkit-scrollbar-thumb {
+.reservationListBody::-webkit-scrollbar-thumb,
+.reservationRows::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.28);
+  background: linear-gradient(180deg, #22d3ee, #2563eb);
+  border: 2px solid rgba(15, 23, 42, 0.52);
+}
+
+.reservationListBody::-webkit-scrollbar-thumb:hover,
+.reservationRows::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9, #3b82f6);
+}
+
+.groupBlock {
+  min-width: 0;
 }
 
 .hourGroupHeader {
-  height: 30px;
+  height: 32px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 14px;
-  background: rgba(30, 41, 59, 0.42);
+  background: rgba(30, 41, 59, 0.38);
   border-top: 1px solid rgba(148, 163, 184, 0.08);
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
 
 .hourGroupTime {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: #f8fafc;
   letter-spacing: 0.08em;
 }
@@ -479,87 +632,89 @@
 }
 
 .reservationRow {
-  height: 42px;
-  min-height: 42px;
-  display: grid;
-  grid-template-columns: 72px minmax(160px, 1.35fr) 82px 112px 96px 100px minmax(150px, 1fr) 156px;
-  align-items: center;
-  padding: 0 14px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.07);
-}
-
-.reservationRow:nth-child(odd) {
-  background: rgba(6, 11, 22, 0.14);
+  min-height: 56px;
+  height: 56px;
+  padding: 9px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .reservationRow:hover {
-  background: rgba(30, 41, 59, 0.26);
+  background: rgba(30, 41, 59, 0.22);
+}
+
+.reservationRow[data-selected="true"] {
+  background: rgba(8, 47, 73, 0.44);
+  box-shadow: inset 3px 0 0 rgba(34, 211, 238, 0.9);
 }
 
 .timeCell,
 .clientCell,
 .statusCell,
-.serviceCell,
 .tableCell,
-.noteCell,
-.peopleCell {
+.noteCell {
   min-width: 0;
 }
 
 .timeValue {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: #f8fafc;
-  white-space: nowrap;
 }
 
 .clientName {
   font-size: 13px;
-  font-weight: 700;
+  line-height: 1.1;
+  font-weight: 800;
   color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.clientMeta {
+.clientMeta,
+.noteSecondary {
   margin-top: 2px;
   font-size: 11px;
+  line-height: 1.15;
   color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.peopleCell,
-.serviceCell,
 .tableCell,
-.noteCell {
+.notePrimary {
   font-size: 12px;
+  line-height: 1.15;
   color: #cbd5e1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.peopleCell {
-  font-size: 13px;
-  font-weight: 700;
-  color: #f8fafc;
+.noteCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .statusBadge {
-  height: 24px;
-  min-width: 86px;
+  min-width: 88px;
+  height: 25px;
   padding: 0 10px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
   border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
 }
 
 .statusBadge[data-tone="emerald"] {
@@ -604,24 +759,20 @@
   justify-content: flex-end;
   gap: 6px;
   min-width: 0;
+  overflow: hidden;
+}
+
+.rowAction,
+.moreButton {
+  height: 28px;
+  border-radius: 8px;
 }
 
 .rowAction {
-  height: 28px;
   padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.82);
-  color: #e2e8f0;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 750;
   white-space: nowrap;
-  transition: border-color 0.16s ease, background-color 0.16s ease;
-}
-
-.rowAction:hover {
-  border-color: rgba(34, 211, 238, 0.28);
-  background: rgba(30, 41, 59, 0.92);
 }
 
 .rowAction[data-tone="emerald"] {
@@ -640,353 +791,320 @@
   color: #d8b4fe;
 }
 
-.rowAction[data-tone="amber"] {
-  color: #fbbf24;
-}
-
-.rowAction[data-tone="slate"] {
-  color: #e2e8f0;
-}
-
 .moreButton {
   width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.82);
-  color: #cbd5e1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.moreButton:hover {
-  border-color: rgba(34, 211, 238, 0.28);
-}
-
-.moreIcon {
-  width: 14px;
-  height: 14px;
-}
-
-.sideCard {
+.sideCard,
+.profilePanel,
+.summaryCard {
   min-width: 0;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.9);
-  padding: 18px;
+  min-height: 0;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-}
-
-.occupancyCard {
-  height: 100%;
-  min-height: 562px;
-  padding: 18px;
+  overflow: hidden;
 }
 
 .sideCardHeader {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 12px;
 }
 
 .sideCardEyebrow {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: #67e8f9;
+  font-weight: 750;
 }
 
 .sideCardTitle {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.1;
-  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.05;
+  font-weight: 850;
   color: #f8fafc;
 }
 
-.occupancyBody {
+.profilePanel {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 15, 28, 0.97));
+}
+
+.selectedReservationBody {
   flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  min-height: 0;
-  padding-top: 10px;
+  gap: 14px;
 }
 
-.occupancyDonutBlock {
+.selectedReservationTop {
   display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding-top: 18px;
-}
-
-.occupancyDonut {
-  width: 122px;
-  height: 122px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  position: relative;
-  flex: 0 0 122px;
-  background: conic-gradient(#22d3ee 0 78%, rgba(148, 163, 184, 0.18) 78% 100%);
-}
-
-.occupancyDonut::after {
-  content: "";
-  position: absolute;
-  inset: 15px;
-  border-radius: 999px;
-  background: #0b1626;
-}
-
-.occupancyDonut span {
-  position: relative;
-  z-index: 1;
-  font-size: 24px;
-  font-weight: 800;
-  color: #f8fafc;
-}
-
-.occupancyMainValue {
-  font-size: 15px;
-  font-weight: 800;
-  color: #f8fafc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.occupancyToday {
-  font-size: 11px;
-  color: #94a3b8;
-}
-
-.occupancyStates {
-  display: grid;
-  gap: 10px;
-}
-
-.occupancyStateRow {
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  color: #cbd5e1;
-}
-
-.occupancyDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  display: inline-block;
-}
-
-.occupancyStateLabel {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.occupancyStateValue,
-.occupancyStatePercent {
-  font-weight: 700;
-  color: #e2e8f0;
-  text-align: right;
-}
-
-.occupancyDot[data-tone="green"] {
-  background: #22c55e;
-}
-
-.occupancyDot[data-tone="amber"] {
-  background: #f59e0b;
-}
-
-.occupancyDot[data-tone="red"] {
-  background: #ef4444;
-}
-
-.occupancyDot[data-tone="blue"] {
-  background: #38bdf8;
-}
-
-.occupancyDot[data-tone="purple"] {
-  background: #8b5cf6;
-}
-
-.occupancyDot[data-tone="slate"] {
-  background: #94a3b8;
-}
-
-.occupancyCta {
-  margin-top: auto;
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.82);
-  color: #e2e8f0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.agendaTimeline {
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-.agendaItem {
-  display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) 34px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 124px;
+  gap: 12px;
   align-items: start;
 }
 
-.agendaTime {
-  font-size: 13px;
-  font-weight: 700;
-  color: #f8fafc;
-  white-space: nowrap;
+.selectedReservationIdentity {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
 }
 
-.agendaBody {
+.selectedReservationAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 850;
+  color: #e0faff;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(125, 211, 252, 0.55), transparent 32%),
+    radial-gradient(circle at 70% 80%, rgba(14, 165, 233, 0.35), transparent 42%),
+    linear-gradient(135deg, rgba(14, 116, 144, 0.95), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 28px rgba(34, 211, 238, 0.16);
+}
+
+.selectedReservationText {
   min-width: 0;
+}
+
+.selectedReservationNameRow {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.agendaTitle {
-  font-size: 12px;
-  font-weight: 700;
+.selectedReservationNameRow h4 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.08;
+  font-weight: 850;
   color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.agendaSubtitle,
-.agendaTable {
+.selectedReservationMeta {
+  margin: 5px 0 0;
   font-size: 11px;
-  color: #94a3b8;
+  line-height: 1.12;
+  color: #9fb3c8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.agendaButton {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.82);
+.selectedActions {
+  display: grid;
+  gap: 6px;
+}
+
+.selectedActionPrimary,
+.selectedActionSecondary,
+.selectedActionDanger {
+  height: 30px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.selectedActionPrimary {
+  color: #dff7ff;
+  background: rgba(14, 165, 233, 0.18);
+  border-color: rgba(14, 165, 233, 0.38);
+}
+
+.selectedActionSecondary {
   color: #cbd5e1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.agendaButtonIcon {
-  width: 16px;
-  height: 16px;
+.selectedActionDanger {
+  color: #fda4af;
+  border-color: rgba(244, 114, 182, 0.2);
 }
 
-.quickActionsGrid {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+.selectedInfoGrid {
+  flex: 1 1 auto;
   min-height: 0;
-}
-
-.quickActionTile {
-  min-width: 0;
-  height: 46px;
-  padding: 8px 10px 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.82);
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  gap: 4px 10px;
-  align-items: center;
-  text-align: left;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
 }
 
-.quickActionTile[data-tone="cyan"] {
-  background: linear-gradient(180deg, rgba(8, 47, 73, 0.55), rgba(15, 23, 42, 0.82));
+.selectedInfoCard {
+  min-width: 0;
+  padding: 9px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(2, 6, 23, 0.32);
+  display: grid;
+  align-content: start;
+  gap: 4px;
 }
 
-.quickActionTile[data-tone="emerald"] {
-  background: linear-gradient(180deg, rgba(6, 95, 70, 0.42), rgba(15, 23, 42, 0.82));
+.selectedInfoCard span {
+  font-size: 10px;
+  line-height: 1;
+  color: #8aa0b8;
 }
 
-.quickActionTile[data-tone="violet"] {
-  background: linear-gradient(180deg, rgba(76, 29, 149, 0.42), rgba(15, 23, 42, 0.82));
+.selectedInfoCard strong {
+  font-size: 11px;
+  line-height: 1.16;
+  color: #f8fafc;
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
-.quickActionTile[data-tone="slate"] {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.82));
+.summaryCardBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
 }
 
-.quickActionArrow {
-  justify-self: end;
+.nextReservationPanel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.summaryTile {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(2, 6, 23, 0.28);
+  display: grid;
+  gap: 3px;
+  align-content: start;
+}
+
+.summaryTile span,
+.summaryTile em {
+  font-size: 11px;
+  line-height: 1.1;
   color: #94a3b8;
-  font-size: 12px;
+  font-style: normal;
 }
 
-.quickActionIcon {
-  grid-column: 1;
-  grid-row: 1;
-  width: 22px;
-  height: 22px;
+.summaryTile strong {
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 850;
+  color: #f8fafc;
+}
+
+.nextReservationCard {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.14), transparent 42%),
+    rgba(2, 6, 23, 0.3);
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.nextReservationLabel {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8aa0b8;
+}
+
+.nextReservationTime {
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: #f8fafc;
+}
+
+.nextReservationClient,
+.nextReservationHelper {
+  margin: 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nextReservationClient {
+  font-size: 12px;
+  line-height: 1.12;
+  font-weight: 750;
+  color: #e2e8f0;
+}
+
+.nextReservationHelper {
+  font-size: 11px;
+  line-height: 1.12;
+  color: #94a3b8;
+}
+
+.nextReservationStatus {
+  width: fit-content;
+  height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #67e8f9;
-}
-
-.quickActionIconSvg {
-  width: 16px;
-  height: 16px;
-}
-
-.quickActionLabel {
-  grid-column: 1 / span 2;
-  grid-row: 2;
-  font-size: 12px;
-  font-weight: 700;
-  color: #f8fafc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.quickActionTile[data-tone="emerald"] .quickActionIcon {
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  background: rgba(6, 95, 70, 0.2);
   color: #86efac;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
 }
 
-.quickActionTile[data-tone="rose"] .quickActionIcon {
-  color: #fda4af;
-}
-
-.quickActionTile[data-tone="violet"] .quickActionIcon {
-  color: #d8b4fe;
-}
-
-.quickActionTile[data-tone="slate"] .quickActionIcon {
-  color: #cbd5e1;
+.nextReservationButton {
+  margin-top: auto;
+  height: 30px;
+  min-height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  background: rgba(8, 47, 73, 0.24);
+  color: #67e8f9;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .srOnly {
@@ -999,4 +1117,165 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+
+/* Tonal action buttons for reservas-lab */
+.rowAction[data-tone="emerald"] {
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.rowAction[data-tone="emerald"]:hover {
+  color: #dcfce7;
+  border-color: rgba(34, 197, 94, 0.46);
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.rowAction[data-tone="cyan"] {
+  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.rowAction[data-tone="cyan"]:hover {
+  color: #ecfeff;
+  border-color: rgba(34, 211, 238, 0.48);
+  background: rgba(34, 211, 238, 0.16);
+}
+
+.rowAction[data-tone="rose"] {
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.rowAction[data-tone="rose"]:hover {
+  color: #ffe4e6;
+  border-color: rgba(244, 63, 94, 0.5);
+  background: rgba(244, 63, 94, 0.16);
+}
+
+.rowAction[data-tone="violet"] {
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.3);
+  background: rgba(167, 139, 250, 0.1);
+}
+
+.rowAction[data-tone="violet"]:hover {
+  color: #ede9fe;
+  border-color: rgba(167, 139, 250, 0.5);
+  background: rgba(167, 139, 250, 0.16);
+}
+
+.selectedAction {
+  height: 30px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.72);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.selectedAction:hover {
+  transform: translateY(-1px);
+}
+
+.selectedActionConfirm {
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.34);
+  background: rgba(34, 197, 94, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.selectedActionConfirm:hover {
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.52);
+}
+
+.selectedActionComplete,
+.selectedActionTable {
+  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.34);
+  background: rgba(34, 211, 238, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.selectedActionComplete:hover,
+.selectedActionTable:hover {
+  color: #ecfeff;
+  background: rgba(34, 211, 238, 0.18);
+  border-color: rgba(34, 211, 238, 0.52);
+}
+
+.selectedActionCancel {
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.34);
+  background: rgba(244, 63, 94, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.selectedActionCancel:hover {
+  color: #ffe4e6;
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.52);
+}
+
+.selectedActionNoShow {
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.34);
+  background: rgba(167, 139, 250, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.selectedActionNoShow:hover {
+  color: #ede9fe;
+  background: rgba(167, 139, 250, 0.18);
+  border-color: rgba(167, 139, 250, 0.52);
+}
+
+@media (max-width: 1440px) {
+  .content {
+    padding: 10px 18px 18px;
+  }
+
+  .metricsGrid,
+  .metricGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .topMetricsRow {
+    grid-template-columns: minmax(0, 1fr) 212px;
+  }
+
+  .workspaceGrid,
+  .crmMainGrid {
+    grid-template-columns: minmax(0, 1fr) 400px;
+  }
+
+  .rightColumn {
+    grid-template-rows: minmax(0, 1fr) 138px;
+  }
+
+  .reservationTableHeader,
+  .reservationRow {
+    grid-template-columns:
+      66px
+      minmax(170px, 1.3fr)
+      102px
+      92px
+      minmax(150px, 1fr)
+      142px;
+    gap: 6px;
+  }
 }

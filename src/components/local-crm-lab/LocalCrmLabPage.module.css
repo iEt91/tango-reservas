@@ -9,10 +9,10 @@
   height: calc(100vh - 56px);
   max-height: calc(100vh - 56px);
   overflow: hidden;
-  padding: 12px 24px 30px;
+  padding: 12px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   color: #f8fafc;
 }
 
@@ -105,9 +105,12 @@
 }
 
 .primaryButton {
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.16), rgba(8, 47, 73, 0.7));
-  border-color: rgba(34, 211, 238, 0.22);
-  color: #e0f2fe;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.95), rgba(14, 165, 233, 0.78));
+  border-color: rgba(103, 232, 249, 0.45);
+  color: #ecfeff;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08) inset,
+    0 14px 30px rgba(14, 165, 233, 0.18);
 }
 
 .secondaryButton {
@@ -120,7 +123,7 @@
 }
 
 .metricGrid {
-  flex: 0 0 108px;
+  flex: 0 0 86px;
   display: grid;
   grid-template-columns: repeat(5, minmax(120px, 1fr));
   gap: 8px;
@@ -131,21 +134,61 @@
 }
 
 .metricCard {
-  height: 108px;
-  min-height: 108px;
-  padding: 10px;
+  position: relative;
+  height: 86px;
+  min-height: 86px;
+  padding: 12px 12px 11px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 28, 0.92));
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 10px;
+  row-gap: 4px;
   overflow: hidden;
 }
 
+.metricCardcyan {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
+  border-color: rgba(34, 211, 238, 0.18);
+}
+
+.metricCardamber {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(245, 158, 11, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
+  border-color: rgba(245, 158, 11, 0.18);
+}
+
+.metricCardviolet {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(139, 92, 246, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
+  border-color: rgba(139, 92, 246, 0.18);
+}
+
+.metricCardemerald {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 197, 94, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
+  border-color: rgba(34, 197, 94, 0.18);
+}
+
+.metricCardrose {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(239, 68, 68, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+
 .metricIcon {
+  grid-row: 1 / span 2;
+  align-self: center;
   width: 34px;
   height: 34px;
   border-radius: 999px;
@@ -181,9 +224,10 @@
 }
 
 .metricLabel {
+  align-self: end;
   font-size: 11px;
-  font-weight: 700;
-  color: #e2e8f0;
+  font-weight: 750;
+  color: #cbd5e1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -191,31 +235,23 @@
 }
 
 .metricValue {
-  font-size: 26px;
+  align-self: start;
+  font-size: 27px;
   line-height: 1;
-  font-weight: 900;
+  font-weight: 850;
   letter-spacing: -0.04em;
 }
 
 .metricSubtitle {
-  margin-top: -2px;
-  font-size: 11px;
-  color: #94a3b8;
+  display: none;
 }
 
 .metricFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: auto;
-  font-size: 11px;
-  color: #94a3b8;
+  display: none;
 }
 
 .metricLink {
-  color: #67e8f9;
-  white-space: nowrap;
+  display: none;
 }
 
 .crmMainGrid {
@@ -246,8 +282,8 @@
   height: 100%;
   align-self: stretch;
   display: grid;
-  grid-template-rows: 156px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-rows: 205px minmax(0, 1fr);
+  gap: 10px;
   overflow: hidden;
 }
 
@@ -302,30 +338,32 @@
 
 .filtersBar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 124px 124px 140px 96px;
-  gap: 8px;
+  grid-template-columns: minmax(300px, 430px) 108px 104px 138px 94px;
+  gap: 9px;
   align-items: center;
   min-width: 0;
   flex: 0 0 36px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .filterControl {
   height: 38px;
   min-height: 38px;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(15, 23, 42, 0.74);
   color: #e2e8f0;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   box-shadow: none;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .filterLabel {
@@ -341,20 +379,27 @@
   color: #ffffff;
   font-weight: 800;
   white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .filterSearch {
   padding-left: 12px;
   justify-content: flex-start;
+  max-width: 430px;
 }
 
 .filterSearch input {
   width: 100%;
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: #e2e8f0;
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .filterIcon {
@@ -409,26 +454,40 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.9) rgba(15, 23, 42, 0.52);
+}
+
+.customerRows::-webkit-scrollbar {
+  width: 8px;
+}
+
+.customerRows::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.52);
+  border-radius: 999px;
+}
+
+.customerRows::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee, #2563eb);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.52);
+}
+
+.customerRows::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9, #3b82f6);
 }
 
 .customerRow {
+ padding: 0 14px 0 18px;
+  min-height: 48px;
   display: grid;
-  grid-template-columns:
-    minmax(170px, 1.25fr)
-    minmax(150px, 1fr)
-    minmax(80px, 0.58fr)
-    minmax(82px, 0.58fr)
-    minmax(126px, 0.85fr)
-    minmax(46px, 0.32fr)
-    minmax(84px, 0.52fr);
-  gap: 8px;
+  grid-template-columns: minmax(210px, 1.1fr) minmax(220px, 1fr) minmax(130px, 0.65fr) minmax(92px, 0.48fr) minmax(150px, 0.8fr) 58px 104px;
   align-items: center;
-  min-height: 45px;
-  height: 45px;
-  padding: 4px 14px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.07);
-  min-width: 0;
+  column-gap: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.075);
 }
 
 .customerRowSelected {
@@ -522,10 +581,11 @@
 }
 
 .customerContact {
+  min-width: 0;
   display: grid;
   gap: 4px;
-  min-width: 0;
-  color: #cbd5e1;
+  line-height: 1.1;
+  padding-block: 4px;
 }
 
 .contactRow {
@@ -632,9 +692,9 @@
 }
 
 .profilePanel {
-  height: 156px;
-  min-height: 156px;
-  max-height: 156px;
+  height: 205px;
+  min-height: 205px;
+  max-height: 205px;
   padding: 12px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.14);
@@ -643,14 +703,14 @@
     linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 15, 28, 0.97));
   overflow: hidden;
   display: grid;
-  grid-template-rows: auto auto;
-  gap: 8px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
 }
 
 .profileMainRow {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
+  grid-template-columns: minmax(0, 1fr) 136px;
   gap: 12px;
   align-items: start;
 }
@@ -747,7 +807,7 @@
 .profileActions {
   display: grid;
   grid-template-rows: repeat(3, 28px);
-  gap: 7px;
+  gap: 6px;
   justify-items: stretch;
   min-width: 0;
 }
@@ -853,11 +913,8 @@
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr 1.18fr;
-  gap: 0;
-  border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.13);
-  background: rgba(15, 23, 42, 0.7);
+  grid-template-rows: minmax(0, 0.98fr) minmax(0, 1.02fr);
+  gap: 10px;
   overflow: hidden;
 }
 
@@ -867,14 +924,13 @@
   height: 100%;
   padding: 12px;
   overflow: hidden;
-  border-right: 1px solid rgba(148, 163, 184, 0.1);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .detailCard h3 {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: 13px;
   line-height: 1.1;
   font-weight: 850;
@@ -914,7 +970,7 @@
 
 .detailDivider {
   height: 1px;
-  margin: 2px 0;
+  margin: 0;
   background: rgba(148, 163, 184, 0.08);
 }
 
@@ -923,7 +979,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .detailGroup {
@@ -1051,10 +1107,14 @@
 .historyList {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: grid;
   align-content: start;
   gap: 8px;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.9) rgba(15, 23, 42, 0.52);
 }
 
 .historyFooterButton {
@@ -1256,7 +1316,7 @@
   }
 
   .rightColumn {
-    grid-template-rows: 176px minmax(0, 1fr) 116px;
+    grid-template-rows: 168px minmax(0, 1fr);
     gap: 10px;
   }
 
@@ -1369,4 +1429,710 @@
     min-height: 0;
     max-height: none;
   }
+}
+
+
+.infoCardsRow {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+}
+
+.rightDetailsGrid .detailCard {
+  border-right: 0;
+}
+
+.historyWideCard {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.historyHeaderRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.historyHeaderRow h3 {
+  margin: 0;
+}
+
+.historyHeaderRow span {
+  color: #8aa0b8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.historyList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.historyList::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.52);
+  border-radius: 999px;
+}
+
+.historyList::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee, #2563eb);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.52);
+}
+
+.historyList::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9, #3b82f6);
+}
+
+.historyTable .compactRow {
+  display: grid;
+  grid-template-columns: 92px 58px minmax(0, 1fr) 72px;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 1200px) {
+  .infoCardsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .rightMiddleGrid,
+  .rightDetailsGrid {
+    grid-template-rows: auto;
+  }
+}
+
+/* Ajuste CRM: tags solo en Segmento + tarjeta de cliente más alta */
+.customerNameRow .customerTag {
+  display: none;
+}
+
+.customerSegment .segmentPill.tagAmber {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.30);
+}
+
+.customerSegment .segmentPill.tagEmerald {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.customerSegment .segmentPill.tagRose {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.30);
+}
+
+.customerSegment .segmentPill.tagCyan {
+  color: #67e8f9;
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.26);
+}
+
+.customerSegment .segmentPill.tagSlate {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+@media (max-width: 1440px) {
+  .rightColumn {
+    grid-template-rows: 190px minmax(0, 1fr);
+  }
+
+  .profilePanel {
+    height: 190px;
+    min-height: 190px;
+    max-height: 190px;
+  }
+}
+
+.whatsAppButton {
+  min-height: 30px;
+  height: 30px;
+  border: 1px solid rgba(34, 197, 94, 0.36);
+  border-radius: 8px;
+  background: rgba(22, 101, 52, 0.32);
+  color: #dcfce7;
+  font-size: 11px;
+  font-weight: 850;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  line-height: 1;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.profileSecondaryButton {
+  min-height: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.editCustomerButton {
+  min-height: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.actionButtonIcon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.filterBar {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+  overflow: visible;
+}
+
+.filterSelects {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.filterSelect {
+  min-width: 116px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.filtersRow,
+.tableFilters,
+.searchFilters {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow: visible;
+}
+
+.filtersRow > *,
+.tableFilters > *,
+.searchFilters > * {
+  flex: 0 0 auto;
+}
+
+.filtersRow .searchBox,
+.tableFilters .searchBox,
+.searchFilters .searchBox {
+  flex: 1 1 auto;
+  min-width: 260px;
+}
+
+.profileStats,
+.profileStatsGrid {
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  overflow: hidden;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.profileStat,
+.profileStatCard {
+  min-height: 58px;
+  height: 58px;
+  padding: 8px 7px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(2, 6, 23, 0.34);
+  display: grid;
+  gap: 3px;
+  align-content: start;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.profileStat span,
+.profileStatCard span {
+  line-height: 1.05;
+}
+
+.profileStat strong,
+.profileStatCard strong {
+  line-height: 1.05;
+  white-space: normal;
+  overflow: visible;
+}
+
+@media (max-width: 1440px) {
+  .rightColumn {
+    grid-template-rows: 205px minmax(0, 1fr);
+  }
+
+  .profilePanel {
+    height: 205px;
+    min-height: 205px;
+    max-height: 205px;
+  }
+
+  .customerRow {
+    min-height: 48px;
+  }
+}
+
+
+/* === Ajustes finales CRM-lab: filtros, botones y mini tarjetas cliente === */
+
+/* 1) Filtros: achica el buscador y deja aire para Segmento / Vistas / Ordenar / Filtros */
+.filtersBar {
+  grid-template-columns: minmax(320px, 0.8fr) 118px 118px 138px 88px;
+  gap: 10px !important;
+  overflow: visible !important;
+}
+
+.filterSearch {
+  min-width: 0 !important;
+  max-width: 520px !important;
+  overflow: hidden !important;
+}
+
+.filterSearch input {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.filterControl {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.filterLabel,
+.filterValue {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* 2) Botones de la tarjeta lateral: centrado vertical real */
+.whatsappButton,
+.primaryActionButton,
+.secondaryActionButton {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+.whatsappButton *,
+.primaryActionButton *,
+.secondaryActionButton * {
+  line-height: 1 !important;
+}
+
+.actionIcon,
+.actionButtonIcon {
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 auto !important;
+}
+
+/* 3) Tarjeta lateral: más alto arriba, menos historial abajo */
+.rightColumn {
+  grid-template-rows: 218px minmax(0, 1fr);
+}
+
+.profilePanel {
+  height: 218px;
+  min-height: 218px;
+  max-height: 218px;
+}
+
+/* 4) Las 5 mini tarjetas internas: más borde inferior/altura para que no tape texto */
+.profileStats,
+.profileStatsGrid {
+  align-items: stretch !important;
+  gap: 7px !important;
+}
+
+.profileStat,
+.profileStatCard {
+  min-height: 64px;
+  height: 64px;
+  padding: 9px 7px 9px !important;
+  align-content: start !important;
+  overflow: hidden !important;
+}
+
+.profileStatLabel {
+  line-height: 1.05 !important;
+}
+
+.profileStatValue,
+.profileStatValueMultiline {
+  line-height: 1.12 !important;
+  -webkit-line-clamp: 3 !important;
+}
+
+/* 5) Línea divisoria de clientes un poco más baja, lejos del email */
+.customerRow {
+  min-height: 52px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+.customerContact {
+  gap: 5px !important;
+  padding-block: 5px !important;
+}
+
+@media (max-width: 1440px) {
+  .filtersBar {
+    grid-template-columns: minmax(240px, 0.68fr) 108px 108px 122px 86px !important;
+    gap: 8px !important;
+  }
+
+  .filterSearch {
+    max-width: 460px !important;
+  }
+
+  .rightColumn {
+    grid-template-rows: 226px minmax(0, 1fr) !important;
+  }
+
+  .profilePanel {
+    height: 226px !important;
+    min-height: 226px !important;
+    max-height: 226px !important;
+  }
+
+  .profileStat,
+  .profileStatCard {
+    min-height: 72px !important;
+    height: 72px !important;
+  }
+
+  .customerRow {
+    min-height: 52px !important;
+  }
+}
+
+/* === CRM-lab polish final: filtros, botones, mini tarjetas y aire visual === */
+
+/* A) Filtros: buscador más corto y controles con ancho suficiente.
+   Evita que se corten Segmento / Vistas / Ordenar. */
+.filtersBar {
+  grid-template-columns: minmax(260px, 0.62fr) 132px 132px 154px 94px !important;
+  gap: 10px !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+
+.filterSearch {
+  min-width: 0 !important;
+  max-width: 440px !important;
+  overflow: hidden !important;
+}
+
+.filterSearch input {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.filterControl {
+  min-width: 0 !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  overflow: hidden !important;
+}
+
+.filterControl .filterLabel,
+.filterControl .filterValue,
+.filterLabel,
+.filterValue {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.filterControl .filterLabel {
+  max-width: 56px !important;
+}
+
+.filterControl .filterValue {
+  max-width: 78px !important;
+}
+
+/* B) Botones del cliente: centrado vertical real.
+   El botón verde de WhatsApp usa .whatsappButton en este archivo. */
+.whatsappButton,
+.primaryActionButton,
+.secondaryActionButton {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  line-height: 30px !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+
+.whatsappButton *,
+.primaryActionButton *,
+.secondaryActionButton * {
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.actionIcon,
+.actionButtonIcon {
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 auto !important;
+}
+
+/* C) Tarjeta lateral derecha: más alto arriba para que las mini tarjetas no tapen texto. */
+.rightColumn {
+  grid-template-rows: 232px minmax(0, 1fr) !important;
+}
+
+.profilePanel {
+  height: 232px !important;
+  min-height: 232px !important;
+  max-height: 232px !important;
+}
+
+.profileMainRow {
+  grid-template-columns: minmax(0, 1fr) 136px !important;
+  gap: 12px !important;
+}
+
+.profileStats,
+.profileStatsGrid {
+  gap: 7px !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+}
+
+.profileStat,
+.profileStatCard {
+  min-height: 76px !important;
+  height: 76px !important;
+  padding: 10px 7px 9px !important;
+  align-content: start !important;
+  overflow: hidden !important;
+}
+
+.profileStatLabel {
+  line-height: 1.05 !important;
+}
+
+.profileStatValue,
+.profileStatValueMultiline {
+  line-height: 1.12 !important;
+  -webkit-line-clamp: 3 !important;
+}
+
+/* D) Panel derecho inferior: más compacto para compensar la tarjeta superior. */
+.rightMiddleGrid,
+.rightDetailsGrid {
+  grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr) !important;
+}
+
+/* E) Tabla de clientes: más aire a la izquierda y líneas menos pegadas al email. */
+.tableHeader {
+  padding-left: 22px !important;
+  padding-right: 14px !important;
+}
+
+.customerRow {
+  min-height: 52px !important;
+  padding: 5px 14px 5px 22px !important;
+}
+
+.customerCell {
+  gap: 12px !important;
+}
+
+.customerContact {
+  gap: 5px !important;
+  padding-block: 5px !important;
+}
+
+/* F) Cuando la pantalla es cercana a 1440px, priorizamos legibilidad de filtros. */
+@media (max-width: 1440px) {
+  .filtersBar {
+    grid-template-columns: minmax(220px, 0.55fr) 120px 120px 140px 90px !important;
+    gap: 8px !important;
+  }
+
+  .filterSearch {
+    max-width: 380px !important;
+  }
+
+  .filterControl {
+    padding: 0 10px !important;
+  }
+
+  .rightColumn {
+    grid-template-rows: 236px minmax(0, 1fr) !important;
+  }
+
+  .profilePanel {
+    height: 236px !important;
+    min-height: 236px !important;
+    max-height: 236px !important;
+  }
+
+  .profileStat,
+  .profileStatCard {
+    min-height: 78px !important;
+    height: 78px !important;
+  }
+
+  .customerRow {
+    min-height: 52px !important;
+    padding-left: 22px !important;
+  }
+}
+
+
+/* Pulido final CRM */
+.filtersBar .filterControl:not(.filterSearch) .filterLabel {
+  display: none;
+}
+
+.filtersBar .filterControl:not(.filterSearch) .filterValue {
+  max-width: 100%;
+  text-align: center;
+}
+
+.filtersBar > .secondaryButton {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 1440px) {
+  .filtersBar {
+    grid-template-columns: minmax(260px, 1fr) 102px 96px 130px 88px;
+    gap: 8px;
+  }
+
+  .filterSearch {
+    max-width: none;
+  }
+}
+
+.rightColumn {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.75) rgba(15, 23, 42, 0.45);
+}
+
+.rightColumn::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rightColumn::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.45);
+  border-radius: 999px;
+}
+
+.rightColumn::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee, #2563eb);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.45);
+}
+
+.whatsappButton,
+.primaryActionButton,
+.secondaryActionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  line-height: 1;
+  padding: 0 10px;
+}
+
+.whatsappButton span,
+.primaryActionButton span,
+.secondaryActionButton span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.actionIcon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.profileStat,
+.profileStatCard {
+  min-height: 64px;
+  height: 64px;
+  padding: 8px 7px 8px;
+}
+
+.profileStats,
+.profileStatsGrid {
+  align-items: stretch;
+}
+
+.profileStatValue,
+.profileStatValueMultiline {
+  line-height: 1.12;
+  -webkit-line-clamp: 2;
+}
+
+.pageIcon {
+  display: none;
 }

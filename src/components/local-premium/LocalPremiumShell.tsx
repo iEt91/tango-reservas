@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Business } from "@/data/types";
@@ -14,6 +15,15 @@ import {
 import { LocalPremiumSidebar } from "@/components/local-premium/LocalPremiumSidebar";
 import { LocalPremiumTopbar } from "@/components/local-premium/LocalPremiumTopbar";
 import designLabStyles from "@/components/design-lab/TangoDesignLabDashboard.module.css";
+
+const DemoScenarioSwitcher = dynamic(
+  () =>
+    import("@/components/demo/DemoScenarioSwitcher").then((module) => module.DemoScenarioSwitcher),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 type LocalPremiumShellProps = {
   children: ReactNode;
@@ -135,6 +145,8 @@ export function LocalPremiumShell({ children }: LocalPremiumShellProps) {
     };
   });
 
+  const showDemoScenarioSwitcher = pathname.startsWith("/local/plano-lab");
+
   return (
     <div className={`${designLabStyles.shell} relative overflow-hidden`}>
       <LocalPremiumSidebar
@@ -151,6 +163,7 @@ export function LocalPremiumShell({ children }: LocalPremiumShellProps) {
             businessLabel={currentBusinessLabel}
             isSupportMode={isSupportMode}
             supportHref={supportHref}
+            rightActions={showDemoScenarioSwitcher ? <DemoScenarioSwitcher /> : null}
           />
 
           <main className="min-w-0 flex-1 overflow-hidden px-3 py-3 sm:px-4 sm:py-4 lg:px-5">

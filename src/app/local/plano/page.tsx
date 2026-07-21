@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { LocalFloorPlanPage } from "@/components/local-floor-plan/LocalFloorPlanPage";
+import { V2PlanoPage } from "./v2-plano-page";
 
-export default function LocalPlanoPage() {
-  return (
-    <Suspense fallback={null}>
-      <LocalFloorPlanPage />
-    </Suspense>
-  );
+export default function PlanoPage() {
+  return <V2PlanoPage />;
 }

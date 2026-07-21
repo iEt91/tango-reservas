@@ -7,8 +7,6 @@ type Tone = "cyan" | "emerald" | "amber" | "rose" | "violet";
 type MetricCard = {
   title: string;
   value: string;
-  subtitle: string;
-  footer: string;
   tone: Tone;
 };
 
@@ -33,23 +31,11 @@ type CustomerRow = {
 };
 
 const crmMetrics: MetricCard[] = [
-  { title: "Total clientes", value: "1.248", subtitle: "+28 este mes", footer: "Ver todos →", tone: "cyan" },
-  { title: "Clientes VIP", value: "186", subtitle: "15% del total", footer: "Ver todos →", tone: "amber" },
-  {
-    title: "Cumpleaños próximos",
-    value: "17",
-    subtitle: "En los próximos 7 días",
-    footer: "Ver todos →",
-    tone: "violet",
-  },
-  {
-    title: "Clientes frecuentes",
-    value: "542",
-    subtitle: "+9% vs mes anterior",
-    footer: "Ver todos →",
-    tone: "emerald",
-  },
-  { title: "Riesgo no-show", value: "38", subtitle: "3% del total", footer: "Ver todos →", tone: "rose" },
+  { title: "Clientes totales", value: "1.248", tone: "cyan" },
+  { title: "VIP", value: "186", tone: "amber" },
+  { title: "Cumpleaños próximos", value: "17", tone: "violet" },
+  { title: "Frecuentes", value: "542", tone: "emerald" },
+  { title: "Riesgo no-show", value: "38", tone: "rose" },
 ];
 
 const crmSegments: SegmentTab[] = [
@@ -403,10 +389,7 @@ export function LocalCrmLabPage() {
       <main className={styles.page}>
         <header className={styles.pageHeader}>
           <div className={styles.pageHeading}>
-            <div className={styles.pageEyebrow}>¡Bienvenido, Mariano!</div>
-            <h1 className={styles.pageTitle}>
-              CRM / Gestión de clientes <span className={styles.pageIcon}>👥</span>
-            </h1>
+            <h1 className={styles.pageTitle}>CRM de clientes</h1>
             <p className={styles.pageSubtitle}>
               Conocé, segmentá y fidelizá a tus clientes para ofrecer experiencias memorables.
             </p>
@@ -427,17 +410,20 @@ export function LocalCrmLabPage() {
           <div className={styles.leftColumn}>
             <section className={styles.metricGrid} aria-label="Métricas CRM">
               {crmMetrics.map((metric) => (
-                <article key={metric.title} className={styles.metricCard}>
+                <article
+                  key={metric.title}
+                  className={`${styles.metricCard} ${styles[`metricCard${metric.tone}`]}`}
+                >
                   <div className={`${styles.metricIcon} ${toneClass(metric.tone)}`}>
                     <LabIcon
                       name={
-                        metric.title === "Total clientes"
+                        metric.title === "Clientes totales"
                           ? "users"
-                          : metric.title === "Clientes VIP"
+                          : metric.title === "VIP"
                             ? "vip"
                             : metric.title === "Cumpleaños próximos"
                               ? "birthday"
-                              : metric.title === "Clientes frecuentes"
+                              : metric.title === "Frecuentes"
                                 ? "frequent"
                                 : "risk"
                       }
@@ -447,11 +433,6 @@ export function LocalCrmLabPage() {
 
                   <div className={styles.metricLabel}>{metric.title}</div>
                   <div className={styles.metricValue}>{metric.value}</div>
-                  <div className={styles.metricSubtitle}>{metric.subtitle}</div>
-                  <div className={styles.metricFooter}>
-                    <span>Hoy</span>
-                    <span className={styles.metricLink}>{metric.footer}</span>
-                  </div>
                 </article>
               ))}
             </section>
@@ -490,7 +471,7 @@ export function LocalCrmLabPage() {
               </button>
 
               <button type="button" className={styles.filterControl}>
-                <span className={styles.filterLabel}>Ordenar por</span>
+                <span className={styles.filterLabel}>Ordenar</span>
                 <strong className={styles.filterValue}>Más recientes ▼</strong>
               </button>
 
@@ -522,11 +503,6 @@ export function LocalCrmLabPage() {
                       <div className={styles.customerNameBlock}>
                         <div className={styles.customerNameRow}>
                           <span className={styles.customerName}>{customer.name}</span>
-                          {customer.tags.map((tag) => (
-                            <span key={`${customer.id}-${tag}`} className={`${styles.customerTag} ${customerTagClass(tag)}`}>
-                              {tag}
-                            </span>
-                          ))}
                         </div>
                       </div>
                     </div>
@@ -543,7 +519,9 @@ export function LocalCrmLabPage() {
                     </div>
 
                     <div className={styles.customerSegment}>
-                      <span className={styles.segmentPill}>{customer.tags.join(' · ')}</span>
+                      <span className={`${styles.segmentPill} ${customerTagClass(customer.tags[0] ?? "")}`}>
+                        {customer.tags.join(" · ")}
+                      </span>
                     </div>
                     <div className={styles.customerMeta}>{customer.lastVisit}</div>
                     <div className={styles.customerMeta}>{customer.nextReservation}</div>
@@ -606,7 +584,7 @@ export function LocalCrmLabPage() {
                 <div className={styles.profileActions}>
                   <button type="button" className={styles.whatsappButton}>
                     <LabIcon name="whatsapp" className={styles.actionIcon} />
-                    Enviar WhatsApp
+                    <span>Enviar WhatsApp</span>
                   </button>
                   <button type="button" className={styles.primaryActionButton}>
                     Crear reserva
@@ -648,73 +626,78 @@ export function LocalCrmLabPage() {
                 </div>
             </section>
 
-            <section className={styles.rightMiddleGrid}>
-              <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <h3>Preferencias</h3>
-                <div className={styles.detailList}>
-                  {visibleCustomerPreferences.map((item) => (
-                    <div key={item.label} className={styles.detailGroup}>
-                      <span className={styles.detailLabel}>{item.label}</span>
-                      <strong className={styles.detailValue}>{item.value}</strong>
-                    </div>
-                  ))}
-                  <div className={styles.tagList}>
-                    <span className={`${styles.tagPill} ${styles.tagPurple}`}>Aniversario</span>
-                    <span className={`${styles.tagPill} ${styles.tagBlue}`}>Cumpleaños</span>
-                    <span className={`${styles.tagPill} ${styles.tagGold}`}>Amante del vino</span>
-                    <span className={`${styles.tagPill} ${styles.tagGreen}`}>Veggie friendly</span>
-                    <span className={`${styles.tagPill} ${styles.tagBrown}`}>Viajero frecuente</span>
-                  </div>
-                </div>
-              </article>
-
-              <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <h3>Alergias e intolerancias</h3>
-                <div className={styles.detailStack}>
-                  <div className={styles.simpleList}>
-                    {customerAllergies.map((allergy) => (
-                      <span key={allergy} className={styles.listPill}>
-                        {allergy}
-                      </span>
+            <section className={styles.rightDetailsGrid}>
+              <div className={styles.infoCardsRow}>
+                <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
+                  <h3>Preferencias</h3>
+                  <div className={styles.detailList}>
+                    {visibleCustomerPreferences.map((item) => (
+                      <div key={item.label} className={styles.detailGroup}>
+                        <span className={styles.detailLabel}>{item.label}</span>
+                        <strong className={styles.detailValue}>{item.value}</strong>
+                      </div>
                     ))}
+                    <div className={styles.tagList}>
+                      <span className={`${styles.tagPill} ${styles.tagPurple}`}>Aniversario</span>
+                      <span className={`${styles.tagPill} ${styles.tagBlue}`}>Cumpleaños</span>
+                      <span className={`${styles.tagPill} ${styles.tagGold}`}>Amante del vino</span>
+                      <span className={`${styles.tagPill} ${styles.tagGreen}`}>Veggie friendly</span>
+                      <span className={`${styles.tagPill} ${styles.tagBrown}`}>Viajero frecuente</span>
+                    </div>
                   </div>
-                  <div className={styles.detailDivider} />
-                  <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Preferencias dietarias</span>
+                </article>
+
+                <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
+                  <h3>Alergias e intolerancias</h3>
+                  <div className={styles.detailStack}>
                     <div className={styles.simpleList}>
-                      {customerDietary.map((item) => (
-                        <span key={item} className={styles.listPill}>
-                          {item}
+                      {customerAllergies.map((allergy) => (
+                        <span key={allergy} className={styles.listPill}>
+                          {allergy}
                         </span>
                       ))}
                     </div>
-                  </div>
-                  <div className={styles.detailDivider} />
-                  <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Forma de contacto preferida</span>
-                    <div className={styles.simpleList}>
-                      <span className={`${styles.listPill} ${styles.whatsAppPill}`}>WhatsApp</span>
-                    </div>
-                  </div>
-                  <div className={styles.detailDivider} />
-                  <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Canal y antigüedad</span>
-                    <div className={styles.metaGrid}>
-                      <div>
-                        <span>Canal de origen</span>
-                        <strong>Instagram</strong>
-                      </div>
-                      <div>
-                        <span>Cliente desde</span>
-                        <strong>Febrero 2025</strong>
+                    <div className={styles.detailDivider} />
+                    <div className={styles.detailGroup}>
+                      <span className={styles.detailLabel}>Preferencias dietarias</span>
+                      <div className={styles.simpleList}>
+                        {customerDietary.map((item) => (
+                          <span key={item} className={styles.listPill}>
+                            {item}
+                          </span>
+                        ))}
                       </div>
                     </div>
+                    <div className={styles.detailDivider} />
+                    <div className={styles.detailGroup}>
+                      <span className={styles.detailLabel}>Forma de contacto preferida</span>
+                      <div className={styles.simpleList}>
+                        <span className={`${styles.listPill} ${styles.whatsAppPill}`}>WhatsApp</span>
+                      </div>
+                    </div>
+                    <div className={styles.detailDivider} />
+                    <div className={styles.detailGroup}>
+                      <span className={styles.detailLabel}>Canal y antigüedad</span>
+                      <div className={styles.metaGrid}>
+                        <div>
+                          <span>Canal de origen</span>
+                          <strong>Instagram</strong>
+                        </div>
+                        <div>
+                          <span>Cliente desde</span>
+                          <strong>Febrero 2025</strong>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </div>
 
-              <article className={`${styles.card} ${styles.detailCard} ${styles.detailCardTall}`}>
-                <h3>Historial de reservas (8)</h3>
+              <article className={`${styles.card} ${styles.detailCard} ${styles.historyWideCard}`}>
+                <div className={styles.historyHeaderRow}>
+                  <h3>Historial de reservas (8)</h3>
+                  <span>Últimas visitas</span>
+                </div>
                 <div className={styles.historyCardBody}>
                   <div className={styles.historyList}>
                     <div className={styles.historyTable}>

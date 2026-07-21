@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { LocalReservationsPage } from "@/components/local-reservations/LocalReservationsPage";
+import { V2ReservasPage } from "./v2-reservas-page";
 
-export default function LocalReservationsRoutePage() {
-  return (
-    <Suspense fallback={null}>
-      <LocalReservationsPage />
-    </Suspense>
-  );
+export default function ReservasPage() {
+  return <V2ReservasPage />;
 }

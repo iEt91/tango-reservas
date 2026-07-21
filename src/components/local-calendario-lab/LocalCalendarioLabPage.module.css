@@ -11,6 +11,7 @@
   flex-direction: column;
   gap: 12px;
   padding-top: 8px;
+  padding-bottom: 18px;
 }
 
 .pageHeader {
@@ -33,7 +34,7 @@
 }
 
 .pageTitle {
-  margin: 4px 0 8px;
+  margin: 0 0 8px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -113,26 +114,53 @@
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
-  height: 118px;
+  gap: 10px;
+  height: 104px;
+  min-height: 0;
   min-width: 0;
+  flex: 0 0 104px;
 }
 
 .metricCard {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  grid-template-rows: auto 1fr auto auto;
-  column-gap: 12px;
-  row-gap: 2px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 5px;
   min-width: 0;
-  height: 118px;
+  height: 100%;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 15px;
   border: 1px solid rgba(148, 163, 184, 0.12);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.94));
-  padding: 12px 14px 12px 12px;
+  padding: 11px 12px;
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
 }
+
+.metricCardblue {
+  background: linear-gradient(180deg, rgba(14, 116, 144, 0.34), rgba(8, 15, 28, 0.96));
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+.metricCardgreen {
+  background: linear-gradient(180deg, rgba(22, 101, 52, 0.34), rgba(8, 15, 28, 0.96));
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.metricCardamber {
+  background: linear-gradient(180deg, rgba(146, 64, 14, 0.34), rgba(8, 15, 28, 0.96));
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.metricCardred {
+  background: linear-gradient(180deg, rgba(127, 29, 29, 0.34), rgba(8, 15, 28, 0.96));
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.metricCardpurple {
+  background: linear-gradient(180deg, rgba(91, 33, 182, 0.34), rgba(8, 15, 28, 0.96));
+  border-color: rgba(139, 92, 246, 0.24);
+}
+
 
 .metricHeader {
   grid-column: 2;
@@ -145,16 +173,16 @@
 
 .metricIcon {
   grid-column: 1;
-  grid-row: 1 / span 4;
+  grid-row: 1 / span 2;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 34px;
+  height: 34px;
   align-self: center;
   justify-self: center;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(15, 23, 42, 0.82);
+  background: rgba(2, 6, 23, 0.28);
 }
 
 .metricToneblue {
@@ -228,14 +256,11 @@
 
 .metricSubtitle,
 .metricDetail {
-  grid-column: 2;
-  font-size: 12px;
-  line-height: 1.2;
-  color: #94a3b8;
+  display: none;
 }
 
 .metricSubtitle {
-  grid-row: 3;
+  display: none;
 }
 
 .metricDetail {
@@ -243,14 +268,7 @@
 }
 
 .metricFooter {
-  grid-column: 1 / -1;
-  grid-row: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 11px;
-  color: #94a3b8;
+  display: none;
 }
 
 .metricFooterLeft,
@@ -286,6 +304,7 @@
   align-items: stretch;
   min-width: 0;
   margin-top: 10px;
+  padding-bottom: 8px;
 }
 
 .monthPanel,
@@ -299,7 +318,7 @@
 }
 
 .monthPanel {
-  height: 590px;
+  height: 620px;
   min-width: 0;
   overflow: hidden;
 }
@@ -419,6 +438,7 @@
 }
 
 .dayCell {
+  position: relative;
   min-height: 82px;
   border-right: 1px solid rgba(148, 163, 184, 0.08);
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
@@ -427,25 +447,78 @@
   flex-direction: column;
   justify-content: space-between;
   min-width: 0;
+  overflow: hidden;
+  background: rgba(8, 15, 28, 0.24);
+}
+
+.dayHasReservations::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--day-occupancy, 0%);
+  background: linear-gradient(
+    90deg,
+    rgba(22, 101, 52, 0.40),
+    rgba(20, 83, 45, 0.5)
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dayCell > * {
+  position: relative;
+  z-index: 1;
+}
+
+
+.dayHasReservations {
+  background: rgba(8, 15, 28, 0.24);
 }
 
 .dayMuted {
-  background: rgba(255, 255, 255, 0.01);
+  opacity: 0.28;
+  background: rgba(2, 6, 23, 0.34);
   color: rgba(248, 250, 252, 0.65);
 }
 
+.dayMuted::after {
+  opacity: 0.18;
+}
+
+.dayMuted .dayOccupancy {
+  display: none;
+}
+
+
 .daySelected {
   position: relative;
-  outline: 1px solid rgba(34, 211, 238, 0.9);
+  outline: 1px solid rgba(34, 211, 238, 0.92);
   outline-offset: -1px;
   background: rgba(8, 47, 73, 0.42);
+  box-shadow:
+    inset 0 0 0 1px rgba(103, 232, 249, 0.18),
+    0 0 20px rgba(34, 211, 238, 0.10);
 }
 
 .dayTopRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 8px;
 }
+
+.dayOccupancy {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  color: #bbf7d0;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(20, 83, 45, 0.46);
+  border: 1px solid rgba(134, 239, 172, 0.18);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.10);
+}
+
 
 .dayNumber {
   font-size: 15px;
@@ -472,6 +545,17 @@
   border-radius: 999px;
 }
 
+.dayStats .dayStatRow:first-child .dayStatDot {
+  background: #22d3ee !important;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.32);
+}
+
+.dayStats .dayStatRow:nth-child(2) .dayStatDot {
+  background: #86efac !important;
+  box-shadow: 0 0 8px rgba(134, 239, 172, 0.24);
+}
+
+
 .dayStatDot[data-tone="blue"] {
   background: #60a5fa;
 }
@@ -493,7 +577,7 @@
 }
 
 .agendaPanel {
-  height: 590px;
+  height: 620px;
   min-height: 590px;
   min-width: 0;
   display: flex;
@@ -792,10 +876,10 @@
 
 .sideColumn {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) 148px;
+  grid-template-rows: minmax(0, 1fr) 170px;
   gap: 14px;
   min-width: 0;
-  height: 590px;
+  height: 620px;
 }
 
 .sidePanel,
@@ -833,10 +917,33 @@
   gap: 10px;
   margin-top: 14px;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.92) rgba(15, 23, 42, 0.52);
+}
+.sideList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sideList::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.52);
+  border-radius: 999px;
+}
+
+.sideList::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee, #2563eb);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.52);
+}
+
+.sideList::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9, #3b82f6);
 }
 
 .sideItem {
+  padding-right: 8px;
   display: grid;
   grid-template-columns: 56px minmax(0, 1fr) 28px;
   align-items: center;
@@ -874,9 +981,39 @@
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.62);
   border: 1px solid rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
 }
+
+.sideItemStatusconfirmed {
+  color: #86efac;
+  background: rgba(22, 101, 52, 0.30);
+  border-color: rgba(34, 197, 94, 0.34);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.08);
+}
+
+.sideItemStatuspending {
+  color: #fbbf24;
+  background: rgba(146, 64, 14, 0.30);
+  border-color: rgba(245, 158, 11, 0.34);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.08);
+}
+
+.sideItemStatusspecial {
+  color: #c4b5fd;
+  background: rgba(91, 33, 182, 0.32);
+  border-color: rgba(139, 92, 246, 0.36);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.09);
+}
+
+.sideItemStatusrisk {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.32);
+  border-color: rgba(239, 68, 68, 0.36);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.09);
+}
+
 
 .sideLink {
   margin-top: auto;
@@ -940,4 +1077,42 @@
   .sideColumn {
     grid-template-rows: auto auto;
   }
+}
+
+.dayCell:hover {
+  background: rgba(8, 47, 73, 0.34);
+  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.18);
+}
+
+
+.agendaList {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.92) rgba(15, 23, 42, 0.52);
+}
+
+.agendaList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.agendaList::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.52);
+  border-radius: 999px;
+}
+
+.agendaList::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee, #2563eb);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.52);
+}
+
+.agendaList::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9, #3b82f6);
+}
+.searchBox {
+  max-width: 460px;
+}
+
+.searchInput {
+  max-width: 460px;
 }

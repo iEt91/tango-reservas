@@ -1,5 +1,5 @@
-import { LocalDashboardPage } from "@/components/local-dashboard/LocalDashboardPage";
+import { V2LocalPage } from "./v2-local-page";
 
 export default function LocalPage() {
-  return <LocalDashboardPage />;
+  return <V2LocalPage />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useDemoScenario } from "@/lib/demo/demo-context";
 import styles from "./LocalPlanoLabPage.module.css";
 
 type IconName =
@@ -55,6 +56,35 @@ type HourlySegment = {
   percent: number;
 };
 
+type ReservationStatus = "confirmed" | "pending" | "special" | "no_show_risk";
+
+type MockReservation = {
+  id: number;
+  tableId: number | null;
+  guest: string;
+  start: string;
+  end: string;
+  guests: number;
+  status: ReservationStatus;
+};
+
+type LiveFloorStats = {
+  availableTables: number;
+  availableSeats: number;
+  occupiedTables: number;
+  occupiedSeats: number;
+  reservedTables: number;
+  reservedSeats: number;
+  offlineTables: number;
+  offlineSeats: number;
+  unassignedReservations: number;
+  unassignedGuests: number;
+  totalSeats: number;
+  activeTables: number;
+  occupancyPercent: number;
+  occupiedAndReservedSeats: number;
+};
+
 const mockTables: MockTable[] = [
   { id: 1, name: "Mesa 1", seats: 2, status: "available", shape: "round", x: 20, y: 18, w: 92, h: 92 },
   { id: 2, name: "Mesa 2", seats: 4, status: "reserved", shape: "square", x: 40, y: 17, w: 96, h: 96 },
@@ -90,6 +120,23 @@ const hourlyOccupancySegments: HourlySegment[] = [
   { hour: "21:00", percent: 60 },
   { hour: "22:00", percent: 44 },
 ];
+
+const mediumReservations: MockReservation[] = [
+  { id: 1, tableId: 1, guest: "Mesa familiar", start: "12:00", end: "13:30", guests: 2, status: "confirmed" },
+  { id: 2, tableId: 5, guest: "Ana García", start: "13:00", end: "14:30", guests: 2, status: "confirmed" },
+  { id: 3, tableId: 2, guest: "Juan Martín López", start: "13:30", end: "15:30", guests: 4, status: "pending" },
+  { id: 4, tableId: 7, guest: "Valeria del Mar", start: "14:30", end: "16:30", guests: 2, status: "pending" },
+  { id: 5, tableId: 6, guest: "Ana García", start: "15:30", end: "17:30", guests: 6, status: "pending" },
+  { id: 6, tableId: 3, guest: "Carlos Rojas", start: "15:45", end: "17:45", guests: 4, status: "confirmed" },
+  { id: 7, tableId: 10, guest: "Roberto Álvarez", start: "16:00", end: "18:30", guests: 8, status: "confirmed" },
+  { id: 8, tableId: 8, guest: "Grupo de amigos", start: "18:30", end: "20:30", guests: 8, status: "special" },
+  { id: 9, tableId: 4, guest: "Diego & Laura", start: "20:00", end: "22:00", guests: 6, status: "confirmed" },
+  { id: 10, tableId: null, guest: "Reserva sin mesa", start: "21:00", end: "22:30", guests: 4, status: "pending" },
+];
+
+const timelineStartHour = 11;
+const timelineEndHour = 23;
+const timelineStepMinutes = 15;
 
 const statusLabel: Record<TableStatus, string> = {
   available: "Disponible",
@@ -335,32 +382,208 @@ function getChairOffsets(table: MockTable) {
   return base;
 }
 
-function getTimelineColor(percent: number) {
+function timeToMinutes(time: string) {
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function getTimelinePosition(time: string) {
+  const start = timelineStartHour * 60;
+  const end = timelineEndHour * 60;
+  const current = timeToMinutes(time);
+  const clamped = Math.min(Math.max(current, start), end);
+
+  return ((clamped - start) / (end - start)) * 100;
+}
+
+function isReservationActive(reservation: MockReservation, time: string) {
+  const current = timeToMinutes(time);
+  return current >= timeToMinutes(reservation.start) && current < timeToMinutes(reservation.end);
+}
+
+function getStatusForTableAtTime(table: MockTable, time: string, reservations: MockReservation[]): TableStatus {
+  if (table.status === "offline") {
+    return "offline";
+  }
+
+  const activeReservation = reservations.find(
+    (reservation) => reservation.tableId === table.id && isReservationActive(reservation, time)
+  );
+
+  if (!activeReservation) {
+    return "available";
+  }
+
+  return activeReservation.status === "confirmed" ? "occupied" : "reserved";
+}
+
+function getFloorStatsAtTime(time: string, reservations: MockReservation[]): LiveFloorStats {
+  const liveTables = mockTables.map((table) => ({
+    ...table,
+    liveStatus: getStatusForTableAtTime(table, time, reservations),
+  }));
+
+  const activeReservations = reservations.filter((reservation) => isReservationActive(reservation, time));
+  const unassignedReservations = activeReservations.filter((reservation) => reservation.tableId === null);
+
+  const available = liveTables.filter((table) => table.liveStatus === "available");
+  const occupied = liveTables.filter((table) => table.liveStatus === "occupied");
+  const reserved = liveTables.filter((table) => table.liveStatus === "reserved");
+  const offline = liveTables.filter((table) => table.liveStatus === "offline");
+
+  const totalSeats = mockTables.reduce((sum, table) => sum + table.seats, 0);
+  const occupiedAndReservedSeats = [...occupied, ...reserved].reduce((sum, table) => sum + table.seats, 0);
+
+  return {
+    availableTables: available.length,
+    availableSeats: available.reduce((sum, table) => sum + table.seats, 0),
+    occupiedTables: occupied.length,
+    occupiedSeats: occupied.reduce((sum, table) => sum + table.seats, 0),
+    reservedTables: reserved.length,
+    reservedSeats: reserved.reduce((sum, table) => sum + table.seats, 0),
+    offlineTables: offline.length,
+    offlineSeats: offline.reduce((sum, table) => sum + table.seats, 0),
+    unassignedReservations: unassignedReservations.length,
+    unassignedGuests: unassignedReservations.reduce((sum, reservation) => sum + reservation.guests, 0),
+    totalSeats,
+    activeTables: mockTables.length - offline.length,
+    occupancyPercent: Math.round((occupiedAndReservedSeats / totalSeats) * 100),
+    occupiedAndReservedSeats,
+  };
+}
+
+function getOccupancyColor(percent: number) {
   if (percent < 40) {
-    return styles.timelineLow;
+    return "#22c55e";
   }
 
   if (percent < 70) {
-    return styles.timelineMid;
+    return "#f59e0b";
   }
 
-  return styles.timelineHigh;
+  return "#ef4444";
+}
+
+function getTimelineSegments(reservations: MockReservation[]) {
+  const segments = [];
+
+  for (let minutes = timelineStartHour * 60; minutes < timelineEndHour * 60; minutes += timelineStepMinutes) {
+    const time = minutesToTime(minutes);
+    const nextTime = minutesToTime(minutes + timelineStepMinutes);
+    const percent = getFloorStatsAtTime(time, reservations).occupancyPercent;
+    const nextPercent = getFloorStatsAtTime(nextTime, reservations).occupancyPercent;
+
+    segments.push({
+      time,
+      percent,
+      startColor: getOccupancyColor(percent),
+      endColor: getOccupancyColor(nextPercent),
+    });
+  }
+
+  return segments;
 }
 
 export function LocalPlanoLabPage() {
+  const { scenario } = useDemoScenario();
+  const [isHydrated, setIsHydrated] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState(6);
+  const [selectedTime, setSelectedTime] = useState("15:45");
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  const currentReservations = useMemo<MockReservation[]>(
+    () =>
+      (isHydrated ? scenario.reservations : mediumReservations).map((reservation) => ({
+        id: reservation.id,
+        tableId: reservation.tableId,
+        guest: "customerName" in reservation ? reservation.customerName : reservation.guest,
+        start: reservation.start,
+        end: reservation.end,
+        guests: reservation.guests,
+        status: reservation.status === "special" ? "special" : reservation.status === "confirmed" ? "confirmed" : "pending",
+      })),
+    [isHydrated, scenario.reservations]
+  );
+  const timelineSegments = useMemo(() => getTimelineSegments(currentReservations), [currentReservations]);
+  const liveStats = useMemo(() => getFloorStatsAtTime(selectedTime, currentReservations), [selectedTime, currentReservations]);
+  const liveTables = useMemo(
+    () =>
+      mockTables.map((table) => ({
+        ...table,
+        status: getStatusForTableAtTime(table, selectedTime, currentReservations),
+      })),
+    [selectedTime, currentReservations]
+  );
+
   const selectedTable =
-    mockTables.find((table) => table.id === selectedTableId) ?? mockTables[5] ?? mockTables[0];
+    liveTables.find((table) => table.id === selectedTableId) ?? liveTables[5] ?? liveTables[0];
+
+  const selectedReservation = currentReservations.find(
+    (reservation) => reservation.tableId === selectedTable.id && isReservationActive(reservation, selectedTime)
+  );
+  const demoScenarioLabel = isHydrated ? scenario.label : "Ocupación media";
+
+  const liveFloorStats: FloorStat[] = [
+    {
+      label: "Mesas libres",
+      value: String(liveStats.availableTables),
+      subtitle: `${liveStats.availableSeats} cubiertos`,
+      tone: "green",
+      icon: "chair",
+    },
+    {
+      label: "Mesas ocupadas",
+      value: String(liveStats.occupiedTables),
+      subtitle: `${liveStats.occupiedSeats} cubiertos`,
+      tone: "red",
+      icon: "chair",
+    },
+    {
+      label: "Mesas reservadas",
+      value: String(liveStats.reservedTables),
+      subtitle: `${liveStats.reservedSeats} cubiertos`,
+      tone: "blue",
+      icon: "link",
+    },
+    {
+      label: "Fuera de servicio",
+      value: String(liveStats.offlineTables),
+      subtitle: `${liveStats.offlineSeats} cubiertos`,
+      tone: "gray",
+      icon: "dot",
+    },
+    {
+      label: "Reservas sin mesa",
+      value: String(liveStats.unassignedReservations),
+      subtitle: `${liveStats.unassignedGuests} personas`,
+      tone: "amber",
+      icon: "calendar",
+    },
+  ];
 
   return (
     <div className={styles.page}>
       <div className={styles.content}>
         <header className={styles.pageHeader}>
           <div className={styles.pageHeading}>
-            <div className={styles.pageEyebrow}>¡Bienvenido, Mariano!</div>
             <h1 className={styles.pageTitle}>
               Plano del salón <LabIcon name="target" className={styles.pageSpark} />
             </h1>
+            <p className={styles.pageSubtitle}>
+              Visualizá mesas, estados, ocupación y asignación operativa del salón.
+            </p>
+            <p className={styles.pageScenario} suppressHydrationWarning>
+              Demo activo: {demoScenarioLabel}
+            </p>
           </div>
 
           <div className={styles.headerControls}>
@@ -435,7 +658,7 @@ export function LocalPlanoLabPage() {
                 <div className={styles.canvasWalls} aria-hidden="true" />
                 <div className={styles.canvasPlants} aria-hidden="true" />
 
-                {mockTables.map((table) => {
+                {liveTables.map((table) => {
                   const selected = table.id === selectedTable.id;
                   return (
                     <button
@@ -502,20 +725,20 @@ export function LocalPlanoLabPage() {
               <section className={styles.occupancyCard}>
                 <div className={styles.occupancyHeader}>
                   <div>
-                    <div className={styles.occupancyEyebrow}>Ocupación del salón (hoy)</div>
-                    <div className={styles.occupancyTitle}>72%</div>
-                    <div className={styles.occupancyMeta}>78 / 108 cubiertos</div>
+                    <div className={styles.occupancyEyebrow}>Ocupación a las {selectedTime}</div>
+                    <div className={styles.occupancyTitle}>{liveStats.occupancyPercent}%</div>
+                    <div className={styles.occupancyMeta}>{liveStats.occupiedAndReservedSeats} / {liveStats.totalSeats} cubiertos</div>
                   </div>
 
-                  <div className={styles.occupancyDonut} aria-hidden="true">
-                    <span>72%</span>
+                  <div className={styles.occupancyDonut} style={{ "--occupancy": `${liveStats.occupancyPercent}%` } as CSSProperties} aria-hidden="true">
+                    <span>{liveStats.occupancyPercent}%</span>
                   </div>
                 </div>
               </section>
 
               <div className={styles.floorStatsGrid}>
-                {floorStats.map((stat) => (
-                  <article key={stat.label} className={styles.floorStatCard}>
+                {liveFloorStats.map((stat) => (
+                  <article key={stat.label} className={`${styles.floorStatCard} ${styles[`floorStatCard${stat.tone}`]}`}>
                     <div className={`${styles.floorStatIcon} ${styles[`tone${stat.tone}`]}`}>
                       <LabIcon name={stat.icon} className={styles.floorStatIconSvg} />
                     </div>
@@ -530,7 +753,7 @@ export function LocalPlanoLabPage() {
                 <div className={styles.capacityMetric}>
                   <span className={styles.summaryCardLabel}>Capacidad total</span>
                   <div className={styles.inlineMetric}>
-                    <span className={styles.summaryCardValue}>108</span>
+                    <span className={styles.summaryCardValue}>{liveStats.totalSeats}</span>
                     <span className={styles.summaryCardMeta}>cubiertos</span>
                   </div>
                 </div>
@@ -538,8 +761,8 @@ export function LocalPlanoLabPage() {
                 <div className={styles.capacityMetric}>
                   <span className={styles.summaryCardLabel}>Mesas activas</span>
                   <div className={styles.inlineMetric}>
-                    <span className={styles.summaryCardValue}>16</span>
-                    <span className={styles.summaryCardMeta}>de 17</span>
+                    <span className={styles.summaryCardValue}>{liveStats.activeTables}</span>
+                    <span className={styles.summaryCardMeta}>de {mockTables.length}</span>
                   </div>
                 </div>
               </section>
@@ -552,8 +775,23 @@ export function LocalPlanoLabPage() {
                 <div>
                   <div className={styles.selectedPanelEyebrow}>Mesa seleccionada</div>
                   <h3 className={styles.selectedPanelTitle}>
-                    Mesa 6 <span className={styles.selectedPill}>Reservada</span>
+                    {selectedTable.name} <span className={styles.selectedPill}>{statusLabel[selectedTable.status]}</span>
                   </h3>
+                </div>
+              </div>
+
+              <div className={styles.selectedQuickStats}>
+                <div>
+                  <span>Reserva actual</span>
+                  <strong>{selectedReservation ? `${selectedReservation.start} · ${selectedReservation.guest}` : "Sin reserva activa"}</strong>
+                </div>
+                <div>
+                  <span>Próxima mesa libre</span>
+                  <strong>{selectedReservation ? selectedReservation.end : "Ahora"}</strong>
+                </div>
+                <div>
+                  <span>Zona</span>
+                  <strong>Salón principal</strong>
                 </div>
               </div>
 
@@ -561,7 +799,7 @@ export function LocalPlanoLabPage() {
                 <div className={styles.selectedFieldsRow}>
                   <label className={styles.selectedField}>
                     <span>Nombre de la mesa</span>
-                    <input value="Mesa 6" readOnly />
+                    <input value={selectedTable.name} readOnly />
                   </label>
 
                   <label className={styles.selectedField}>
@@ -570,7 +808,7 @@ export function LocalPlanoLabPage() {
                       <button type="button" className={styles.smallControlButton}>
                         -
                       </button>
-                      <input value="6" readOnly />
+                      <input value={selectedTable.seats} readOnly />
                       <button type="button" className={styles.smallControlButton}>
                         +
                       </button>
@@ -590,7 +828,7 @@ export function LocalPlanoLabPage() {
                   <label className={styles.selectedField}>
                     <span>Estado</span>
                     <button type="button" className={styles.selectField}>
-                      <span>Reservada</span>
+                      <span>{statusLabel[selectedTable.status]}</span>
                       <LabIcon name="chevronDown" className={styles.controlChevron} />
                     </button>
                   </label>
@@ -644,7 +882,7 @@ export function LocalPlanoLabPage() {
           <div className={styles.timelineHeader}>
             <div>
               <div className={styles.timelineTitle}>
-                Ocupación por horario <span>(Jueves, 22 de mayo)</span>
+                Ocupación por horario <span>(Jueves, 22 de mayo · {selectedTime})</span>
               </div>
             </div>
           </div>
@@ -658,28 +896,56 @@ export function LocalPlanoLabPage() {
             </div>
 
             <div className={styles.timelineTrack}>
-              {hourlyOccupancySegments.map((segment) => (
-                <div
-                  key={segment.hour}
-                  className={`${styles.timelineSegment} ${getTimelineColor(segment.percent)}`}
-                  title={`${segment.hour} - ${segment.percent}%`}
-                />
-              ))}
-              <div className={styles.timelineMarker} aria-hidden="true" />
+              <div className={styles.timelineInteractiveBar}>
+                {timelineSegments.map((segment) => (
+                  <button
+                    key={segment.time}
+                    type="button"
+                    className={styles.timelineSegmentButton}
+                    style={
+                      {
+                        "--segment-start": segment.startColor,
+                        "--segment-end": segment.endColor,
+                      } as CSSProperties
+                    }
+                    title={`${segment.time} · ${segment.percent}% ocupación`}
+                    onClick={() => setSelectedTime(segment.time)}
+                  />
+                ))}
+              </div>
+
+              <input
+                className={styles.timelineRangeInput}
+                type="range"
+                min={timelineStartHour * 60}
+                max={timelineEndHour * 60}
+                step={timelineStepMinutes}
+                value={timeToMinutes(selectedTime)}
+                aria-label="Seleccionar horario de ocupación"
+                onChange={(event) => setSelectedTime(minutesToTime(Number(event.target.value)))}
+              />
+
+              <div
+                className={styles.timelineMarker}
+                style={{ left: `${getTimelinePosition(selectedTime)}%` }}
+                aria-hidden="true"
+              >
+                <span>{selectedTime}</span>
+              </div>
             </div>
 
             <div className={styles.timelineLegend}>
               <span>
                 <i className={styles.legendLow} />
-                0-39%
+                Baja
               </span>
               <span>
                 <i className={styles.legendMid} />
-                40-69%
+                Media
               </span>
               <span>
                 <i className={styles.legendHigh} />
-                70-100%
+                Alta
               </span>
             </div>
           </div>

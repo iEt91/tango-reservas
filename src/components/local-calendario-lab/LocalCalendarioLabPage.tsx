@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import styles from "./LocalCalendarioLabPage.module.css";
 
 type IconName =
@@ -71,48 +71,39 @@ type AgendaReservation = {
 
 const metrics: MetricCard[] = [
   {
-    title: "Total reservas hoy",
+    title: "Total del día",
     value: "24",
-    eyebrow: "Mayo 2026",
-    subtitle: "cubiertos 72",
+    subtitle: "",
     icon: "calendar",
     tone: "blue",
   },
   {
-    title: "Ocupación esperada",
-    value: "78%",
-    eyebrow: "Hoy",
-    subtitle: "104 / 134 cubiertos",
-    icon: "clock",
+    title: "Confirmadas",
+    value: "14",
+    subtitle: "",
+    icon: "check",
     tone: "green",
-    rightNode: <div className={styles.miniDonut} aria-hidden="true" />,
   },
   {
-    title: "Pendientes confirmar",
+    title: "Pendientes",
     value: "6",
-    subtitle: "reservas",
-    eyebrow: "Hoy",
-    link: "Ver reservas →",
-    icon: "filter",
+    subtitle: "",
+    icon: "clock",
     tone: "amber",
   },
   {
-    title: "Riesgo no-show",
+    title: "Especiales",
     value: "3",
-    subtitle: "reservas",
-    eyebrow: "Hoy",
-    link: "Ver reservas →",
-    icon: "x",
-    tone: "red",
+    subtitle: "",
+    icon: "star",
+    tone: "purple",
   },
   {
-    title: "Mesas disponibles",
-    value: "8",
-    subtitle: "ahora",
-    eyebrow: "Hoy",
-    link: "Ver plano →",
-    icon: "plan",
-    tone: "purple",
+    title: "Riesgo no-show",
+    value: "1",
+    subtitle: "",
+    icon: "x",
+    tone: "red",
   },
 ];
 
@@ -540,6 +531,12 @@ function formatDayLabel(date: string) {
     .replace(/^./, (char) => char.toUpperCase());
 }
 
+const DAILY_SEAT_CAPACITY = 96;
+
+function getDayOccupancyPercent(day: CalendarDay) {
+  return Math.min(100, Math.max(0, Math.round((day.seats / DAILY_SEAT_CAPACITY) * 100)));
+}
+
 export function LocalCalendarioLabPage() {
   const [expandedSlots, setExpandedSlots] = useState<string[]>(["13:00"]);
   const selectedDate = "2026-05-22";
@@ -573,12 +570,11 @@ export function LocalCalendarioLabPage() {
       <div className={styles.content}>
         <header className={styles.pageHeader}>
           <div className={styles.pageHeading}>
-            <div className={styles.pageEyebrow}>¡Bienvenido, Mariano!</div>
             <h1 className={styles.pageTitle}>
-              Operación diaria del negocio <LabIcon name="sparkles" className={styles.pageSpark} />
+              Calendario de reservas <LabIcon name="sparkles" className={styles.pageSpark} />
             </h1>
             <p className={styles.pageSubtitle}>
-              Gestioná tu calendario, reservas y la operación del restaurante.
+              Visualizá reservas por mes, agenda diaria, ocupación y próximos turnos del restaurante.
             </p>
           </div>
 
@@ -598,7 +594,10 @@ export function LocalCalendarioLabPage() {
 
         <section className={styles.metricsGrid} aria-label="Métricas de calendario">
           {metrics.map((metric) => (
-            <article key={metric.title} className={styles.metricCard}>
+            <article
+              key={metric.title}
+              className={`${styles.metricCard} ${styles[`metricCard${metric.tone}`]}`}
+            >
               <span className={`${styles.metricIcon} ${styles[`metricTone${metric.tone}`]}`}>
                 <LabIcon name={metric.icon} className={styles.metricIconSvg} />
               </span>
@@ -610,18 +609,6 @@ export function LocalCalendarioLabPage() {
               <div className={styles.metricValueWrap}>
                 <div className={styles.metricValue}>{metric.value}</div>
                 {metric.rightNode ? <div className={styles.metricRightNode}>{metric.rightNode}</div> : null}
-              </div>
-
-              <div className={styles.metricFooter}>
-                <span className={styles.metricFooterLeft}>{metric.subtitle}</span>
-                <span className={styles.metricFooterCenter}>{metric.eyebrow ? "Hoy" : ""}</span>
-                {metric.link ? (
-                  <button type="button" className={styles.metricFooterLink}>
-                    {metric.link}
-                  </button>
-                ) : (
-                  <span />
-                )}
               </div>
             </article>
           ))}
@@ -669,29 +656,47 @@ export function LocalCalendarioLabPage() {
             </div>
 
             <div className={styles.monthGrid}>
-              {calendarDays.map((day) => (
-                <article
-                  key={day.date}
-                  className={`${styles.dayCell} ${!day.isCurrentMonth ? styles.dayMuted : ""} ${
-                    day.isSelected ? styles.daySelected : ""
-                  }`}
-                >
-                  <div className={styles.dayTopRow}>
-                    <div className={styles.dayNumber}>{day.dayNumber}</div>
-                  </div>
+              {calendarDays.map((day) => {
+                const occupancyPercent = getDayOccupancyPercent(day);
 
-                  <div className={styles.dayStats}>
-                    <div className={styles.dayStatRow}>
-                      <span className={styles.dayStatDot} data-tone={day.dots[0] ? "blue" : "gray"} />
-                      <span>{day.reservations} reservas</span>
+                return (
+                  <article
+                    key={day.date}
+                    className={[
+                      styles.dayCell,
+                      !day.isCurrentMonth ? styles.dayMuted : "",
+                      day.reservations > 0 ? styles.dayHasReservations : "",
+                      day.isSelected ? styles.daySelected : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    style={
+                      {
+                        "--day-occupancy": `${occupancyPercent}%`,
+                      } as CSSProperties
+                    }
+                  >
+                    <div className={styles.dayTopRow}>
+                      <div className={styles.dayNumber}>{day.dayNumber}</div>
+
+                      {day.isCurrentMonth && day.reservations > 0 ? (
+                        <span className={styles.dayOccupancy}>{occupancyPercent}%</span>
+                      ) : null}
                     </div>
-                    <div className={styles.dayStatRow}>
-                      <span className={styles.dayStatDot} data-tone={day.dots[1] ? "gray" : "blue"} />
-                      <span>{day.seats} cubiertos</span>
+
+                    <div className={styles.dayStats}>
+                      <div className={styles.dayStatRow}>
+                        <span className={styles.dayStatDot} data-tone="cyan" />
+                        <span>{day.reservations} reservas</span>
+                      </div>
+                      <div className={styles.dayStatRow}>
+                        <span className={styles.dayStatDot} data-tone="green" />
+                        <span>{day.seats} cubiertos</span>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           </section>
 
@@ -856,7 +861,7 @@ export function LocalCalendarioLabPage() {
                       </div>
                       <div className={styles.sideItemName}>{item.name}</div>
                     </div>
-                    <div className={styles.sideItemStatus}>
+                    <div className={`${styles.sideItemStatus} ${styles[`sideItemStatus${item.tone}`]}`}>
                       {item.tone === "confirmed" ? (
                         <LabIcon name="check" className={styles.sideStatusIcon} />
                       ) : item.tone === "pending" ? (
