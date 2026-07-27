@@ -194,6 +194,14 @@ function formatDateLabel(date: string) {
   } de ${parsedDate.getFullYear()}`;
 }
 
+function formatShortDate(date: string) {
+  const parsedDate = parseLocalDate(date);
+
+  return `${String(parsedDate.getDate()).padStart(2, "0")}/${String(
+    parsedDate.getMonth() + 1
+  ).padStart(2, "0")}/${parsedDate.getFullYear()}`;
+}
+
 function formatMonthLabel(date: string) {
   const parsedDate = parseLocalDate(date);
 
@@ -1712,38 +1720,32 @@ export function V2PlanoPage() {
 
                   {isDatePickerOpen ? (
                     <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-[360px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">Seleccionar fecha</p>
-                          <p className="mt-1 text-xs text-slate-500">Filtra la ocupación del plano por día.</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setIsDatePickerOpen(false)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50"
-                          aria-label="Cerrar calendario"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <button
                           type="button"
                           onClick={() => setCalendarMonth(moveMonth(calendarMonth, -1))}
                           className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                           aria-label="Mes anterior"
                         >
-                          <ChevronLeft size={16} />
+                          <ChevronLeft size={17} />
                         </button>
-                        <p className="text-sm font-bold capitalize text-slate-950">{formatMonthLabel(calendarMonth)}</p>
+
+                        <div className="text-center">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            Seleccionar día
+                          </p>
+                          <p className="mt-0.5 text-sm font-semibold capitalize text-slate-950">
+                            {formatMonthLabel(calendarMonth)}
+                          </p>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => setCalendarMonth(moveMonth(calendarMonth, 1))}
                           className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                           aria-label="Mes siguiente"
                         >
-                          <ChevronRight size={16} />
+                          <ChevronRight size={17} />
                         </button>
                       </div>
 
@@ -1758,6 +1760,7 @@ export function V2PlanoPage() {
                           const isDisabled = !day.date || day.date < TODAY_DATE || day.date > maxBookingDate;
                           const isSelected = day.date === selectedDate;
                           const hasReservations = day.date ? reservationDatesInMonth.has(day.date) : false;
+                          const isToday = day.date === TODAY_DATE;
 
                           return (
                             <button
@@ -1769,8 +1772,10 @@ export function V2PlanoPage() {
                                 "relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition",
                                 day.currentMonth ? "text-slate-700" : "text-transparent",
                                 isSelected
-                                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
-                                  : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800",
+                                  ? "border-emerald-700 bg-emerald-600 text-white shadow-sm"
+                                  : isToday
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                                    : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800",
                                 isDisabled ? "cursor-not-allowed opacity-30 hover:bg-transparent" : ""
                               )}
                             >
@@ -1783,24 +1788,31 @@ export function V2PlanoPage() {
                         })}
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                        <button
-                          type="button"
-                          onClick={() => selectCalendarDate(TODAY_DATE)}
-                          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                        >
-                          Hoy
-                        </button>
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600">
+                      <div className="mt-4 border-t border-slate-100 pt-3">
+                        <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                          <p className="font-semibold">Filtra la ocupación del plano por día.</p>
+                          <p className="mt-1 text-emerald-800">
+                            Día: {formatShortDate(selectedDate)}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => selectCalendarDate(TODAY_DATE)}
+                            className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                          >
+                            Hoy
+                          </button>
+                          <span className="h-9 rounded-xl border border-emerald-100 bg-emerald-50 px-3 pt-2 text-xs font-semibold text-emerald-800">
                             {localConfig.bookingWindowDays} días
                           </span>
                           <button
                             type="button"
                             onClick={applyCalendarDate}
-                            className="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-800"
+                            className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                           >
-                            Aplicar
+                            Cerrar
                           </button>
                         </div>
                       </div>

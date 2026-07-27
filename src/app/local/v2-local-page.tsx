@@ -43,6 +43,13 @@ const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
 const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
 const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
 
+type V2ReservationOrderLineItem = {
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
 type V2ReservationDraft = {
   id: string;
   date: string;
@@ -56,16 +63,10 @@ type V2ReservationDraft = {
   tableName?: string;
   origin?: "web" | "whatsapp" | "phone" | "instagram" | "manual";
   orderItems?: string;
+  orderLineItems?: V2ReservationOrderLineItem[];
   orderTotal?: number;
   payment?: string;
   paymentMethod?: string;
-  paidAmount?: number;
-  paymentBreakdown?: {
-    cash: number;
-    card: number;
-    mercadoPago: number;
-    transfer: number;
-  };
   reservationCode?: string;
   createdAt?: string;
   confirmedAt?: string;
@@ -221,14 +222,21 @@ function isClosedReservation(status: string) {
   return status === "completed" || status === "cancelled" || status === "no_show";
 }
 
+function hasReservationConsumption(reservation: V2ReservationDraft) {
+  return Boolean(
+    reservation.orderItems?.trim() ||
+      reservation.orderLineItems?.some((item) => Number(item.quantity) > 0) ||
+      Number(reservation.orderTotal) > 0
+  );
+}
+
 function isOpenTableReservation(reservation: V2ReservationDraft) {
   if (reservation.status !== "confirmed") return false;
 
   return Boolean(
     reservation.seatedAt ||
       reservation.consumptionStartedAt ||
-      reservation.orderItems?.trim() ||
-      Number(reservation.orderTotal) > 0
+      hasReservationConsumption(reservation)
   );
 }
 
@@ -315,7 +323,11 @@ function getCashLikeTotal(paymentTotals: Record<string, number>) {
   return Object.entries(paymentTotals).reduce((total, [method, amount]) => {
     const normalizedMethod = method.toLowerCase();
 
-    if (normalizedMethod.includes("efectivo")) {
+    if (
+      normalizedMethod.includes("efectivo") ||
+      normalizedMethod.includes("transfer") ||
+      normalizedMethod.includes("sin método")
+    ) {
       return total + amount;
     }
 
@@ -323,31 +335,15 @@ function getCashLikeTotal(paymentTotals: Record<string, number>) {
   }, 0);
 }
 
-function getReservationPaymentRows(reservation: V2ReservationDraft) {
-  const total = Number(reservation.orderTotal) || 0;
-
-  if (reservation.paymentBreakdown) {
-    return [
-      { method: "Efectivo", amount: Number(reservation.paymentBreakdown.cash) || 0 },
-      { method: "Tarjeta", amount: Number(reservation.paymentBreakdown.card) || 0 },
-      { method: "Mercado Pago", amount: Number(reservation.paymentBreakdown.mercadoPago) || 0 },
-      { method: "Transferencia", amount: Number(reservation.paymentBreakdown.transfer) || 0 },
-    ].filter((item) => item.amount > 0);
-  }
-
-  return [
-    {
-      method: normalizePaymentMethod(reservation.paymentMethod || reservation.payment),
-      amount: Number(reservation.paidAmount ?? total) || 0,
-    },
-  ];
-}
-
 function getCardLikeTotal(paymentTotals: Record<string, number>) {
   return Object.entries(paymentTotals).reduce((total, [method, amount]) => {
     const normalizedMethod = method.toLowerCase();
 
-    if (!normalizedMethod.includes("efectivo")) {
+    if (
+      normalizedMethod.includes("tarjeta") ||
+      normalizedMethod.includes("mercado") ||
+      normalizedMethod.includes("mp")
+    ) {
       return total + amount;
     }
 
@@ -457,7 +453,10 @@ export function V2LocalPage() {
       })),
     ...todayReservations
       .filter((reservation) => reservation.status !== "cancelled" && reservation.status !== "no_show")
-      .flatMap((reservation) => getReservationPaymentRows(reservation)),
+      .map((reservation) => ({
+        method: normalizePaymentMethod(reservation.paymentMethod || reservation.payment),
+        amount: Number(reservation.orderTotal) || 0,
+      })),
   ].reduce<Record<string, number>>((totals, item) => {
     if (item.amount <= 0) return totals;
 
@@ -686,25 +685,22 @@ export function V2LocalPage() {
                 icon={<Warehouse size={22} />}
               />
 
-              <V2Card className="flex min-h-[86px] flex-col justify-between px-3 py-2">
-                <div className="flex items-start gap-2">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                    <Banknote size={19} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-slate-500">Caja del día</p>
-                    <p className="mt-0.5 text-xl font-bold leading-none text-slate-950">{formatMoney(todayRevenue)}</p>
-                  </div>
+              <V2Card className="flex min-h-[86px] items-center gap-2 px-3 py-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                  <Banknote size={19} />
                 </div>
-
-                <div className="mt-2 grid w-full grid-cols-2 gap-1.5 text-[10px] font-semibold text-slate-600">
-                  <div title="Efectivo" className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-emerald-50 px-2 py-1.5 text-emerald-800">
-                    <Banknote size={12} />
-                    <span className="truncate">{formatMoney(cashLikeTotal)}</span>
-                  </div>
-                  <div title="Tarjeta / no efectivo" className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-blue-50 px-2 py-1.5 text-blue-800">
-                    <CreditCard size={12} />
-                    <span className="truncate">{formatMoney(cardLikeTotal)}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-slate-500">Caja del día</p>
+                  <p className="mt-0.5 text-xl font-bold leading-none text-slate-950">{formatMoney(todayRevenue)}</p>
+                  <div className="mt-1.5 grid grid-cols-2 gap-1 text-[10px] font-semibold text-slate-600">
+                    <div className="flex min-w-0 items-center gap-1 truncate rounded-lg bg-emerald-50 px-1.5 py-1 text-emerald-800">
+                      <Banknote size={11} />
+                      <span className="truncate">{formatMoney(cashLikeTotal)}</span>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-1 truncate rounded-lg bg-blue-50 px-1.5 py-1 text-blue-800">
+                      <CreditCard size={11} />
+                      <span className="truncate">{formatMoney(cardLikeTotal)}</span>
+                    </div>
                   </div>
                 </div>
               </V2Card>

@@ -40,7 +40,7 @@ type V2DeliveryOrderItem = {
 
 type V2DeliveryWhatsAppAction = "confirmation" | "modification" | "cancellation";
 type V2SortDirection = "asc" | "desc";
-type V2DateFilterMode = "single" | "range";
+type V2DateFilterMode = "single" | "range" | "all";
 type V2DeliveryColumnSortKey = "id" | "time" | "client" | "phone" | "type" | "total" | "payment";
 
 type V2DeliveryStockMovement = {
@@ -1088,6 +1088,10 @@ export function V2EnviosPage() {
     null;
 
   const selectedDateLabel = useMemo(() => {
+    if (dateFilterMode === "all") {
+      return "Todo el historial";
+    }
+
     if (dateFilterMode === "single") {
       return formatDateLabel(selectedDate);
     }
@@ -1126,9 +1130,11 @@ export function V2EnviosPage() {
     const filtered = deliveries.filter((delivery) => {
       const deliveryDate = delivery.date ?? TODAY_DELIVERIES_DATE;
       const matchesDate =
-        dateFilterMode === "single"
-          ? deliveryDate === selectedDate
-          : deliveryDate >= start && deliveryDate <= end;
+        dateFilterMode === "all"
+          ? true
+          : dateFilterMode === "single"
+            ? deliveryDate === selectedDate
+            : deliveryDate >= start && deliveryDate <= end;
       const matchesSearch =
         query.length === 0 ||
         delivery.client.toLowerCase().includes(query) ||
@@ -1190,7 +1196,10 @@ export function V2EnviosPage() {
     setIsPickingRangeEnd(false);
     setSelectedDate((current) => {
       const nextDate = addDays(current, days);
+
       setCalendarMonth(nextDate);
+      setRangeStartDate(nextDate);
+      setRangeEndDate(nextDate);
 
       return nextDate;
     });
@@ -1211,8 +1220,11 @@ export function V2EnviosPage() {
   }, [deliveries]);
 
   function selectCalendarDate(date: string) {
-    if (dateFilterMode === "single") {
+    if (dateFilterMode === "single" || dateFilterMode === "all") {
+      setDateFilterMode("single");
       setSelectedDate(date);
+      setRangeStartDate(date);
+      setRangeEndDate(date);
       setCalendarMonth(date);
       setIsCalendarOpen(false);
       return;
@@ -1241,6 +1253,35 @@ export function V2EnviosPage() {
     setRangeEndDate(end);
     setCalendarMonth(start);
     setIsPickingRangeEnd(false);
+  }
+
+  function showSingleDeliveryDay() {
+    setDateFilterMode("single");
+    setRangeStartDate(selectedDate);
+    setRangeEndDate(selectedDate);
+    setCalendarMonth(selectedDate);
+    setIsPickingRangeEnd(false);
+  }
+
+  function startDeliveryRangeSelection() {
+    setDateFilterMode("range");
+    setRangeStartDate(selectedDate);
+    setRangeEndDate(selectedDate);
+    setCalendarMonth(selectedDate);
+    setIsPickingRangeEnd(false);
+    setIsCalendarOpen(true);
+  }
+
+  function showThirtyDeliveryDays() {
+    const startDate = addDays(TODAY_DELIVERIES_DATE, -29);
+
+    applyDeliveryRange(startDate, TODAY_DELIVERIES_DATE);
+  }
+
+  function showAllDeliveries() {
+    setDateFilterMode("all");
+    setIsPickingRangeEnd(false);
+    setIsCalendarOpen(false);
   }
 
   function selectDelivery(delivery: V2Delivery) {
@@ -1935,89 +1976,7 @@ export function V2EnviosPage() {
 
                   {isCalendarOpen ? (
                     <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-[360px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">
-                            Seleccionar fecha
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {dateFilterMode === "range"
-                              ? isPickingRangeEnd
-                                ? "Ahora elegí la fecha final."
-                                : "Elegí la fecha inicial."
-                              : "Elegí un día o un intervalo."}
-                          </p>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setIsCalendarOpen(false)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
-                          aria-label="Cerrar calendario"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDateFilterMode("single");
-                            setIsPickingRangeEnd(false);
-                          }}
-                          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                            dateFilterMode === "single"
-                              ? "bg-white text-slate-950 shadow-sm"
-                              : "text-slate-500 hover:text-slate-950"
-                          }`}
-                        >
-                          Un día
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDateFilterMode("range");
-                            setIsPickingRangeEnd(false);
-                          }}
-                          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                            dateFilterMode === "range"
-                              ? "bg-white text-slate-950 shadow-sm"
-                              : "text-slate-500 hover:text-slate-950"
-                          }`}
-                        >
-                          Intervalo
-                        </button>
-                      </div>
-
-                      {dateFilterMode === "range" ? (
-                        <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                          <label className="grid gap-1 font-semibold text-slate-600">
-                            Desde
-                            <input
-                              type="date"
-                              value={rangeStartDate}
-                              onChange={(event) =>
-                                applyDeliveryRange(event.target.value, rangeEndDate)
-                              }
-                              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
-                            />
-                          </label>
-                          <label className="grid gap-1 font-semibold text-slate-600">
-                            Hasta
-                            <input
-                              type="date"
-                              value={rangeEndDate}
-                              onChange={(event) =>
-                                applyDeliveryRange(rangeStartDate, event.target.value)
-                              }
-                              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
-                            />
-                          </label>
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <button
                           type="button"
                           onClick={() => setCalendarMonth((current) => moveMonth(current, -1))}
@@ -2027,9 +1986,18 @@ export function V2EnviosPage() {
                           <ChevronLeft size={17} />
                         </button>
 
-                        <p className="text-sm font-semibold capitalize text-slate-950">
-                          {MONTH_NAMES[calendarMonthData.month]} {calendarMonthData.year}
-                        </p>
+                        <div className="text-center">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            {dateFilterMode === "range"
+                              ? isPickingRangeEnd
+                                ? "Seleccionar hasta"
+                                : "Seleccionar desde"
+                              : "Seleccionar día"}
+                          </p>
+                          <p className="mt-0.5 text-sm font-semibold capitalize text-slate-950">
+                            {MONTH_NAMES[calendarMonthData.month]} {calendarMonthData.year}
+                          </p>
+                        </div>
 
                         <button
                           type="button"
@@ -2076,9 +2044,9 @@ export function V2EnviosPage() {
                               className={[
                                 "relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition",
                                 isSelected
-                                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                                  ? "border-emerald-700 bg-emerald-600 text-white shadow-sm"
                                   : isInsideRange
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    ? "border-emerald-200 bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
                                     : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800",
                               ].join(" ")}
                             >
@@ -2097,44 +2065,96 @@ export function V2EnviosPage() {
                       </div>
 
                       <div className="mt-4 border-t border-slate-100 pt-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <V2Button
-                            size="sm"
-                            variant="secondary"
+                        {dateFilterMode === "range" ? (
+                          <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                            <p className="font-semibold">
+                              {isPickingRangeEnd ? "Ahora elegí la fecha final." : "Elegí la fecha inicial."}
+                            </p>
+                            <p className="mt-1 text-emerald-800">
+                              Rango: {formatShortDate(getRangeBounds(rangeStartDate, rangeEndDate).start)} — {formatShortDate(getRangeBounds(rangeStartDate, rangeEndDate).end)}
+                            </p>
+                          </div>
+                        ) : null}
+
+                        <div className="flex items-center justify-between gap-3">
+                          <button
+                            type="button"
                             onClick={() => {
                               setDateFilterMode("single");
                               setSelectedDate(TODAY_DELIVERIES_DATE);
+                              setRangeStartDate(TODAY_DELIVERIES_DATE);
+                              setRangeEndDate(TODAY_DELIVERIES_DATE);
                               setCalendarMonth(TODAY_DELIVERIES_DATE);
                               setIsPickingRangeEnd(false);
                             }}
+                            className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                           >
                             Hoy
-                          </V2Button>
-
-                          <div className="flex items-center gap-2">
-                            <V2Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                const endDate = addDays(TODAY_DELIVERIES_DATE, 7);
-                                applyDeliveryRange(TODAY_DELIVERIES_DATE, endDate);
-                              }}
-                            >
-                              Próx. 7 días
-                            </V2Button>
-
-                            <V2Button
-                              size="sm"
-                              variant="primary"
-                              onClick={() => setIsCalendarOpen(false)}
-                            >
-                              Aplicar
-                            </V2Button>
-                          </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={startDeliveryRangeSelection}
+                            className="h-9 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                          >
+                            Rango
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsCalendarOpen(false)}
+                            className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                          >
+                            Cerrar
+                          </button>
                         </div>
                       </div>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="flex min-w-0 justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={showSingleDeliveryDay}
+                    className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                      dateFilterMode === "single"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                    }`}
+                  >
+                    Día
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={startDeliveryRangeSelection}
+                    className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                      dateFilterMode === "range"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                    }`}
+                  >
+                    Rango
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={showThirtyDeliveryDays}
+                    className="h-10 shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                  >
+                    30 días
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={showAllDeliveries}
+                    className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                      dateFilterMode === "all"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                    }`}
+                  >
+                    Todo
+                  </button>
                 </div>
 
                 <div className="min-w-[260px] flex-[1.5]">

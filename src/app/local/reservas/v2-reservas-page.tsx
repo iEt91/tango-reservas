@@ -2257,9 +2257,20 @@ export function V2ReservasPage() {
   function openSingleDate(date: string) {
     setDateFilterMode("single");
     setSelectedDate(date);
+    setRangeStartDate(date);
+    setRangeEndDate(date);
     setCalendarMonth(date);
     setIsPickingRangeEnd(false);
     setIsCalendarOpen(false);
+  }
+
+  function startReservationRangeSelection() {
+    setDateFilterMode("range");
+    setRangeStartDate(selectedDate);
+    setRangeEndDate(selectedDate);
+    setCalendarMonth(selectedDate);
+    setIsPickingRangeEnd(false);
+    setIsCalendarOpen(true);
   }
 
   function openReservationEditor(reservation: V2ReservationDraft) {
@@ -3010,98 +3021,27 @@ export function V2ReservasPage() {
                           {isCalendarOpen ? (
                             <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-[360px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
                               <div className="flex items-center justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-950">
-                                    Seleccionar fecha
-                                  </p>
-                                  <p className="mt-0.5 text-xs text-slate-500">
-                                    {dateFilterMode === "range"
-                                      ? isPickingRangeEnd
-                                        ? "Ahora elegí la fecha final."
-                                        : "Elegí la fecha inicial."
-                                      : "Elegí un día o un intervalo."}
-                                  </p>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => setIsCalendarOpen(false)}
-                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
-                                  aria-label="Cerrar calendario"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-
-                              <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1 text-sm font-semibold">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setDateFilterMode("single");
-                                    setIsPickingRangeEnd(false);
-                                  }}
-                                  className={`rounded-xl px-3 py-2 transition ${
-                                    dateFilterMode === "single"
-                                      ? "bg-white text-slate-950 shadow-sm"
-                                      : "text-slate-500 hover:text-slate-950"
-                                  }`}
-                                >
-                                  Un día
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setDateFilterMode("range");
-                                    setIsPickingRangeEnd(false);
-                                  }}
-                                  className={`rounded-xl px-3 py-2 transition ${
-                                    dateFilterMode === "range"
-                                      ? "bg-white text-slate-950 shadow-sm"
-                                      : "text-slate-500 hover:text-slate-950"
-                                  }`}
-                                >
-                                  Intervalo
-                                </button>
-                              </div>
-
-                              {dateFilterMode === "range" ? (
-                                <div className="mt-4 grid grid-cols-2 gap-3">
-                                  <V2Field label="Desde">
-                                    <V2Input
-                                      type="date"
-                                      value={rangeStartDate}
-                                      onChange={(event) =>
-                                        applyRange(event.target.value, rangeEndDate)
-                                      }
-                                    />
-                                  </V2Field>
-
-                                  <V2Field label="Hasta">
-                                    <V2Input
-                                      type="date"
-                                      value={rangeEndDate}
-                                      onChange={(event) =>
-                                        applyRange(rangeStartDate, event.target.value)
-                                      }
-                                    />
-                                  </V2Field>
-                                </div>
-                              ) : null}
-
-                              <div className="mt-4 flex items-center justify-between">
                                 <button
                                   type="button"
                                   onClick={() => setCalendarMonth((current) => addDays(getMonthStart(current), -1))}
                                   className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                                   aria-label="Mes anterior"
                                 >
-                                  <ChevronLeft size={16} />
+                                  <ChevronLeft size={17} />
                                 </button>
 
-                                <p className="text-sm font-semibold capitalize text-slate-950">
-                                  {MONTH_NAMES[calendarMonthData.month]} {calendarMonthData.year}
-                                </p>
+                                <div className="text-center">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    {dateFilterMode === "range"
+                                      ? isPickingRangeEnd
+                                        ? "Seleccionar hasta"
+                                        : "Seleccionar desde"
+                                      : "Seleccionar día"}
+                                  </p>
+                                  <p className="mt-0.5 text-sm font-semibold capitalize text-slate-950">
+                                    {MONTH_NAMES[calendarMonthData.month]} {calendarMonthData.year}
+                                  </p>
+                                </div>
 
                                 <button
                                   type="button"
@@ -3113,7 +3053,7 @@ export function V2ReservasPage() {
                                   className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                                   aria-label="Mes siguiente"
                                 >
-                                  <ChevronRight size={16} />
+                                  <ChevronRight size={17} />
                                 </button>
                               </div>
 
@@ -3125,7 +3065,7 @@ export function V2ReservasPage() {
 
                               <div className="mt-2 grid grid-cols-7 gap-1.5">
                                 {Array.from({ length: calendarMonthData.firstWeekday }).map((_, index) => (
-                                  <div key={`empty-${index}`} />
+                                  <span key={`empty-${index}`} className="h-9" />
                                 ))}
 
                                 {Array.from({ length: calendarMonthData.daysInMonth }).map((_, index) => {
@@ -3137,7 +3077,10 @@ export function V2ReservasPage() {
                                   const isSelected =
                                     dateFilterMode === "single"
                                       ? date === selectedDate
-                                      : date >= start && date <= end;
+                                      : date === start || date === end;
+                                  const isInsideRange =
+                                    dateFilterMode === "range" && date > start && date < end;
+                                  const isToday = date === TODAY_RESERVATIONS_DATE;
                                   const reservationsCount = reservationCountByDate[date] ?? 0;
 
                                   return (
@@ -3147,8 +3090,12 @@ export function V2ReservasPage() {
                                       onClick={() => selectCalendarDate(date)}
                                       className={`relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition ${
                                         isSelected
-                                          ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
-                                          : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
+                                          ? "border-emerald-700 bg-emerald-600 text-white shadow-sm"
+                                          : isInsideRange
+                                            ? "border-emerald-200 bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                                            : isToday
+                                              ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                                              : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
                                       }`}
                                     >
                                       {day}
@@ -3165,33 +3112,40 @@ export function V2ReservasPage() {
                                 })}
                               </div>
 
-                              <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-4">
-                                <V2Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() => openSingleDate(TODAY_RESERVATIONS_DATE)}
-                                >
-                                  Hoy
-                                </V2Button>
+                              <div className="mt-4 border-t border-slate-100 pt-3">
+                                {dateFilterMode === "range" ? (
+                                  <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                                    <p className="font-semibold">
+                                      {isPickingRangeEnd ? "Ahora elegí la fecha final." : "Elegí la fecha inicial."}
+                                    </p>
+                                    <p className="mt-1 text-emerald-800">
+                                      Rango: {formatShortDate(getRangeBounds(rangeStartDate, rangeEndDate).start)} — {formatShortDate(getRangeBounds(rangeStartDate, rangeEndDate).end)}
+                                    </p>
+                                  </div>
+                                ) : null}
 
-                                <div className="flex gap-2">
-                                  <V2Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() =>
-                                      applyRange(TODAY_RESERVATIONS_DATE, addDays(TODAY_RESERVATIONS_DATE, localConfig.bookingWindowDays - 1))
-                                    }
+                                <div className="flex items-center justify-between gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => openSingleDate(TODAY_RESERVATIONS_DATE)}
+                                    className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                                   >
-                                    {localConfig.bookingWindowDays} días
-                                  </V2Button>
-
-                                  <V2Button
-                                    size="sm"
-                                    variant="primary"
+                                    Hoy
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={startReservationRangeSelection}
+                                    className="h-9 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                                  >
+                                    Rango
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => setIsCalendarOpen(false)}
+                                    className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                                   >
-                                    Aplicar
-                                  </V2Button>
+                                    Cerrar
+                                  </button>
                                 </div>
                               </div>
                             </div>

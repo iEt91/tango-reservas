@@ -37,7 +37,7 @@ const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
 const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
 
 type HistoryTab = "envios" | "reservas";
-type HistoryRange = "all" | "today" | "7d" | "30d" | "day";
+type HistoryRange = "all" | "today" | "7d" | "30d" | "day" | "custom";
 
 type V2DeliveryOrderItem = {
   id: string;
@@ -156,6 +156,38 @@ function addDaysToDateKey(date: string, days: number) {
   const day = String(parsedDate.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function getRangeBounds(startDate: string, endDate: string) {
+  return startDate <= endDate
+    ? { start: startDate, end: endDate }
+    : { start: endDate, end: startDate };
+}
+
+function formatShortDate(date: string) {
+  const parsedDate = new Date(`${date}T00:00:00`);
+
+  if (Number.isNaN(parsedDate.getTime())) return date;
+
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(parsedDate);
+}
+
+function formatHistoryRangeLabel(
+  range: HistoryRange,
+  selectedDate: string,
+  customStartDate: string,
+  customEndDate: string
+) {
+  if (range === "custom") {
+    const { start, end } = getRangeBounds(customStartDate, customEndDate);
+    return `${formatShortDate(start)} — ${formatShortDate(end)}`;
+  }
+
+  return formatLongDate(selectedDate);
 }
 
 function formatLongDate(date: string) {
@@ -429,7 +461,13 @@ function summarizeReservationConsumption(reservation: V2Reservation) {
   return groups.map(([item, quantity]) => `${quantity}x ${item}`).join(", ");
 }
 
-function isInsideRange(date: string | undefined, range: HistoryRange, selectedDate: string) {
+function isInsideRange(
+  date: string | undefined,
+  range: HistoryRange,
+  selectedDate: string,
+  customStartDate: string,
+  customEndDate: string
+) {
   if (range === "all") return true;
 
   const itemDate = parseDateTime(date, "00:00");
@@ -437,6 +475,12 @@ function isInsideRange(date: string | undefined, range: HistoryRange, selectedDa
 
   if (range === "day") {
     return date === selectedDate;
+  }
+
+  if (range === "custom") {
+    const { start, end } = getRangeBounds(customStartDate, customEndDate);
+
+    return Boolean(date && date >= start && date <= end);
   }
 
   if (range === "today") {
@@ -620,8 +664,11 @@ export default function HistorialPage() {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [rangeFilter, setRangeFilter] = useState<HistoryRange>("30d");
+  const [rangeFilter, setRangeFilter] = useState<HistoryRange>("day");
   const [selectedDate, setSelectedDate] = useState(() => getTodayDateKey());
+  const [customStartDate, setCustomStartDate] = useState(() => getTodayDateKey());
+  const [customEndDate, setCustomEndDate] = useState(() => getTodayDateKey());
+  const [isPickingRangeEnd, setIsPickingRangeEnd] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => getTodayDateKey());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -685,9 +732,12 @@ export default function HistorialPage() {
     setSelectedDate((current) => {
       const nextDate = addDaysToDateKey(current, -1);
       setCalendarMonth(getMonthStartDateKey(nextDate));
+      setCustomStartDate(nextDate);
+      setCustomEndDate(nextDate);
       return nextDate;
     });
     setRangeFilter("day");
+    setIsPickingRangeEnd(false);
     setOpenId(null);
     setIsCalendarOpen(false);
   }
@@ -696,24 +746,90 @@ export default function HistorialPage() {
     setSelectedDate((current) => {
       const nextDate = addDaysToDateKey(current, 1);
       setCalendarMonth(getMonthStartDateKey(nextDate));
+      setCustomStartDate(nextDate);
+      setCustomEndDate(nextDate);
       return nextDate;
     });
     setRangeFilter("day");
+    setIsPickingRangeEnd(false);
     setOpenId(null);
     setIsCalendarOpen(false);
   }
 
   function selectCalendarDate(value: string) {
+    if (rangeFilter === "custom") {
+      if (!isPickingRangeEnd) {
+        setCustomStartDate(value);
+        setCustomEndDate(value);
+        setSelectedDate(value);
+        setCalendarMonth(getMonthStartDateKey(value));
+        setIsPickingRangeEnd(true);
+        setOpenId(null);
+        return;
+      }
+
+      const { start, end } = getRangeBounds(customStartDate, value);
+
+      setCustomStartDate(start);
+      setCustomEndDate(end);
+      setSelectedDate(start);
+      setCalendarMonth(getMonthStartDateKey(value));
+      setIsPickingRangeEnd(false);
+      setOpenId(null);
+      return;
+    }
+
     setSelectedDate(value);
+    setCustomStartDate(value);
+    setCustomEndDate(value);
     setCalendarMonth(getMonthStartDateKey(value));
     setRangeFilter("day");
+    setIsPickingRangeEnd(false);
     setOpenId(null);
     setIsCalendarOpen(false);
   }
 
   function showFullHistory() {
     setRangeFilter("30d");
+    setIsPickingRangeEnd(false);
     setOpenId(null);
+  }
+
+  function startCustomRangeSelection() {
+    setRangeFilter("custom");
+    setCustomStartDate(selectedDate);
+    setCustomEndDate(selectedDate);
+    setCalendarMonth(getMonthStartDateKey(selectedDate));
+    setIsPickingRangeEnd(false);
+    setIsCalendarOpen(true);
+    setOpenId(null);
+  }
+
+  function updateRangeFilter(value: HistoryRange) {
+    setRangeFilter(value);
+    setIsPickingRangeEnd(false);
+    setOpenId(null);
+
+    if (value === "today") {
+      const today = getTodayDateKey();
+
+      setSelectedDate(today);
+      setCustomStartDate(today);
+      setCustomEndDate(today);
+      setCalendarMonth(getMonthStartDateKey(today));
+    }
+
+    if (value === "day") {
+      setCustomStartDate(selectedDate);
+      setCustomEndDate(selectedDate);
+    }
+
+    if (value === "custom") {
+      setCustomStartDate(selectedDate);
+      setCustomEndDate(selectedDate);
+      setCalendarMonth(getMonthStartDateKey(selectedDate));
+      setIsCalendarOpen(true);
+    }
   }
 
   const filteredDeliveries = useMemo(() => {
@@ -723,7 +839,7 @@ export default function HistorialPage() {
       .filter((delivery) => {
         const publicId = getDeliveryTrackingId(delivery);
         const matchesStatus = statusFilter === "all" || delivery.status === statusFilter;
-        const matchesRange = isInsideRange(delivery.date, rangeFilter, selectedDate);
+        const matchesRange = isInsideRange(delivery.date, rangeFilter, selectedDate, customStartDate, customEndDate);
         const matchesSearch =
           !normalizedQuery ||
           [publicId, delivery.client, delivery.phone, delivery.address, delivery.order, summarizeDeliveryItems(delivery)]
@@ -737,7 +853,7 @@ export default function HistorialPage() {
         (a, b) =>
           parseDateTime(b.date, b.time).getTime() - parseDateTime(a.date, a.time).getTime()
       );
-  }, [deliveries, query, rangeFilter, selectedDate, statusFilter]);
+  }, [customEndDate, customStartDate, deliveries, query, rangeFilter, selectedDate, statusFilter]);
 
   const filteredReservations = useMemo(() => {
     const normalizedQuery = normalizeSearch(query);
@@ -746,7 +862,7 @@ export default function HistorialPage() {
       .filter((reservation) => {
         const publicId = getReservationCode(reservation);
         const matchesStatus = statusFilter === "all" || reservation.status === statusFilter;
-        const matchesRange = isInsideRange(reservation.date, rangeFilter, selectedDate);
+        const matchesRange = isInsideRange(reservation.date, rangeFilter, selectedDate, customStartDate, customEndDate);
         const matchesSearch =
           !normalizedQuery ||
           [
@@ -768,7 +884,7 @@ export default function HistorialPage() {
         (a, b) =>
           parseDateTime(b.date, b.time).getTime() - parseDateTime(a.date, a.time).getTime()
       );
-  }, [query, rangeFilter, reservations, selectedDate, statusFilter]);
+  }, [customEndDate, customStartDate, query, rangeFilter, reservations, selectedDate, statusFilter]);
 
   const activeCount = activeTab === "envios" ? filteredDeliveries.length : filteredReservations.length;
   const activeOperationalCount =
@@ -920,7 +1036,7 @@ export default function HistorialPage() {
                 className="flex h-10 w-full min-w-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-950 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
               >
                 <CalendarDays className="mr-2 text-slate-500" size={17} />
-                <span className="truncate">{formatLongDate(selectedDate)}</span>
+                <span className="truncate">{formatHistoryRangeLabel(rangeFilter, selectedDate, customStartDate, customEndDate)}</span>
               </button>
 
               {isCalendarOpen ? (
@@ -937,7 +1053,11 @@ export default function HistorialPage() {
 
                     <div className="text-center">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                        Seleccionar día
+                        {rangeFilter === "custom"
+                          ? isPickingRangeEnd
+                            ? "Seleccionar hasta"
+                            : "Seleccionar desde"
+                          : "Seleccionar día"}
                       </p>
                       <h2 className="mt-0.5 text-sm font-semibold capitalize text-slate-950">
                         {formatCalendarMonth(calendarMonth)}
@@ -963,7 +1083,13 @@ export default function HistorialPage() {
                   <div className="mt-2 grid grid-cols-7 gap-1.5">
                     {calendarDates.map((date) => {
                       const parsedDate = new Date(`${date}T00:00:00`);
-                      const isSelected = date === selectedDate;
+                      const { start, end } = getRangeBounds(customStartDate, customEndDate);
+                      const isSelected =
+                        rangeFilter === "custom"
+                          ? date === start || date === end
+                          : date === selectedDate;
+                      const isInCustomRange =
+                        rangeFilter === "custom" && date >= start && date <= end;
                       const isToday = date === getTodayDateKey();
                       const isMuted = !isSameMonth(date, calendarMonth);
 
@@ -974,12 +1100,14 @@ export default function HistorialPage() {
                           onClick={() => selectCalendarDate(date)}
                           className={`flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition ${
                             isSelected
-                              ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
-                              : isToday
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                                : isMuted
-                                  ? "border-slate-100 bg-slate-50 text-slate-300 hover:text-slate-500"
-                                  : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
+                              ? "border-emerald-700 bg-emerald-600 text-white shadow-sm"
+                              : isInCustomRange
+                                ? "border-emerald-200 bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                                : isToday
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                                  : isMuted
+                                    ? "border-slate-100 bg-slate-50 text-slate-300 hover:text-slate-500"
+                                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
                           }`}
                         >
                           {parsedDate.getDate()}
@@ -988,21 +1116,41 @@ export default function HistorialPage() {
                     })}
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => selectCalendarDate(getTodayDateKey())}
-                      className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-                    >
-                      Hoy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsCalendarOpen(false)}
-                      className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-                    >
-                      Cerrar
-                    </button>
+                  <div className="mt-4 border-t border-slate-100 pt-3">
+                    {rangeFilter === "custom" ? (
+                      <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                        <p className="font-semibold">
+                          {isPickingRangeEnd ? "Ahora elegí la fecha final." : "Elegí la fecha inicial."}
+                        </p>
+                        <p className="mt-1 text-emerald-800">
+                          Rango: {formatShortDate(getRangeBounds(customStartDate, customEndDate).start)} — {formatShortDate(getRangeBounds(customStartDate, customEndDate).end)}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => selectCalendarDate(getTodayDateKey())}
+                        className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                      >
+                        Hoy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={startCustomRangeSelection}
+                        className="h-9 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                      >
+                        Rango
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsCalendarOpen(false)}
+                        className="h-9 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -1047,27 +1195,54 @@ export default function HistorialPage() {
               )}
             </V2Select>
 
-            <div className="flex min-w-0 gap-2">
-              <V2Select
-                value={rangeFilter}
-                onChange={(event) => setRangeFilter(event.target.value as HistoryRange)}
+            <div className="flex min-w-0 justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => updateRangeFilter("day")}
+                className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                  rangeFilter === "day"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                }`}
               >
-                <option value="day">Día seleccionado</option>
-                <option value="today">Hoy</option>
-                <option value="7d">Últimos 7 días</option>
-                <option value="30d">Últimos 30 días</option>
-                <option value="all">Todo el historial</option>
-              </V2Select>
+                Día
+              </button>
 
-              {rangeFilter === "day" ? (
-                <button
-                  type="button"
-                  onClick={showFullHistory}
-                  className="hidden h-10 shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 xl:inline-flex xl:items-center"
-                >
-                  30 días
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={startCustomRangeSelection}
+                className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                  rangeFilter === "custom"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                }`}
+              >
+                Rango
+              </button>
+
+              <button
+                type="button"
+                onClick={showFullHistory}
+                className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                  rangeFilter === "30d"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                }`}
+              >
+                30 días
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateRangeFilter("all")}
+                className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                  rangeFilter === "all"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                }`}
+              >
+                Todo
+              </button>
             </div>
           </div>
         </V2Card>
