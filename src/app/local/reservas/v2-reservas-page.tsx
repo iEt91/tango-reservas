@@ -3,19 +3,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
+  ArrowRightLeft,
+  Banknote,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  CreditCard,
   Download,
   Eye,
   EyeOff,
   Filter,
+  Landmark,
   Plus,
   Search,
   UserRound,
   Users,
+  Wallet,
   X,
   XCircle,
 } from "lucide-react";
@@ -36,6 +41,23 @@ import {
 } from "@/lib/v2/v2-mock-data";
 
 type V2ReservationWhatsAppAction = "confirmation" | "cancellation" | "modification";
+type V2ReservationPaymentMethod = "cash" | "card" | "mercado_pago" | "transfer" | "mixed";
+
+type V2ReservationPaymentBreakdown = {
+  cash: number;
+  card: number;
+  mercadoPago: number;
+  transfer: number;
+};
+
+type V2ReservationPaymentForm = {
+  method: V2ReservationPaymentMethod;
+  amount: string;
+  cash: string;
+  card: string;
+  mercadoPago: string;
+  transfer: string;
+};
 
 type V2ReservationDraft = {
   id: string;
@@ -52,6 +74,10 @@ type V2ReservationDraft = {
   origin?: V2ReservationOrigin;
   orderItems?: string;
   orderTotal?: number;
+  paymentMethod?: string;
+  paidAmount?: number;
+  paymentBreakdown?: V2ReservationPaymentBreakdown;
+  paymentClosedAt?: string;
   reservationCode?: string;
   stockDiscounted?: boolean;
   stockReturned?: boolean;
@@ -754,6 +780,102 @@ function formatMoney(value: number) {
   return `$${Math.max(Number(value) || 0, 0).toLocaleString("es-AR")}`;
 }
 
+function parsePaymentAmount(value: string) {
+  const normalizedValue = value.replace(",", ".");
+  const amount = Number(normalizedValue);
+
+  return Number.isFinite(amount) ? Math.max(amount, 0) : 0;
+}
+
+function formatPaymentMethod(method?: string) {
+  if (!method) return "Sin método";
+
+  const normalizedMethod = method.trim().toLowerCase();
+
+  if (normalizedMethod === "cash" || normalizedMethod.includes("efectivo")) return "Efectivo";
+  if (normalizedMethod === "card" || normalizedMethod.includes("tarjeta")) return "Tarjeta";
+  if (
+    normalizedMethod === "mercado_pago" ||
+    normalizedMethod.includes("mercado") ||
+    normalizedMethod.includes("mp")
+  ) {
+    return "Mercado Pago";
+  }
+  if (normalizedMethod === "transfer" || normalizedMethod.includes("transfer")) return "Transferencia";
+  if (normalizedMethod === "mixed" || normalizedMethod.includes("mixto")) return "Mixto";
+
+  return method;
+}
+
+function getPaymentBreakdownTotal(breakdown?: V2ReservationPaymentBreakdown) {
+  if (!breakdown) return 0;
+
+  return (
+    Number(breakdown.cash) +
+    Number(breakdown.card) +
+    Number(breakdown.mercadoPago) +
+    Number(breakdown.transfer)
+  );
+}
+
+function createPaymentForm(reservation: V2ReservationDraft): V2ReservationPaymentForm {
+  const total = Math.max(Number(reservation.orderTotal) || 0, 0);
+  const breakdown = reservation.paymentBreakdown;
+
+  return {
+    method:
+      reservation.paymentMethod === "Mixto" || reservation.paymentMethod === "mixed"
+        ? "mixed"
+        : "cash",
+    amount: String(Number(reservation.paidAmount ?? total) || 0),
+    cash: String(Number(breakdown?.cash) || 0),
+    card: String(Number(breakdown?.card) || 0),
+    mercadoPago: String(Number(breakdown?.mercadoPago) || 0),
+    transfer: String(Number(breakdown?.transfer) || 0),
+  };
+}
+
+function getPaymentBreakdownFromForm(form: V2ReservationPaymentForm): V2ReservationPaymentBreakdown {
+  if (form.method === "mixed") {
+    return {
+      cash: parsePaymentAmount(form.cash),
+      card: parsePaymentAmount(form.card),
+      mercadoPago: parsePaymentAmount(form.mercadoPago),
+      transfer: parsePaymentAmount(form.transfer),
+    };
+  }
+
+  const amount = parsePaymentAmount(form.amount);
+
+  return {
+    cash: form.method === "cash" ? amount : 0,
+    card: form.method === "card" ? amount : 0,
+    mercadoPago: form.method === "mercado_pago" ? amount : 0,
+    transfer: form.method === "transfer" ? amount : 0,
+  };
+}
+
+const PAYMENT_METHOD_OPTIONS: {
+  method: V2ReservationPaymentMethod;
+  label: string;
+  icon: "cash" | "card" | "mercado_pago" | "transfer" | "mixed";
+}[] = [
+  { method: "cash", label: "Efectivo", icon: "cash" },
+  { method: "card", label: "Tarjeta", icon: "card" },
+  { method: "transfer", label: "Transferencia", icon: "transfer" },
+  { method: "mercado_pago", label: "Mercado Pago", icon: "mercado_pago" },
+  { method: "mixed", label: "Mixto", icon: "mixed" },
+];
+
+function renderPaymentMethodIcon(icon: (typeof PAYMENT_METHOD_OPTIONS)[number]["icon"]) {
+  if (icon === "cash") return <Banknote size={20} />;
+  if (icon === "card") return <CreditCard size={20} />;
+  if (icon === "transfer") return <Landmark size={20} />;
+  if (icon === "mercado_pago") return <Wallet size={20} />;
+
+  return <ArrowRightLeft size={20} />;
+}
+
 function escapeCsvValue(value: string | number | null | undefined) {
   const rawValue = String(value ?? "");
   const escapedValue = rawValue.replace(/"/g, '""');
@@ -1341,6 +1463,17 @@ export function V2ReservasPage() {
     useState<{ id: V2MenuCategory; label: string }[]>(FALLBACK_MENU_CATEGORIES);
   const [stockDecisionReservation, setStockDecisionReservation] =
     useState<{ reservationId: string; status: V2ReservationStatus } | null>(null);
+  const [paymentCloseReservation, setPaymentCloseReservation] =
+    useState<V2ReservationDraft | null>(null);
+  const [paymentCloseForm, setPaymentCloseForm] = useState<V2ReservationPaymentForm>({
+    method: "cash",
+    amount: "0",
+    cash: "0",
+    card: "0",
+    mercadoPago: "0",
+    transfer: "0",
+  });
+  const [paymentCloseError, setPaymentCloseError] = useState("");
 
   useEffect(() => {
     function syncReservationsFromStorage() {
@@ -2329,6 +2462,50 @@ export function V2ReservasPage() {
     }
   }
 
+  function openPaymentCloseModal(reservation: V2ReservationDraft) {
+    const normalizedReservation = normalizeReservation(reservation);
+
+    setPaymentCloseReservation(normalizedReservation);
+    setPaymentCloseForm(createPaymentForm(normalizedReservation));
+    setPaymentCloseError("");
+  }
+
+  function closePaymentCloseModal() {
+    setPaymentCloseReservation(null);
+    setPaymentCloseError("");
+  }
+
+  function completeReservationWithPayment() {
+    if (!paymentCloseReservation) return;
+
+    const expectedTotal = Math.max(Number(paymentCloseReservation.orderTotal) || 0, 0);
+    const paymentBreakdown = getPaymentBreakdownFromForm(paymentCloseForm);
+    const paidAmount = Number(getPaymentBreakdownTotal(paymentBreakdown).toFixed(2));
+    const totalDifference = Math.abs(paidAmount - expectedTotal);
+
+    if (expectedTotal > 0 && totalDifference > 0.01) {
+      setPaymentCloseError(
+        `El pago cargado (${formatMoney(paidAmount)}) debe coincidir con el total del consumo (${formatMoney(expectedTotal)}).`
+      );
+      return;
+    }
+
+    const paymentMethod =
+      paymentCloseForm.method === "mixed"
+        ? "Mixto"
+        : formatPaymentMethod(paymentCloseForm.method);
+
+    applyReservationStatusChange({
+      ...withReservationStatusTimestamp(paymentCloseReservation, "completed"),
+      paymentMethod,
+      paidAmount,
+      paymentBreakdown,
+      paymentClosedAt: getNowTimestamp(),
+    });
+
+    closePaymentCloseModal();
+  }
+
   function resolveStockDecision(shouldReturnStock: boolean) {
     if (!stockDecisionReservation) return;
 
@@ -2664,7 +2841,7 @@ export function V2ReservasPage() {
 
                           <div className="relative min-w-0 flex-1">
                             <V2Input
-                              className="min-w-0 pr-11"
+                              className="min-w-0 bg-slate-50 pr-11 font-semibold text-slate-950"
                               value={selectedDateLabel}
                               readOnly
                             />
@@ -2688,15 +2865,7 @@ export function V2ReservasPage() {
                           />
 
                           {isCalendarOpen ? (
-                            <div
-                              className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
-                              onClick={() => setIsCalendarOpen(false)}
-                            >
-                              <div
-                                className="max-h-[calc(100dvh-3rem)] w-[360px] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl"
-                                onClick={(event) => event.stopPropagation()}
-                                onWheel={(event) => event.stopPropagation()}
-                              >
+                            <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-[360px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="text-sm font-semibold text-slate-950">
@@ -2781,7 +2950,7 @@ export function V2ReservasPage() {
                                 <button
                                   type="button"
                                   onClick={() => setCalendarMonth((current) => addDays(getMonthStart(current), -1))}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+                                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                                   aria-label="Mes anterior"
                                 >
                                   <ChevronLeft size={16} />
@@ -2798,20 +2967,20 @@ export function V2ReservasPage() {
                                     nextMonth.setMonth(nextMonth.getMonth() + 1);
                                     setCalendarMonth(nextMonth.toISOString().slice(0, 10));
                                   }}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+                                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                                   aria-label="Mes siguiente"
                                 >
                                   <ChevronRight size={16} />
                                 </button>
                               </div>
 
-                              <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                {["D", "L", "M", "M", "J", "V", "S"].map((day, index) => (
+                              <div className="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day, index) => (
                                   <span key={`${day}-${index}`}>{day}</span>
                                 ))}
                               </div>
 
-                              <div className="mt-2 grid grid-cols-7 gap-1">
+                              <div className="mt-2 grid grid-cols-7 gap-1.5">
                                 {Array.from({ length: calendarMonthData.firstWeekday }).map((_, index) => (
                                   <div key={`empty-${index}`} />
                                 ))}
@@ -2833,10 +3002,10 @@ export function V2ReservasPage() {
                                       key={date}
                                       type="button"
                                       onClick={() => selectCalendarDate(date)}
-                                      className={`relative flex h-10 items-center justify-center rounded-xl text-sm font-semibold transition ${
+                                      className={`relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition ${
                                         isSelected
-                                          ? "bg-emerald-600 text-white"
-                                          : "text-slate-700 hover:bg-slate-100"
+                                          ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                                          : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
                                       }`}
                                     >
                                       {day}
@@ -2881,7 +3050,6 @@ export function V2ReservasPage() {
                                     Aplicar
                                   </V2Button>
                                 </div>
-                              </div>
                               </div>
                             </div>
                           ) : null}
@@ -3158,12 +3326,12 @@ export function V2ReservasPage() {
                           type="button"
                           key={item.id}
                           onClick={() => openQuickAction(item)}
-                          className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                          className={`group flex w-full items-start gap-3 rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                             item.status === "pending"
-                              ? "border-amber-200 bg-amber-50/40"
+                              ? "border-amber-200 bg-gradient-to-br from-amber-50 to-white"
                               : needsTable
-                                ? "border-orange-200 bg-orange-50/35"
-                                : "border-slate-100 bg-white"
+                                ? "border-orange-200 bg-gradient-to-br from-orange-50 to-white"
+                                : "border-slate-200 bg-gradient-to-br from-white to-slate-50"
                           }`}
                         >
                           <span
@@ -3219,7 +3387,7 @@ export function V2ReservasPage() {
             </V2Card>
 
             <V2Card
-              className={`flex min-h-[420px] flex-1 flex-col overflow-hidden ${
+              className={`flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm ${
                 selectedReservation
                   ? DETAIL_BORDER_TONES[selectedDetailToneIndex]
                   : ""
@@ -3241,7 +3409,7 @@ export function V2ReservasPage() {
 
               {selectedReservation ? (
                 <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm text-slate-600">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       {getReservationCode(selectedReservation)}
                     </p>
@@ -3253,7 +3421,7 @@ export function V2ReservasPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
+                  <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
                       Tracking público
                     </p>
@@ -3281,7 +3449,7 @@ export function V2ReservasPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                         Personas
                       </p>
@@ -3290,7 +3458,7 @@ export function V2ReservasPage() {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                         Duración
                       </p>
@@ -3300,7 +3468,7 @@ export function V2ReservasPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Teléfono
                     </p>
@@ -3310,7 +3478,7 @@ export function V2ReservasPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                         Origen
                       </p>
@@ -3319,7 +3487,7 @@ export function V2ReservasPage() {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                         Mesa
                       </p>
@@ -3329,7 +3497,7 @@ export function V2ReservasPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Nota
                     </p>
@@ -3338,7 +3506,7 @@ export function V2ReservasPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Pedido / consumo
                     </p>
@@ -3351,6 +3519,25 @@ export function V2ReservasPage() {
                     <p className="mt-1 font-semibold text-slate-950">
                       {formatMoney(selectedReservation.orderTotal ?? 0)}
                     </p>
+
+                    {selectedReservation.paymentMethod ? (
+                      <>
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Pago
+                        </p>
+                        <div className="mt-2 grid gap-2 text-xs text-slate-600">
+                          <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">
+                            {formatPaymentMethod(selectedReservation.paymentMethod)} · {formatMoney(selectedReservation.paidAmount ?? selectedReservation.orderTotal ?? 0)}
+                          </span>
+                          {selectedReservation.paymentBreakdown &&
+                          selectedReservation.paymentMethod === "Mixto" ? (
+                            <span className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                              Efectivo {formatMoney(selectedReservation.paymentBreakdown.cash)} · Tarjeta {formatMoney(selectedReservation.paymentBreakdown.card)} · Mercado Pago {formatMoney(selectedReservation.paymentBreakdown.mercadoPago)} · Transferencia {formatMoney(selectedReservation.paymentBreakdown.transfer)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </>
+                    ) : null}
                   </div>
 
                   <div className="rounded-2xl border border-slate-100 bg-white p-3">
@@ -3548,6 +3735,172 @@ export function V2ReservasPage() {
                   </V2Button>
                 </>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {paymentCloseReservation ? (
+        <div
+          className="fixed inset-0 z-[78] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          onClick={closePaymentCloseModal}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
+              <div>
+                <p className="text-sm font-semibold text-emerald-700">
+                  Cierre de mesa
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-slate-950">
+                  {paymentCloseReservation.client || "Reserva sin cliente"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Total a cobrar: <strong>{formatMoney(paymentCloseReservation.orderTotal ?? 0)}</strong>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closePaymentCloseModal}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+                aria-label="Cerrar cierre de mesa"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4 p-5">
+              {paymentCloseError ? (
+                <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  <AlertTriangle className="mt-0.5 shrink-0" size={17} />
+                  <p>{paymentCloseError}</p>
+                </div>
+              ) : null}
+
+              <V2Field label="Método de pago">
+                <div className="grid grid-cols-5 gap-2">
+                  {PAYMENT_METHOD_OPTIONS.map((option) => {
+                    const isSelected = paymentCloseForm.method === option.method;
+
+                    return (
+                      <button
+                        key={option.method}
+                        type="button"
+                        title={option.label}
+                        aria-label={option.label}
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          const total = String(Math.max(Number(paymentCloseReservation.orderTotal) || 0, 0));
+
+                          setPaymentCloseError("");
+                          setPaymentCloseForm({
+                            method: option.method,
+                            amount: total,
+                            cash: option.method === "mixed" ? paymentCloseForm.cash : "0",
+                            card: option.method === "mixed" ? paymentCloseForm.card : "0",
+                            mercadoPago: option.method === "mixed" ? paymentCloseForm.mercadoPago : "0",
+                            transfer: option.method === "mixed" ? paymentCloseForm.transfer : "0",
+                          });
+                        }}
+                        className={`flex h-14 items-center justify-center rounded-2xl border text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                          isSelected
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-700 ring-4 ring-emerald-100"
+                            : "border-slate-200 bg-gradient-to-br from-white to-slate-50 hover:border-emerald-200 hover:text-emerald-700"
+                        }`}
+                      >
+                        {renderPaymentMethodIcon(option.icon)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs font-medium text-slate-500">
+                  Seleccionado: {formatPaymentMethod(paymentCloseForm.method)}
+                </p>
+              </V2Field>
+
+              {paymentCloseForm.method === "mixed" ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <V2Field label="Efectivo">
+                    <V2Input
+                      type="number"
+                      min="0"
+                      value={paymentCloseForm.cash}
+                      onChange={(event) =>
+                        setPaymentCloseForm({ ...paymentCloseForm, cash: event.target.value })
+                      }
+                    />
+                  </V2Field>
+                  <V2Field label="Tarjeta">
+                    <V2Input
+                      type="number"
+                      min="0"
+                      value={paymentCloseForm.card}
+                      onChange={(event) =>
+                        setPaymentCloseForm({ ...paymentCloseForm, card: event.target.value })
+                      }
+                    />
+                  </V2Field>
+                  <V2Field label="Mercado Pago">
+                    <V2Input
+                      type="number"
+                      min="0"
+                      value={paymentCloseForm.mercadoPago}
+                      onChange={(event) =>
+                        setPaymentCloseForm({ ...paymentCloseForm, mercadoPago: event.target.value })
+                      }
+                    />
+                  </V2Field>
+                  <V2Field label="Transferencia">
+                    <V2Input
+                      type="number"
+                      min="0"
+                      value={paymentCloseForm.transfer}
+                      onChange={(event) =>
+                        setPaymentCloseForm({ ...paymentCloseForm, transfer: event.target.value })
+                      }
+                    />
+                  </V2Field>
+                </div>
+              ) : (
+                <V2Field label="Monto cobrado">
+                  <V2Input
+                    type="number"
+                    min="0"
+                    value={paymentCloseForm.amount}
+                    onChange={(event) => {
+                      setPaymentCloseError("");
+                      setPaymentCloseForm({ ...paymentCloseForm, amount: event.target.value });
+                    }}
+                  />
+                </V2Field>
+              )}
+
+              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm md:grid-cols-2">
+                <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm">
+                  <Banknote className="text-emerald-700" size={17} />
+                  <span className="font-semibold text-slate-700">
+                    Total cargado {formatMoney(getPaymentBreakdownTotal(getPaymentBreakdownFromForm(paymentCloseForm)))}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm">
+                  <CreditCard className="text-blue-700" size={17} />
+                  <span className="font-semibold text-slate-700">
+                    Consumo {formatMoney(paymentCloseReservation.orderTotal ?? 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-200 p-5">
+              <V2Button type="button" variant="secondary" onClick={closePaymentCloseModal}>
+                Volver
+              </V2Button>
+              <V2Button type="button" variant="success" onClick={completeReservationWithPayment}>
+                Cerrar mesa
+              </V2Button>
             </div>
           </div>
         </div>
@@ -3824,7 +4177,7 @@ export function V2ReservasPage() {
                     type="button"
                     onClick={() => {
                       setOpenActionsReservationId(null);
-                      updateReservationStatus(actionsReservation.id, "completed");
+                      openPaymentCloseModal(actionsReservation);
                     }}
                     className="flex w-full items-center gap-2 rounded-2xl border border-emerald-200 px-4 py-3 text-left text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
                   >
@@ -4046,7 +4399,7 @@ export function V2ReservasPage() {
                 </div>
               </div>
 
-              <div className="flex min-h-0 flex-col rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+              <div className="flex min-h-0 flex-col rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm.5 shadow-sm">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Pedido actual
                 </h3>
@@ -4255,7 +4608,7 @@ export function V2ReservasPage() {
                             <button
                               type="button"
                               onClick={() => moveEditorCalendarMonth(-1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                               aria-label="Mes anterior"
                             >
                               <ChevronLeft size={16} />
@@ -4268,20 +4621,20 @@ export function V2ReservasPage() {
                             <button
                               type="button"
                               onClick={() => moveEditorCalendarMonth(1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                               aria-label="Mes siguiente"
                             >
                               <ChevronRight size={16} />
                             </button>
                           </div>
 
-                          <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                            {["D", "L", "M", "M", "J", "V", "S"].map((day, index) => (
+                          <div className="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day, index) => (
                               <span key={`editor-${day}-${index}`}>{day}</span>
                             ))}
                           </div>
 
-                          <div className="mt-2 grid grid-cols-7 gap-1">
+                          <div className="mt-2 grid grid-cols-7 gap-1.5">
                             {Array.from({ length: editorCalendarMonthData.firstWeekday }).map((_, index) => (
                               <span key={`editor-empty-${index}`} />
                             ))}

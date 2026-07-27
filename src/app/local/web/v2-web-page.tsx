@@ -15,11 +15,15 @@ import {
   Pencil,
   Phone,
   Save,
+  ShoppingBag,
+  Star,
   Truck,
+  Wine,
   Utensils,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import * as LucideIcons from "lucide-react";
+import { useEffect, useState } from "react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
@@ -27,18 +31,8 @@ import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import {
-  v2MenuItems,
   v2WebConfig,
 } from "@/lib/v2/v2-mock-data";
-import {
-  V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY,
-  V2_WEB_TEMPLATE_STORAGE_KEY,
-  V2WebTemplateContent,
-  createDefaultV2WebTemplateContent,
-  getV2WebTemplateById,
-  mergeV2WebTemplateContent,
-  v2WebTemplates,
-} from "@/lib/v2/v2-web-templates";
 
 type WebConfigState = {
   businessName: string;
@@ -75,11 +69,24 @@ type LocalMenuProduct = {
   status?: string;
 };
 
+type LocalMenuCategory = {
+  id: string;
+  name: string;
+  description?: string;
+  order?: number;
+  visible?: boolean;
+  active?: boolean;
+  isPromotion?: boolean;
+};
+
+type PublicMenuIconKey = string;
+
 type PublicMenuSection = {
   id: string;
   name: string;
   description: string;
   active: boolean;
+  iconKey?: PublicMenuIconKey;
   productIds: string[];
   featuredProductIds?: string[];
 };
@@ -88,6 +95,9 @@ const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
 const PUBLIC_MENU_SECTIONS_STORAGE_KEY = "tango-v2-public-menu-sections-v1";
 const PUBLIC_MENU_SECTIONS_EVENT = "tango-v2-public-menu-sections-updated";
 const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
+const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+const MENU_ITEMS_EVENT = "tango-v2-menu-items-updated";
+const MENU_CATEGORIES_EVENT = "tango-v2-menu-categories-updated";
 const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
 
 function formatCurrency(value: number) {
@@ -96,6 +106,105 @@ function formatCurrency(value: number) {
     currency: "ARS",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+type LucideMenuIconComponent = React.ElementType<{
+  size?: number | string;
+  className?: string;
+  strokeWidth?: number | string;
+}>;
+
+const BLOCKED_LUCIDE_EXPORTS = new Set([
+  "Icon",
+  "LucideIcon",
+  "LucideProvider",
+  "createLucideIcon",
+  "icons",
+]);
+
+function isRenderableLucideIconExport(iconName: string, iconValue: unknown) {
+  if (!/^[A-Z]/.test(iconName)) return false;
+  if (iconName.endsWith("Icon")) return false;
+  if (BLOCKED_LUCIDE_EXPORTS.has(iconName)) return false;
+
+  return typeof iconValue === "function" || (typeof iconValue === "object" && iconValue !== null);
+}
+
+const LUCIDE_ICON_LIBRARY = Object.entries(LucideIcons)
+  .filter(([iconName, iconValue]) => isRenderableLucideIconExport(iconName, iconValue))
+  .map(([iconName, Icon]) => ({
+    key: iconName,
+    label: iconName.replace(/([a-z])([A-Z])/g, "$1 $2"),
+    Icon: Icon as LucideMenuIconComponent,
+  }))
+  .sort((first, second) => first.label.localeCompare(second.label, "es"));
+
+const DEFAULT_PUBLIC_MENU_ICON_KEY = "Utensils";
+
+function normalizePublicMenuIconKey(iconKey?: PublicMenuIconKey): PublicMenuIconKey | undefined {
+  const aliases: Record<string, string> = {
+    leaf: "Leaf",
+    utensils: "Utensils",
+    bag: "ShoppingBag",
+    star: "Star",
+    wine: "Wine",
+    bike: "Bike",
+    clock: "Clock",
+    calendar: "CalendarDays",
+  };
+
+  return iconKey ? aliases[iconKey] ?? iconKey : undefined;
+}
+
+function getPublicMenuIconOption(iconKey?: PublicMenuIconKey) {
+  const normalizedIconKey = normalizePublicMenuIconKey(iconKey);
+
+  return (
+    LUCIDE_ICON_LIBRARY.find((option) => option.key === normalizedIconKey) ??
+    LUCIDE_ICON_LIBRARY.find((option) => option.key === DEFAULT_PUBLIC_MENU_ICON_KEY) ??
+    LUCIDE_ICON_LIBRARY.find((option) => option.key === "Leaf") ??
+    LUCIDE_ICON_LIBRARY[0]
+  );
+}
+
+function inferPublicMenuIconKey(name: string): PublicMenuIconKey {
+  const normalizedName = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (
+    normalizedName.includes("bebida") ||
+    normalizedName.includes("vino") ||
+    normalizedName.includes("trago")
+  ) {
+    return "Wine";
+  }
+
+  if (
+    normalizedName.includes("postre") ||
+    normalizedName.includes("tortilla")
+  ) {
+    return "Star";
+  }
+
+  if (
+    normalizedName.includes("sandwich") ||
+    normalizedName.includes("pan") ||
+    normalizedName.includes("burger")
+  ) {
+    return "ShoppingBag";
+  }
+
+  if (
+    normalizedName.includes("ensalada") ||
+    normalizedName.includes("vegetal") ||
+    normalizedName.includes("clasico")
+  ) {
+    return "Leaf";
+  }
+
+  return DEFAULT_PUBLIC_MENU_ICON_KEY;
 }
 
 function normalizeWebConfig(value?: Partial<WebConfigState> | null): WebConfigState {
@@ -140,23 +249,50 @@ function writeStoredWebConfig(config: WebConfigState) {
   window.dispatchEvent(new Event(WEB_CONFIG_EVENT));
 }
 
-function createDefaultPublicMenuSections(products: LocalMenuProduct[] = []): PublicMenuSection[] {
-  const fallbackSections = [
-    { id: "pizzas", name: "Pizzas", description: "Pizzas destacadas del local." },
-    { id: "empanadas", name: "Empanadas", description: "Empanadas y opciones rápidas." },
-    { id: "bebidas", name: "Bebidas", description: "Bebidas visibles en la web." },
-  ];
+function readLocalMenuCategories(): LocalMenuCategory[] {
+  if (typeof window === "undefined") return [];
 
-  if (products.length === 0) {
-    return fallbackSections.map((section) => ({ ...section, active: true, productIds: [], featuredProductIds: [] }));
+  try {
+    const rawValue = window.localStorage.getItem(MENU_CATEGORIES_STORAGE_KEY);
+    const parsedCategories = rawValue ? (JSON.parse(rawValue) as LocalMenuCategory[]) : [];
+
+    return parsedCategories
+      .filter((category) => category.visible !== false && category.active !== false && !category.isPromotion)
+      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  } catch {
+    return [];
   }
+}
 
-  return fallbackSections.map((section, index) => ({
-    ...section,
-    active: true,
-    productIds: products.slice(index * 4, index * 4 + 4).map((product) => product.id),
-    featuredProductIds: products.slice(index * 4, index * 4 + 2).map((product) => product.id),
-  }));
+function createDefaultPublicMenuSections(
+  products: LocalMenuProduct[] = [],
+  categories: LocalMenuCategory[] = []
+): PublicMenuSection[] {
+  const visibleCategories = categories.length > 0
+    ? categories
+    : [
+        { id: "entradas", name: "Entradas", description: "Platos visibles en la web.", order: 1 },
+        { id: "principales", name: "Principales", description: "Platos visibles en la web.", order: 2 },
+        { id: "postres", name: "Postres", description: "Platos visibles en la web.", order: 3 },
+      ];
+
+  return visibleCategories.map((category) => {
+    const categoryProducts = products.filter((product) => product.categoryId === category.id);
+    const productIds = categoryProducts.map((product) => product.id);
+
+    return {
+      id: category.id,
+      name: category.name || "Nueva sección",
+      description: category.description || "Platos visibles en la web.",
+      active: category.visible !== false && category.active !== false,
+      iconKey: inferPublicMenuIconKey(category.name || ""),
+      productIds,
+      featuredProductIds: categoryProducts
+        .filter((product) => productIds.includes(product.id))
+        .slice(0, 2)
+        .map((product) => product.id),
+    };
+  });
 }
 
 function readLocalMenuProducts(): LocalMenuProduct[] {
@@ -174,31 +310,79 @@ function readLocalMenuProducts(): LocalMenuProduct[] {
   }
 }
 
-function readPublicMenuSections(products: LocalMenuProduct[]): PublicMenuSection[] {
-  if (typeof window === "undefined") return createDefaultPublicMenuSections(products);
+function readPublicMenuSections(
+  products: LocalMenuProduct[],
+  categories: LocalMenuCategory[]
+): PublicMenuSection[] {
+  const defaultSections = createDefaultPublicMenuSections(products, categories);
+
+  if (typeof window === "undefined") return defaultSections;
 
   try {
     const rawValue = window.localStorage.getItem(PUBLIC_MENU_SECTIONS_STORAGE_KEY);
     const parsedSections = rawValue ? (JSON.parse(rawValue) as PublicMenuSection[]) : null;
 
     if (!parsedSections || parsedSections.length === 0) {
-      return createDefaultPublicMenuSections(products);
+      return defaultSections;
     }
 
-    return parsedSections.map((section) => ({
-      id: section.id,
-      name: section.name || "Nueva sección",
-      description: section.description || "Sección visible en la web.",
-      active: section.active !== false,
-      productIds: Array.isArray(section.productIds) ? section.productIds : [],
-      featuredProductIds: Array.isArray(section.featuredProductIds)
-        ? section.featuredProductIds.filter((productId) =>
-            Array.isArray(section.productIds) ? section.productIds.includes(productId) : false
-          )
-        : [],
-    }));
+    const validCategoryIds = new Set(categories.map((category) => category.id));
+    const sectionById = new Map(parsedSections.map((section) => [section.id, section]));
+    const sectionByName = new Map(
+      parsedSections.map((section) => [section.name.trim().toLowerCase(), section])
+    );
+
+    if (categories.length > 0) {
+      return defaultSections.map((defaultSection) => {
+        const storedSection =
+          sectionById.get(defaultSection.id) ??
+          sectionByName.get(defaultSection.name.trim().toLowerCase());
+
+        const allowedProductIds = new Set(
+          products
+            .filter((product) => product.categoryId === defaultSection.id)
+            .map((product) => product.id)
+        );
+
+        const storedProductIds = storedSection?.productIds?.filter((productId) =>
+          allowedProductIds.has(productId)
+        );
+
+        const productIds =
+          storedProductIds && storedProductIds.length > 0
+            ? storedProductIds
+            : defaultSection.productIds;
+
+        return {
+          ...defaultSection,
+          description: storedSection?.description || defaultSection.description,
+          active: storedSection?.active ?? defaultSection.active,
+          iconKey: storedSection?.iconKey ?? defaultSection.iconKey,
+          productIds,
+          featuredProductIds: (storedSection?.featuredProductIds ?? defaultSection.featuredProductIds ?? []).filter(
+            (productId) => productIds.includes(productId)
+          ),
+        };
+      });
+    }
+
+    return parsedSections
+      .filter((section) => !validCategoryIds.size || validCategoryIds.has(section.id))
+      .map((section) => ({
+        id: section.id,
+        name: section.name || "Nueva sección",
+        description: section.description || "Sección visible en la web.",
+        active: section.active !== false,
+        iconKey: section.iconKey ?? inferPublicMenuIconKey(section.name || ""),
+        productIds: Array.isArray(section.productIds) ? section.productIds : [],
+        featuredProductIds: Array.isArray(section.featuredProductIds)
+          ? section.featuredProductIds.filter((productId) =>
+              Array.isArray(section.productIds) ? section.productIds.includes(productId) : false
+            )
+          : [],
+      }));
   } catch {
-    return createDefaultPublicMenuSections(products);
+    return defaultSections;
   }
 }
 
@@ -207,23 +391,6 @@ function writePublicMenuSections(sections: PublicMenuSection[]) {
 
   window.localStorage.setItem(PUBLIC_MENU_SECTIONS_STORAGE_KEY, JSON.stringify(sections));
   window.dispatchEvent(new Event(PUBLIC_MENU_SECTIONS_EVENT));
-}
-
-function readTemplateContent(): Record<string, V2WebTemplateContent> {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const rawValue = window.localStorage.getItem(V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY);
-    return rawValue ? (JSON.parse(rawValue) as Record<string, V2WebTemplateContent>) : {};
-  } catch {
-    return {};
-  }
-}
-
-function getStorageTemplateId() {
-  if (typeof window === "undefined") return v2WebTemplates[0].id;
-
-  return window.localStorage.getItem(V2_WEB_TEMPLATE_STORAGE_KEY) ?? v2WebTemplates[0].id;
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -278,10 +445,6 @@ function ToggleRow({
   );
 }
 
-const featuredMenuItems = v2MenuItems.filter(
-  (item) => item.visible && item.featured
-);
-
 export function V2WebPage() {
   const [activeTab, setActiveTab] = useState<WebTab>("portada");
   const [config, setConfig] = useState<WebConfigState>(() => normalizeWebConfig());
@@ -290,48 +453,43 @@ export function V2WebPage() {
   const [publicMenuSections, setPublicMenuSections] = useState<PublicMenuSection[]>([]);
   const [selectedPublicMenuSectionId, setSelectedPublicMenuSectionId] = useState("");
   const [isPublicMenuPopupOpen, setIsPublicMenuPopupOpen] = useState(false);
-  const [activeTemplateId, setActiveTemplateId] = useState(v2WebTemplates[0].id);
-  const activeTemplate = useMemo(
-    () => getV2WebTemplateById(activeTemplateId),
-    [activeTemplateId]
-  );
-  const [templateContent, setTemplateContent] = useState(() =>
-    createDefaultV2WebTemplateContent(v2WebTemplates[0])
-  );
+  const [isPublicMenuIconPickerOpen, setIsPublicMenuIconPickerOpen] = useState(false);
+  const [publicMenuIconSearch, setPublicMenuIconSearch] = useState("");
 
   useEffect(() => {
     setConfig(readStoredWebConfig());
 
-    const products = readLocalMenuProducts();
-    const sections = readPublicMenuSections(products);
+    function loadMenuPublicSections() {
+      const products = readLocalMenuProducts();
+      const categories = readLocalMenuCategories();
+      const sections = readPublicMenuSections(products, categories);
 
-    setLocalMenuProducts(products);
-    setPublicMenuSections(sections);
-    setSelectedPublicMenuSectionId(sections[0]?.id ?? "");
+      setLocalMenuProducts(products);
+      setPublicMenuSections(sections);
+      setSelectedPublicMenuSectionId((currentSectionId) =>
+        sections.some((section) => section.id === currentSectionId)
+          ? currentSectionId
+          : sections[0]?.id ?? ""
+      );
+    }
+
+    loadMenuPublicSections();
+
+    window.addEventListener("storage", loadMenuPublicSections);
+    window.addEventListener(MENU_ITEMS_EVENT, loadMenuPublicSections);
+    window.addEventListener(MENU_CATEGORIES_EVENT, loadMenuPublicSections);
+
+    return () => {
+      window.removeEventListener("storage", loadMenuPublicSections);
+      window.removeEventListener(MENU_ITEMS_EVENT, loadMenuPublicSections);
+      window.removeEventListener(MENU_CATEGORIES_EVENT, loadMenuPublicSections);
+    };
   }, []);
 
   useEffect(() => {
-    function loadPublicTemplatePreview() {
-      const templateId = getStorageTemplateId();
-      const template = getV2WebTemplateById(templateId);
-      const storedContent = readTemplateContent()[template.id];
-
-      setActiveTemplateId(template.id);
-      setTemplateContent(mergeV2WebTemplateContent(template, storedContent));
-    }
-
-    loadPublicTemplatePreview();
-
-    window.addEventListener("storage", loadPublicTemplatePreview);
-    window.addEventListener("tango-v2-web-template-updated", loadPublicTemplatePreview);
-    window.addEventListener("tango-v2-web-template-content-updated", loadPublicTemplatePreview);
-
-    return () => {
-      window.removeEventListener("storage", loadPublicTemplatePreview);
-      window.removeEventListener("tango-v2-web-template-updated", loadPublicTemplatePreview);
-      window.removeEventListener("tango-v2-web-template-content-updated", loadPublicTemplatePreview);
-    };
-  }, []);
+    setIsPublicMenuIconPickerOpen(false);
+    setPublicMenuIconSearch("");
+  }, [selectedPublicMenuSectionId]);
 
   const isPublished = config.status === "published";
   const activeSections = [
@@ -355,6 +513,11 @@ export function V2WebPage() {
     : [];
 
   const selectedFeaturedProductIds = selectedPublicMenuSection?.featuredProductIds ?? [];
+  const selectedPublicMenuIconOption = getPublicMenuIconOption(selectedPublicMenuSection?.iconKey);
+  const filteredPublicMenuIconOptions = LUCIDE_ICON_LIBRARY.filter((option) =>
+    option.label.toLowerCase().includes(publicMenuIconSearch.trim().toLowerCase()) ||
+    option.key.toLowerCase().includes(publicMenuIconSearch.trim().toLowerCase())
+  );
 
   const productsAvailableForSelectedSection = selectedPublicMenuSection
     ? localMenuProducts.filter(
@@ -362,32 +525,14 @@ export function V2WebPage() {
       )
     : localMenuProducts;
 
-  const previewMenuItems = useMemo(() => {
-    const featuredProducts = publicMenuSections
-      .filter((section) => section.active)
-      .flatMap((section) =>
-        (section.featuredProductIds ?? [])
-          .map((productId) => localMenuProducts.find((product) => product.id === productId))
-          .filter(Boolean) as LocalMenuProduct[]
-      );
-
-    const configuredProducts = publicMenuSections
-      .filter((section) => section.active)
-      .flatMap((section) =>
-        section.productIds
-          .map((productId) => localMenuProducts.find((product) => product.id === productId))
-          .filter(Boolean) as LocalMenuProduct[]
-      );
-
-    const uniqueProducts = [...featuredProducts, ...configuredProducts].filter(
-      (product, index, products) =>
-        products.findIndex((currentProduct) => currentProduct.id === product.id) === index
-    );
-
-    return uniqueProducts.length > 0
-      ? uniqueProducts.slice(0, 4)
-      : featuredMenuItems.slice(0, 3);
-  }, [localMenuProducts, publicMenuSections]);
+  const publishedPublicMenuSections = publicMenuSections.filter((section) => section.active);
+  const publishedPublicMenuProductIds = new Set(
+    publishedPublicMenuSections.flatMap((section) => section.productIds)
+  );
+  const publishedPublicMenuFeaturedIds = new Set(
+    publishedPublicMenuSections.flatMap((section) => section.featuredProductIds ?? [])
+  );
+  const hiddenPublicMenuSections = publicMenuSections.filter((section) => !section.active);
 
   function updateConfig<K extends keyof WebConfigState>(key: K, value: WebConfigState[K]) {
     setConfig((current) => ({
@@ -423,6 +568,7 @@ export function V2WebPage() {
       name: "Nueva sección",
       description: "Descripción de la sección.",
       active: true,
+      iconKey: DEFAULT_PUBLIC_MENU_ICON_KEY,
       productIds: [],
       featuredProductIds: [],
     };
@@ -620,14 +766,18 @@ export function V2WebPage() {
           </V2Card>
 
           <V2Card>
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Menú destacado</p>
-            <p className="mt-2 text-2xl font-black text-slate-950">{previewMenuItems.length}</p>
-            <p className="mt-1 text-xs text-slate-500">Platos visibles en preview</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Menú público</p>
+            <p className="mt-2 text-2xl font-black text-slate-950">
+              {publishedPublicMenuProductIds.size}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {publishedPublicMenuSections.length} visibles · {hiddenPublicMenuSections.length} ocultas · {publishedPublicMenuFeaturedIds.size} destacados
+            </p>
           </V2Card>
         </div>
 
-        <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[430px_1fr]">
-          <V2Card className="flex min-h-0 flex-col overflow-hidden p-0">
+        <div className="mt-4 min-h-0 flex-1">
+          <V2Card className="flex h-full min-h-0 flex-col overflow-hidden p-0">
             <div className="shrink-0 border-b border-slate-200 bg-white p-5">
               <div className="grid grid-cols-3 rounded-2xl border border-slate-200 bg-slate-50 p-1">
                 {tabs.map((tab) => {
@@ -819,14 +969,19 @@ export function V2WebPage() {
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {publicMenuSections.map((section) => (
-                          <span
-                            key={section.id}
-                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600"
-                          >
-                            {section.name} · {section.productIds.length} platos
-                          </span>
-                        ))}
+                        {publicMenuSections.map((section) => {
+                          const Icon = getPublicMenuIconOption(section.iconKey).Icon;
+
+                          return (
+                            <span
+                              key={section.id}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600"
+                            >
+                              <Icon size={13} className="text-emerald-700" />
+                              {section.name} · {section.productIds.length} platos
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   ) : null}
@@ -872,403 +1027,6 @@ export function V2WebPage() {
                   />
                 </div>
               ) : null}
-            </div>
-          </V2Card>
-
-          <V2Card className="flex min-h-0 flex-col overflow-hidden p-0">
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white p-4">
-              <div>
-                <h2 className="text-base font-semibold text-slate-950">Vista previa pública</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Preview comercial aproximado de la web del local.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <V2Badge tone={isPublished ? "green" : "red"}>
-                  {isPublished ? "Publicada" : "Borrador"}
-                </V2Badge>
-                <V2Badge tone={config.showMenu ? "green" : "slate"}>
-                  Menú {config.showMenu ? "visible" : "oculto"}
-                </V2Badge>
-              </div>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto bg-[#15110d] text-[#f4ead8]">
-              <section className="relative min-h-[560px] overflow-hidden bg-[#110e0b]">
-                <img
-                  src={templateContent.imageValues.hero ?? activeTemplate.previewImage}
-                  alt={templateContent.textValues.heroTitle}
-                  className="absolute inset-0 h-full w-full object-cover opacity-70"
-                />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_34%,rgba(0,0,0,0.12),transparent_24%),linear-gradient(90deg,rgba(13,10,8,0.98),rgba(13,10,8,0.82)_35%,rgba(13,10,8,0.22)_72%,rgba(13,10,8,0.72))]" />
-                <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#15110d] to-transparent" />
-
-                <header className="relative z-20 border-b border-white/10 bg-black/42 backdrop-blur-md">
-                  <div className="flex items-center justify-between px-8 py-5">
-                    <div className="leading-none">
-                      <p className="font-serif text-4xl font-bold uppercase tracking-[0.12em] text-[#c9784a]">
-                        {config.businessName}
-                      </p>
-                      <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-[0.36em] text-[#d6b489]">
-                        Cocina de autor
-                      </p>
-                    </div>
-
-                    <nav className="hidden items-center gap-7 text-xs font-black uppercase tracking-[0.12em] text-[#f7ead7]/82 lg:flex">
-                      <span>Inicio</span>
-                      {config.showMenu ? <span>Menú</span> : null}
-                      <span>Nosotros</span>
-                      {config.showGallery ? <span>Galería</span> : null}
-                      {config.showReservations ? <span>Eventos</span> : null}
-                      <span>Contacto</span>
-                    </nav>
-
-                    <div className="hidden items-center gap-3 md:flex">
-                      {config.showReservations ? (
-                        <button className="inline-flex h-11 items-center justify-center rounded border border-[#b96f47] px-7 text-xs font-black uppercase tracking-[0.14em] text-[#e8b085]">
-                          Reservar
-                        </button>
-                      ) : null}
-                      {config.showDelivery ? (
-                        <button className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#c97048] px-7 text-xs font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-black/30">
-                          Pedir ahora
-                          <Bike size={18} />
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </header>
-
-                <div className="relative z-10 px-8 pb-10 pt-16">
-                  <div className="max-w-[620px]">
-                    <p className="text-sm font-black uppercase tracking-[0.2em] text-[#d79a6c]">
-                      {templateContent.textValues.heroEyebrow}
-                    </p>
-                    <h1 className="mt-5 font-serif text-[58px] font-normal leading-[0.98] tracking-[-0.035em] text-[#fff2dd] md:text-[74px]">
-                      {templateContent.textValues.heroTitle}
-                    </h1>
-
-                    <div className="mt-6 flex max-w-sm items-center gap-3 text-[#9fa875]">
-                      <span className="h-px flex-1 bg-[#9c7656]" />
-                      <Leaf size={20} />
-                      <span className="h-px flex-1 bg-[#9c7656]" />
-                    </div>
-
-                    <p className="mt-6 max-w-[470px] text-lg leading-8 text-[#f4ead8]/82">
-                      {templateContent.textValues.heroSubtitle}
-                    </p>
-
-                    <div className="mt-8 flex flex-wrap gap-4">
-                      {config.showReservations ? (
-                        <button className="inline-flex h-12 items-center gap-3 rounded bg-[#c97048] px-8 text-sm font-black uppercase tracking-[0.12em] text-white">
-                          <CalendarDays size={18} />
-                          {templateContent.textValues.primaryButton}
-                        </button>
-                      ) : null}
-                      {config.showMenu ? (
-                        <button className="inline-flex h-12 items-center gap-3 rounded border border-[#a96a4b] bg-black/25 px-8 text-sm font-black uppercase tracking-[0.12em] text-[#f7ead7]">
-                          <Utensils size={18} />
-                          Ver menú
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="mt-10 grid overflow-hidden rounded-2xl border border-[#c9a86a]/28 bg-[linear-gradient(180deg,rgba(36,31,25,0.92),rgba(20,17,13,0.94))] shadow-[inset_0_0_0_1px_rgba(207,160,111,0.2),0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-md md:grid-cols-4">
-                    {[
-                      { icon: CalendarDays, title: "Reservas online", text: "Reservá tu mesa fácil y rápido en segundos.", visible: config.showReservations },
-                      { icon: Bike, title: "Delivery & retiro", text: "Pedí por delivery o retiro y disfrutá donde estés.", visible: config.showDelivery },
-                      { icon: Leaf, title: "Menú actualizado", text: "Platos de estación con ingredientes frescos.", visible: config.showMenu },
-                      { icon: Clock, title: "Abierto hoy", text: "Lun a Dom · 12:00 — 00:00 hs", visible: true },
-                    ]
-                      .filter((item) => item.visible)
-                      .map((item) => {
-                        const Icon = item.icon;
-
-                        return (
-                          <div key={item.title} className="flex gap-4 border-[#c9a86a]/18 p-5 md:border-r last:border-r-0">
-                            <Icon className="mt-1 shrink-0 text-[#c9a86a]" size={26} />
-                            <div>
-                              <p className="text-sm font-black uppercase tracking-[0.08em] text-[#fff2dd]">{item.title}</p>
-                              <p className="mt-1 text-sm leading-5 text-[#f4ead8]/62">{item.text}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </section>
-
-              {config.showMenu ? (
-                <section className="border-t border-[#c9a86a]/12 bg-[#15110d] px-8 py-10">
-                  <div className="text-center">
-                    <p className="font-serif text-[12px] font-bold uppercase tracking-[0.42em] text-[#c9a86a]">Platos destacados</p>
-                    <h2 className="mt-3 font-serif text-3xl font-bold uppercase tracking-[0.32em] text-[#f5ead6]">Carta</h2>
-                    <div className="mx-auto mt-3 flex w-56 items-center justify-center gap-3 text-[#9fa875]">
-                      <span className="h-px flex-1 bg-[#715943]" />
-                      <Leaf size={18} />
-                      <span className="h-px flex-1 bg-[#715943]" />
-                    </div>
-                  </div>
-
-                  <div className="mt-7 grid gap-4 md:grid-cols-4">
-                    {previewMenuItems.concat(previewMenuItems.slice(0, 1)).slice(0, 4).map((item, index) => (
-                      <article key={`${item.id}-featured-${index}`} className="overflow-hidden rounded-3xl border border-[#c9a86a]/18 bg-black/18">
-                        <img src={item.imageUrl || templateContent.imageValues[`menu${(index % 4) + 1}`]} alt={item.name} className="h-32 w-full object-cover" />
-                        <div className="p-4 text-center">
-                          <h4 className="font-serif text-lg font-bold text-[#fff2dd]">{item.name}</h4>
-                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#f4ead8]/58">{item.description || "Sin descripción"}</p>
-                          <p className="mt-3 font-black text-[#d77f52]">{formatCurrency(Number(item.price) || 0)}</p>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-
-                  <div className="mt-12 text-center">
-                    <h2 className="font-serif text-3xl font-bold uppercase tracking-[0.32em] text-[#f5ead6]">Explorá nuestro menú</h2>
-                    <div className="mx-auto mt-3 flex w-56 items-center justify-center gap-3 text-[#9fa875]">
-                      <span className="h-px flex-1 bg-[#715943]" />
-                      <Leaf size={18} />
-                      <span className="h-px flex-1 bg-[#715943]" />
-                    </div>
-                  </div>
-
-                  <div className="mt-7 grid gap-4 md:grid-cols-5">
-                    {[
-                      { title: "Entradas", text: "Comienzos que despiertan.", icon: Leaf },
-                      { title: "Principales", text: "Platos intensos y sabrosos.", icon: Utensils },
-                      { title: "Pastas", text: "Hechas en casa, como siempre.", icon: MessageCircle },
-                      { title: "Postres", text: "El final perfecto para tu comida.", icon: Eye },
-                      { title: "Bebidas", text: "Vinos, tragos y sin alcohol.", icon: Phone },
-                    ].map((item) => {
-                      const CategoryIcon = item.icon;
-
-                      return (
-                        <div key={item.title} className="rounded-3xl border border-[#c9a86a]/18 bg-black/18 p-5 text-center">
-                          <CategoryIcon className="mx-auto text-[#9fa875]" size={34} />
-                          <p className="mt-5 text-sm font-black uppercase tracking-[0.12em] text-[#fff2dd]">{item.title}</p>
-                          <p className="mt-2 text-sm leading-6 text-[#f4ead8]/58">{item.text}</p>
-                          <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-[#c9a86a]">Ver opciones</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-7 rounded-3xl border border-[#c9a86a]/24 bg-black/14 p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c9a86a]">Entradas</p>
-                        <h3 className="mt-2 font-serif text-2xl text-[#fff2dd]">Platos de la categoría</h3>
-                      </div>
-                      <p className="hidden text-sm text-[#f4ead8]/55 md:block">Deslizá horizontalmente para ver más opciones.</p>
-                    </div>
-
-                    <div className="mt-5 grid gap-4 md:grid-cols-4">
-                      {previewMenuItems.concat(previewMenuItems.slice(0, 1)).slice(0, 4).map((item, index) => (
-                        <article key={`${item.id}-category-${index}`} className="overflow-hidden rounded-2xl border border-[#c9a86a]/18 bg-black/18">
-                          <img src={item.imageUrl || templateContent.imageValues[`menu${(index % 4) + 1}`]} alt={item.name} className="h-24 w-full object-cover" />
-                          <div className="p-3">
-                            <h4 className="font-serif text-lg font-bold text-[#fff2dd]">{item.name}</h4>
-                            <p className="mt-2 line-clamp-2 text-sm leading-5 text-[#f4ead8]/58">{item.description || "Sin descripción"}</p>
-                            <p className="mt-3 font-black text-[#d77f52]">{formatCurrency(Number(item.price) || 0)}</p>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              ) : null}
-
-              {config.showGallery ? (
-                <section className="border-t border-[#c9a86a]/12 bg-[#1b140f] px-8 py-10">
-                  <div className="text-center">
-                    <h2 className="font-serif text-3xl font-bold uppercase tracking-[0.32em] text-[#f5ead6]">Nuestro espacio</h2>
-                    <div className="mx-auto mt-3 flex w-56 items-center justify-center gap-3 text-[#9fa875]">
-                      <span className="h-px flex-1 bg-[#715943]" />
-                      <Leaf size={18} />
-                      <span className="h-px flex-1 bg-[#715943]" />
-                    </div>
-                  </div>
-
-                  <div className="mt-7 grid gap-4 md:grid-cols-6">
-                    {["espacio2", "espacio1", "espacio3", "espacio6", "espacio5", "hero"].map((slotId) => (
-                      <img key={slotId} src={templateContent.imageValues[slotId] ?? templateContent.imageValues.hero} alt={slotId} className="h-28 w-full rounded-2xl object-cover" />
-                    ))}
-                  </div>
-
-                  <div className="mt-6 text-center">
-                    <button className="rounded border border-[#c97048] px-10 py-3 text-xs font-black uppercase tracking-[0.16em] text-[#d88757]">Ver más fotos</button>
-                  </div>
-                </section>
-              ) : null}
-
-              {config.showReservations ? (
-                <section className="grid gap-8 border-t border-[#c9a86a]/12 bg-[#34271d] px-8 py-10 lg:grid-cols-[0.72fr_1fr]">
-                  <div>
-                    <div className="flex h-24 w-24 items-center justify-center rounded-full border border-[#c9a86a]/28 bg-[#c9a86a]/12 text-[#e5c687]">
-                      <CalendarDays size={44} />
-                    </div>
-                    <p className="mt-5 text-xs font-black uppercase tracking-[0.28em] text-[#c9a86a]">Reservas online</p>
-                    <h2 className="mt-3 font-serif text-4xl text-[#fff2dd]">Reservá tu mesa</h2>
-                    <p className="mt-4 max-w-xl text-sm leading-7 text-[#f4ead8]/72">
-                      Elegí fecha, horario y cantidad de personas. El sistema valida disponibilidad según horarios configurados y capacidad real del plano.
-                    </p>
-
-                    <div className="mt-6 grid gap-3 md:grid-cols-3">
-                      {[
-                        ["Ventana", "30 días"],
-                        ["Duración", "90 min"],
-                        ["Capacidad", "24 personas"],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-2xl border border-[#c9a86a]/18 bg-black/18 p-4">
-                          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#c9a86a]">{label}</p>
-                          <p className="mt-2 font-black text-[#fff2dd]">{value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[2rem] border border-[#c9a86a]/22 bg-black/32 p-6">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {["Nombre", "Teléfono", "Email", "Personas", "Fecha", "Horario"].map((label, index) => (
-                        <label key={label} className="block">
-                          <span className="text-xs font-black uppercase tracking-[0.14em] text-[#c9a86a]">{label}</span>
-                          <div className="mt-2 h-11 rounded-xl border border-[#c9a86a]/24 bg-black/24 px-4 text-sm text-[#f4ead8]/40">
-                            <span className="leading-[2.75rem]">{index === 3 ? "2" : index === 4 ? "domingo, 19 de julio" : index === 5 ? "Seleccionar horario" : "—"}</span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="mt-5 h-20 rounded-xl border border-[#c9a86a]/24 bg-black/24 p-4 text-sm text-[#f4ead8]/40">Nota opcional</div>
-                    <button className="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded bg-[#c97048] text-sm font-black uppercase tracking-[0.14em] text-white">
-                      <CalendarDays size={18} />
-                      Enviar reserva
-                    </button>
-                  </div>
-                </section>
-              ) : null}
-
-              <section className="border-t border-[#c9a86a]/12 bg-[#15110d] px-8 py-10">
-                <div className="text-center">
-                  <h2 className="font-serif text-3xl font-bold uppercase tracking-[0.32em] text-[#f5ead6]">Lo que dicen nuestros comensales</h2>
-                  <div className="mx-auto mt-3 flex w-56 items-center justify-center gap-3 text-[#9fa875]">
-                    <span className="h-px flex-1 bg-[#715943]" />
-                    <Leaf size={18} />
-                    <span className="h-px flex-1 bg-[#715943]" />
-                  </div>
-                </div>
-
-                <div className="mt-7 grid gap-4 md:grid-cols-3">
-                  {[
-                    ["Martina L.", "Una experiencia increíble de principio a fin. Los sabores, la atención y el ambiente son de primer nivel."],
-                    ["Ignacio R.", "La cocina es espectacular y los postres una locura. Volvemos siempre."],
-                    ["Sofía G.", "Demuru es sinónimo de calidez y calidad. Ideal para una cena especial."],
-                  ].map(([name, quote]) => (
-                    <div key={name} className="rounded-3xl border border-[#c9a86a]/18 bg-black/18 p-6">
-                      <p className="text-3xl text-[#c9a86a]">”</p>
-                      <p className="mt-4 text-sm leading-7 text-[#f4ead8]/76">{quote}</p>
-                      <p className="mt-8 font-black text-[#fff2dd]">— {name}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {config.showMap ? (
-                <section className="border-t border-[#c9a86a]/12 bg-[#110e0b] px-8 py-10">
-                  <div className="text-center">
-                    <h2 className="font-serif text-3xl font-bold uppercase tracking-[0.32em] text-[#f5ead6]">Visitá Demuru</h2>
-                    <div className="mx-auto mt-3 flex w-56 items-center justify-center gap-3 text-[#9fa875]">
-                      <span className="h-px flex-1 bg-[#715943]" />
-                      <Leaf size={18} />
-                      <span className="h-px flex-1 bg-[#715943]" />
-                    </div>
-                  </div>
-
-                  <div className="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1fr]">
-                    <div className="rounded-[2rem] border border-[#c9a86a]/18 bg-black/18 p-6">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c9a86a]">Visitá Demuru</p>
-                      <h3 className="mt-3 font-serif text-3xl text-[#fff2dd]">Estamos en Pinamar</h3>
-
-                      <div className="mt-6 grid gap-3">
-                        {[
-                          { title: "Teléfono", value: config.phone, icon: Phone },
-                          { title: "WhatsApp", value: config.whatsapp, icon: MessageCircle },
-                          { title: "Instagram", value: config.instagram, icon: MessageCircle },
-                          { title: "Dirección", value: config.address, icon: MapPin },
-                          { title: "Horarios", value: "Miércoles a Domingo · 08:00–02:00", icon: Clock },
-                        ].map((item) => {
-                          const ContactIcon = item.icon;
-
-                          return (
-                            <div key={item.title} className="flex items-center gap-4 rounded-2xl border border-[#c9a86a]/12 bg-black/22 p-4">
-                              <ContactIcon className="text-[#c9a86a]" size={20} />
-                              <div>
-                                <p className="text-xs font-black uppercase tracking-[0.14em] text-[#fff2dd]">{item.title}</p>
-                                <p className="mt-1 text-sm text-[#f4ead8]/70">{item.value}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="relative min-h-[360px] overflow-hidden rounded-[2rem] border border-[#c9a86a]/18 bg-[#cde8df]">
-                      <div className="absolute inset-0 bg-[linear-gradient(135deg,#bfe6d6,#e8f1e2_35%,#9ed7ea)]" />
-                      <div className="absolute left-[32%] top-0 h-full w-12 rotate-12 bg-white/70" />
-                      <div className="absolute left-[42%] top-0 h-full w-2 rotate-12 bg-slate-400/70" />
-                      <div className="absolute right-[20%] top-0 h-full w-[48%] bg-sky-300/55" />
-                      <div className="absolute left-8 top-8 rounded-3xl border border-[#c9a86a]/18 bg-[#201b15] p-5 shadow-2xl">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c9a86a]">Ubicación</p>
-                        <p className="mt-2 text-sm text-[#f4ead8]/75">{config.address}</p>
-                        <button className="mt-4 rounded-full border border-[#c9a86a]/24 px-5 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#fff2dd]">Abrir en Maps</button>
-                      </div>
-                      <div className="absolute bottom-8 right-10 rounded-full bg-red-500 px-3 py-2 text-xs font-black text-white shadow-xl">
-                        Demuru Pinamar
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              ) : null}
-
-              <footer className="border-t border-[#c9a86a]/18 bg-[#0f0d0a] px-8 py-10">
-                <div className="grid gap-8 md:grid-cols-4">
-                  <div>
-                    <p className="font-serif text-4xl font-bold uppercase tracking-[0.12em] text-[#c9784a]">Demuru</p>
-                    <p className="mt-4 text-sm leading-6 text-[#f4ead8]/55">
-                      Cocina de autor con alma local. Ingredientes reales, técnicas cuidadas y hospitalidad en cada detalle.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#fff2dd]">Enlaces</p>
-                    <div className="mt-4 grid gap-2 text-sm text-[#f4ead8]/65">
-                      <span>Inicio</span>
-                      <span>Menú</span>
-                      <span>Galería</span>
-                      <span>Contacto</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#fff2dd]">Síguenos</p>
-                    <div className="mt-4 flex gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#c9a86a]/18 text-[#c9a86a]">
-                        <MessageCircle size={18} />
-                      </span>
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#c9a86a]/18 text-[#c9a86a]">
-                        <MessageCircle size={18} />
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#fff2dd]">Newsletter</p>
-                    <p className="mt-4 text-sm text-[#f4ead8]/55">Recibí novedades y promociones.</p>
-                    <div className="mt-4 flex overflow-hidden rounded border border-[#c9a86a]/18">
-                      <div className="flex-1 px-4 py-3 text-sm text-[#f4ead8]/35">Tu email</div>
-                      <div className="bg-[#c97048] px-4 py-3 text-sm font-black text-white">→</div>
-                    </div>
-                  </div>
-                </div>
-              </footer>
             </div>
           </V2Card>
         </div>
@@ -1342,9 +1100,16 @@ export function V2WebPage() {
                             className="block w-full text-left"
                           >
                             <div className="flex items-center justify-between gap-3">
-                              <p className="truncate text-sm font-semibold text-slate-950">
-                                {section.name}
-                              </p>
+                              <div className="flex min-w-0 items-center gap-2">
+                                {(() => {
+                                  const Icon = getPublicMenuIconOption(section.iconKey).Icon;
+
+                                  return <Icon size={16} className="shrink-0 text-emerald-700" />;
+                                })()}
+                                <p className="truncate text-sm font-semibold text-slate-950">
+                                  {section.name}
+                                </p>
+                              </div>
                               <span
                                 className={cn(
                                   "rounded-full px-2 py-0.5 text-[11px] font-bold",
@@ -1438,6 +1203,78 @@ export function V2WebPage() {
                           </button>
                         </V2Field>
                       </div>
+
+                      <V2Field label="Ícono de sección">
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setIsPublicMenuIconPickerOpen((current) => !current)}
+                            className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            <span className="flex min-w-0 items-center gap-2">
+                              {selectedPublicMenuIconOption ? (
+                                <selectedPublicMenuIconOption.Icon
+                                  size={20}
+                                  className="shrink-0 text-emerald-700"
+                                />
+                              ) : null}
+                              <span className="truncate">
+                                {selectedPublicMenuIconOption?.label ?? "Seleccionar ícono"}
+                              </span>
+                            </span>
+                            <span className="text-xs font-bold text-slate-400">
+                              {isPublicMenuIconPickerOpen ? "Cerrar" : "Abrir"}
+                            </span>
+                          </button>
+
+                          {isPublicMenuIconPickerOpen ? (
+                            <div className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                              <div className="border-b border-slate-200 p-3">
+                                <V2Input
+                                  value={publicMenuIconSearch}
+                                  placeholder="Buscar ícono..."
+                                  onChange={(event) => setPublicMenuIconSearch(event.target.value)}
+                                />
+                                <p className="mt-2 text-xs text-slate-400">
+                                  {filteredPublicMenuIconOptions.length} íconos disponibles
+                                </p>
+                              </div>
+
+                              <div className="max-h-72 overflow-y-auto p-3">
+                                <div className="grid grid-cols-5 gap-2 sm:grid-cols-8">
+                                  {filteredPublicMenuIconOptions.map((option) => {
+                                    const Icon = option.Icon;
+                                    const isSelected = selectedPublicMenuSection.iconKey === option.key;
+
+                                    return (
+                                      <button
+                                        key={option.key}
+                                        type="button"
+                                        title={option.label}
+                                        onClick={() => {
+                                          updatePublicMenuSection(selectedPublicMenuSection.id, {
+                                            iconKey: option.key,
+                                          });
+                                          setIsPublicMenuIconPickerOpen(false);
+                                          setPublicMenuIconSearch("");
+                                        }}
+                                        className={cn(
+                                          "flex h-11 items-center justify-center rounded-xl border transition",
+                                          isSelected
+                                            ? "border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm"
+                                            : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                                        )}
+                                      >
+                                        <Icon size={20} />
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </V2Field>
 
                       <V2Field label="Descripción">
                         <V2Input

@@ -31,8 +31,6 @@ import {
 
 const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
 const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
-const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
-const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
 
 type V2BusinessHourSlot = {
   open: string;
@@ -45,14 +43,6 @@ type V2BusinessHourConfig = {
   close: string;
   enabled: boolean;
   slots: V2BusinessHourSlot[];
-};
-
-type V2PublicWebQuickConfig = {
-  showMenu: boolean;
-  showReservations: boolean;
-  showDelivery: boolean;
-  showGallery: boolean;
-  showMap: boolean;
 };
 
 type V2LocalConfigState = {
@@ -231,58 +221,6 @@ function writeConfigToStorage(value: V2LocalConfigState) {
   window.dispatchEvent(new Event(LOCAL_CONFIG_EVENT));
 }
 
-function getDefaultPublicWebQuickConfig(): V2PublicWebQuickConfig {
-  return {
-    showMenu: true,
-    showReservations: true,
-    showDelivery: true,
-    showGallery: true,
-    showMap: true,
-  };
-}
-
-function readPublicWebQuickConfig(): V2PublicWebQuickConfig {
-  if (typeof window === "undefined") return getDefaultPublicWebQuickConfig();
-
-  try {
-    const rawValue = window.localStorage.getItem(WEB_CONFIG_STORAGE_KEY);
-    const parsedConfig = rawValue ? JSON.parse(rawValue) : {};
-    const defaultConfig = getDefaultPublicWebQuickConfig();
-
-    return {
-      showMenu: parsedConfig.showMenu ?? defaultConfig.showMenu,
-      showReservations: parsedConfig.showReservations ?? defaultConfig.showReservations,
-      showDelivery: parsedConfig.showDelivery ?? defaultConfig.showDelivery,
-      showGallery: parsedConfig.showGallery ?? defaultConfig.showGallery,
-      showMap: parsedConfig.showMap ?? defaultConfig.showMap,
-    };
-  } catch {
-    return getDefaultPublicWebQuickConfig();
-  }
-}
-
-function writePublicWebQuickConfig(value: V2PublicWebQuickConfig) {
-  if (typeof window === "undefined") return;
-
-  let existingConfig = {};
-
-  try {
-    const rawValue = window.localStorage.getItem(WEB_CONFIG_STORAGE_KEY);
-    existingConfig = rawValue ? JSON.parse(rawValue) : {};
-  } catch {
-    existingConfig = {};
-  }
-
-  window.localStorage.setItem(
-    WEB_CONFIG_STORAGE_KEY,
-    JSON.stringify({
-      ...existingConfig,
-      ...value,
-    })
-  );
-  window.dispatchEvent(new Event(WEB_CONFIG_EVENT));
-}
-
 function booleanSelectValue(value: boolean) {
   return value ? "enabled" : "disabled";
 }
@@ -312,14 +250,10 @@ function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
 
 export function V2ConfiguracionPage() {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
-  const [publicWebConfig, setPublicWebConfig] = useState<V2PublicWebQuickConfig>(() =>
-    getDefaultPublicWebQuickConfig()
-  );
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
   useEffect(() => {
     setConfig(readConfigFromStorage());
-    setPublicWebConfig(readPublicWebQuickConfig());
   }, []);
 
   const openDays = useMemo(
@@ -330,27 +264,12 @@ export function V2ConfiguracionPage() {
     () => config.businessHours.filter((item) => !item.enabled),
     [config.businessHours]
   );
-  const enabledNotifications = [
-    config.notifyNewReservations,
-    config.notifyNewDeliveries,
-    config.notifyLowStock,
-    config.notifyDailySummary,
-    config.birthdayReminderEnabled,
-  ].filter(Boolean).length;
 
   function updateConfig<K extends keyof V2LocalConfigState>(
     field: K,
     value: V2LocalConfigState[K]
   ) {
     setConfig((current) => ({ ...current, [field]: value }));
-    setSaveStatus("idle");
-  }
-
-  function updatePublicWebConfig<K extends keyof V2PublicWebQuickConfig>(
-    field: K,
-    value: V2PublicWebQuickConfig[K]
-  ) {
-    setPublicWebConfig((current) => ({ ...current, [field]: value }));
     setSaveStatus("idle");
   }
 
@@ -432,7 +351,6 @@ export function V2ConfiguracionPage() {
     const nextConfig = { ...config, businessHours: normalizedHours };
     setConfig(nextConfig);
     writeConfigToStorage(nextConfig);
-    writePublicWebQuickConfig(publicWebConfig);
     setSaveStatus("saved");
   }
 
@@ -456,7 +374,7 @@ export function V2ConfiguracionPage() {
         />
 
         <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 overflow-hidden xl:grid-cols-[1fr_340px]">
-          <div className="min-h-0 overflow-y-auto pr-1 pb-2">
+          <div className="v2-config-scrollbar min-h-0 overflow-y-auto pr-1 pb-2">
             <div className="space-y-4 pb-2">
               <div className="sticky top-0 z-20 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
                 <div className="flex items-center gap-2 overflow-x-auto">
@@ -465,7 +383,6 @@ export function V2ConfiguracionPage() {
                   <a href="#config-horarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Horarios</a>
                   <a href="#config-reservas" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Reservas</a>
                   <a href="#config-envios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Envíos</a>
-                  <a href="#config-web-publica" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Web pública</a>
                   <a href="#config-notificaciones" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Notificaciones</a>
                   <a href="#config-usuarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Usuarios</a>
                   <a href="#config-sistema" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Sistema</a>
@@ -480,7 +397,7 @@ export function V2ConfiguracionPage() {
                   </div>
                   <div>
                     <h2 className="text-base font-semibold text-slate-950">Datos del negocio</h2>
-                    <p className="mt-1 text-sm text-slate-500">Información principal que identifica al local dentro del panel y la web pública.</p>
+                    <p className="mt-1 text-sm text-slate-500">Información operativa que identifica al local dentro del panel.</p>
                   </div>
                 </div>
 
@@ -495,9 +412,6 @@ export function V2ConfiguracionPage() {
                       <option value="beauty">Belleza / estética</option>
                       <option value="other">Otro rubro</option>
                     </V2Select>
-                  </V2Field>
-                  <V2Field label="URL pública">
-                    <V2Input value={config.publicUrl} onChange={(event) => updateConfig("publicUrl", event.target.value)} />
                   </V2Field>
                   <V2Field label="Estado del local">
                     <V2Select value={config.status} onChange={(event) => updateConfig("status", event.target.value as V2LocalConfigState["status"])}>
@@ -522,8 +436,8 @@ export function V2ConfiguracionPage() {
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-slate-950">Contacto público</h2>
-                    <p className="mt-1 text-sm text-slate-500">Datos visibles para clientes y usados en reservas, envíos y web.</p>
+                    <h2 className="text-base font-semibold text-slate-950">Contacto operativo</h2>
+                    <p className="mt-1 text-sm text-slate-500">Datos base del local usados en reservas, envíos, soporte y futuras notificaciones.</p>
                   </div>
                 </div>
 
@@ -751,69 +665,6 @@ export function V2ConfiguracionPage() {
                 </V2Card>
               </div>
 
-              <div id="config-web-publica" className="scroll-mt-20">
-                <V2Card>
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                      <Globe2 size={20} />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-slate-950">Web pública</h2>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Controles rápidos de publicación y visibilidad general. El contenido comercial se edita desde /local/web.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 md:grid-cols-3">
-                    <V2Field label="Estado de la web">
-                      <V2Select value={config.status} onChange={(event) => updateConfig("status", event.target.value as V2LocalConfigState["status"])}>
-                        <option value="active">Publicada</option>
-                        <option value="draft">Borrador</option>
-                        <option value="paused">Pausada</option>
-                      </V2Select>
-                    </V2Field>
-                    <V2Field label="URL pública">
-                      <V2Input value={config.publicUrl} onChange={(event) => updateConfig("publicUrl", event.target.value)} />
-                    </V2Field>
-                    <V2Field label="Reservas en web">
-                      <V2Select value={booleanSelectValue(publicWebConfig.showReservations)} onChange={(event) => updatePublicWebConfig("showReservations", booleanFromSelect(event.target.value))}>
-                        <option value="enabled">Mostrar</option>
-                        <option value="disabled">Ocultar</option>
-                      </V2Select>
-                    </V2Field>
-                    <V2Field label="Menú en web">
-                      <V2Select value={booleanSelectValue(publicWebConfig.showMenu)} onChange={(event) => updatePublicWebConfig("showMenu", booleanFromSelect(event.target.value))}>
-                        <option value="enabled">Mostrar</option>
-                        <option value="disabled">Ocultar</option>
-                      </V2Select>
-                    </V2Field>
-                    <V2Field label="Pedidos en web">
-                      <V2Select value={booleanSelectValue(publicWebConfig.showDelivery)} onChange={(event) => updatePublicWebConfig("showDelivery", booleanFromSelect(event.target.value))}>
-                        <option value="enabled">Mostrar</option>
-                        <option value="disabled">Ocultar</option>
-                      </V2Select>
-                    </V2Field>
-                    <V2Field label="Galería">
-                      <V2Select value={booleanSelectValue(publicWebConfig.showGallery)} onChange={(event) => updatePublicWebConfig("showGallery", booleanFromSelect(event.target.value))}>
-                        <option value="enabled">Mostrar</option>
-                        <option value="disabled">Ocultar</option>
-                      </V2Select>
-                    </V2Field>
-                    <V2Field label="Mapa / ubicación">
-                      <V2Select value={booleanSelectValue(publicWebConfig.showMap)} onChange={(event) => updatePublicWebConfig("showMap", booleanFromSelect(event.target.value))}>
-                        <option value="enabled">Mostrar</option>
-                        <option value="disabled">Ocultar</option>
-                      </V2Select>
-                    </V2Field>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
-                    <strong>Separación correcta:</strong> Configuración controla si una función está habilitada. /local/web controla textos, imágenes, portada y menú público.
-                  </div>
-                </V2Card>
-              </div>
-
               <div id="config-notificaciones" className="scroll-mt-20">
                 <V2Card>
                 <div className="flex items-start gap-3">
@@ -824,10 +675,34 @@ export function V2ConfiguracionPage() {
                   </div>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Nuevas reservas</p><p className="mt-1 text-sm text-slate-500">{config.notifyNewReservations ? "Activado" : "Desactivado"}</p></div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Nuevos pedidos</p><p className="mt-1 text-sm text-slate-500">{config.notifyNewDeliveries ? "Activado" : "Desactivado"}</p></div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Stock bajo</p><p className="mt-1 text-sm text-slate-500">{config.notifyLowStock ? "Activado" : "Desactivado"}</p></div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="font-semibold text-slate-950">Resumen diario</p><p className="mt-1 text-sm text-slate-500">{config.notifyDailySummary ? "Activado" : "Desactivado"}</p></div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-950">Nuevas reservas</p>
+                      <V2Badge tone="slate">Próximamente</V2Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">Alerta interna cuando entra una reserva nueva.</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-950">Nuevos pedidos</p>
+                      <V2Badge tone="slate">Próximamente</V2Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">Alerta interna cuando entra un pedido desde la web.</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-950">Stock bajo</p>
+                      <V2Badge tone="slate">Próximamente</V2Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">Aviso futuro conectado al módulo Stock.</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-950">Resumen diario</p>
+                      <V2Badge tone="slate">Próximamente</V2Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">Resumen operativo automático al cierre del día.</p>
+                  </div>
                 </div>
                 <div className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
                   <V2Field label="Recordatorio de cumpleaños">
@@ -858,10 +733,10 @@ export function V2ConfiguracionPage() {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700"><UsersRound size={20} /></div>
                     <div>
                       <h2 className="text-base font-semibold text-slate-950">Usuarios y permisos</h2>
-                      <p className="mt-1 text-sm text-slate-500">Base para diferenciar dueño, encargado, empleados y soporte.</p>
+                      <p className="mt-1 text-sm text-slate-500">Base visual para roles. La invitación real de usuarios queda para una etapa con login y permisos.</p>
                     </div>
                   </div>
-                  <V2Button variant="secondary">Invitar usuario</V2Button>
+                  <V2Badge tone="slate">Próximamente</V2Badge>
                 </div>
                 <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
                   {v2LocalUsers.map((user) => (
@@ -883,7 +758,7 @@ export function V2ConfiguracionPage() {
                     </div>
                     <div>
                       <h2 className="text-base font-semibold text-slate-950">Sistema</h2>
-                      <p className="mt-1 text-sm text-slate-500">Información técnica visible del sistema.</p>
+                      <p className="mt-1 text-sm text-slate-500">Información técnica de referencia. No modifica reglas operativas del local.</p>
                     </div>
                   </div>
 
@@ -909,18 +784,46 @@ export function V2ConfiguracionPage() {
 
             <V2Card className="min-h-0 flex-1 overflow-hidden">
               <h2 className="text-base font-semibold text-slate-950">Resumen operativo</h2>
-              <div className="mt-4 grid h-[calc(100%-2.25rem)] content-start gap-3 overflow-y-auto pr-1 text-sm">
+              <div className="v2-config-scrollbar mt-4 grid h-[calc(100%-2.25rem)] content-start gap-3 overflow-y-auto pr-1 text-sm">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Horarios</p><p className="mt-1 font-semibold text-slate-950">{openDays.length} abiertos / {closedDays.length} cerrados</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Reservas</p><p className="mt-1 font-semibold text-slate-950">{config.standardDurationMinutes} min · {config.bookingWindowDays} días visibles</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Envíos</p><p className="mt-1 font-semibold text-slate-950">{formatCurrency(config.fixedDeliveryCost)} costo fijo</p></div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Web pública</p><p className="mt-1 font-semibold text-slate-950">{config.status === "active" ? "Publicada" : config.status === "paused" ? "Pausada" : "Borrador"} · {publicWebConfig.showReservations ? "reservas visibles" : "reservas ocultas"}</p></div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alertas</p><p className="mt-1 font-semibold text-slate-950">{enabledNotifications} activas</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alertas</p><p className="mt-1 font-semibold text-slate-950">Configuración futura</p></div>
               </div>
             </V2Card>
 
           </aside>
         </div>
       </div>
+
+      <style jsx global>{`
+        .v2-config-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 transparent;
+        }
+
+        .v2-config-scrollbar::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        .v2-config-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .v2-config-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+          border: 3px solid transparent;
+          border-radius: 999px;
+          background-clip: padding-box;
+        }
+
+        .v2-config-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #94a3b8, #64748b);
+          border: 3px solid transparent;
+          background-clip: padding-box;
+        }
+      `}</style>
     </V2AppShell>
   );
 }

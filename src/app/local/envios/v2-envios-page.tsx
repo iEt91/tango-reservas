@@ -1863,7 +1863,7 @@ export function V2EnviosPage() {
 
                   <div className="relative min-w-0 flex-1">
                     <V2Input
-                      className="min-w-0 pr-11"
+                      className="min-w-0 bg-slate-50 pr-11 font-semibold text-slate-950"
                       value={selectedDateLabel}
                       readOnly
                     />
@@ -1887,7 +1887,7 @@ export function V2EnviosPage() {
                   />
 
                   {isCalendarOpen ? (
-                    <div className="absolute left-12 top-12 z-30 w-[370px] rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl">
+                    <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-[360px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-950">
@@ -1974,7 +1974,7 @@ export function V2EnviosPage() {
                         <button
                           type="button"
                           onClick={() => setCalendarMonth((current) => moveMonth(current, -1))}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                           aria-label="Mes anterior"
                         >
                           <ChevronLeft size={17} />
@@ -1987,20 +1987,20 @@ export function V2EnviosPage() {
                         <button
                           type="button"
                           onClick={() => setCalendarMonth((current) => moveMonth(current, 1))}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                           aria-label="Mes siguiente"
                         >
                           <ChevronRight size={17} />
                         </button>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase text-slate-400">
-                        {["D", "L", "M", "M", "J", "V", "S"].map((weekday, index) => (
+                      <div className="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((weekday, index) => (
                           <span key={`${weekday}-${index}`}>{weekday}</span>
                         ))}
                       </div>
 
-                      <div className="mt-2 grid grid-cols-7 gap-1">
+                      <div className="mt-2 grid grid-cols-7 gap-1.5">
                         {Array.from({ length: calendarMonthData.firstWeekday }).map((_, index) => (
                           <span key={`empty-${index}`} className="h-9" />
                         ))}
@@ -2027,12 +2027,12 @@ export function V2EnviosPage() {
                               type="button"
                               onClick={() => selectCalendarDate(date)}
                               className={[
-                                "relative flex h-9 items-center justify-center rounded-xl text-sm font-medium transition",
+                                "relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition",
                                 isSelected
-                                  ? "bg-emerald-700 text-white shadow-sm"
+                                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
                                   : isInsideRange
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : "text-slate-700 hover:bg-slate-100",
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800",
                               ].join(" ")}
                             >
                               {day}
@@ -2334,7 +2334,7 @@ export function V2EnviosPage() {
                       type="button"
                       key={item.id}
                       onClick={() => selectDelivery(item)}
-                      className="block w-full border-b border-slate-100 pb-3 text-left last:border-b-0 last:pb-0"
+                      className="group block w-full rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-md"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -2361,7 +2361,7 @@ export function V2EnviosPage() {
               </div>
             </V2Card>
 
-            <V2Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden">
+            <V2Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm">
               <h2 className="text-base font-semibold text-slate-950">
                 Pedido seleccionado
               </h2>
@@ -2372,7 +2372,7 @@ export function V2EnviosPage() {
                 </p>
               ) : (
               <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm">
-                <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -2389,7 +2389,7 @@ export function V2EnviosPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
+                <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
                     Tracking público
                   </p>
@@ -2436,7 +2436,7 @@ export function V2EnviosPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Tipo
                     </p>
@@ -2445,7 +2445,7 @@ export function V2EnviosPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Total
                     </p>
@@ -2455,7 +2455,7 @@ export function V2EnviosPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Teléfono
                   </p>
@@ -2464,7 +2464,7 @@ export function V2EnviosPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     {selectedDelivery.deliveryType === "delivery" ? "Dirección" : "Entrega"}
                   </p>
@@ -2475,7 +2475,7 @@ export function V2EnviosPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Pedido completo
                   </p>
@@ -2490,7 +2490,7 @@ export function V2EnviosPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Nota
                   </p>

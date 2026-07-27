@@ -1704,14 +1704,14 @@ export function V2PlanoPage() {
                       setCalendarMonth(selectedDate);
                       setIsDatePickerOpen((current) => !current);
                     }}
-                    className="flex h-9 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-left text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50"
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-left text-sm font-semibold text-slate-950 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
                   >
                     <span className="truncate">{formatDateLabel(selectedDate)}</span>
                     <CalendarDays size={17} className="ml-3 shrink-0 text-slate-400" />
                   </button>
 
                   {isDatePickerOpen ? (
-                    <div className="absolute left-0 top-11 z-50 w-[360px] rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl">
+                    <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-[360px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-950">Seleccionar fecha</p>
@@ -1731,7 +1731,7 @@ export function V2PlanoPage() {
                         <button
                           type="button"
                           onClick={() => setCalendarMonth(moveMonth(calendarMonth, -1))}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                           aria-label="Mes anterior"
                         >
                           <ChevronLeft size={16} />
@@ -1740,20 +1740,20 @@ export function V2PlanoPage() {
                         <button
                           type="button"
                           onClick={() => setCalendarMonth(moveMonth(calendarMonth, 1))}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
                           aria-label="Mes siguiente"
                         >
                           <ChevronRight size={16} />
                         </button>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-400">
-                        {["D", "L", "M", "M", "J", "V", "S"].map((day, index) => (
+                      <div className="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day, index) => (
                           <div key={`weekday-${day}-${index}`} className="py-1">{day}</div>
                         ))}
                       </div>
 
-                      <div className="mt-1 grid grid-cols-7 gap-1">
+                      <div className="mt-2 grid grid-cols-7 gap-1.5">
                         {calendarMonthDays.map((day, index) => {
                           const isDisabled = !day.date || day.date < TODAY_DATE || day.date > maxBookingDate;
                           const isSelected = day.date === selectedDate;
@@ -1766,11 +1766,11 @@ export function V2PlanoPage() {
                               disabled={isDisabled}
                               onClick={() => selectCalendarDate(day.date)}
                               className={cn(
-                                "relative flex h-9 items-center justify-center rounded-xl text-sm font-semibold transition",
+                                "relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition",
                                 day.currentMonth ? "text-slate-700" : "text-transparent",
                                 isSelected
-                                  ? "bg-emerald-600 text-white shadow-sm"
-                                  : "hover:bg-emerald-50 hover:text-emerald-700",
+                                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                                  : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800",
                                 isDisabled ? "cursor-not-allowed opacity-30 hover:bg-transparent" : ""
                               )}
                             >

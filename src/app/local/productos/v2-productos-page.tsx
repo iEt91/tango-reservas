@@ -199,14 +199,14 @@ function getStockAlertCardToneClass(product: V2StockProduct) {
   const status = getStockStatus(product);
 
   if (status === "out_of_stock") {
-    return "border-red-200 bg-red-100/30 hover:bg-red-100/60";
+    return "border-red-200 bg-gradient-to-br from-red-50 to-white text-red-900 hover:border-red-300";
   }
 
   if (status === "low_stock") {
-    return "border-amber-200 bg-amber-100/30 hover:bg-amber-100/60";
+    return "border-amber-200 bg-gradient-to-br from-amber-50 to-white text-amber-900 hover:border-amber-300";
   }
 
-  return "border-emerald-200 bg-emerald-100/30 hover:bg-emerald-100/60";
+  return "border-emerald-200 bg-gradient-to-br from-emerald-50 to-white text-emerald-900 hover:border-emerald-300";
 }
 
 function getStockMiniCardToneClass(product: V2StockProduct) {
@@ -628,7 +628,7 @@ export function V2ProductosPage() {
                           type="button"
                           key={item.id}
                           onClick={() => openEditor(item)}
-                          className={`block w-full rounded-xl border p-3 text-left transition ${getStockAlertCardToneClass(item)}`}
+                          className={`group block w-full rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getStockAlertCardToneClass(item)}`}
                         >
                           <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -646,7 +646,7 @@ export function V2ProductosPage() {
                       </div>
 
                           <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                            <div className={`rounded-lg p-2 ${getStockMiniCardToneClass(item)}`}>
+                            <div className={`rounded-xl p-2 shadow-sm ${getStockMiniCardToneClass(item)}`}>
                               <p className="font-semibold uppercase tracking-wide text-slate-400">
                                 Restante
                               </p>
@@ -655,7 +655,7 @@ export function V2ProductosPage() {
                               </p>
                             </div>
 
-                            <div className={`rounded-lg p-2 ${getStockMiniCardToneClass(item)}`}>
+                            <div className={`rounded-xl p-2 shadow-sm ${getStockMiniCardToneClass(item)}`}>
                               <p className="font-semibold uppercase tracking-wide text-slate-400">
                                 Alerta
                               </p>
@@ -665,7 +665,7 @@ export function V2ProductosPage() {
                               </p>
                             </div>
 
-                            <div className={`rounded-lg p-2 ${getStockMiniCardToneClass(item)}`}>
+                            <div className={`rounded-xl p-2 shadow-sm ${getStockMiniCardToneClass(item)}`}>
                               <p className="font-semibold uppercase tracking-wide text-slate-400">
                                 Costo/u
                               </p>
@@ -674,7 +674,7 @@ export function V2ProductosPage() {
                               </p>
                             </div>
 
-                            <div className={`rounded-lg p-2 ${getStockMiniCardToneClass(item)}`}>
+                            <div className={`rounded-xl p-2 shadow-sm ${getStockMiniCardToneClass(item)}`}>
                               <p className="font-semibold uppercase tracking-wide text-slate-400">
                                 Descontado $
                               </p>

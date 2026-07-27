@@ -17,6 +17,7 @@ import {
   Utensils,
   Wine,
 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY,
@@ -195,12 +196,16 @@ type PublicDeliveryOrderItem = {
   quantity: number;
 };
 
+type PublicMenuIconKey = string;
+
 type PublicMenuSection = {
   id: string;
   name: string;
   description: string;
   active: boolean;
+  iconKey?: PublicMenuIconKey;
   productIds: string[];
+  featuredProductIds?: string[];
 };
 
 type PublicWebConfigState = {
@@ -242,6 +247,73 @@ type PublicDeliveryRecord = {
   source?: "web" | "manual";
   needsAcceptance?: boolean;
 };
+
+type LucideMenuIconComponent = React.ElementType<{
+  size?: number | string;
+  className?: string;
+  strokeWidth?: number | string;
+}>;
+
+const PUBLIC_MENU_ICON_ALIASES: Record<string, string> = {
+  leaf: "Leaf",
+  utensils: "Utensils",
+  bag: "ShoppingBag",
+  star: "Star",
+  wine: "Wine",
+  bike: "Bike",
+  clock: "Clock",
+  calendar: "CalendarDays",
+};
+
+function getPublicMenuIcon(iconKey?: PublicMenuIconKey) {
+  const normalizedIconKey = iconKey ? PUBLIC_MENU_ICON_ALIASES[iconKey] ?? iconKey : "Leaf";
+  const Icon = (LucideIcons as Record<string, unknown>)[normalizedIconKey];
+
+  return typeof Icon === "function" || (typeof Icon === "object" && Icon !== null)
+    ? (Icon as LucideMenuIconComponent)
+    : Leaf;
+}
+
+function inferPublicMenuIconKey(name: string): PublicMenuIconKey {
+  const normalizedName = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (
+    normalizedName.includes("bebida") ||
+    normalizedName.includes("vino") ||
+    normalizedName.includes("trago")
+  ) {
+    return "Wine";
+  }
+
+  if (
+    normalizedName.includes("postre") ||
+    normalizedName.includes("tortilla")
+  ) {
+    return "Star";
+  }
+
+  if (
+    normalizedName.includes("sandwich") ||
+    normalizedName.includes("pan") ||
+    normalizedName.includes("burger")
+  ) {
+    return "ShoppingBag";
+  }
+
+  if (
+    normalizedName.includes("ensalada") ||
+    normalizedName.includes("vegetal") ||
+    normalizedName.includes("clasico")
+  ) {
+    return "Leaf";
+  }
+
+  return "Utensils";
+}
+
 
 const DEFAULT_PUBLIC_ORDER_FORM: PublicOrderForm = {
   client: "",
@@ -335,26 +407,6 @@ function addDays(date: string, days: number) {
   return `${year}-${month}-${day}`;
 }
 
-function getLocalDateKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function getPublicDateTimeFromSlot(date: string, time: string, openMinutes: number) {
-  const parsedDate = new Date(`${date}T00:00:00`);
-  const slotMinutes = getSlotAbsoluteMinutes(time, openMinutes);
-  const dayOffset = Math.floor(slotMinutes / 1440);
-  const minutesInDay = slotMinutes % 1440;
-
-  parsedDate.setDate(parsedDate.getDate() + dayOffset);
-  parsedDate.setHours(Math.floor(minutesInDay / 60), minutesInDay % 60, 0, 0);
-
-  return parsedDate;
-}
-
 function formatPublicDate(date: string) {
   const parsedDate = new Date(`${date}T00:00:00`);
 
@@ -362,23 +414,6 @@ function formatPublicDate(date: string) {
     weekday: "long",
     day: "numeric",
     month: "long",
-  });
-}
-
-function formatPublicCalendarMonth(date: string) {
-  const parsedDate = new Date(`${date}T00:00:00`);
-
-  return parsedDate.toLocaleDateString("es-AR", {
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatPublicCalendarWeekday(date: string) {
-  const parsedDate = new Date(`${date}T00:00:00`);
-
-  return parsedDate.toLocaleDateString("es-AR", {
-    weekday: "short",
   });
 }
 
@@ -457,10 +492,6 @@ function getPublicAvailableTimeSlots(config: PublicLocalConfigState, date: strin
 
   if (businessWindows.length === 0) return [];
 
-  const now = new Date();
-  const todayKey = getLocalDateKey(now);
-  const minimumNoticeMs = Math.max(Number(config.minimumNoticeHours) || 0, 0) * 60 * 60 * 1000;
-  const minimumReservationDateTime = new Date(now.getTime() + minimumNoticeMs);
   const slots = new Set<string>();
 
   businessWindows.forEach((businessWindow) => {
@@ -469,14 +500,7 @@ function getPublicAvailableTimeSlots(config: PublicLocalConfigState, date: strin
       current <= businessWindow.closeMinutes;
       current += 30
     ) {
-      const slotTime = formatTimeFromMinutes(current);
-      const slotDateTime = getPublicDateTimeFromSlot(date, slotTime, businessWindow.openMinutes);
-
-      if (date === todayKey && slotDateTime <= minimumReservationDateTime) {
-        continue;
-      }
-
-      slots.add(slotTime);
+      slots.add(formatTimeFromMinutes(current));
     }
   });
 
@@ -498,38 +522,24 @@ function getPublicSlotGroupLabel(openTime: string, index: number) {
 }
 
 function getPublicTimeSlotGroups(config: PublicLocalConfigState, date: string) {
-  const now = new Date();
-  const todayKey = getLocalDateKey(now);
-  const minimumNoticeMs = Math.max(Number(config.minimumNoticeHours) || 0, 0) * 60 * 60 * 1000;
-  const minimumReservationDateTime = new Date(now.getTime() + minimumNoticeMs);
+  return getBusinessWindowsForDate(config, date).map((businessWindow, index) => {
+    const slots: string[] = [];
 
-  return getBusinessWindowsForDate(config, date)
-    .map((businessWindow, index) => {
-      const slots: string[] = [];
+    for (
+      let current = businessWindow.openMinutes;
+      current <= businessWindow.closeMinutes;
+      current += 30
+    ) {
+      slots.push(formatTimeFromMinutes(current));
+    }
 
-      for (
-        let current = businessWindow.openMinutes;
-        current <= businessWindow.closeMinutes;
-        current += 30
-      ) {
-        const slotTime = formatTimeFromMinutes(current);
-        const slotDateTime = getPublicDateTimeFromSlot(date, slotTime, businessWindow.openMinutes);
-
-        if (date === todayKey && slotDateTime <= minimumReservationDateTime) {
-          continue;
-        }
-
-        slots.push(slotTime);
-      }
-
-      return {
-        id: `${businessWindow.open}-${businessWindow.close}-${index}`,
-        label: getPublicSlotGroupLabel(businessWindow.open, index),
-        range: `${businessWindow.open}–${businessWindow.close}`,
-        slots,
-      };
-    })
-    .filter((group) => group.slots.length > 0);
+    return {
+      id: `${businessWindow.open}-${businessWindow.close}-${index}`,
+      label: getPublicSlotGroupLabel(businessWindow.open, index),
+      range: `${businessWindow.open}–${businessWindow.close}`,
+      slots,
+    };
+  });
 }
 
 function formatPublicBusinessHoursForContact(config: PublicLocalConfigState) {
@@ -620,7 +630,13 @@ function readPublicMenuSectionsConfig(): PublicMenuSection[] {
       name: section.name || "Menú",
       description: section.description || "Platos del local.",
       active: section.active !== false,
+      iconKey: section.iconKey ?? inferPublicMenuIconKey(section.name || ""),
       productIds: Array.isArray(section.productIds) ? section.productIds : [],
+      featuredProductIds: Array.isArray(section.featuredProductIds)
+        ? section.featuredProductIds.filter((productId) =>
+            Array.isArray(section.productIds) ? section.productIds.includes(productId) : false
+          )
+        : [],
     }));
 }
 
@@ -1091,7 +1107,6 @@ export default function PublicTemplatePage() {
   const [reservationError, setReservationError] = useState("");
   const [reservationSuccess, setReservationSuccess] = useState("");
   const [isTimePopupOpen, setIsTimePopupOpen] = useState(false);
-  const [isDatePopupOpen, setIsDatePopupOpen] = useState(false);
   const [pendingReservation, setPendingReservation] =
     useState<PendingPublicReservation | null>(null);
   const [createdReservationSummary, setCreatedReservationSummary] =
@@ -1371,18 +1386,31 @@ export default function PublicTemplatePage() {
         .map((productId) => publicMenuItemsById[productId])
         .filter(Boolean);
 
+      const featuredItems = (section.featuredProductIds ?? [])
+        .map((productId) => publicMenuItemsById[productId])
+        .filter(Boolean);
+
       return {
         title: section.name,
         description: section.description || fallbackCategory?.description || "Platos del local.",
-        icon: fallbackCategory?.icon ?? Utensils,
+        icon: getPublicMenuIcon(section.iconKey),
         items,
+        featuredItems,
       };
     })
     .filter((section) => section.items.length > 0);
 
   const publicFeaturedMenuItems =
     configuredPublicSections.length > 0
-      ? configuredPublicSections.flatMap((section) => section.items).slice(0, 4)
+      ? [
+          ...configuredPublicSections.flatMap((section) => section.featuredItems),
+          ...configuredPublicSections.flatMap((section) => section.items),
+        ]
+          .filter(
+            (item, index, items) =>
+              items.findIndex((currentItem) => currentItem.id === item.id) === index
+          )
+          .slice(0, 4)
       : publicMenuItems.length > 0
         ? publicMenuItems.slice(0, 4)
         : fallbackFeaturedItems.map((item) => ({ ...item, imageUrl: "" }));
@@ -1398,7 +1426,7 @@ export default function PublicTemplatePage() {
               return {
                 title: categoryName,
                 description: fallbackCategory?.description ?? "Platos del local.",
-                icon: fallbackCategory?.icon ?? Utensils,
+                icon: getPublicMenuIcon(inferPublicMenuIconKey(categoryName)) ?? fallbackCategory?.icon ?? Utensils,
                 items: publicMenuItems.filter((item) => item.category === categoryName),
               };
             }
@@ -1414,6 +1442,8 @@ export default function PublicTemplatePage() {
     publicMenuCategoryCards.find((item) => item.title === expandedCategory)?.items ??
     publicMenuCategoryCards[0]?.items ??
     [];
+  const shouldCenterActiveCategoryItems =
+    publicActiveCategoryItems.length > 0 && publicActiveCategoryItems.length <= 5;
 
   const filteredOrderItems =
     activeOrderCategory === "Todos"
@@ -1469,282 +1499,62 @@ export default function PublicTemplatePage() {
     { id: "hero", label: "Detalle" },
   ];
 
-  const publicCapacity = getPublicCapacity(localConfig, floorTables);
-
-  function getSlotAvailabilityForReservation(date: string, time: string, people: number) {
-    const availablePeople = getAvailablePeopleForSlot(
-      reservations,
-      floorTables,
-      localConfig,
-      date,
-      time
-    );
-    const normalizedPeople = Math.max(Number(people) || 1, 1);
-
-    if (availablePeople < normalizedPeople) {
-      return {
-        availablePeople,
-        isBookable: false,
-        reason: "Completo",
-      };
-    }
-
-    if (localConfig.allowReservationsWithoutTable === false) {
-      const probeReservation = normalizePublicReservation({
-        id: `probe-${date}-${time}-${normalizedPeople}`,
-        date,
-        time,
-        client: "Cliente web",
-        people: normalizedPeople,
-        phone: "",
-        note: "",
-        status: localConfig.defaultReservationStatus,
-        durationMinutes: localConfig.standardDurationMinutes,
-        tableName: "",
-        origin: "web",
-      });
-      const assignedTableName = getBestAvailablePublicTableForReservation(
-        probeReservation,
-        reservations,
-        floorTables,
-        localConfig
-      );
-
-      if (!assignedTableName) {
-        return {
-          availablePeople: 0,
-          isBookable: false,
-          reason: "Completo",
-        };
-      }
-    }
-
-    return {
-      availablePeople,
-      isBookable: true,
-      reason: `${availablePeople} lugares`,
-    };
-  }
-
-  function getDateAvailabilityStatus(date: string) {
-    const isOpen = Boolean(getBusinessWindowForDate(localConfig, date));
-    const baseSlots = getPublicAvailableTimeSlots(localConfig, date);
-    const usableTables = floorTables.filter(
-      (table) => table.status !== "blocked" && !table.locked && Number(table.capacity) > 0
-    );
-    const totalTableCapacity = usableTables.reduce(
-      (total, table) => total + Math.max(Number(table.capacity) || 0, 0),
-      0
-    );
-    const totalCapacityPerSlot = Math.min(localConfig.maxPeoplePerSlot, totalTableCapacity);
-    const reservationDuration = Math.max(Number(localConfig.standardDurationMinutes) || 90, 15);
-
-    if (!isOpen || baseSlots.length === 0 || totalCapacityPerSlot <= 0) {
-      return {
-        status: "closed" as const,
-        label: "Cerrado o sin mesas",
-        bookableSlots: 0,
-        maxAvailablePeople: 0,
-        availabilityPercent: 0,
-      };
-    }
-
-    function getTableAvailableCapacityForSlot(time: string) {
-      const businessWindows = getBusinessWindowsForDate(localConfig, date);
-      const matchingWindow =
-        businessWindows.find((businessWindow) => {
-          const slotMinutes = getSlotAbsoluteMinutes(time, businessWindow.openMinutes);
-
-          return (
-            slotMinutes >= businessWindow.openMinutes &&
-            slotMinutes <= businessWindow.closeMinutes
-          );
-        }) ?? businessWindows[0];
-
-      const openMinutes = matchingWindow?.openMinutes ?? 0;
-
-      const freeTableCapacity = usableTables.reduce((total, table) => {
-        const normalizedTableName = normalizePublicTableName(table.name);
-        const hasConflict = reservations.some((reservation) => {
-          if (reservation.date !== date) return false;
-          if (!isActivePublicReservation(reservation)) return false;
-          if (!splitPublicTableNames(reservation.tableName).includes(normalizedTableName)) {
-            return false;
-          }
-
-          return doReservationsOverlap(
-            reservation.time,
-            Math.max(Number(reservation.durationMinutes) || reservationDuration, 15),
-            time,
-            reservationDuration,
-            openMinutes
-          );
-        });
-
-        return hasConflict ? total : total + Math.max(Number(table.capacity) || 0, 0);
-      }, 0);
-
-      const unassignedReservedPeople = reservations
-        .filter((reservation) => reservation.date === date && isActivePublicReservation(reservation))
-        .filter((reservation) => !reservation.tableName?.trim())
-        .filter((reservation) =>
-          doReservationsOverlap(
-            reservation.time,
-            Math.max(Number(reservation.durationMinutes) || reservationDuration, 15),
-            time,
-            reservationDuration,
-            openMinutes
-          )
-        )
-        .reduce((total, reservation) => total + Math.max(Number(reservation.people) || 0, 0), 0);
-
-      return Math.max(
-        Math.min(localConfig.maxPeoplePerSlot, freeTableCapacity) - unassignedReservedPeople,
-        0
-      );
-    }
-
-    const slotCapacities = baseSlots.map((time) => ({
-      time,
-      availableCapacity: getTableAvailableCapacityForSlot(time),
-      isBookable: getSlotAvailabilityForReservation(date, time, reservationForm.people).isBookable,
-    }));
-    const bookableSlots = slotCapacities.filter((slot) => slot.isBookable);
-    const availableCapacity = slotCapacities.reduce(
-      (total, slot) => total + slot.availableCapacity,
-      0
-    );
-    const totalDailyCapacity = baseSlots.length * totalCapacityPerSlot;
-    const availabilityPercent =
-      totalDailyCapacity > 0 ? Math.round((availableCapacity / totalDailyCapacity) * 100) : 0;
-    const maxAvailablePeople = Math.max(
-      0,
-      ...bookableSlots.map((slot) => slot.availableCapacity)
-    );
-
-    if (availableCapacity <= 0 || bookableSlots.length === 0) {
-      return {
-        status: "closed" as const,
-        label: "Sin mesas disponibles",
-        bookableSlots: 0,
-        maxAvailablePeople: 0,
-        availabilityPercent: 0,
-      };
-    }
-
-    if (availabilityPercent < 60) {
-      return {
-        status: "limited" as const,
-        label: `${availabilityPercent}% disponible`,
-        bookableSlots: bookableSlots.length,
-        maxAvailablePeople,
-        availabilityPercent,
-      };
-    }
-
-    return {
-      status: "available" as const,
-      label: `${availabilityPercent}% disponible`,
-      bookableSlots: bookableSlots.length,
-      maxAvailablePeople,
-      availabilityPercent,
-    };
-  }
-
-  const publicCalendarDates = useMemo(
+  const publicAvailableDates = useMemo(
     () =>
       Array.from({ length: localConfig.bookingWindowDays })
         .map((_, index) => {
           const date = addDays(getTodayDateKey(), index);
-          const availability = getDateAvailabilityStatus(date);
+          const isOpen = Boolean(getBusinessWindowForDate(localConfig, date));
 
           return {
             date,
             label: formatPublicDate(date),
-            dayNumber: new Date(`${date}T00:00:00`).getDate(),
-            weekday: formatPublicCalendarWeekday(date),
-            ...availability,
+            isOpen,
           };
-        }),
-    [floorTables, localConfig, reservationForm.people, reservations]
+        })
+        .filter((item) => item.isOpen),
+    [localConfig]
   );
 
-  const publicAvailableDates = publicCalendarDates.filter((item) => item.status !== "closed");
-
-  const calendarLeadingEmptyDays = publicCalendarDates[0]
-    ? new Date(`${publicCalendarDates[0].date}T00:00:00`).getDay()
-    : 0;
-
   const publicAvailableTimeSlots = useMemo(
-    () =>
-      getPublicAvailableTimeSlots(localConfig, reservationForm.date).filter((time) =>
-        getSlotAvailabilityForReservation(
-          reservationForm.date,
-          time,
-          reservationForm.people
-        ).isBookable
-      ),
-    [floorTables, localConfig, reservationForm.date, reservationForm.people, reservations]
+    () => getPublicAvailableTimeSlots(localConfig, reservationForm.date),
+    [localConfig, reservationForm.date]
   );
 
   const publicTimeSlotGroups = useMemo(
-    () =>
-      getPublicTimeSlotGroups(localConfig, reservationForm.date)
-        .map((group) => ({
-          ...group,
-          slots: group.slots.filter((time) =>
-            getSlotAvailabilityForReservation(
-              reservationForm.date,
-              time,
-              reservationForm.people
-            ).isBookable
-          ),
-        }))
-        .filter((group) => group.slots.length > 0),
-    [floorTables, localConfig, reservationForm.date, reservationForm.people, reservations]
+    () => getPublicTimeSlotGroups(localConfig, reservationForm.date),
+    [localConfig, reservationForm.date]
   );
 
-  const selectedSlotAvailability = reservationForm.time
-    ? getSlotAvailabilityForReservation(
+  const selectedSlotAvailablePeople = reservationForm.time
+    ? getAvailablePeopleForSlot(
+        reservations,
+        floorTables,
+        localConfig,
         reservationForm.date,
-        reservationForm.time,
-        reservationForm.people
+        reservationForm.time
       )
-    : null;
-
-  const selectedSlotAvailablePeople = selectedSlotAvailability?.availablePeople ?? 0;
+    : 0;
 
   const isSelectedDateOpen = Boolean(getBusinessWindowForDate(localConfig, reservationForm.date));
+  const publicCapacity = getPublicCapacity(localConfig, floorTables);
 
   useEffect(() => {
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
 
       setIsTimePopupOpen(false);
-      setIsDatePopupOpen(false);
       setPendingReservation(null);
       setCreatedReservationSummary(null);
       setIsOrderPopupOpen(false);
     }
 
-    if (
-      isTimePopupOpen ||
-      isDatePopupOpen ||
-      pendingReservation ||
-      createdReservationSummary ||
-      isOrderPopupOpen
-    ) {
+    if (isTimePopupOpen || pendingReservation || createdReservationSummary || isOrderPopupOpen) {
       window.addEventListener("keydown", handleEscapeKey);
     }
 
     return () => window.removeEventListener("keydown", handleEscapeKey);
-  }, [
-    isTimePopupOpen,
-    isDatePopupOpen,
-    pendingReservation,
-    createdReservationSummary,
-    isOrderPopupOpen,
-  ]);
+  }, [isTimePopupOpen, pendingReservation, createdReservationSummary, isOrderPopupOpen]);
 
   function updateReservationForm<K extends keyof PublicReservationForm>(
     key: K,
@@ -1756,7 +1566,6 @@ export default function PublicTemplatePage() {
       if (key === "date") {
         const nextDate = String(value);
         setIsTimePopupOpen(false);
-        setIsDatePopupOpen(false);
 
         return {
           ...current,
@@ -1896,35 +1705,6 @@ export default function PublicTemplatePage() {
       origin: "web",
     });
 
-    const liveAvailableTimeSlots = getPublicAvailableTimeSlots(
-      configForReservation,
-      baseReservation.date
-    );
-
-    if (!liveAvailableTimeSlots.includes(baseReservation.time)) {
-      setPendingReservation(null);
-      setReservationError("Ese horario ya no está disponible. Elegí otro horario.");
-      setReservationSuccess("");
-      return;
-    }
-
-    const liveAvailablePeople = getAvailablePeopleForSlot(
-      reservationsForReservation,
-      tablesForReservation,
-      configForReservation,
-      baseReservation.date,
-      baseReservation.time
-    );
-
-    if (baseReservation.people > liveAvailablePeople) {
-      setPendingReservation(null);
-      setReservationError(
-        `Para ese horario quedan ${liveAvailablePeople} lugares disponibles. Probá con otro horario.`
-      );
-      setReservationSuccess("");
-      return;
-    }
-
     const shouldAutoAssignTable =
       configForReservation.autoAssignReservationTables !== false ||
       configForReservation.allowReservationsWithoutTable === false;
@@ -1938,13 +1718,16 @@ export default function PublicTemplatePage() {
         )
       : "";
 
-    if (!assignedTableName && configForReservation.allowReservationsWithoutTable === false) {
-      setPendingReservation(null);
-      setReservationError(
-        "No hay mesas disponibles para esa fecha, horario y cantidad de personas. Probá con otro horario."
+    if (!assignedTableName && shouldAutoAssignTable) {
+      assignedTableName = getBestAvailablePublicTableForReservation(
+        baseReservation,
+        reservationsForReservation,
+        DEFAULT_PUBLIC_FLOOR_TABLES,
+        {
+          ...configForReservation,
+          allowTableCombinations: true,
+        }
       );
-      setReservationSuccess("");
-      return;
     }
 
     const nextReservation: PublicReservationDraft = {
@@ -2859,7 +2642,7 @@ export default function PublicTemplatePage() {
               })}
             </div>
             <div className="mt-8 overflow-hidden rounded-2xl border demuru-border bg-[#151410]/78 p-5">
-              <div className="flex items-end justify-between gap-4">
+              <div className="flex items-end justify-center gap-4 text-center">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c9a86a]">
                     {expandedCategory}
@@ -2870,11 +2653,15 @@ export default function PublicTemplatePage() {
                 </div>
               </div>
 
-              <div className="demuru-scrollbar mt-5 flex gap-4 overflow-x-auto pb-2">
+              <div
+                className={`demuru-scrollbar mt-5 flex gap-4 overflow-x-auto pb-2 ${
+                  shouldCenterActiveCategoryItems ? "justify-center" : "justify-start"
+                }`}
+              >
                 {publicActiveCategoryItems.map((item) => (
                   <article
                     key={item.id}
-                    className="min-w-[260px] overflow-hidden rounded-xl border demuru-border bg-[#0f0d0a]"
+                    className="w-[260px] min-w-[260px] shrink-0 overflow-hidden rounded-xl border demuru-border bg-[#0f0d0a]"
                   >
                     <img
                       src={item.imageUrl || content.imageValues[item.imageSlot]}
@@ -3035,20 +2822,32 @@ export default function PublicTemplatePage() {
                   />
                 </label>
 
-                <div className="block">
+                <label className="block">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-[#c9a86a]">
                     Fecha
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsDatePopupOpen(true)}
-                    disabled={publicCalendarDates.length === 0}
-                    className="mt-2 flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-[#c9a86a]/24 bg-black/24 px-4 text-left text-sm text-[#fff2dd] outline-none transition hover:border-[#d88757] disabled:cursor-not-allowed disabled:opacity-50"
+                  <select
+                    value={reservationForm.date}
+                    onChange={(event) => updateReservationForm("date", event.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-[#c9a86a]/24 bg-black/24 px-4 text-sm text-[#fff2dd] outline-none focus:border-[#d88757]"
                   >
-                    <span>{reservationForm.date ? formatPublicDate(reservationForm.date) : "Elegir fecha"}</span>
-                    <CalendarDays size={18} className="text-[#c9a86a]" />
-                  </button>
-                </div>
+                    {publicAvailableDates.length > 0 ? (
+                      publicAvailableDates.map((item) => (
+                        <option
+                          key={item.date}
+                          value={item.date}
+                          className="bg-[#15110d] text-[#fff2dd]"
+                        >
+                          {item.label}
+                        </option>
+                      ))
+                    ) : (
+                      <option className="bg-[#15110d] text-[#fff2dd]">
+                        Sin fechas disponibles
+                      </option>
+                    )}
+                  </select>
+                </label>
 
                 <div className="block">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-[#c9a86a]">
@@ -3134,104 +2933,6 @@ export default function PublicTemplatePage() {
                 Enviar reserva
               </button>
 
-              {isDatePopupOpen ? (
-                <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
-                  onClick={() => setIsDatePopupOpen(false)}
-                >
-                  <div
-                    className="w-full max-w-4xl rounded-[2rem] border border-[#c9a86a]/28 bg-[#15110d] p-6 text-[#fff2dd] shadow-2xl shadow-black/50"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <div className="flex items-start justify-between gap-4 border-b border-[#c9a86a]/18 pb-4">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c9a86a]">
-                          Seleccionar fecha
-                        </p>
-                        <h3 className="demuru-serif mt-2 text-3xl text-[#fff2dd]">
-                          {publicCalendarDates[0]
-                            ? formatPublicCalendarMonth(publicCalendarDates[0].date)
-                            : "Calendario"}
-                        </h3>
-                        <p className="mt-2 text-sm text-[#f4ead8]/62">
-                          Los puntos indican disponibilidad real según horarios, reservas activas y mesas del plano.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsDatePopupOpen(false)}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#c9a86a]/24 bg-black/20 text-[#f4ead8] transition hover:border-[#d88757] hover:text-white"
-                        aria-label="Cerrar calendario"
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap gap-3 text-xs font-bold text-[#f4ead8]/62">
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                        Disponible
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
-                        Pocas mesas
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                        Sin mesas / cerrado
-                      </span>
-                    </div>
-
-                    <div className="mt-5 grid grid-cols-7 gap-2 text-center text-[11px] font-black uppercase tracking-[0.12em] text-[#c9a86a]">
-                      {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
-                        <span key={day}>{day}</span>
-                      ))}
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-7 gap-2">
-                      {Array.from({ length: calendarLeadingEmptyDays }).map((_, index) => (
-                        <div key={`empty-${index}`} />
-                      ))}
-
-                      {publicCalendarDates.map((item) => {
-                        const isSelected = reservationForm.date === item.date;
-                        const isDisabled = item.status === "closed";
-                        const dotClass =
-                          item.status === "available"
-                            ? "bg-emerald-400"
-                            : item.status === "limited"
-                              ? "bg-amber-300"
-                              : "bg-red-400";
-
-                        return (
-                          <button
-                            key={item.date}
-                            type="button"
-                            disabled={isDisabled}
-                            title={`${item.label} · ${item.status === "closed" ? item.label : `${item.availabilityPercent}% disponible`}`}
-                            onClick={() => updateReservationForm("date", item.date)}
-                            className={`min-h-[68px] rounded-2xl border p-2 text-center transition ${
-                              isSelected
-                                ? "border-[#d88757] bg-[#c97048] text-white shadow-lg shadow-black/20"
-                                : isDisabled
-                                  ? "cursor-not-allowed border-[#c9a86a]/10 bg-black/16 text-[#f4ead8]/30"
-                                  : "border-[#c9a86a]/18 bg-black/22 text-[#f4ead8] hover:border-[#d88757] hover:bg-[#c97048]/18"
-                            }`}
-                          >
-                            <span className="block text-[10px] font-bold uppercase tracking-[0.08em] opacity-70">
-                              {item.weekday}
-                            </span>
-                            <span className="mt-1 block text-lg font-black">{item.dayNumber}</span>
-                            <span className={`mx-auto mt-2 block h-2.5 w-2.5 rounded-full ${dotClass}`} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
               {isTimePopupOpen ? (
                 <div
                   className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
@@ -3264,7 +2965,7 @@ export default function PublicTemplatePage() {
                       </button>
                     </div>
 
-                    <div className="demuru-scrollbar mt-5 max-h-[430px] space-y-6 overflow-y-auto pr-1">
+                    <div className="mt-5 max-h-[430px] space-y-6 overflow-y-auto pr-1">
                       {publicTimeSlotGroups.length > 0 ? (
                         publicTimeSlotGroups.map((group) => (
                           <div key={group.id}>
@@ -3279,13 +2980,14 @@ export default function PublicTemplatePage() {
 
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                               {group.slots.map((time) => {
-                                const slotAvailability = getSlotAvailabilityForReservation(
+                                const availablePeople = getAvailablePeopleForSlot(
+                                  reservations,
+                                  floorTables,
+                                  localConfig,
                                   reservationForm.date,
-                                  time,
-                                  reservationForm.people
+                                  time
                                 );
-                                const availablePeople = slotAvailability.availablePeople;
-                                const isUnavailable = !slotAvailability.isBookable;
+                                const isUnavailable = availablePeople <= 0;
                                 const isSelected = reservationForm.time === time;
 
                                 return (

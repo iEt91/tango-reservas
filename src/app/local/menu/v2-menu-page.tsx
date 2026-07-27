@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import {
+  AlertTriangle,
   BookOpenText,
   Eye,
   EyeOff,
@@ -86,6 +87,36 @@ function normalizeSearch(value: string) {
 
 const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
 const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+const MENU_IMAGE_API_PATH = "/api/menu-images";
+const MENU_ITEMS_EVENT = "tango-v2-menu-items-updated";
+const MENU_CATEGORIES_EVENT = "tango-v2-menu-categories-updated";
+
+function buildMenuImageUrl(productName: string) {
+  const normalizedName = productName.trim();
+
+  if (!normalizedName) return "";
+
+  return `${MENU_IMAGE_API_PATH}/${encodeURIComponent(normalizedName)}`;
+}
+
+function isAutoMenuImageUrl(value?: string) {
+  return Boolean(value && value.startsWith(`${MENU_IMAGE_API_PATH}/`));
+}
+
+function shouldAutoAssignMenuImage(item: Pick<V2MenuItemDraft, "name" | "imageUrl">) {
+  return !item.imageUrl || item.imageUrl.startsWith("blob:") || isAutoMenuImageUrl(item.imageUrl);
+}
+
+function applyAutomaticMenuImages(items: V2MenuItemDraft[]) {
+  return items.map((item) => {
+    if (!shouldAutoAssignMenuImage(item)) return item;
+
+    return {
+      ...item,
+      imageUrl: buildMenuImageUrl(item.name),
+    };
+  });
+}
 
 function readFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -105,6 +136,14 @@ function writeToStorage<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
 
   window.localStorage.setItem(key, JSON.stringify(value));
+
+  if (key === MENU_ITEMS_STORAGE_KEY) {
+    window.dispatchEvent(new Event(MENU_ITEMS_EVENT));
+  }
+
+  if (key === MENU_CATEGORIES_STORAGE_KEY) {
+    window.dispatchEvent(new Event(MENU_CATEGORIES_EVENT));
+  }
 }
 
 function V2MenuStatusBadge({ status }: { status: V2MenuItemStatus }) {
@@ -116,14 +155,19 @@ function V2MenuStatusBadge({ status }: { status: V2MenuItemStatus }) {
 }
 
 function V2MenuThumbnail({ item }: { item: Pick<V2MenuItemDraft, "imageUrl" | "name"> }) {
+
+
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
       {item.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={item.imageUrl}
           alt={item.name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
         />
       ) : (
         <ImageIcon size={18} className="text-slate-400" />
@@ -161,6 +205,57 @@ function createEmptyCategory(nextOrder: number): V2MenuCategoryDraft {
   };
 }
 
+
+type V2MenuImageFile = {
+  fileName: string;
+  name: string;
+  imageUrl: string;
+};
+
+function normalizeMenuProductName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function fetchAvailableMenuImages() {
+  try {
+    const response = await fetch("/api/menu-images/_list", { cache: "no-store" });
+
+    if (!response.ok) return [];
+
+    const data = (await response.json()) as { files?: V2MenuImageFile[] };
+
+    return Array.isArray(data.files) ? data.files : [];
+  } catch {
+    return [];
+  }
+}
+
+function createMenuImageProductDraft(file: V2MenuImageFile): V2MenuItem {
+  const now = new Date().toISOString();
+
+  return {
+    id: `img-product-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: file.name,
+    description: "",
+    categoryId: "",
+    price: 0,
+    status: "available",
+    visible: true,
+    featured: false,
+    imageUrl: file.imageUrl,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+
 export function V2MenuPage() {
   const [menuItems, setMenuItems] = useState<V2MenuItemDraft[]>(v2MenuItems);
 
@@ -182,6 +277,8 @@ export function V2MenuPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [visibilityFilter, setVisibilityFilter] = useState("all");
+  const [quickFilter, setQuickFilter] = useState("all");
+  const [hasQuickChanges, setHasQuickChanges] = useState(false);
 
   const [editingItem, setEditingItem] = useState<V2MenuItemDraft | null>(null);
   const [editingItemMode, setEditingItemMode] = useState<"create" | "edit">("edit");
@@ -198,7 +295,9 @@ export function V2MenuPage() {
 
   useEffect(() => {
     setMenuItems(
-      readFromStorage<V2MenuItemDraft[]>(MENU_ITEMS_STORAGE_KEY, v2MenuItems)
+      applyAutomaticMenuImages(
+        readFromStorage<V2MenuItemDraft[]>(MENU_ITEMS_STORAGE_KEY, v2MenuItems)
+      )
     );
 
     setCategories(
@@ -246,8 +345,9 @@ export function V2MenuPage() {
   }, [orderedCategories]);
 
   const visibleItems = menuItems.filter((item) => item.visible);
-  const featuredItems = menuItems.filter((item) => item.featured);
   const pausedItems = menuItems.filter((item) => item.status === "paused");
+  const withoutCategoryItems = menuItems.filter((item) => !item.categoryId);
+  const withoutPriceItems = menuItems.filter((item) => Number(item.price) <= 0);
 
   const filteredItems = useMemo(() => {
     const query = normalizeSearch(searchValue);
@@ -272,12 +372,31 @@ export function V2MenuPage() {
       const matchesVisibility =
         visibilityFilter === "all" ||
         (visibilityFilter === "visible" && item.visible) ||
-        (visibilityFilter === "hidden" && !item.visible) ||
-        (visibilityFilter === "featured" && item.featured);
+        (visibilityFilter === "hidden" && !item.visible);
 
-      return matchesSearch && matchesCategory && matchesStatus && matchesVisibility;
+      const matchesQuickFilter =
+        quickFilter === "all" ||
+        (quickFilter === "without-category" && !item.categoryId) ||
+        (quickFilter === "without-price" && Number(item.price) <= 0) ||
+        (quickFilter === "needs-review" && (!item.categoryId || Number(item.price) <= 0));
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesStatus &&
+        matchesVisibility &&
+        matchesQuickFilter
+      );
     });
-  }, [categoryFilter, categoryNameById, menuItems, searchValue, statusFilter, visibilityFilter]);
+  }, [
+    categoryFilter,
+    categoryNameById,
+    menuItems,
+    quickFilter,
+    searchValue,
+    statusFilter,
+    visibilityFilter,
+  ]);
 
   const productsOutsideAssignCategory = useMemo(() => {
     if (!assignCategory) return [];
@@ -292,7 +411,9 @@ export function V2MenuPage() {
   }
 
   function getCategoryProductEntries(category: V2MenuCategoryDraft): V2CategoryProduct[] {
-    if (category.products) return category.products;
+    if (category.isPromotion) {
+      return category.products ?? [];
+    }
 
     return menuItems
       .filter((item) => item.categoryId === category.id)
@@ -354,8 +475,21 @@ export function V2MenuPage() {
 
     setEditingCategory({
       ...editingCategory,
-      products: nextProducts,
+      products: editingCategory.isPromotion ? nextProducts : undefined,
     });
+
+    if (!editingCategory.isPromotion) {
+      setMenuItems((currentItems) =>
+        currentItems.map((item) => {
+          if (item.id !== productId) return item;
+
+          return {
+            ...item,
+            categoryId: normalizedQuantity > 0 ? editingCategory.id : "",
+          };
+        })
+      );
+    }
   }
 
   function reorderCategories(sourceId: string, targetId: string) {
@@ -418,9 +552,13 @@ export function V2MenuPage() {
   function saveItem() {
     if (!editingItem) return;
 
+    const sanitizedName = editingItem.name.trim() || "Producto sin nombre";
     const sanitizedItem: V2MenuItemDraft = {
       ...editingItem,
-      name: editingItem.name.trim() || "Producto sin nombre",
+      name: sanitizedName,
+      imageUrl: shouldAutoAssignMenuImage(editingItem)
+        ? buildMenuImageUrl(sanitizedName)
+        : editingItem.imageUrl,
       description: editingItem.description.trim(),
       price: Number(editingItem.price) || 0,
     };
@@ -437,6 +575,8 @@ export function V2MenuPage() {
   }
 
   function toggleItemStatus(itemId: string) {
+    setHasQuickChanges(true);
+
     setMenuItems((current) =>
       current.map((item) =>
         item.id === itemId
@@ -449,6 +589,56 @@ export function V2MenuPage() {
     );
   }
 
+  function updateQuickItemCategory(itemId: string, categoryId: string) {
+    setHasQuickChanges(true);
+
+    setMenuItems((current) =>
+      current.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              categoryId,
+            }
+          : item
+      )
+    );
+  }
+
+  function updateQuickItemPrice(itemId: string, price: string) {
+    setHasQuickChanges(true);
+
+    setMenuItems((current) =>
+      current.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              price: Number(price) || 0,
+            }
+          : item
+      )
+    );
+  }
+
+  function toggleQuickItemVisibility(itemId: string) {
+    setHasQuickChanges(true);
+
+    setMenuItems((current) =>
+      current.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              visible: !item.visible,
+            }
+          : item
+      )
+    );
+  }
+
+  function confirmQuickChanges() {
+    writeToStorage(MENU_ITEMS_STORAGE_KEY, menuItems);
+    setHasQuickChanges(false);
+  }
+
   function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -456,6 +646,10 @@ export function V2MenuPage() {
 
     const imageUrl = URL.createObjectURL(file);
     setEditingItem({ ...editingItem, imageUrl });
+  }
+
+  function linkGeneratedMenuImages() {
+    setMenuItems((current) => applyAutomaticMenuImages(current));
   }
 
   function renderSelectableCell(item: V2MenuItemDraft, content: ReactNode) {
@@ -490,6 +684,10 @@ export function V2MenuPage() {
   function saveCategory() {
     if (!editingCategory) return;
 
+    const categoryEntries = getCategoryProductEntries(editingCategory).filter(
+      (entry) => entry.quantity > 0
+    );
+
     const sanitizedCategory: V2MenuCategoryDraft = {
       ...editingCategory,
       name: editingCategory.name.trim() || "Categoría sin nombre",
@@ -498,10 +696,26 @@ export function V2MenuPage() {
       isPromotion: Boolean(editingCategory.isPromotion),
       fixedPrice: Number(editingCategory.fixedPrice) || undefined,
       discountPercent: Number(editingCategory.discountPercent) || undefined,
-      products: getCategoryProductEntries(editingCategory).filter(
-        (entry) => entry.quantity > 0
-      ),
+      products: editingCategory.isPromotion ? categoryEntries : undefined,
     };
+
+    if (!sanitizedCategory.isPromotion) {
+      const assignedProductIds = new Set(categoryEntries.map((entry) => entry.productId));
+
+      setMenuItems((currentItems) =>
+        currentItems.map((item) => {
+          if (assignedProductIds.has(item.id)) {
+            return { ...item, categoryId: sanitizedCategory.id };
+          }
+
+          if (item.categoryId === sanitizedCategory.id) {
+            return { ...item, categoryId: "" };
+          }
+
+          return item;
+        })
+      );
+    }
 
     if (editingCategoryMode === "create") {
       setCategories((current) => [...current, sanitizedCategory]);
@@ -531,6 +745,19 @@ export function V2MenuPage() {
 
   function assignProductToCategory() {
     if (!assignCategory || !productToAssignId) return;
+
+    if (!assignCategory.isPromotion) {
+      setMenuItems((currentItems) =>
+        currentItems.map((item) =>
+          item.id === productToAssignId
+            ? { ...item, categoryId: assignCategory.id }
+            : item
+        )
+      );
+
+      closeAssignProduct();
+      return;
+    }
 
     setCategories((current) =>
       current.map((category) => {
@@ -571,6 +798,24 @@ export function V2MenuPage() {
 
   function confirmRemoveFromCategory() {
     if (!removeFromCategoryTarget) return;
+
+    const targetCategory = categories.find(
+      (category) => category.id === removeFromCategoryTarget.categoryId
+    );
+
+    if (!targetCategory?.isPromotion) {
+      setMenuItems((currentItems) =>
+        currentItems.map((item) =>
+          item.id === removeFromCategoryTarget.productId &&
+          item.categoryId === removeFromCategoryTarget.categoryId
+            ? { ...item, categoryId: "" }
+            : item
+        )
+      );
+
+      closeRemoveFromCategoryDialog();
+      return;
+    }
 
     setCategories((current) =>
       current.map((category) => {
@@ -632,6 +877,12 @@ export function V2MenuPage() {
         current.filter((category) => category.id !== deleteTarget.id)
       );
 
+      setMenuItems((currentItems) =>
+        currentItems.map((item) =>
+          item.categoryId === deleteTarget.id ? { ...item, categoryId: "" } : item
+        )
+      );
+
       if (categoryFilter === deleteTarget.id) {
         setCategoryFilter("all");
       }
@@ -643,6 +894,37 @@ export function V2MenuPage() {
 
     closeDeleteDialog();
   }
+
+  async function importProductsFromImageFolder() {
+    const files = await fetchAvailableMenuImages();
+
+    if (!files.length) {
+      window.alert("No se encontraron imágenes en src/app/local/menu/img.");
+      return;
+    }
+
+    const existingNames = new Set(menuItems.map((item) => normalizeMenuProductName(item.name)));
+    const productsToCreate = files
+      .filter((file) => !existingNames.has(normalizeMenuProductName(file.name)))
+      .map(createMenuImageProductDraft);
+
+    if (!productsToCreate.length) {
+      window.alert("No hay productos nuevos para importar. Las imágenes ya coinciden con productos existentes.");
+      return;
+    }
+
+    setMenuItems((currentItems) => {
+      const currentNames = new Set(currentItems.map((item) => normalizeMenuProductName(item.name)));
+      const uniqueProducts = productsToCreate.filter(
+        (product) => !currentNames.has(normalizeMenuProductName(product.name))
+      );
+
+      return [...currentItems, ...uniqueProducts];
+    });
+
+    window.alert(`Se importaron ${productsToCreate.length} productos desde la carpeta de imágenes.`);
+  }
+
 
   return (
     <V2AppShell>
@@ -659,6 +941,28 @@ export function V2MenuPage() {
                 <BookOpenText size={18} />
                 Gestionar recetas
               </Link>
+
+              <V2Button
+                variant="secondary"
+                icon={<ImageIcon size={18} />}
+                onClick={linkGeneratedMenuImages}
+              >
+                Vincular imágenes
+              </V2Button>
+              <V2Button type="button" variant="secondary" onClick={importProductsFromImageFolder}>
+                <Plus size={16} />
+                Importar imágenes
+              </V2Button>
+
+              {hasQuickChanges ? (
+                <V2Button type="button" variant="success" onClick={confirmQuickChanges}>
+                  Guardar cambios rápidos
+                </V2Button>
+              ) : (
+                <span className="inline-flex h-10 items-center rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700">
+                  Menú sincronizado
+                </span>
+              )}
 
               <V2Button
                 variant="secondary"
@@ -681,8 +985,9 @@ export function V2MenuPage() {
 
         <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_340px]">
           <div className="flex min-h-0 flex-col gap-4">
-            <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid shrink-0 gap-3 md:grid-cols-3 xl:grid-cols-6">
               <V2MetricCard
+                className="min-h-[88px] py-3"
                 label="Productos"
                 value={menuItems.length}
                 helper="Total"
@@ -691,6 +996,7 @@ export function V2MenuPage() {
               />
 
               <V2MetricCard
+                className="min-h-[88px] py-3"
                 label="Categorías"
                 value={categories.length}
                 helper="Configurables"
@@ -699,6 +1005,7 @@ export function V2MenuPage() {
               />
 
               <V2MetricCard
+                className="min-h-[88px] py-3"
                 label="Visibles"
                 value={visibleItems.length}
                 helper="En web"
@@ -707,23 +1014,34 @@ export function V2MenuPage() {
               />
 
               <V2MetricCard
-                label="Destacados"
-                value={featuredItems.length}
-                helper="Productos"
-                tone="purple"
-                icon={<Star size={22} />}
-              />
-
-              <V2MetricCard
+                className="min-h-[88px] py-3"
                 label="Pausados"
                 value={pausedItems.length}
                 helper="No disponibles"
                 tone="red"
                 icon={<PauseCircle size={22} />}
               />
+
+              <V2MetricCard
+                className="min-h-[88px] py-3"
+                label="Sin categoría"
+                value={withoutCategoryItems.length}
+                helper="Revisar"
+                tone="orange"
+                icon={<Tags size={22} />}
+              />
+
+              <V2MetricCard
+                className="min-h-[88px] py-3"
+                label="Precio $0"
+                value={withoutPriceItems.length}
+                helper="Completar"
+                tone="red"
+                icon={<AlertTriangle size={22} />}
+              />
             </div>
 
-            <div className="-mt-2 shrink-0">
+            <div className="-mt-3 shrink-0">
               <V2FilterBar>
                 <div className="relative min-w-[320px] flex-1">
                   <Search
@@ -772,7 +1090,18 @@ export function V2MenuPage() {
                     <option value="all">Toda visibilidad</option>
                     <option value="visible">Visible en web</option>
                     <option value="hidden">Oculto en web</option>
-                    <option value="featured">Destacados</option>
+                  </V2Select>
+                </div>
+
+                <div className="min-w-[180px]">
+                  <V2Select
+                    value={quickFilter}
+                    onChange={(event) => setQuickFilter(event.target.value)}
+                  >
+                    <option value="all">Revisión rápida</option>
+                    <option value="needs-review">Sin categoría o precio</option>
+                    <option value="without-category">Solo sin categoría</option>
+                    <option value="without-price">Solo precio $0</option>
                   </V2Select>
                 </div>
               </V2FilterBar>
@@ -805,18 +1134,38 @@ export function V2MenuPage() {
                   {
                     header: "Categoría",
                     align: "left",
-                    cell: (row) =>
-                      renderSelectableCell(row, getCategoryName(row.categoryId)),
+                    cell: (row) => (
+                      <div onClick={(event) => event.stopPropagation()}>
+                        <V2Select
+                          value={row.categoryId}
+                          onChange={(event) => updateQuickItemCategory(row.id, event.target.value)}
+                          className="min-w-[170px]"
+                        >
+                          <option value="">Sin categoría</option>
+                          {sortedCategoriesForDropdowns
+                            .filter((category) => !category.isPromotion)
+                            .map((category) => (
+                              <option key={category.id} value={category.id}>
+                                {category.name}
+                              </option>
+                            ))}
+                        </V2Select>
+                      </div>
+                    ),
                   },
                   {
                     header: "Precio",
-                    cell: (row) =>
-                      renderSelectableCell(
-                        row,
-                        <span className="font-semibold text-slate-950">
-                          {formatCurrency(row.price)}
-                        </span>
-                      ),
+                    cell: (row) => (
+                      <div onClick={(event) => event.stopPropagation()}>
+                        <V2Input
+                          type="number"
+                          min={0}
+                          value={String(row.price)}
+                          onChange={(event) => updateQuickItemPrice(row.id, event.target.value)}
+                          className="w-28 font-semibold text-slate-950"
+                        />
+                      </div>
+                    ),
                   },
                   {
                     header: "Estado",
@@ -828,27 +1177,22 @@ export function V2MenuPage() {
                   },
                   {
                     header: "Web",
-                    cell: (row) =>
-                      renderSelectableCell(
-                        row,
-                        row.visible ? (
+                    cell: (row) => (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleQuickItemVisibility(row.id);
+                        }}
+                        className="inline-flex"
+                      >
+                        {row.visible ? (
                           <V2Badge tone="green">Visible</V2Badge>
                         ) : (
                           <V2Badge tone="red">Oculto</V2Badge>
-                        )
-                      ),
-                  },
-                  {
-                    header: "Destacado",
-                    cell: (row) =>
-                      renderSelectableCell(
-                        row,
-                        row.featured ? (
-                          <V2Badge tone="purple">Destacado</V2Badge>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )
-                      ),
+                        )}
+                      </button>
+                    ),
                   },
                   {
                     header: "Disponibilidad",
@@ -905,12 +1249,12 @@ export function V2MenuPage() {
                         }}
                         onDrop={() => handleCategoryDrop(category.id)}
                         onDragEnd={handleCategoryDragEnd}
-                        className={`rounded-xl border p-3 transition ${
+                        className={`rounded-2xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                           dragOverCategoryId === category.id
-                            ? "border-emerald-300 bg-white ring-2 ring-emerald-100"
+                            ? "border-emerald-300 bg-gradient-to-br from-emerald-50 to-white ring-2 ring-emerald-100"
                             : category.isPromotion
-                              ? "border-amber-200 bg-amber-50/35"
-                              : "border-slate-200 bg-white"
+                              ? "border-amber-200 bg-gradient-to-br from-amber-50 to-white"
+                              : "border-slate-200 bg-gradient-to-br from-white to-slate-50"
                         } ${draggedCategoryId === category.id ? "opacity-60" : ""}`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -1055,7 +1399,7 @@ export function V2MenuPage() {
               </button>
             </div>
 
-            <div className="max-h-[70vh] overflow-y-auto p-6">
+            <div className="max-h-[72vh] overflow-y-auto overflow-x-hidden p-6">
               <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
                 <div>
                   <p className="mb-2 text-[13px] font-medium text-slate-700">
@@ -1069,6 +1413,9 @@ export function V2MenuPage() {
                         src={editingItem.imageUrl}
                         alt={editingItem.name}
                         className="h-full w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
                       />
                     ) : (
                       <div className="text-center text-slate-400">
@@ -1084,6 +1431,9 @@ export function V2MenuPage() {
                     onChange={handleImageChange}
                     className="mt-3 block w-full text-sm text-slate-600 file:mr-3 file:h-9 file:rounded-lg file:border file:border-slate-200 file:bg-white file:px-3 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-50"
                   />
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Si existe una imagen en <code className="rounded bg-slate-100 px-1">src/app/local/menu/img</code> con el mismo nombre del producto, se vincula automáticamente.
+                  </p>
                 </div>
 
                 <div className="grid gap-4">
@@ -1096,7 +1446,7 @@ export function V2MenuPage() {
                     />
                   </V2Field>
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 lg:grid-cols-2">
                     <V2Field label="Precio">
                       <V2Input
                         type="number"
@@ -1220,7 +1570,7 @@ export function V2MenuPage() {
 
       {editingCategory ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
+          <div className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
               <div>
                 <p className="text-sm text-slate-500">
@@ -1255,7 +1605,7 @@ export function V2MenuPage() {
                   />
                 </V2Field>
 
-                <div className="grid gap-4 md:grid-cols-[1fr_180px]">
+                <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
                   <V2Field label="Descripción">
                     <V2Textarea
                       rows={1}
@@ -1371,7 +1721,7 @@ export function V2MenuPage() {
                     ) : null}
                   </div>
 
-                  <div className="mt-4 max-h-48 overflow-y-auto pr-1">
+                  <div className="mt-4 max-h-[320px] overflow-y-auto overflow-x-hidden pr-1">
                     <div className="space-y-2">
                       {sortedMenuItemsForDropdowns.map((item) => {
                         const currentQuantity =
@@ -1382,10 +1732,10 @@ export function V2MenuPage() {
                         return (
                           <div
                             key={item.id}
-                            className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                           >
-                            <div className="min-w-0">
-                              <p className="truncate font-semibold text-slate-950">
+                            <div className="min-w-0 overflow-hidden">
+                              <p className="max-w-full truncate font-semibold text-slate-950">
                                 {item.name}
                               </p>
                               <p className="mt-0.5 text-xs text-slate-500">
