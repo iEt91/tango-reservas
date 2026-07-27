@@ -63,6 +63,11 @@ type V2UnassignedReservation = {
   status: "pending" | "confirmed";
 };
 
+type V2PlanoReservation = (typeof v2Reservations)[number] & {
+  seatedAt?: string;
+  consumptionStartedAt?: string;
+};
+
 type V2BusinessHourSlot = {
   open: string;
   close: string;
@@ -118,6 +123,8 @@ const FLOOR_BACKGROUND_STORAGE_KEY = "tango-v2-floor-background";
 const FLOOR_BACKGROUND_SETTINGS_STORAGE_KEY = "tango-v2-floor-background-settings";
 const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
 const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
+const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
+const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
 const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
 
 const DEFAULT_LOCAL_CONFIG: V2LocalConfigState = {
@@ -309,6 +316,10 @@ function normalizeTableName(tableName?: string) {
 
 function isActiveReservationStatus(status: string) {
   return status === "pending" || status === "confirmed";
+}
+
+function isReservationOccupyingTable(reservation: V2PlanoReservation) {
+  return Boolean(reservation.seatedAt || reservation.consumptionStartedAt);
 }
 
 const INITIAL_TABLES: V2FloorTable[] = [
@@ -675,7 +686,8 @@ export function V2PlanoPage() {
   const [activeBusinessSlotIndex, setActiveBusinessSlotIndex] = useState(0);
   const [localConfig, setLocalConfig] =
     useState<V2LocalConfigState>(() => DEFAULT_LOCAL_CONFIG);
-  const [planoReservations, setPlanoReservations] = useState<typeof v2Reservations>(v2Reservations);
+  const [planoReservations, setPlanoReservations] =
+    useState<V2PlanoReservation[]>(v2Reservations);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
   const [backgroundSettings, setBackgroundSettings] =
@@ -752,10 +764,9 @@ export function V2PlanoPage() {
 
     return {
       ...baseTable,
-      status:
-        reservationForTable.status === "pending"
-          ? ("reserved" as V2TableStatus)
-          : ("occupied" as V2TableStatus),
+      status: isReservationOccupyingTable(reservationForTable)
+        ? ("occupied" as V2TableStatus)
+        : ("reserved" as V2TableStatus),
       reservationId: reservationForTable.id,
       reservationClient: reservationForTable.client,
       reservationTime: reservationForTable.time,
@@ -788,7 +799,7 @@ export function V2PlanoPage() {
       status: reservation.status === "pending" ? "pending" : "confirmed",
     }));
 
-  function getReservationTimeRange(reservation: (typeof v2Reservations)[number]) {
+  function getReservationTimeRange(reservation: V2PlanoReservation) {
     const startsAt = getAbsoluteMinutesForTimeline(reservation.time, sliderStartTime);
     const endsAt = startsAt + (reservation.durationMinutes ?? localConfig.standardDurationMinutes);
 
@@ -796,8 +807,8 @@ export function V2PlanoPage() {
   }
 
   function reservationOverlaps(
-    firstReservation: (typeof v2Reservations)[number],
-    secondReservation: (typeof v2Reservations)[number]
+    firstReservation: V2PlanoReservation,
+    secondReservation: V2PlanoReservation
   ) {
     const firstRange = getReservationTimeRange(firstReservation);
     const secondRange = getReservationTimeRange(secondReservation);
@@ -809,7 +820,7 @@ export function V2PlanoPage() {
   }
 
   function findTableConflict(
-    reservationToAssign: (typeof v2Reservations)[number],
+    reservationToAssign: V2PlanoReservation,
     targetTableName: string
   ) {
     return (
@@ -826,13 +837,13 @@ export function V2PlanoPage() {
     );
   }
 
-  function persistReservations(nextReservations: typeof v2Reservations) {
+  function persistReservations(nextReservations: V2PlanoReservation[]) {
     setPlanoReservations(nextReservations);
     window.localStorage.setItem(
       RESERVATIONS_STORAGE_KEY,
       JSON.stringify(nextReservations)
     );
-    window.dispatchEvent(new Event("tango-v2-reservations-updated"));
+    window.dispatchEvent(new Event(RESERVATIONS_EVENT));
   }
 
   function loadReservationsFromStorage() {
@@ -844,7 +855,7 @@ export function V2PlanoPage() {
         return;
       }
 
-      const parsedReservations = JSON.parse(storedReservations) as typeof v2Reservations;
+      const parsedReservations = JSON.parse(storedReservations) as V2PlanoReservation[];
 
       if (!Array.isArray(parsedReservations)) {
         setPlanoReservations(v2Reservations);
@@ -868,6 +879,7 @@ export function V2PlanoPage() {
     function handleFocus() {
       loadReservationsFromStorage();
       loadConfigFromStorage();
+      loadTablesFromStorage();
     }
 
     function handleStorage(event: StorageEvent) {
@@ -878,14 +890,48 @@ export function V2PlanoPage() {
       if (event.key === LOCAL_CONFIG_STORAGE_KEY) {
         loadConfigFromStorage();
       }
+
+      if (event.key === FLOOR_TABLES_STORAGE_KEY) {
+        loadTablesFromStorage();
+      }
+    }
+
+    function loadTablesFromStorage() {
+      try {
+        const storedTables = window.localStorage.getItem(FLOOR_TABLES_STORAGE_KEY);
+
+        if (!storedTables) {
+          setTables(INITIAL_TABLES);
+          setSelectedTableId((currentId) =>
+            INITIAL_TABLES.some((table) => table.id === currentId)
+              ? currentId
+              : INITIAL_TABLES[0]?.id ?? ""
+          );
+          return;
+        }
+
+        const parsedTables = JSON.parse(storedTables) as V2FloorTable[];
+
+        if (!Array.isArray(parsedTables) || parsedTables.length === 0) return;
+
+        setTables(parsedTables);
+        setSelectedTableId((currentId) =>
+          parsedTables.some((table) => table.id === currentId)
+            ? currentId
+            : parsedTables[0]?.id ?? ""
+        );
+      } catch {
+        // Si el plano guardado queda inválido, mantenemos las mesas actuales.
+      }
     }
 
     window.addEventListener("focus", handleFocus);
     window.addEventListener("storage", handleStorage);
+    window.addEventListener(RESERVATIONS_EVENT, loadReservationsFromStorage);
+    window.addEventListener(FLOOR_TABLES_EVENT, loadTablesFromStorage);
     window.addEventListener(LOCAL_CONFIG_EVENT, loadConfigFromStorage);
 
     try {
-      const storedTables = window.localStorage.getItem(FLOOR_TABLES_STORAGE_KEY);
       const storedBackground = window.localStorage.getItem(FLOOR_BACKGROUND_STORAGE_KEY);
       const storedBackgroundSettings = window.localStorage.getItem(
         FLOOR_BACKGROUND_SETTINGS_STORAGE_KEY
@@ -903,21 +949,16 @@ export function V2PlanoPage() {
         );
       }
 
-      if (!storedTables) return;
-
-      const parsedTables = JSON.parse(storedTables) as V2FloorTable[];
-
-      if (!Array.isArray(parsedTables) || parsedTables.length === 0) return;
-
-      setTables(parsedTables);
-      setSelectedTableId(parsedTables[0]?.id ?? "");
     } catch {
       // Si el mock guardado queda inválido, mantenemos las mesas iniciales.
     }
+    loadTablesFromStorage();
 
     return () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(RESERVATIONS_EVENT, loadReservationsFromStorage);
+      window.removeEventListener(FLOOR_TABLES_EVENT, loadTablesFromStorage);
       window.removeEventListener(LOCAL_CONFIG_EVENT, loadConfigFromStorage);
     };
   }, []);
@@ -963,40 +1004,41 @@ export function V2PlanoPage() {
 
   useEffect(() => {
     if (!activeTableInteraction) return;
+    const interaction = activeTableInteraction;
 
     function handleMouseMove(event: globalThis.MouseEvent) {
       setTables((currentTables) =>
         currentTables.map((table) => {
-          if (table.id !== activeTableInteraction.tableId) return table;
+          if (table.id !== interaction.tableId) return table;
 
-          if (activeTableInteraction.type === "move") {
+          if (interaction.type === "move") {
             const deltaX =
-              ((event.clientX - activeTableInteraction.startClientX) /
-                activeTableInteraction.canvasWidth) *
+              ((event.clientX - interaction.startClientX) /
+                interaction.canvasWidth) *
               100;
             const deltaY =
-              ((event.clientY - activeTableInteraction.startClientY) /
-                activeTableInteraction.canvasHeight) *
+              ((event.clientY - interaction.startClientY) /
+                interaction.canvasHeight) *
               100;
 
             return {
               ...table,
-              x: Math.min(Math.max(activeTableInteraction.startX + deltaX, 1), 92),
-              y: Math.min(Math.max(activeTableInteraction.startY + deltaY, 1), 88),
+              x: Math.min(Math.max(interaction.startX + deltaX, 1), 92),
+              y: Math.min(Math.max(interaction.startY + deltaY, 1), 88),
             };
           }
 
-          const deltaWidth = event.clientX - activeTableInteraction.startClientX;
-          const deltaHeight = event.clientY - activeTableInteraction.startClientY;
+          const deltaWidth = event.clientX - interaction.startClientX;
+          const deltaHeight = event.clientY - interaction.startClientY;
 
           return {
             ...table,
             width: Math.min(
-              Math.max(activeTableInteraction.startWidth + deltaWidth / 0.82, 48),
+              Math.max(interaction.startWidth + deltaWidth / 0.82, 48),
               260
             ),
             height: Math.min(
-              Math.max(activeTableInteraction.startHeight + deltaHeight / 0.82, 42),
+              Math.max(interaction.startHeight + deltaHeight / 0.82, 42),
               220
             ),
           };
@@ -1279,7 +1321,7 @@ export function V2PlanoPage() {
         ...table,
         x: Math.min(Math.max(selectedTable.x + index * 8, 1), 92),
         y: Math.min(Math.max(selectedTable.y + index * 6, 1), 88),
-        status: table.status === "blocked" ? "blocked" : "available",
+        status: table.status === "blocked" ? ("blocked" as const) : ("available" as const),
         reservationId: undefined,
         reservationClient: undefined,
         reservationTime: undefined,
@@ -1491,11 +1533,13 @@ export function V2PlanoPage() {
     setTables(INITIAL_TABLES);
     setSelectedTableId(INITIAL_TABLES[0]?.id ?? "");
     window.localStorage.removeItem(FLOOR_TABLES_STORAGE_KEY);
+    window.dispatchEvent(new Event(FLOOR_TABLES_EVENT));
     setHasUnsavedChanges(false);
   }
 
   function saveChanges() {
     window.localStorage.setItem(FLOOR_TABLES_STORAGE_KEY, JSON.stringify(tables));
+    window.dispatchEvent(new Event(FLOOR_TABLES_EVENT));
 
     if (backgroundImageUrl) {
       window.localStorage.setItem(FLOOR_BACKGROUND_STORAGE_KEY, backgroundImageUrl);
