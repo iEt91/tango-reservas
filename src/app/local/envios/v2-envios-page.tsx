@@ -646,6 +646,35 @@ function shouldAskToReturnStock(delivery: V2Delivery) {
   return hasStockDiscountEvidence(delivery) && !delivery.stockReturned;
 }
 
+function shouldReserveStockForDelivery(delivery: V2Delivery) {
+  if (delivery.status === "cancelled") return false;
+  if (delivery.needsAcceptance) return false;
+
+  return Boolean(delivery.orderItems?.some((item) => Number(item.quantity) > 0));
+}
+
+function reserveStockForDeliveryIfNeeded(delivery: V2Delivery) {
+  if (delivery.stockDiscounted || delivery.stockReturned) return delivery;
+  if (!shouldReserveStockForDelivery(delivery)) return delivery;
+
+  const stockMovements = resolveStockMovementsForDelivery(delivery);
+
+  if (stockMovements.length === 0) return delivery;
+
+  applyStockMovements(stockMovements, "discount", delivery);
+
+  return {
+    ...delivery,
+    stockDiscounted: true,
+    stockReturned: false,
+    stockMovements,
+    note:
+      delivery.note && delivery.note !== "—"
+        ? `${delivery.note} · Stock reservado: ${formatStockMovementsSummary(stockMovements)}.`
+        : `Stock reservado: ${formatStockMovementsSummary(stockMovements)}.`,
+  };
+}
+
 function getDeliveryRowToneClass(delivery: V2Delivery) {
   if (isWebDeliveryPendingAcceptance(delivery)) {
     return "bg-amber-100/60 hover:bg-amber-100";
@@ -1434,6 +1463,18 @@ export function V2EnviosPage() {
       nextDelivery = applyEditedDeliveryStockDifference(existingDelivery, nextDelivery);
     }
 
+    if (!existingDelivery) {
+      nextDelivery = reserveStockForDeliveryIfNeeded(nextDelivery);
+    }
+
+    if (
+      existingDelivery &&
+      !existingDelivery.stockDiscounted &&
+      !existingDelivery.stockReturned
+    ) {
+      nextDelivery = reserveStockForDeliveryIfNeeded(nextDelivery);
+    }
+
     const nextDeliveries = existingDelivery
       ? deliveries.map((delivery) =>
           delivery.id === existingDelivery.id ? nextDelivery : delivery
@@ -1591,9 +1632,15 @@ export function V2EnviosPage() {
   }
 
   function updateDeliveryStatus(id: string, status: V2DeliveryStatus) {
-    const nextDeliveries = deliveries.map((delivery) =>
-      delivery.id === id ? withDeliveryStatusTimestamp(delivery, status) : delivery
-    );
+    const nextDeliveries = deliveries.map((delivery) => {
+      if (delivery.id !== id) return delivery;
+
+      const nextDelivery = withDeliveryStatusTimestamp(delivery, status);
+
+      if (status === "cancelled") return nextDelivery;
+
+      return reserveStockForDeliveryIfNeeded(nextDelivery);
+    });
 
     persistDeliveries(nextDeliveries);
   }
