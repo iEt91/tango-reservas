@@ -72,6 +72,13 @@ type V2Delivery = {
   cancelledAt?: string;
 };
 
+type V2ReservationOrderLineItem = {
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
 type V2Reservation = {
   id: string;
   date: string;
@@ -85,6 +92,7 @@ type V2Reservation = {
   tableName?: string;
   origin?: "web" | "whatsapp" | "phone" | "instagram" | "manual";
   orderItems?: string;
+  orderLineItems?: V2ReservationOrderLineItem[];
   orderTotal?: number;
   paymentMethod?: string;
   paidAmount?: number;
@@ -380,6 +388,23 @@ function summarizeDeliveryItems(delivery: V2Delivery) {
   return delivery.order || "Pedido sin detalle";
 }
 
+function summarizeReservationLineItems(lineItems?: V2ReservationOrderLineItem[]) {
+  const validItems = (lineItems ?? []).filter((item) => Number(item.quantity) > 0);
+
+  if (validItems.length === 0) return "";
+
+  return validItems
+    .map((item) => `${item.quantity}x ${item.name}`)
+    .join(", ");
+}
+
+function hasReservationConsumption(reservation: V2Reservation) {
+  return Boolean(
+    reservation.orderItems?.trim() ||
+      reservation.orderLineItems?.some((item) => Number(item.quantity) > 0)
+  );
+}
+
 function getOrderGroups(orderItems?: string) {
   const groups = new Map<string, number>();
 
@@ -393,6 +418,10 @@ function getOrderGroups(orderItems?: string) {
 }
 
 function summarizeReservationConsumption(reservation: V2Reservation) {
+  const lineItemsSummary = summarizeReservationLineItems(reservation.orderLineItems);
+
+  if (lineItemsSummary) return lineItemsSummary;
+
   const groups = getOrderGroups(reservation.orderItems);
 
   if (groups.length === 0) return "Sin consumo cargado";
@@ -489,7 +518,7 @@ function deliveryTimeline(delivery: V2Delivery): TimelineItem[] {
 function reservationTimeline(reservation: V2Reservation): TimelineItem[] {
   const createdAt =
     reservation.createdAt ?? timestampFromDateTime(reservation.date, reservation.time);
-  const hasConsumption = Boolean(reservation.orderItems?.trim());
+  const hasConsumption = hasReservationConsumption(reservation);
   const isConfirmed =
     reservation.status === "confirmed" ||
     reservation.status === "completed" ||
