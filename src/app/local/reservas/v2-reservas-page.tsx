@@ -59,6 +59,13 @@ type V2ReservationPaymentForm = {
   transfer: string;
 };
 
+type V2ReservationOrderLineItem = {
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
 type V2ReservationDraft = {
   id: string;
   date: string;
@@ -73,6 +80,7 @@ type V2ReservationDraft = {
   tableName?: string;
   origin?: V2ReservationOrigin;
   orderItems?: string;
+  orderLineItems?: V2ReservationOrderLineItem[];
   orderTotal?: number;
   paymentMethod?: string;
   paidAmount?: number;
@@ -448,7 +456,7 @@ function appendStockMovementHistory(
       quantity: movement.quantity,
       unit: product?.unit ?? "unidad",
       label: direction === "discount" ? "Consumo de mesa cargado" : "Stock devuelto por reserva",
-      detail: detail ?? formatOrderItems(reservation.orderItems),
+      detail: detail ?? formatReservationOrderItems(reservation),
       referenceId: reservation.id,
       client: reservation.client,
     };
@@ -532,14 +540,27 @@ function addStockMovement(
   });
 }
 
-function resolveStockMovementsForMenuItem(itemName: string, quantity: number) {
+function resolveStockMovementsForMenuItem(
+  item:
+    | Pick<V2MenuOrderItem, "id" | "name">
+    | Pick<V2ReservationOrderLineItem, "menuItemId" | "name">
+    | string,
+  quantity: number
+) {
   const stockProducts = readStockProductsFromStorage();
   const recipes = readRecipesFromConfig();
   const movements = new Map<string, V2ReservationStockMovement>();
+  const itemId =
+    typeof item === "string"
+      ? ""
+      : "menuItemId" in item
+        ? item.menuItemId
+        : item.id;
+  const itemName = typeof item === "string" ? item : item.name;
   const normalizedItemName = normalizeTextForStock(itemName);
-  const recipe = recipes.find(
-    (item) => normalizeTextForStock(item.name) === normalizedItemName
-  );
+  const recipe =
+    recipes.find((candidate) => candidate.menuItemId && candidate.menuItemId === itemId) ??
+    recipes.find((candidate) => normalizeTextForStock(candidate.name) === normalizedItemName);
 
   if (recipe) {
     recipe.ingredients.forEach((ingredient) => {
@@ -937,8 +958,94 @@ function getOrderItemGroups(orderItems?: string) {
   }));
 }
 
-function formatOrderItems(orderItems?: string) {
-  const groups = getOrderItemGroups(orderItems);
+function getMenuItemToken(item: Pick<V2MenuOrderItem, "name" | "price">) {
+  return `${item.name} (${formatMoney(item.price)})`;
+}
+
+function buildOrderItemsTextFromLineItems(lineItems?: V2ReservationOrderLineItem[]) {
+  return (lineItems ?? [])
+    .flatMap((item) =>
+      Array.from({ length: Math.max(Number(item.quantity) || 0, 0) }, () =>
+        getMenuItemToken({ name: item.name, price: item.price })
+      )
+    )
+    .join(", ");
+}
+
+function normalizeOrderLineItems(
+  value: unknown,
+  legacyOrderItems?: string,
+  menuItems: V2MenuOrderItem[] = FALLBACK_MENU_ORDER_ITEMS
+): V2ReservationOrderLineItem[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => item as Partial<V2ReservationOrderLineItem>)
+      .filter((item) => item.menuItemId || item.name)
+      .map((item) => {
+        const matchedMenuItem =
+          menuItems.find((menuItem) => menuItem.id === item.menuItemId) ??
+          menuItems.find(
+            (menuItem) =>
+              normalizeTextForStock(menuItem.name) === normalizeTextForStock(item.name ?? "")
+          );
+
+        return {
+          menuItemId: item.menuItemId || matchedMenuItem?.id || "",
+          name: item.name || matchedMenuItem?.name || "Plato sin nombre",
+          price: Number(item.price ?? matchedMenuItem?.price) || 0,
+          quantity: Math.max(Number(item.quantity) || 0, 0),
+        };
+      })
+      .filter((item) => item.quantity > 0);
+  }
+
+  const groupedItems = getOrderItemGroups(legacyOrderItems);
+
+  return groupedItems
+    .map(({ item, quantity }) => {
+      const matchedMenuItem =
+        menuItems.find((menuItem) => item === getMenuItemToken(menuItem)) ??
+        menuItems.find((menuItem) =>
+          normalizeTextForStock(item).includes(normalizeTextForStock(menuItem.name))
+        );
+
+      if (!matchedMenuItem) {
+        return {
+          menuItemId: "",
+          name: item.replace(/\s*\([^)]*\)\s*$/, ""),
+          price: 0,
+          quantity,
+        };
+      }
+
+      return {
+        menuItemId: matchedMenuItem.id,
+        name: matchedMenuItem.name,
+        price: matchedMenuItem.price,
+        quantity,
+      };
+    })
+    .filter((item) => item.quantity > 0);
+}
+
+function formatOrderLineItems(lineItems?: V2ReservationOrderLineItem[]) {
+  const validItems = (lineItems ?? []).filter((item) => Number(item.quantity) > 0);
+
+  if (validItems.length === 0) return "Sin platos asignados";
+
+  return validItems
+    .map((item) => `${item.quantity}x ${item.name} (${formatMoney(item.price)})`)
+    .join(", ");
+}
+
+function formatReservationOrderItems(
+  reservation: Pick<V2ReservationDraft, "orderItems" | "orderLineItems">
+) {
+  if (reservation.orderLineItems && reservation.orderLineItems.length > 0) {
+    return formatOrderLineItems(reservation.orderLineItems);
+  }
+
+  const groups = getOrderItemGroups(reservation.orderItems);
 
   if (groups.length === 0) return "Sin platos asignados";
 
@@ -947,33 +1054,34 @@ function formatOrderItems(orderItems?: string) {
     .join(", ");
 }
 
-function getMenuItemToken(item: V2MenuOrderItem) {
-  return `${item.name} (${formatMoney(item.price)})`;
+function getMenuItemQuantity(
+  orderLineItems: V2ReservationOrderLineItem[] | undefined,
+  item: V2MenuOrderItem
+) {
+  return orderLineItems?.find((lineItem) => lineItem.menuItemId === item.id)?.quantity ?? 0;
 }
 
-function getMenuItemQuantity(orderItems: string | undefined, item: V2MenuOrderItem) {
-  const token = getMenuItemToken(item);
-
-  return (orderItems ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .filter((value) => value === token).length;
-}
-
-function calculateOrderTotal(orderItems?: string, menuItems: V2MenuOrderItem[] = FALLBACK_MENU_ORDER_ITEMS) {
+function calculateOrderTotal(
+  orderItems?: string,
+  menuItems: V2MenuOrderItem[] = FALLBACK_MENU_ORDER_ITEMS
+) {
   const rawItems = (orderItems ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
 
   return rawItems.reduce((total, rawItem) => {
-    const matchingItem = menuItems.find(
-      (item) => rawItem === getMenuItemToken(item)
-    );
+    const matchingItem = menuItems.find((item) => rawItem === getMenuItemToken(item));
 
     return total + (matchingItem?.price ?? 0);
   }, 0);
+}
+
+function calculateOrderLineItemsTotal(lineItems?: V2ReservationOrderLineItem[]) {
+  return (lineItems ?? []).reduce(
+    (total, item) => total + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+    0
+  );
 }
 
 function timeToMinutes(time: string) {
@@ -1308,8 +1416,24 @@ function normalizeReservation(reservation: V2ReservationDraft): V2ReservationDra
     durationMinutes: Math.max(Number(reservation.durationMinutes) || 120, 15),
     tableName: reservation.tableName?.trim() ?? "",
     origin: reservation.origin ?? "manual",
-    orderItems: reservation.orderItems?.trim() ?? "",
-    orderTotal: Math.max(Number(reservation.orderTotal) || 0, 0),
+    orderItems:
+      reservation.orderLineItems && reservation.orderLineItems.length > 0
+        ? buildOrderItemsTextFromLineItems(reservation.orderLineItems)
+        : reservation.orderItems?.trim() ?? "",
+    orderLineItems: normalizeOrderLineItems(
+      reservation.orderLineItems,
+      reservation.orderItems,
+      readStoredMenuItems()
+    ),
+    orderTotal:
+      reservation.orderLineItems && reservation.orderLineItems.length > 0
+        ? calculateOrderLineItemsTotal(reservation.orderLineItems)
+        : Math.max(
+            Number(reservation.orderTotal) ||
+              calculateOrderTotal(reservation.orderItems, readStoredMenuItems()) ||
+              0,
+            0
+          ),
     reservationCode: reservation.reservationCode ?? createPublicCode("RES", reservation.id),
     stockDiscounted: Boolean(reservation.stockDiscounted),
     stockReturned: Boolean(reservation.stockReturned),
@@ -1322,7 +1446,7 @@ function normalizeReservation(reservation: V2ReservationDraft): V2ReservationDra
         : undefined),
     consumptionStartedAt:
       reservation.consumptionStartedAt ??
-      (reservation.orderItems?.trim()
+      (reservation.orderItems?.trim() || (reservation.orderLineItems?.length ?? 0) > 0
         ? createReservationTimestamp(reservation.date, reservation.time)
         : undefined),
     completedAt:
@@ -2148,6 +2272,7 @@ export function V2ReservasPage() {
       email: "",
       origin: "manual",
       orderItems: "",
+      orderLineItems: [],
       ...reservation,
     });
     setEditorCalendarMonth(reservation.date || selectedDate);
@@ -2564,32 +2689,43 @@ export function V2ReservasPage() {
   ) {
     if (!orderReservation) return;
 
-    const previousQuantity = getMenuItemQuantity(orderReservation.orderItems, item);
+    const currentLineItems = normalizeOrderLineItems(
+      orderReservation.orderLineItems,
+      orderReservation.orderItems,
+      menuOrderItems
+    );
+    const previousQuantity = getMenuItemQuantity(currentLineItems, item);
     const quantity = Math.max(Number(requestedQuantity) || 0, 0);
     const quantityDiff = quantity - previousQuantity;
-    const token = getMenuItemToken(item);
-    const otherItems = (orderReservation.orderItems ?? "")
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .filter((value) => value !== token);
+    const otherLineItems = currentLineItems.filter(
+      (lineItem) => lineItem.menuItemId !== item.id
+    );
 
-    const nextItems = [
-      ...otherItems,
-      ...Array.from({ length: quantity }, () => token),
-    ];
-    const nextOrderItems = nextItems.join(", ");
+    const nextOrderLineItems =
+      quantity > 0
+        ? [
+            ...otherLineItems,
+            {
+              menuItemId: item.id,
+              name: item.name,
+              price: item.price,
+              quantity,
+            },
+          ].sort((a, b) => a.name.localeCompare(b.name, "es"))
+        : otherLineItems.sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+    const nextOrderItems = buildOrderItemsTextFromLineItems(nextOrderLineItems);
     let nextStockMovements = orderReservation.stockMovements ?? [];
 
     if (quantityDiff > 0) {
-      const stockMovements = resolveStockMovementsForMenuItem(item.name, quantityDiff);
+      const stockMovements = resolveStockMovementsForMenuItem(item, quantityDiff);
 
       applyStockMovements(stockMovements, "discount", orderReservation, item.name);
       nextStockMovements = mergeStockMovements(nextStockMovements, stockMovements);
     }
 
     if (quantityDiff < 0) {
-      const stockMovements = resolveStockMovementsForMenuItem(item.name, Math.abs(quantityDiff));
+      const stockMovements = resolveStockMovementsForMenuItem(item, Math.abs(quantityDiff));
 
       applyStockMovements(stockMovements, "return", orderReservation, item.name);
       nextStockMovements = subtractStockMovements(nextStockMovements, stockMovements);
@@ -2598,7 +2734,8 @@ export function V2ReservasPage() {
     updateOrderReservation({
       ...orderReservation,
       orderItems: nextOrderItems,
-      orderTotal: calculateOrderTotal(nextOrderItems, menuOrderItems),
+      orderLineItems: nextOrderLineItems,
+      orderTotal: calculateOrderLineItemsTotal(nextOrderLineItems),
       stockDiscounted: nextStockMovements.length > 0,
       stockReturned: nextStockMovements.length === 0 && Boolean(orderReservation.stockDiscounted),
       stockMovements: nextStockMovements,
@@ -2613,14 +2750,14 @@ export function V2ReservasPage() {
   function addMenuItemToReservation(item: V2MenuOrderItem) {
     if (!orderReservation) return;
 
-    const currentQuantity = getMenuItemQuantity(orderReservation.orderItems, item);
+    const currentQuantity = getMenuItemQuantity(orderReservation.orderLineItems, item);
     setMenuItemQuantity(item, currentQuantity + 1);
   }
 
   function removeMenuItemFromReservation(item: V2MenuOrderItem) {
     if (!orderReservation) return;
 
-    const currentQuantity = getMenuItemQuantity(orderReservation.orderItems, item);
+    const currentQuantity = getMenuItemQuantity(orderReservation.orderLineItems, item);
     setMenuItemQuantity(item, currentQuantity - 1);
   }
 
@@ -2630,12 +2767,18 @@ export function V2ReservasPage() {
     const stockMovements = orderReservation.stockMovements ?? [];
 
     if (stockMovements.length > 0) {
-      applyStockMovements(stockMovements, "return", orderReservation, item.name);
+      applyStockMovements(
+        stockMovements,
+        "return",
+        orderReservation,
+        "Consumo de mesa vaciado"
+      );
     }
 
     updateOrderReservation({
       ...orderReservation,
       orderItems: "",
+      orderLineItems: [],
       orderTotal: 0,
       stockDiscounted: false,
       stockReturned: true,
@@ -2687,7 +2830,7 @@ export function V2ReservasPage() {
       reservation.status,
       ORIGIN_LABELS[reservation.origin ?? "manual"],
       formatReservationNote(reservation.note),
-      formatOrderItems(reservation.orderItems),
+      formatReservationOrderItems(reservation),
       reservation.orderTotal ?? 0,
     ]);
 
@@ -3511,7 +3654,7 @@ export function V2ReservasPage() {
                       Pedido / consumo
                     </p>
                     <p className="mt-1 leading-6 text-slate-700">
-                      {formatOrderItems(selectedReservation.orderItems)}
+                      {formatReservationOrderItems(selectedReservation)}
                     </p>
                     <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Total consumo
@@ -4349,7 +4492,7 @@ export function V2ReservasPage() {
                 <div className="mt-3 grid min-h-0 flex-1 content-start gap-2 overflow-y-auto pr-2">
                   {filteredMenuOrderItems.map((item) => {
                     const quantity = getMenuItemQuantity(
-                      orderReservation.orderItems,
+                      orderReservation.orderLineItems,
                       item
                     );
 
