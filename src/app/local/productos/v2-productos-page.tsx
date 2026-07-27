@@ -130,6 +130,27 @@ function getMovementOriginLabel(origin: V2StockMovementOrigin) {
   return "Manual";
 }
 
+function getMovementTone(type: V2StockMovementType): "green" | "orange" | "blue" {
+  if (type === "return") return "green";
+  if (type === "manual") return "blue";
+
+  return "orange";
+}
+
+function getMovementQuantityPrefix(type: V2StockMovementType) {
+  if (type === "return") return "+";
+  if (type === "discount") return "-";
+
+  return "";
+}
+
+function getMovementCardToneClass(type: V2StockMovementType) {
+  if (type === "return") return "border-emerald-200 bg-emerald-50/70";
+  if (type === "manual") return "border-blue-200 bg-blue-50/70";
+
+  return "border-amber-200 bg-amber-50/70";
+}
+
 function getRemainingStock(product: V2StockProduct) {
   return Math.max(product.totalStock - product.consumedBySales, 0);
 }
@@ -607,8 +628,8 @@ export function V2ProductosPage() {
             </div>
           </div>
 
-          <aside className="flex h-full min-h-0 flex-col overflow-hidden">
-            <V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+            <V2Card className="flex min-h-0 flex-[1.15] flex-col overflow-hidden">
               <h2 className="shrink-0 text-base font-semibold text-slate-950">
                 Alertas de compra
               </h2>
@@ -695,6 +716,82 @@ export function V2ProductosPage() {
               </div>
             </V2Card>
 
+            <V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="flex shrink-0 items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-950">
+                    Movimientos recientes
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Descuentos y devoluciones de stock.
+                  </p>
+                </div>
+                <V2Badge tone="blue">{recentStockMovements.length}</V2Badge>
+              </div>
+
+              <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+                <div className="space-y-2 text-sm">
+                  {recentStockMovements.length > 0 ? (
+                    recentStockMovements.map((movement) => (
+                      <div
+                        key={movement.id}
+                        className={`rounded-2xl border p-3 shadow-sm ${getMovementCardToneClass(movement.type)}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-950">
+                              {movement.productName}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-600">
+                              {movement.label}
+                            </p>
+                          </div>
+                          <V2Badge tone={getMovementTone(movement.type)}>
+                            {getMovementTypeLabel(movement.type)}
+                          </V2Badge>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          <div className="rounded-xl border border-slate-700 bg-white/90 p-2 shadow-sm">
+                            <p className="font-semibold uppercase tracking-wide text-slate-400">
+                              Cantidad
+                            </p>
+                            <p className="mt-1 font-bold text-slate-950">
+                              {getMovementQuantityPrefix(movement.type)}
+                              {formatAmount(movement.quantity, movement.unit as V2StockUnit)}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-700 bg-white/90 p-2 shadow-sm">
+                            <p className="font-semibold uppercase tracking-wide text-slate-400">
+                              Origen
+                            </p>
+                            <p className="mt-1 font-bold text-slate-950">
+                              {getMovementOriginLabel(movement.origin)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                          <span>{formatMovementDate(movement.createdAt)}</span>
+                          {movement.client ? <span>· {movement.client}</span> : null}
+                        </div>
+
+                        {movement.detail ? (
+                          <p className="mt-2 line-clamp-2 text-xs text-slate-500">
+                            {movement.detail}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                      Todavía no hay movimientos de stock registrados.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </V2Card>
           </aside>
         </div>
       </div>
