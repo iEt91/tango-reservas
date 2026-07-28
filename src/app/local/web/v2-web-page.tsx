@@ -456,6 +456,8 @@ export function V2WebPage() {
           ? currentSectionId
           : sections[0]?.id ?? ""
       );
+      setIsPublicMenuIconPickerOpen(false);
+      setPublicMenuIconSearch("");
     }
 
     loadMenuPublicSections();
@@ -471,10 +473,11 @@ export function V2WebPage() {
     };
   }, []);
 
-  useEffect(() => {
+  function selectPublicMenuSection(sectionId: string) {
+    setSelectedPublicMenuSectionId(sectionId);
     setIsPublicMenuIconPickerOpen(false);
     setPublicMenuIconSearch("");
-  }, [selectedPublicMenuSectionId]);
+  }
 
   const isPublished = config.status === "published";
   const activeSections = [
@@ -559,7 +562,7 @@ export function V2WebPage() {
     };
 
     setPublicMenuSections((current) => [...current, newSection]);
-    setSelectedPublicMenuSectionId(newSection.id);
+    selectPublicMenuSection(newSection.id);
     setSaveStatus("idle");
   }
 
@@ -570,6 +573,8 @@ export function V2WebPage() {
 
       return nextSections;
     });
+    setIsPublicMenuIconPickerOpen(false);
+    setPublicMenuIconSearch("");
     setSaveStatus("idle");
   }
 
@@ -1081,7 +1086,7 @@ export function V2WebPage() {
                         >
                           <button
                             type="button"
-                            onClick={() => setSelectedPublicMenuSectionId(section.id)}
+                            onClick={() => selectPublicMenuSection(section.id)}
                             className="block w-full text-left"
                           >
                             <div className="flex items-center justify-between gap-3">

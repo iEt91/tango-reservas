@@ -693,11 +693,12 @@ export default function HistorialPage() {
     };
   }, []);
 
-  useEffect(() => {
+  function selectHistoryTab(nextTab: HistoryTab) {
+    setActiveTab(nextTab);
     setOpenId(null);
     setStatusFilter("all");
     setIsInfoOpen(false);
-  }, [activeTab]);
+  }
 
   function openDatePicker() {
     setCalendarMonth(getMonthStartDateKey(selectedDate));
@@ -937,7 +938,7 @@ export default function HistorialPage() {
               <div className="flex rounded-xl border border-slate-200 bg-white p-1">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("envios")}
+                  onClick={() => selectHistoryTab("envios")}
                   className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
                     activeTab === "envios"
                       ? "bg-emerald-600 text-white"
@@ -948,7 +949,7 @@ export default function HistorialPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("reservas")}
+                  onClick={() => selectHistoryTab("reservas")}
                   className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
                     activeTab === "reservas"
                       ? "bg-emerald-600 text-white"

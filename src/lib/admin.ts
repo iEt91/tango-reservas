@@ -1,10 +1,10 @@
 import type { Business } from "@/data/types";
 import { getBusinesses } from "@/data/businesses";
 import { getBusinessBySlug as getLocalBusinessBySlug } from "@/data/businesses";
-import { getBusinessHours, getBusinessServices, getReservationRules } from "@/data/scheduling";
-import { getFloorTablesByBusinessId } from "@/data/floor-plan";
-import { getReservationsByBusinessId } from "@/data/reservations";
-import { getMenuSummary } from "@/data/menu";
+import { getBusinessHours, getBusinessServices, getReservationRules } from "@/lib/scheduling";
+import { getFloorTablesByBusinessId } from "@/lib/floor-plan";
+import { getReservationsByBusinessId } from "@/lib/reservations";
+import { getMenuSummary } from "@/lib/menu";
 
 export type AdminBusinessSetupStatus = {
   complete: boolean;

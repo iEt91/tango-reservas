@@ -24,6 +24,7 @@ import { AdminBusinessFilters } from "./AdminBusinessFilters";
 import { AdminBusinessTable } from "./AdminBusinessTable";
 import { AdminDeleteBusinessDialog } from "./AdminDeleteBusinessDialog";
 import { WideContainer } from "../WideContainer";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 const initialFilters: BusinessFiltersState = {
   search: "",
@@ -74,7 +75,7 @@ type AdminBusinessesPanelProps = {
 };
 
 export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHasMounted();
   const [businesses, setBusinesses] = useState<Business[]>(snapshot.businesses);
   const [filters, setFilters] = useState<BusinessFiltersState>(initialFilters);
   const [feedback, setFeedback] = useState("");
@@ -99,10 +100,7 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
   );
 
   useEffect(() => {
-    setMounted(true);
-
     if (snapshot.resolvedSource === "supabase") {
-      setBusinesses(snapshot.businesses);
       return;
     }
 
@@ -128,7 +126,7 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
       unsubscribeMenu();
       unsubscribeFloorPlan();
     };
-  }, [snapshot.businesses, snapshot.resolvedSource]);
+  }, [snapshot.resolvedSource]);
 
   const dashboardStats = useMemo(
     () => (mounted && !readOnly ? getAdminDashboardStats(businesses) : null),
@@ -496,4 +494,3 @@ export function AdminBusinessesPanel({ snapshot }: AdminBusinessesPanelProps) {
     </WideContainer>
   );
 }
-
