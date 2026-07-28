@@ -455,7 +455,7 @@ export function getAvailableTablesForReservationSlot({
       reasonsByTableId[tableId] = [...new Set([...(reasonsByTableId[tableId] ?? []), "Mesa ocupada por otra reserva en este horario"])];
 
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
+
         console.debug("[availability] table blocked", {
           tableId,
           tableLabel: table?.label ?? null,
@@ -485,7 +485,7 @@ export function getAvailableTablesForReservationSlot({
     for (const table of tables) {
       const reasons = reasonsByTableId[table.id] ?? [];
       if (reasons.length > 0) {
-        // eslint-disable-next-line no-console
+
         console.debug("[availability]", {
           tableId: table.id,
           tableLabel: table.label,
