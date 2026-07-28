@@ -24,7 +24,6 @@ import {
   NO_ACTIVE_LOCAL_BUSINESS_MESSAGE,
   navigateToBusiness,
   setStoredOwnerBusinessSlug,
-  type LocalAccessMode,
 } from "@/lib/local-business-routing";
 
 type UseLocalBusinessSelectionParams = {

@@ -3,7 +3,6 @@ import { getDataSource } from "@/lib/data/dataSource";
 import {
   createPublicWebGalleryItem,
   deletePublicWebGalleryItem,
-  togglePublicWebGalleryItemStatus,
   updatePublicWebGalleryItem,
   getPublicWebGalleryByBusinessId,
 } from "@/lib/data/webContent";

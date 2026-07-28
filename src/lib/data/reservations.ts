@@ -15,17 +15,6 @@ function isSupabaseMode() {
   return getDataSource() === "supabase";
 }
 
-function cloneReservation(reservation: Reservation) {
-  return {
-    ...reservation,
-    assignedTableIds: reservation.assignedTableIds ? [...reservation.assignedTableIds] : null,
-  };
-}
-
-function cloneReservations(reservations: Reservation[]) {
-  return reservations.map(cloneReservation);
-}
-
 function getSupabaseReservationsByBusinessSync(businessId: string) {
   return supabaseReservations.getSupabaseReservationsByBusinessSync(businessId);
 }

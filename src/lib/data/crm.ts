@@ -16,7 +16,6 @@ import type {
 import {
   createSupabaseCustomerNote,
   deleteSupabaseCustomerNote,
-  getSupabaseCustomerById,
   getSupabaseCustomerByIdSync,
   getSupabaseCustomerByPhone,
   getSupabaseCustomerByPhoneSync,
@@ -31,7 +30,7 @@ import {
   updateSupabaseCustomerNote,
   type SupabaseCustomerInput,
 } from "@/lib/data/supabase/customers";
-import { getReservationsSnapshot, subscribeReservations } from "@/data/reservations";
+import { getReservationsSnapshot } from "@/data/reservations";
 import { getServicesByBusinessSync } from "@/lib/data/services";
 
 function isSupabaseMode() {

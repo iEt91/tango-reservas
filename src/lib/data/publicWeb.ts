@@ -24,7 +24,6 @@ import {
 import { getBusinessBySlug, getBusinessSlugs } from "@/data/businesses";
 import { getMenuCategoriesByBusinessId, getMenuItemsByBusinessId } from "@/data/menu";
 import { getBusinessServices } from "@/data/scheduling";
-import { getBusinessById } from "@/lib/data/businesses";
 
 export type PublicWebPageData = {
   business: Business;
