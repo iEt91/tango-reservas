@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { PublicWebGalleryItem } from "@/data/types";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 type PublicGalleryProps = {
   title: string;
@@ -42,11 +43,7 @@ export function PublicGallery({
   hideWhenEmpty = false,
 }: PublicGalleryProps) {
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useHasMounted();
 
   const columns =
     variant === "minimal"

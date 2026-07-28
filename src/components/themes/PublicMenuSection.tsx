@@ -7,6 +7,7 @@ import {
   subscribeMenu,
 } from "@/data/menu";
 import type { MenuCategory, MenuItem } from "@/data/types";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 type PublicMenuSectionProps = {
   businessId: string;
@@ -61,7 +62,7 @@ export function PublicMenuSection({
   categoriesOverride,
   itemsOverride,
 }: PublicMenuSectionProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHasMounted();
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const useOverrides = Array.isArray(categoriesOverride) && Array.isArray(itemsOverride);
@@ -77,10 +78,6 @@ export function PublicMenuSection({
     getSnapshotValue,
     getSnapshotValue,
   );
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const resolvedData = useMemo(() => {
     if (!mounted) {

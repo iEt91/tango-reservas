@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   getMenuCategoriesByBusinessId,
   getMenuItemsByBusinessId,
   subscribeMenu,
 } from "@/data/menu";
 import type { MenuCategory, MenuItem } from "@/data/types";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 type PublicFeaturedMenuProps = {
   businessId: string;
@@ -63,7 +64,7 @@ export function PublicFeaturedMenu({
   categoriesOverride,
   itemsOverride,
 }: PublicFeaturedMenuProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHasMounted();
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const useOverrides = Array.isArray(categoriesOverride) && Array.isArray(itemsOverride);
   const getSnapshotValue = () =>
@@ -78,10 +79,6 @@ export function PublicFeaturedMenu({
     getSnapshotValue,
     getSnapshotValue,
   );
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const resolvedData = useMemo(() => {
     if (!mounted) {

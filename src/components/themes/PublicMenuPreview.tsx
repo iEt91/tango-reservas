@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { getMenuCategoriesByBusinessId, getMenuItemsByBusinessId, subscribeMenu } from "@/data/menu";
 import type { MenuCategory, MenuItem } from "@/data/types";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 type PublicMenuPreviewProps = {
   businessId: string;
@@ -44,11 +45,8 @@ export function PublicMenuPreview({
   accentColor,
   variant = "elegant",
 }: PublicMenuPreviewProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHasMounted();
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   const snapshot = useSyncExternalStore(
     subscribeMenu,
     () =>
