@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   getMenuCategoriesByBusinessId,
   getMenuItemsByBusinessId,
@@ -107,31 +107,11 @@ export function PublicMenuSection({
     return resolvedData.items.filter((item) => item.isActive);
   }, [resolvedData]);
 
-  useEffect(() => {
-    if (!mounted) {
-      return;
-    }
-
-    if (activeCategories.length === 0) {
-      setSelectedCategoryId("");
-      return;
-    }
-
-    const hasSelection = activeCategories.some((category) => category.id === selectedCategoryId);
-    if (hasSelection) {
-      return;
-    }
-
-    const defaultCategory =
-      activeCategories.find((category) =>
-        activeItems.some((item) => item.categoryId === category.id),
-      ) ?? activeCategories[0];
-
-    setSelectedCategoryId(defaultCategory?.id ?? "");
-  }, [activeCategories, activeItems, mounted, selectedCategoryId]);
-
   const selectedCategory =
     activeCategories.find((category) => category.id === selectedCategoryId) ??
+    activeCategories.find((category) =>
+      activeItems.some((item) => item.categoryId === category.id),
+    ) ??
     activeCategories[0] ??
     null;
 

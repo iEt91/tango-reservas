@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Check, Eye, Image as ImageIcon, LayoutTemplate, Pencil, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
@@ -16,23 +16,33 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+function subscribeActiveTemplate(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("tango-v2-web-template-updated", onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("tango-v2-web-template-updated", onStoreChange);
+  };
+}
+
+function getActiveTemplateId() {
+  const storedTemplateId = window.localStorage.getItem(V2_WEB_TEMPLATE_STORAGE_KEY);
+  return getV2WebTemplateById(storedTemplateId ?? "").id;
+}
+
 export default function V2WebTemplatesPage() {
-  const [activeTemplateId, setActiveTemplateId] = useState(v2WebTemplates[0]?.id ?? "");
+  const activeTemplateId = useSyncExternalStore(
+    subscribeActiveTemplate,
+    getActiveTemplateId,
+    () => v2WebTemplates[0]?.id ?? "",
+  );
   const activeTemplate = useMemo(
     () => getV2WebTemplateById(activeTemplateId),
     [activeTemplateId]
   );
 
-  useEffect(() => {
-    const storedTemplateId = window.localStorage.getItem(V2_WEB_TEMPLATE_STORAGE_KEY);
-
-    if (storedTemplateId) {
-      setActiveTemplateId(storedTemplateId);
-    }
-  }, []);
-
   function selectTemplate(templateId: string) {
-    setActiveTemplateId(templateId);
     window.localStorage.setItem(V2_WEB_TEMPLATE_STORAGE_KEY, templateId);
     window.dispatchEvent(new CustomEvent("tango-v2-web-template-updated"));
   }
