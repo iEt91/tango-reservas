@@ -1443,17 +1443,17 @@ export default function PublicTemplatePage() {
               fallbackCategoryItems[0].items,
           }));
 
+  const resolvedExpandedCategory = publicMenuCategoryCards.some(
+    (category) => category.title === expandedCategory,
+  )
+    ? expandedCategory
+    : publicMenuCategoryCards[0]?.title ?? "Entradas";
   const publicActiveCategoryItems =
-    publicMenuCategoryCards.find((item) => item.title === expandedCategory)?.items ??
+    publicMenuCategoryCards.find((item) => item.title === resolvedExpandedCategory)?.items ??
     publicMenuCategoryCards[0]?.items ??
     [];
   const shouldCenterActiveCategoryItems =
     publicActiveCategoryItems.length > 0 && publicActiveCategoryItems.length <= 5;
-
-  const filteredOrderItems =
-    activeOrderCategory === "Todos"
-      ? publicOrderItems
-      : publicOrderItems.filter((item) => item.category === activeOrderCategory);
 
   const selectedOrderItems = publicOrderItems
     .map((item) => ({
@@ -1480,20 +1480,13 @@ export default function PublicTemplatePage() {
       )
     ),
   ];
-
-  useEffect(() => {
-    if (orderCategories.includes(activeOrderCategory)) return;
-
-    setActiveOrderCategory(orderCategories[0] ?? "Todos");
-  }, [activeOrderCategory, orderCategories]);
-
-  useEffect(() => {
-    if (publicMenuCategoryCards.some((category) => category.title === expandedCategory)) {
-      return;
-    }
-
-    setExpandedCategory(publicMenuCategoryCards[0]?.title ?? "Entradas");
-  }, [expandedCategory, publicMenuCategoryCards]);
+  const resolvedActiveOrderCategory = orderCategories.includes(activeOrderCategory)
+    ? activeOrderCategory
+    : orderCategories[0] ?? "Todos";
+  const filteredOrderItems =
+    resolvedActiveOrderCategory === "Todos"
+      ? publicOrderItems
+      : publicOrderItems.filter((item) => item.category === resolvedActiveOrderCategory);
 
   const galleryImages = [
     { id: "espacio2", label: "Fachada" },
@@ -2077,7 +2070,7 @@ export default function PublicTemplatePage() {
               className="grid h-[88vh] w-full max-w-6xl overflow-hidden rounded-[2rem] border border-[#c9a86a]/28 bg-[#15110d] text-[#fff2dd] shadow-2xl shadow-black/50 lg:grid-cols-[1.25fr_0.75fr]"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex min-h-0 flex-col border-b border-[#c9a86a]/18 lg:border-b-0 lg:border-r">
+              <div className="flex min-h-0 min-w-0 flex-col border-b border-[#c9a86a]/18 lg:border-b-0 lg:border-r">
                 <div className="flex items-start justify-between gap-4 border-b border-[#c9a86a]/18 p-6">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c9a86a]">
@@ -2110,7 +2103,7 @@ export default function PublicTemplatePage() {
                         type="button"
                         onClick={() => setActiveOrderCategory(category)}
                         className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
-                          activeOrderCategory === category
+                          resolvedActiveOrderCategory === category
                             ? "border-[#d88757] bg-[#c97048] text-white"
                             : "border-[#c9a86a]/20 bg-black/20 text-[#f4ead8]/70 hover:border-[#d88757]"
                         }`}
@@ -2142,7 +2135,7 @@ export default function PublicTemplatePage() {
                             alt={item.name}
                             className="h-full min-h-[132px] w-24 object-cover"
                           />
-                          <div className="p-4">
+                          <div className="min-w-0 p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
@@ -2210,7 +2203,7 @@ export default function PublicTemplatePage() {
                 </div>
               </div>
 
-              <aside className="flex min-h-0 flex-col">
+              <aside className="flex min-h-0 min-w-0 flex-col">
                 <div className="border-b border-[#c9a86a]/18 p-6">
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c9a86a]">
                     Resumen
@@ -2622,7 +2615,7 @@ export default function PublicTemplatePage() {
                     type="button"
                     onClick={() => setExpandedCategory(category.title)}
                     className={`group rounded-xl border p-7 text-center transition hover:-translate-y-1 hover:bg-[#211a14] ${
-                      expandedCategory === category.title
+                      resolvedExpandedCategory === category.title
                         ? "border-[#c97048] bg-[#211a14]"
                         : "demuru-border bg-[#151410]/82"
                     }`}
@@ -2645,7 +2638,7 @@ export default function PublicTemplatePage() {
               <div className="flex items-end justify-center gap-4 text-center">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c9a86a]">
-                    {expandedCategory}
+                    {resolvedExpandedCategory}
                   </p>
                   <h3 className="demuru-serif mt-1 text-2xl text-[#fff2dd]">
                     Platos de la categoría
