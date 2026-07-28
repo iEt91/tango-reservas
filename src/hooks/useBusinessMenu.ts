@@ -1,30 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { getMenuCategoriesByBusinessId, getMenuItemsByBusinessId, subscribeMenu } from "@/data/menu";
 import type { MenuCategory, MenuItem } from "@/data/types";
 
 export function useBusinessMenu(businessId?: string | null) {
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [items, setItems] = useState<MenuItem[]>([]);
+  const getSnapshot = () =>
+    JSON.stringify({
+      categories: businessId ? getMenuCategoriesByBusinessId(businessId) : [],
+      items: businessId ? getMenuItemsByBusinessId(businessId) : [],
+    });
+  const snapshot = useSyncExternalStore(
+    businessId ? subscribeMenu : () => () => {},
+    getSnapshot,
+    () => '{"categories":[],"items":[]}',
+  );
 
-  useEffect(() => {
-    if (!businessId) {
-      setCategories([]);
-      setItems([]);
-      return;
+  return useMemo(() => {
+    try {
+      return JSON.parse(snapshot) as { categories: MenuCategory[]; items: MenuItem[] };
+    } catch {
+      return { categories: [], items: [] };
     }
-
-    const syncMenu = () => {
-      setCategories(getMenuCategoriesByBusinessId(businessId));
-      setItems(getMenuItemsByBusinessId(businessId));
-    };
-
-    syncMenu();
-    const unsubscribe = subscribeMenu(syncMenu);
-    return unsubscribe;
-  }, [businessId]);
-
-  return { categories, items };
+  }, [snapshot]);
 }
-

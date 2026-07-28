@@ -1,25 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { getPublicWebContentByBusinessId, subscribePublicWeb } from "@/lib/data/webContent";
 import type { PublicWebContent } from "@/data/types";
 
 export function useBusinessWebContent(businessId?: string | null) {
-  const [content, setContent] = useState<PublicWebContent | null>(null);
+  const getSnapshot = () =>
+    JSON.stringify(businessId ? getPublicWebContentByBusinessId(businessId) : null);
+  const snapshot = useSyncExternalStore(
+    businessId ? subscribePublicWeb : () => () => {},
+    getSnapshot,
+    () => "null",
+  );
 
-  useEffect(() => {
-    if (!businessId) {
-      setContent(null);
-      return;
+  return useMemo(() => {
+    try {
+      return JSON.parse(snapshot) as PublicWebContent | null;
+    } catch {
+      return null;
     }
-
-    const syncContent = () => setContent(getPublicWebContentByBusinessId(businessId));
-
-    syncContent();
-    const unsubscribe = subscribePublicWeb(syncContent);
-    return unsubscribe;
-  }, [businessId]);
-
-  return content;
+  }, [snapshot]);
 }
-
