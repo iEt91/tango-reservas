@@ -160,7 +160,7 @@ export default function PedidoTrackingPage({ params }: TrackingPageProps) {
     };
   }, []);
 
-  const [nowTick, setNowTick] = useState(Date.now());
+  const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {

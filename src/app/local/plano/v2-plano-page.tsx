@@ -151,6 +151,10 @@ function getTodayDateKey() {
   return `${year}-${month}-${day}`;
 }
 
+function createMergedTableId() {
+  return `merged-${Date.now()}`;
+}
+
 const TODAY_DATE = getTodayDateKey();
 const DEFAULT_SLIDER_START = "00:00";
 const DEFAULT_SLIDER_END = "00:00";
@@ -1284,7 +1288,7 @@ export function V2PlanoPage() {
 
     const mergedTable: V2FloorTable = {
       ...rawTablesToMerge[0],
-      id: `merged-${Date.now()}`,
+      id: createMergedTableId(),
       name: rawTablesToMerge.map((table) => table.name).join(" + "),
       capacity: rawTablesToMerge.reduce((total, table) => total + table.capacity, 0),
       status: "available",

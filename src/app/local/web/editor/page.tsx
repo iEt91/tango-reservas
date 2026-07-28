@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Check,
   Eye,
@@ -195,13 +196,13 @@ export default function V2WebEditorPage() {
                 Cambios guardados
               </span>
             ) : null}
-            <a
+            <Link
               href="/local/web/plantillas"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <LayoutTemplate size={17} />
               Plantillas
-            </a>
+            </Link>
             <a
               href="/demuru"
               target="_blank"

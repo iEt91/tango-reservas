@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   AlertTriangle,
   Banknote,
@@ -631,21 +632,21 @@ export function V2LocalPage() {
           description={`Centro de control operativo · ${formatTodayLabel()}`}
           actions={
             <div className="flex flex-wrap items-center gap-2">
-              <a href="/local/reservas">
+              <Link href="/local/reservas">
                 <V2Button variant="secondary" icon={<CalendarDays size={18} />}>
                   Reservas
                 </V2Button>
-              </a>
-              <a href="/local/envios">
+              </Link>
+              <Link href="/local/envios">
                 <V2Button variant="secondary" icon={<ShoppingBag size={18} />}>
                   Envíos
                 </V2Button>
-              </a>
-              <a href="/local/reservas">
+              </Link>
+              <Link href="/local/reservas">
                 <V2Button variant="primary" icon={<Plus size={18} />}>
                   Nueva reserva
                 </V2Button>
-              </a>
+              </Link>
             </div>
           }
         />

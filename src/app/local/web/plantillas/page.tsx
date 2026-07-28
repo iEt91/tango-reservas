@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Check, Eye, Image as ImageIcon, LayoutTemplate, Pencil, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
@@ -43,20 +44,20 @@ export default function V2WebTemplatesPage() {
         description="Elegí la base visual de la web pública del local. Los textos e imágenes se podrán editar por plantilla."
         actions={
           <>
-            <a
+            <Link
               href="/local/web/editor"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Pencil size={17} />
               Editar contenido
-            </a>
-            <a
+            </Link>
+            <Link
               href="/local/web"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Pencil size={17} />
               Volver a Web
-            </a>
+            </Link>
             <a
               href="/demuru"
               target="_blank"
@@ -179,12 +180,12 @@ export default function V2WebTemplatesPage() {
                       >
                         {isActive ? "Plantilla activa" : "Usar plantilla"}
                       </button>
-                      <a
+                      <Link
                         href="/local/web/editor"
                         className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
                         Editar
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </V2Card>

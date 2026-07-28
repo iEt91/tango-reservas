@@ -163,7 +163,7 @@ export default function ReservaTrackingPage({ params }: ReservaTrackingPageProps
   const resolvedParams = use(params);
   const reservationCode = normalizeCode(resolvedParams.reservationCode);
   const [reservations, setReservations] = useState<PublicReservation[]>([]);
-  const [nowTick, setNowTick] = useState(Date.now());
+  const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
     function syncReservations() {

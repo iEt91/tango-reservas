@@ -399,6 +399,10 @@ function getTodayDateKey() {
   return `${year}-${month}-${day}`;
 }
 
+function createPublicDeliveryId() {
+  return `web-env-${Date.now()}`;
+}
+
 function addDays(date: string, days: number) {
   const parsedDate = new Date(`${date}T00:00:00`);
   parsedDate.setDate(parsedDate.getDate() + days);
@@ -1844,7 +1848,7 @@ export default function PublicTemplatePage() {
       quantity: item.quantity,
     }));
     const publicDelivery: PublicDeliveryRecord = {
-      id: `web-env-${Date.now()}`,
+      id: createPublicDeliveryId(),
       date: getTodayDateKey(),
       time: getTodayTimeKey(),
       client,
