@@ -793,16 +793,11 @@ export function V2ClientesPage() {
       });
   }, [clientFilter, clientSort, clients, searchQuery, sortDirection]);
 
-  useEffect(() => {
-    if (selectedClientId && clients.some((client) => client.id === selectedClientId)) {
-      return;
-    }
-
-    setSelectedClientId(clients[0]?.id ?? "");
-  }, [clients, selectedClientId]);
-
+  const resolvedSelectedClientId = clients.some((client) => client.id === selectedClientId)
+    ? selectedClientId
+    : clients[0]?.id ?? "";
   const selectedClient =
-    clients.find((client) => client.id === selectedClientId) ?? clients[0] ?? null;
+    clients.find((client) => client.id === resolvedSelectedClientId) ?? null;
   const profileClient =
     clients.find((client) => client.id === profileClientId) ?? null;
   const clientPendingDelete =
@@ -1273,7 +1268,7 @@ export function V2ClientesPage() {
                           <tr
                             key={row.id}
                             className={`border-b border-slate-100 transition ${
-                              selectedClientId === row.id
+                              resolvedSelectedClientId === row.id
                                 ? "bg-emerald-50/60 hover:bg-emerald-50"
                                 : index % 2 === 0
                                   ? "bg-white hover:bg-slate-50"

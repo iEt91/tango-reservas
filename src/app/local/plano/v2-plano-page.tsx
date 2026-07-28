@@ -676,19 +676,32 @@ export function V2PlanoPage() {
     () => getBusinessHourSlots(getBusinessHourForDate(localConfig, selectedDate)),
     [localConfig, selectedDate]
   );
+  const resolvedBusinessSlotIndex = Math.min(
+    activeBusinessSlotIndex,
+    Math.max(selectedDateBusinessSlots.length - 1, 0),
+  );
   const selectedDateBusinessHour =
-    selectedDateBusinessSlots[Math.min(activeBusinessSlotIndex, Math.max(selectedDateBusinessSlots.length - 1, 0))] ?? null;
+    selectedDateBusinessSlots[resolvedBusinessSlotIndex] ?? null;
   const isSelectedDateOpen = selectedDateBusinessSlots.length > 0;
   const sliderStartTime =
     isSelectedDateOpen && selectedDateBusinessHour ? selectedDateBusinessHour.open : DEFAULT_SLIDER_START;
   const sliderEndTime =
     isSelectedDateOpen && selectedDateBusinessHour ? selectedDateBusinessHour.close : DEFAULT_SLIDER_END;
   const sliderMaxValue = getSliderMaxValue(sliderStartTime, sliderEndTime);
+  const rawSelectedTimeSliderValue = timeToSliderValue(selectedTime, sliderStartTime);
+  const resolvedSelectedTime =
+    isSelectedDateOpen &&
+    (rawSelectedTimeSliderValue < 0 || rawSelectedTimeSliderValue > sliderMaxValue)
+      ? sliderStartTime
+      : sliderValueToTime(
+          Math.round(Math.max(0, Math.min(rawSelectedTimeSliderValue, sliderMaxValue))),
+          sliderStartTime,
+        );
   const selectedTimeSliderValue = Math.min(
     sliderMaxValue,
-    timeToSliderValue(selectedTime, sliderStartTime)
+    timeToSliderValue(resolvedSelectedTime, sliderStartTime)
   );
-  const selectedTimeMinutes = getAbsoluteMinutesForTimeline(selectedTime, sliderStartTime);
+  const selectedTimeMinutes = getAbsoluteMinutesForTimeline(resolvedSelectedTime, sliderStartTime);
   const maxBookingDate = addDaysToDate(TODAY_DATE, localConfig.bookingWindowDays - 1);
   const calendarMonthDays = useMemo(() => getMonthGridDays(calendarMonth), [calendarMonth]);
   const reservationDatesInMonth = useMemo(
@@ -946,27 +959,6 @@ export function V2PlanoPage() {
       document.removeEventListener("mousedown", handleDocumentMouseDown);
     };
   }, [isDatePickerOpen]);
-
-  useEffect(() => {
-    if (activeBusinessSlotIndex >= selectedDateBusinessSlots.length) {
-      setActiveBusinessSlotIndex(0);
-    }
-  }, [activeBusinessSlotIndex, selectedDateBusinessSlots.length]);
-
-  useEffect(() => {
-    if (!isSelectedDateOpen) return;
-
-    const currentValue = timeToSliderValue(selectedTime, sliderStartTime);
-
-    if (currentValue < 0 || currentValue > sliderMaxValue) {
-      setSelectedTime(sliderStartTime);
-      return;
-    }
-
-    if (selectedTime !== sliderValueToTime(Math.round(currentValue), sliderStartTime)) {
-      setSelectedTime(sliderValueToTime(Math.round(currentValue), sliderStartTime));
-    }
-  }, [isSelectedDateOpen, selectedTime, sliderMaxValue, sliderStartTime]);
 
   useEffect(() => {
     if (!activeTableInteraction) return;
@@ -1852,7 +1844,7 @@ export function V2PlanoPage() {
                         }}
                         className={cn(
                           "rounded-xl border px-3 py-2 text-xs font-bold transition",
-                          index === activeBusinessSlotIndex
+                          index === resolvedBusinessSlotIndex
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                             : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
                         )}
@@ -1895,7 +1887,7 @@ export function V2PlanoPage() {
                         left: `calc(${(selectedTimeSliderValue / sliderMaxValue) * 100}% - 20px)`,
                       }}
                     >
-                      {selectedTime}
+                      {resolvedSelectedTime}
                     </div>
                   </div>
 
@@ -2342,7 +2334,7 @@ export function V2PlanoPage() {
                   {selectedTable ? `Asignar a ${selectedTable.name}` : "Seleccioná una mesa"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {formatDateLabel(selectedDate)} · {selectedTime}
+                  {formatDateLabel(selectedDate)} · {resolvedSelectedTime}
                 </p>
               </div>
 
