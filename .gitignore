@@ -13,3 +13,12 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 tsconfig.tsbuildinfo
+
+# Archivos vacíos creados accidentalmente al pegar comandos en Windows CMD
+/git
+/main
+/next
+/node
+/npm
+/npx
+/tango-reservas@5.6.0-configuracion-lab
