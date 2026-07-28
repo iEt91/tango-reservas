@@ -71,6 +71,19 @@ export function PublicMenuPreview({
     }
   }, [mounted, snapshot]);
 
+  const activeCategories = useMemo(
+    () => categories.filter((category) => category.isActive),
+    [categories],
+  );
+  const activeItems = useMemo(() => items.filter((item) => item.isActive), [items]);
+  const visibleCategories = useMemo(
+    () =>
+      activeCategories.filter((category) =>
+        activeItems.some((item) => item.categoryId === category.id),
+      ),
+    [activeCategories, activeItems],
+  );
+
   if (!mounted) {
     return (
       <section
@@ -92,18 +105,6 @@ export function PublicMenuPreview({
     );
   }
 
-  const activeCategories = useMemo(
-    () => categories.filter((category) => category.isActive),
-    [categories],
-  );
-  const activeItems = useMemo(() => items.filter((item) => item.isActive), [items]);
-  const visibleCategories = useMemo(
-    () =>
-      activeCategories.filter((category) =>
-        activeItems.some((item) => item.categoryId === category.id),
-      ),
-    [activeCategories, activeItems],
-  );
   const selectedCategory =
     visibleCategories.find((category) => category.id === selectedCategoryId) ??
     visibleCategories[0] ??
