@@ -303,7 +303,7 @@ function formatReservationPayment(reservation: V2Reservation) {
 }
 
 function isClosedPaidDelivery(delivery: V2Delivery) {
-  return delivery.status === "completed" || delivery.status === "delivered";
+  return delivery.status === "completed" || String(delivery.status) === "delivered";
 }
 
 function normalizeDeliveryPaymentMethod(value?: string) {

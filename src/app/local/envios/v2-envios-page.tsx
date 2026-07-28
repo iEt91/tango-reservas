@@ -1577,6 +1577,7 @@ export function V2EnviosPage() {
 
     const clientPhone = acceptedDelivery.phone.replace(/\D/g, "");
     const trackingId = getDeliveryTrackingId(acceptedDelivery);
+    const trackingUrl = getDeliveryTrackingUrl(acceptedDelivery);
     const whatsappMessage = [
       `Hola ${acceptedDelivery.client}, tu pedido ${trackingId} en Demuru fue aceptado.`,
       "",
@@ -1589,6 +1590,9 @@ export function V2EnviosPage() {
       `Código de pedido: ${trackingId}`,
       `Pedido: ${acceptedDelivery.order}`,
       `Total: ${formatCurrency(acceptedDelivery.total)}`,
+      "",
+      "Podés seguir tu pedido acá:",
+      trackingUrl,
     ].join("\n");
 
     if (clientPhone) {

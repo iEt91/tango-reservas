@@ -155,6 +155,7 @@ const STATUS_PRIORITY: Record<V2ClientStatus, number> = {
   frequent: 1,
   active: 2,
   new: 3,
+  inactive: 4,
 };
 
 function readFromStorage<T>(key: string, fallback: T) {

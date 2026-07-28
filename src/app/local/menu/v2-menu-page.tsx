@@ -237,9 +237,7 @@ async function fetchAvailableMenuImages() {
   }
 }
 
-function createMenuImageProductDraft(file: V2MenuImageFile): V2MenuItem {
-  const now = new Date().toISOString();
-
+function createMenuImageProductDraft(file: V2MenuImageFile): V2MenuItemDraft {
   return {
     id: `img-product-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: file.name,
@@ -250,8 +248,6 @@ function createMenuImageProductDraft(file: V2MenuImageFile): V2MenuItem {
     visible: true,
     featured: false,
     imageUrl: file.imageUrl,
-    createdAt: now,
-    updatedAt: now,
   };
 }
 

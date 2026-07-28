@@ -434,7 +434,7 @@ export function V2LocalPage() {
     (delivery) => delivery.status !== "completed" && delivery.status !== "cancelled"
   );
   const pendingDeliveries = todayDeliveries.filter(
-    (delivery) => delivery.needsAcceptance || delivery.status === "pending"
+    (delivery) => delivery.needsAcceptance || String(delivery.status) === "pending"
   );
   const todayRevenue =
     todayDeliveries

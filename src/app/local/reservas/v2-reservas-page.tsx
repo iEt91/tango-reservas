@@ -1947,18 +1947,19 @@ export function V2ReservasPage() {
 
   const tableOptionsForEditing = useMemo<V2TableOptionForReservation[]>(() => {
     if (!editingReservation) return [];
+    const currentReservation = editingReservation;
 
     function tableConflict(tableName: string) {
       const normalizedTableName = normalizeTableName(tableName);
 
       return (
         reservations.find((reservation) => {
-          if (reservation.id === editingReservation.id) return false;
-          if (reservation.date !== editingReservation.date) return false;
+          if (reservation.id === currentReservation.id) return false;
+          if (reservation.date !== currentReservation.date) return false;
           if (!isActiveReservationStatus(reservation.status)) return false;
           if (!splitTableNames(reservation.tableName).includes(normalizedTableName)) return false;
 
-          return reservationRangesOverlap(reservation, editingReservation);
+          return reservationRangesOverlap(reservation, currentReservation);
         }) ?? null
       );
     }
@@ -2277,7 +2278,6 @@ export function V2ReservasPage() {
     setReservationFormError("");
     setEditingMode("edit");
     setEditingReservation({
-      date: selectedDate,
       durationMinutes: localConfig.standardDurationMinutes,
       tableName: "",
       email: "",
@@ -4198,7 +4198,7 @@ export function V2ReservasPage() {
                     {actionsReservation.client || "Reserva sin cliente"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {actionsReservation.publicCode || actionsReservation.id} · {actionsReservation.time}
+                    {actionsReservation.reservationCode || actionsReservation.id} · {actionsReservation.time}
                   </p>
                   {USE_RESERVATION_WHATSAPP_TEST_PHONE ? (
                     <p className="mt-1 text-xs font-medium text-emerald-600">

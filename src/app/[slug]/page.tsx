@@ -163,6 +163,9 @@ type PublicMenuCategoryDraft = {
   order: number;
   visible?: boolean;
   active?: boolean;
+  isPromotion?: boolean;
+  fixedPrice?: number;
+  discountPercent?: number;
   products?: { productId: string; quantity: number }[];
 };
 
@@ -1281,7 +1284,7 @@ export default function PublicTemplatePage() {
     const menuItemsById = Object.fromEntries(visibleMenuItems.map((item) => [item.id, item]));
     const stockById = Object.fromEntries(stockProducts.map((product) => [product.id, product]));
 
-    function resolveStockStatus(productIds: string[]) {
+    function resolveStockStatus(productIds: string[]): PublicStockStatus {
       const stockStatuses = productIds
         .map((productId) => stockById[productId])
         .filter(Boolean)
@@ -2554,7 +2557,7 @@ export default function PublicTemplatePage() {
                   title: "Abierto hoy",
                   text: "Lun a Dom · 12:00 — 00:00 hs",
                 },
-              ].filter(Boolean).map((item) => {
+              ].filter((item) => item !== null).map((item) => {
                 const Icon = item.icon;
 
                 return (

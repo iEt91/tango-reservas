@@ -20,6 +20,7 @@ export function V2Card({ children, className }: V2CardProps) {
 }
 
 type V2MetricCardProps = {
+  className?: string;
   label: string;
   value: string | number;
   helper?: string;
@@ -37,6 +38,7 @@ const metricToneClasses = {
 };
 
 export function V2MetricCard({
+  className,
   label,
   value,
   helper,
@@ -44,7 +46,7 @@ export function V2MetricCard({
   tone = "slate",
 }: V2MetricCardProps) {
   return (
-    <V2Card className="flex items-center gap-4">
+    <V2Card className={cn("flex items-center gap-4", className)}>
       {icon ? (
         <div
           className={cn(

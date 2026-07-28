@@ -34,7 +34,7 @@ type ReservaTrackingPageProps = {
 
 const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
 const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
-const CLOSED_RESERVATION_VISIBILITY_MINUTES = 20;
+const RESERVATION_TRACKING_GRACE_MINUTES = 10;
 
 const STATUS_LABELS: Record<PublicReservationStatus, string> = {
   pending: "Pendiente",
@@ -100,13 +100,13 @@ function isTimestampExpired(value?: string) {
 
   if (Number.isNaN(time)) return false;
 
-  return Date.now() - time > CLOSED_RESERVATION_VISIBILITY_MINUTES * 60 * 1000;
+  return Date.now() - time > RESERVATION_TRACKING_GRACE_MINUTES * 60 * 1000;
 }
 
-function getReservationEndTime(reservation: PublicReservation) {
+function getReservationTrackingExpiration(reservation: PublicReservation) {
   const [year, month, day] = reservation.date.split("-").map(Number);
   const [hour, minute] = reservation.time.split(":").map(Number);
-  const start = new Date(
+  const reservationTime = new Date(
     year,
     (month ?? 1) - 1,
     day ?? 1,
@@ -116,31 +116,31 @@ function getReservationEndTime(reservation: PublicReservation) {
     0,
   );
 
-  if (Number.isNaN(start.getTime())) return null;
+  if (Number.isNaN(reservationTime.getTime())) return null;
 
-  const duration = Math.max(Number(reservation.durationMinutes) || 90, 15);
-
-  return new Date(start.getTime() + duration * 60 * 1000);
+  return new Date(
+    reservationTime.getTime() + RESERVATION_TRACKING_GRACE_MINUTES * 60 * 1000,
+  );
 }
 
 function isReservationTrackingExpired(reservation: PublicReservation) {
   if (reservation.status === "cancelled") {
-    return isTimestampExpired(reservation.cancelledAt);
-  }
-
-  if (reservation.status === "completed") {
-    return isTimestampExpired(reservation.completedAt);
+    return reservation.cancelledAt
+      ? isTimestampExpired(reservation.cancelledAt)
+      : Date.now() > (getReservationTrackingExpiration(reservation)?.getTime() ?? Infinity);
   }
 
   if (reservation.status === "no_show") {
-    return isTimestampExpired(reservation.noShowAt);
+    return reservation.noShowAt
+      ? isTimestampExpired(reservation.noShowAt)
+      : Date.now() > (getReservationTrackingExpiration(reservation)?.getTime() ?? Infinity);
   }
 
-  const endTime = getReservationEndTime(reservation);
+  const expiration = getReservationTrackingExpiration(reservation);
 
-  if (!endTime) return false;
+  if (!expiration) return false;
 
-  return Date.now() > endTime.getTime();
+  return Date.now() > expiration.getTime();
 }
 
 function readReservations() {

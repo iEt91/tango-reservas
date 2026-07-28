@@ -672,10 +672,9 @@ export default function MenuRecetasPage() {
   }
 
   return (
-    <V2AppShell activeItem="menu">
+    <V2AppShell>
       <div className="flex h-full min-h-0 flex-col">
         <V2PageHeader
-          eyebrow="Demuru"
           title="Recetas"
           description="Conectá cada plato real del menú con los insumos de stock que consume."
           actions={
