@@ -263,7 +263,6 @@ function getTodayDateKey() {
 }
 
 const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
 const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
 
 const DEFAULT_FLOOR_TABLES: V2FloorPlanTable[] = [
@@ -2242,16 +2241,6 @@ export function V2ReservasPage() {
     setRangeStartDate(start);
     setRangeEndDate(end);
     setCalendarMonth(date);
-    setIsPickingRangeEnd(false);
-  }
-
-  function applyRange(startDate: string, endDate: string) {
-    const { start, end } = getRangeBounds(startDate, endDate);
-
-    setDateFilterMode("range");
-    setRangeStartDate(start);
-    setRangeEndDate(end);
-    setCalendarMonth(start);
     setIsPickingRangeEnd(false);
   }
 

@@ -1,24 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import {
-  Bike,
   CalendarDays,
-  Clock,
   ExternalLink,
-  Eye,
   Globe2,
   Image as ImageIcon,
   LayoutTemplate,
-  Leaf,
   MapPin,
   MessageCircle,
   Pencil,
-  Phone,
   Save,
-  ShoppingBag,
-  Star,
   Truck,
-  Wine,
   Utensils,
   X,
 } from "lucide-react";
@@ -99,14 +92,6 @@ const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
 const MENU_ITEMS_EVENT = "tango-v2-menu-items-updated";
 const MENU_CATEGORIES_EVENT = "tango-v2-menu-categories-updated";
 const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 type LucideMenuIconComponent = React.ElementType<{
   size?: number | string;
@@ -707,21 +692,21 @@ export function V2WebPage() {
                 </span>
               ) : null}
 
-              <a
+              <Link
                 href="/local/web/plantillas"
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 <LayoutTemplate size={17} />
                 Plantillas
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="/local/web/editor"
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 <Pencil size={17} />
                 Editor
-              </a>
+              </Link>
 
               <a
                 href="/demuru"

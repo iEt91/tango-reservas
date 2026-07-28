@@ -12,7 +12,6 @@ import {
   PauseCircle,
   Plus,
   Search,
-  Star,
   Tags,
   Trash2,
   X,

@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   Dot,
   Image as ImageIcon,
   Layers,
@@ -18,7 +17,6 @@ import {
   Maximize2,
   Minimize2,
   Unlock,
-  Users,
   X,
 } from "lucide-react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
@@ -52,15 +50,6 @@ type V2FloorTable = {
   note?: string;
   locked?: boolean;
   mergedTables?: V2FloorTable[];
-};
-
-type V2UnassignedReservation = {
-  id: string;
-  client: string;
-  time: string;
-  people: number;
-  note: string;
-  status: "pending" | "confirmed";
 };
 
 type V2PlanoReservation = (typeof v2Reservations)[number] & {
@@ -513,33 +502,6 @@ const INITIAL_TABLES: V2FloorTable[] = [
     width: 86,
     height: 86,
     rotation: 0,
-  },
-];
-
-const UNASSIGNED_RESERVATIONS: V2UnassignedReservation[] = [
-  {
-    id: "unassigned-1",
-    client: "Carlos Gómez",
-    time: "19:30",
-    people: 3,
-    note: "Sin mesa asignada",
-    status: "confirmed",
-  },
-  {
-    id: "unassigned-2",
-    client: "Diego Ramírez",
-    time: "23:00",
-    people: 2,
-    note: "Exterior",
-    status: "pending",
-  },
-  {
-    id: "unassigned-3",
-    client: "Camila Torres",
-    time: "21:15",
-    people: 4,
-    note: "Prefiere interior",
-    status: "confirmed",
   },
 ];
 

@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Clock,
   Leaf,
-  Mail,
   MapPin,
   MessageCircle,
   Phone,
@@ -1112,7 +1111,6 @@ export default function PublicTemplatePage() {
     note: "",
   }));
   const [reservationError, setReservationError] = useState("");
-  const [reservationSuccess, setReservationSuccess] = useState("");
   const [isTimePopupOpen, setIsTimePopupOpen] = useState(false);
   const [pendingReservation, setPendingReservation] =
     useState<PendingPublicReservation | null>(null);
@@ -1568,7 +1566,6 @@ export default function PublicTemplatePage() {
     value: PublicReservationForm[K]
   ) {
     setReservationError("");
-    setReservationSuccess("");
     setReservationForm((current) => {
       if (key === "date") {
         const nextDate = String(value);
@@ -1650,7 +1647,6 @@ export default function PublicTemplatePage() {
       note: reservationForm.note.trim(),
     });
     setReservationError("");
-    setReservationSuccess("");
   }
 
   function readLivePublicConfig() {
@@ -1750,9 +1746,6 @@ export default function PublicTemplatePage() {
     setLocalConfig(configForReservation);
     setFloorTables(tablesForReservation);
     setReservations(nextReservations);
-    setReservationSuccess(
-      `Reserva enviada para ${formatPublicDate(nextReservation.date)} a las ${nextReservation.time}. Queda pendiente de confirmación.`
-    );
     setCreatedReservationSummary({
       client: nextReservation.client,
       reservationCode: getPublicReservationCode(nextReservation),

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { Business } from "@/data/types";
 import { BusinessForm } from "@/components/admin/BusinessForm";
@@ -21,11 +21,6 @@ export default function EditBusinessPage() {
   const sourceLabel = dataSource === "supabase" ? "Supabase" : "modo local/mock";
   const [mounted, setMounted] = useState(false);
   const [business, setBusiness] = useState<Business | null>(null);
-  const initialValues = useMemo(
-    () => (business ? toBusinessFormValues(business) : null),
-    [business],
-  );
-
   useEffect(() => {
     let cancelled = false;
 
@@ -127,4 +122,3 @@ export default function EditBusinessPage() {
     </main>
   );
 }
-
