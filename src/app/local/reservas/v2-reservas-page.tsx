@@ -847,7 +847,11 @@ function createPaymentForm(reservation: V2ReservationDraft): V2ReservationPaymen
       reservation.paymentMethod === "Mixto" || reservation.paymentMethod === "mixed"
         ? "mixed"
         : "cash",
-    amount: String(Number(reservation.paidAmount ?? total) || 0),
+    amount: String(
+      reservation.status === "completed"
+        ? Number(reservation.paidAmount ?? total) || 0
+        : total,
+    ),
     cash: String(Number(breakdown?.cash) || 0),
     card: String(Number(breakdown?.card) || 0),
     mercadoPago: String(Number(breakdown?.mercadoPago) || 0),
@@ -1561,7 +1565,7 @@ export function V2ReservasPage() {
   const [editingReservation, setEditingReservation] =
     useState<V2ReservationDraft | null>(null);
   const [editingMode, setEditingMode] = useState<"create" | "edit">("edit");
-  const [selectedReservation, setSelectedReservation] =
+  const [selectedReservationSnapshot, setSelectedReservation] =
     useState<V2ReservationDraft | null>(null);
   const [noteModalReservation, setNoteModalReservation] =
     useState<V2ReservationDraft | null>(null);
@@ -1576,8 +1580,16 @@ export function V2ReservasPage() {
   const [reservationFormError, setReservationFormError] = useState("");
   const [quickActionReservation, setQuickActionReservation] =
     useState<V2ReservationDraft | null>(null);
-  const [orderReservation, setOrderReservation] =
+  const [orderReservationSnapshot, setOrderReservation] =
     useState<V2ReservationDraft | null>(null);
+  const selectedReservation = selectedReservationSnapshot
+    ? reservations.find((reservation) => reservation.id === selectedReservationSnapshot.id) ??
+      selectedReservationSnapshot
+    : null;
+  const orderReservation = orderReservationSnapshot
+    ? reservations.find((reservation) => reservation.id === orderReservationSnapshot.id) ??
+      orderReservationSnapshot
+    : null;
   const [selectedMenuCategory, setSelectedMenuCategory] =
     useState<V2MenuCategory>("all");
   const [menuOrderItems, setMenuOrderItems] =
@@ -2122,28 +2134,6 @@ export function V2ReservasPage() {
       }) ?? null
     );
   }, [editingReservation, reservations]);
-
-  useEffect(() => {
-    if (!selectedReservation?.id) return;
-
-    const latestSelectedReservation =
-      reservations.find((reservation) => reservation.id === selectedReservation.id) ?? null;
-
-    if (latestSelectedReservation) {
-      setSelectedReservation(latestSelectedReservation);
-    }
-  }, [reservations, selectedReservation?.id]);
-
-  useEffect(() => {
-    if (!orderReservation?.id) return;
-
-    const latestOrderReservation =
-      reservations.find((reservation) => reservation.id === orderReservation.id) ?? null;
-
-    if (latestOrderReservation) {
-      setOrderReservation(latestOrderReservation);
-    }
-  }, [reservations, orderReservation?.id]);
 
   function selectReservationWithTone(reservation: V2ReservationDraft) {
     setSelectedReservation(reservation);

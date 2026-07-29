@@ -8,11 +8,13 @@ import {
   CheckCircle2,
   CreditCard,
   Clock3,
+  Landmark,
   PackageCheck,
   Plus,
   ShoppingBag,
   Table2,
   Truck,
+  WalletCards,
   Warehouse,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -68,6 +70,13 @@ type V2ReservationDraft = {
   orderTotal?: number;
   payment?: string;
   paymentMethod?: string;
+  paidAmount?: number;
+  paymentBreakdown?: {
+    cash: number;
+    card: number;
+    mercadoPago: number;
+    transfer: number;
+  };
   reservationCode?: string;
   createdAt?: string;
   confirmedAt?: string;
@@ -320,31 +329,14 @@ function getAttentionBadgeTone(tone: AttentionItem["tone"]): "red" | "orange" | 
   return "slate";
 }
 
-function getCashLikeTotal(paymentTotals: Record<string, number>) {
+function getPaymentMethodTotal(
+  paymentTotals: Record<string, number>,
+  acceptedMethods: string[],
+) {
   return Object.entries(paymentTotals).reduce((total, [method, amount]) => {
     const normalizedMethod = method.toLowerCase();
 
-    if (
-      normalizedMethod.includes("efectivo") ||
-      normalizedMethod.includes("transfer") ||
-      normalizedMethod.includes("sin método")
-    ) {
-      return total + amount;
-    }
-
-    return total;
-  }, 0);
-}
-
-function getCardLikeTotal(paymentTotals: Record<string, number>) {
-  return Object.entries(paymentTotals).reduce((total, [method, amount]) => {
-    const normalizedMethod = method.toLowerCase();
-
-    if (
-      normalizedMethod.includes("tarjeta") ||
-      normalizedMethod.includes("mercado") ||
-      normalizedMethod.includes("mp")
-    ) {
+    if (acceptedMethods.some((acceptedMethod) => normalizedMethod.includes(acceptedMethod))) {
       return total + amount;
     }
 
@@ -442,8 +434,12 @@ export function V2LocalPage() {
       .filter((delivery) => delivery.status !== "cancelled")
       .reduce((total, delivery) => total + (Number(delivery.total) || 0), 0) +
     todayReservations
-      .filter((reservation) => reservation.status !== "cancelled" && reservation.status !== "no_show")
-      .reduce((total, reservation) => total + (Number(reservation.orderTotal) || 0), 0);
+      .filter((reservation) => reservation.status === "completed")
+      .reduce(
+        (total, reservation) =>
+          total + (Number(reservation.paidAmount ?? reservation.orderTotal) || 0),
+        0,
+      );
 
   const paymentTotals = [
     ...todayDeliveries
@@ -453,11 +449,24 @@ export function V2LocalPage() {
         amount: Number(delivery.total) || 0,
       })),
     ...todayReservations
-      .filter((reservation) => reservation.status !== "cancelled" && reservation.status !== "no_show")
-      .map((reservation) => ({
-        method: normalizePaymentMethod(reservation.paymentMethod || reservation.payment),
-        amount: Number(reservation.orderTotal) || 0,
-      })),
+      .filter((reservation) => reservation.status === "completed")
+      .flatMap((reservation) => {
+        const breakdown = reservation.paymentBreakdown;
+
+        if (breakdown) {
+          return [
+            { method: "Efectivo", amount: Number(breakdown.cash) || 0 },
+            { method: "Tarjeta", amount: Number(breakdown.card) || 0 },
+            { method: "Mercado Pago", amount: Number(breakdown.mercadoPago) || 0 },
+            { method: "Transferencia", amount: Number(breakdown.transfer) || 0 },
+          ];
+        }
+
+        return [{
+          method: normalizePaymentMethod(reservation.paymentMethod || reservation.payment),
+          amount: Number(reservation.paidAmount ?? reservation.orderTotal) || 0,
+        }];
+      }),
   ].reduce<Record<string, number>>((totals, item) => {
     if (item.amount <= 0) return totals;
 
@@ -465,8 +474,10 @@ export function V2LocalPage() {
     return totals;
   }, {});
 
-  const cashLikeTotal = getCashLikeTotal(paymentTotals);
-  const cardLikeTotal = getCardLikeTotal(paymentTotals);
+  const cashTotal = getPaymentMethodTotal(paymentTotals, ["efectivo", "sin método"]);
+  const cardTotal = getPaymentMethodTotal(paymentTotals, ["tarjeta"]);
+  const mercadoPagoTotal = getPaymentMethodTotal(paymentTotals, ["mercado pago"]);
+  const transferTotal = getPaymentMethodTotal(paymentTotals, ["transferencia"]);
 
   const openTableReservations = todayReservations.filter(isOpenTableReservation);
   const reservedOrOccupiedTables = floorTables.filter(
@@ -686,22 +697,45 @@ export function V2LocalPage() {
                 icon={<Warehouse size={22} />}
               />
 
-              <V2Card className="flex min-h-[86px] items-center gap-2 px-3 py-2">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                  <Banknote size={19} />
+              <V2Card className="flex min-h-[86px] flex-col justify-between gap-1 px-2 py-2">
+                <div className="flex min-w-0 items-center justify-center gap-2">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                    <Banknote size={19} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-slate-500">Caja del día</p>
+                    <p className="mt-0.5 text-xl font-bold leading-none text-slate-950">{formatMoney(todayRevenue)}</p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-slate-500">Caja del día</p>
-                  <p className="mt-0.5 text-xl font-bold leading-none text-slate-950">{formatMoney(todayRevenue)}</p>
-                  <div className="mt-1.5 grid grid-cols-2 gap-1 text-[10px] font-semibold text-slate-600">
-                    <div className="flex min-w-0 items-center gap-1 truncate rounded-lg bg-emerald-50 px-1.5 py-1 text-emerald-800">
-                      <Banknote size={11} />
-                      <span className="truncate">{formatMoney(cashLikeTotal)}</span>
-                    </div>
-                    <div className="flex min-w-0 items-center gap-1 truncate rounded-lg bg-blue-50 px-1.5 py-1 text-blue-800">
-                      <CreditCard size={11} />
-                      <span className="truncate">{formatMoney(cardLikeTotal)}</span>
-                    </div>
+
+                <div className="grid w-full grid-cols-2 gap-1 text-[10px] font-semibold text-slate-600">
+                  <div
+                    className="flex min-w-0 items-center gap-1 rounded-lg bg-emerald-50 px-1.5 py-1 text-emerald-800"
+                    title={`Efectivo: ${formatMoney(cashTotal)}`}
+                  >
+                    <Banknote className="shrink-0" size={11} />
+                    <span className="truncate">{formatMoney(cashTotal)}</span>
+                  </div>
+                  <div
+                    className="flex min-w-0 items-center gap-1 rounded-lg bg-sky-50 px-1.5 py-1 text-sky-800"
+                    title={`Mercado Pago: ${formatMoney(mercadoPagoTotal)}`}
+                  >
+                    <WalletCards className="shrink-0" size={11} />
+                    <span className="truncate">{formatMoney(mercadoPagoTotal)}</span>
+                  </div>
+                  <div
+                    className="flex min-w-0 items-center gap-1 rounded-lg bg-blue-50 px-1.5 py-1 text-blue-800"
+                    title={`Tarjeta: ${formatMoney(cardTotal)}`}
+                  >
+                    <CreditCard className="shrink-0" size={11} />
+                    <span className="truncate">{formatMoney(cardTotal)}</span>
+                  </div>
+                  <div
+                    className="flex min-w-0 items-center gap-1 rounded-lg bg-indigo-50 px-1.5 py-1 text-indigo-800"
+                    title={`Transferencia: ${formatMoney(transferTotal)}`}
+                  >
+                    <Landmark className="shrink-0" size={11} />
+                    <span className="truncate">{formatMoney(transferTotal)}</span>
                   </div>
                 </div>
               </V2Card>
