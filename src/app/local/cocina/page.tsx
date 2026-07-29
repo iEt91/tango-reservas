@@ -19,8 +19,11 @@ import { cn } from "@/lib/v2/v2-utils";
 
 const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
 const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
+const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
 const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
 const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
+const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
+const DEFAULT_PREPARATION_TIME_SECONDS = 15 * 60;
 
 type KitchenStatus = "pending" | "preparing" | "ready";
 type CommandSource = "reservation" | "delivery";
@@ -40,6 +43,12 @@ type KitchenTicket = {
   createdAt: string;
   startedAt?: string;
   readyAt?: string;
+};
+
+type StoredRecipe = {
+  menuItemId: string;
+  name: string;
+  preparationTimeSeconds?: number;
 };
 
 type StoredReservation = {
@@ -87,8 +96,9 @@ type KitchenCommand = {
   client: string;
   time: string;
   note: string;
-  items: Array<{ name: string; quantity: number }>;
+  items: Array<{ menuItemId?: string; name: string; quantity: number }>;
   status: KitchenStatus;
+  targetSeconds: number;
   enteredAt?: string;
   startedAt?: string;
   readyAt?: string;
@@ -122,8 +132,8 @@ function parseLegacyItems(value?: string) {
     .map((part) => {
       const match = part.trim().match(/^(\d+)\s*x\s*(.+)$/i);
       return match
-        ? { quantity: Number(match[1]) || 1, name: match[2].trim() }
-        : { quantity: 1, name: part.trim() };
+        ? { menuItemId: undefined, quantity: Number(match[1]) || 1, name: match[2].trim() }
+        : { menuItemId: undefined, quantity: 1, name: part.trim() };
     })
     .filter((item) => item.name);
 }
@@ -131,13 +141,17 @@ function parseLegacyItems(value?: string) {
 function getItems(items?: OrderLineItem[], legacyText?: string) {
   const normalized = (items ?? [])
     .filter((item) => Number(item.quantity) > 0)
-    .map((item) => ({ name: item.name, quantity: Number(item.quantity) }));
+    .map((item) => ({
+      menuItemId: item.menuItemId ?? item.id,
+      name: item.name,
+      quantity: Number(item.quantity),
+    }));
 
   return normalized.length > 0 ? normalized : parseLegacyItems(legacyText);
 }
 
 function subtractTicketItems(
-  allItems: Array<{ name: string; quantity: number }>,
+  allItems: Array<{ menuItemId?: string; name: string; quantity: number }>,
   tickets: KitchenTicket[],
 ) {
   const ticketQuantities = new Map<string, number>();
@@ -157,50 +171,94 @@ function subtractTicketItems(
   });
 }
 
-function getElapsedMinutes(timestamp: string | undefined, now: number) {
+function getCommandTargetSeconds(
+  items: Array<{ menuItemId?: string; name: string; quantity: number }>,
+  recipes: StoredRecipe[],
+) {
+  const longestPreparationTime = items.reduce((longestTime, item) => {
+    const normalizedName = item.name.trim().toLowerCase();
+    const recipe = recipes.find(
+      (candidate) =>
+        (item.menuItemId && candidate.menuItemId === item.menuItemId) ||
+        candidate.name.trim().toLowerCase() === normalizedName,
+    );
+    const preparationTime = Math.max(
+      1,
+      Number(recipe?.preparationTimeSeconds) || DEFAULT_PREPARATION_TIME_SECONDS,
+    );
+
+    return Math.max(longestTime, preparationTime);
+  }, 0);
+
+  return longestPreparationTime || DEFAULT_PREPARATION_TIME_SECONDS;
+}
+
+function getElapsedSeconds(timestamp: string | undefined, endTime: number) {
   if (!timestamp) return 0;
 
   const startedAt = new Date(timestamp).getTime();
   if (!Number.isFinite(startedAt)) return 0;
 
-  return Math.max(0, Math.floor((now - startedAt) / 60000));
+  return Math.max(0, Math.floor((endTime - startedAt) / 1000));
 }
 
-function formatElapsed(minutes: number) {
-  if (minutes < 1) return "Ahora";
-  if (minutes < 60) return `${minutes} min`;
+function formatDuration(totalSeconds: number) {
+  const normalizedSeconds = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(normalizedSeconds / 60);
+  const seconds = normalizedSeconds % 60;
 
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  return `${hours} h ${remainder} min`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function getCommandTone(minutes: number, status: KitchenStatus) {
+function getCommandTone(
+  elapsedSeconds: number,
+  targetSeconds: number,
+  status: KitchenStatus,
+) {
   if (status === "ready") return "border-emerald-200 bg-emerald-50/40";
-  if (minutes >= 30) return "border-red-200 bg-red-50/40";
-  if (minutes >= 15) return "border-orange-200 bg-orange-50/40";
-  return "border-slate-200 bg-white";
+  if (elapsedSeconds >= targetSeconds) return "border-red-200 bg-red-50/40";
+  if (elapsedSeconds >= targetSeconds * 0.75) {
+    return "border-orange-200 bg-orange-50/40";
+  }
+
+  return "border-emerald-200 bg-emerald-50/30";
+}
+
+function getTimerBadgeTone(
+  elapsedSeconds: number,
+  targetSeconds: number,
+  status: KitchenStatus,
+): "green" | "orange" | "red" {
+  if (status === "ready" || elapsedSeconds < targetSeconds * 0.75) return "green";
+  if (elapsedSeconds < targetSeconds) return "orange";
+
+  return "red";
 }
 
 export default function CocinaPage() {
   const [reservations, setReservations] = useState<StoredReservation[]>([]);
   const [deliveries, setDeliveries] = useState<StoredDelivery[]>([]);
+  const [recipes, setRecipes] = useState<StoredRecipe[]>([]);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     function syncCommands() {
       setReservations(readStorage<StoredReservation[]>(RESERVATIONS_STORAGE_KEY, []));
       setDeliveries(readStorage<StoredDelivery[]>(DELIVERIES_STORAGE_KEY, []));
+      setRecipes(
+        readStorage<{ recipes?: StoredRecipe[] }>(LOCAL_CONFIG_STORAGE_KEY, {}).recipes ?? [],
+      );
       setNow(Date.now());
     }
 
     syncCommands();
-    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
 
     window.addEventListener("focus", syncCommands);
     window.addEventListener("storage", syncCommands);
     window.addEventListener(RESERVATIONS_EVENT, syncCommands);
     window.addEventListener(DELIVERIES_EVENT, syncCommands);
+    window.addEventListener(LOCAL_CONFIG_EVENT, syncCommands);
 
     return () => {
       window.clearInterval(timer);
@@ -208,6 +266,7 @@ export default function CocinaPage() {
       window.removeEventListener("storage", syncCommands);
       window.removeEventListener(RESERVATIONS_EVENT, syncCommands);
       window.removeEventListener(DELIVERIES_EVENT, syncCommands);
+      window.removeEventListener(LOCAL_CONFIG_EVENT, syncCommands);
     };
   }, []);
 
@@ -242,6 +301,7 @@ export default function CocinaPage() {
                   ...sharedCommand,
                   id: `reservation-${reservation.id}`,
                   items: baseItems,
+                  targetSeconds: getCommandTargetSeconds(baseItems, recipes),
                   status: reservation.kitchenStatus ?? "pending",
                   enteredAt: reservation.consumptionStartedAt,
                   startedAt: reservation.kitchenStartedAt,
@@ -255,6 +315,7 @@ export default function CocinaPage() {
           ticketId: ticket.id,
           isAddition: true,
           items: getItems(ticket.items),
+          targetSeconds: getCommandTargetSeconds(getItems(ticket.items), recipes),
           status: ticket.status,
           enteredAt: ticket.createdAt,
           startedAt: ticket.startedAt,
@@ -290,6 +351,7 @@ export default function CocinaPage() {
                   ...sharedCommand,
                   id: `delivery-${delivery.id}`,
                   items: baseItems,
+                  targetSeconds: getCommandTargetSeconds(baseItems, recipes),
                   status: delivery.kitchenStatus ?? (delivery.readyAt ? "ready" : "pending"),
                   enteredAt: delivery.acceptedAt ?? delivery.createdAt,
                   startedAt: delivery.kitchenStartedAt,
@@ -303,6 +365,7 @@ export default function CocinaPage() {
           ticketId: ticket.id,
           isAddition: true,
           items: getItems(ticket.items),
+          targetSeconds: getCommandTargetSeconds(getItems(ticket.items), recipes),
           status: ticket.status,
           enteredAt: ticket.createdAt,
           startedAt: ticket.startedAt,
@@ -317,7 +380,7 @@ export default function CocinaPage() {
       const bTime = new Date(b.enteredAt ?? `${today}T${b.time}:00`).getTime();
       return aTime - bTime;
     });
-  }, [deliveries, reservations]);
+  }, [deliveries, recipes, reservations]);
 
   function updateCommand(command: KitchenCommand, status: KitchenStatus) {
     const timestamp = new Date().toISOString();
@@ -410,7 +473,7 @@ export default function CocinaPage() {
   const pending = commands.filter((command) => command.status === "pending");
   const preparing = commands.filter((command) => command.status === "preparing");
   const ready = commands.filter((command) => command.status === "ready");
-  const averagePreparationMinutes =
+  const averagePreparationSeconds =
     ready.length > 0
       ? Math.round(
           ready.reduce(
@@ -418,7 +481,10 @@ export default function CocinaPage() {
               total +
               Math.max(
                 0,
-                getElapsedMinutes(command.startedAt, new Date(command.readyAt ?? now).getTime()),
+                getElapsedSeconds(
+                  command.startedAt,
+                  new Date(command.readyAt ?? now).getTime(),
+                ),
               ),
             0,
           ) / ready.length,
@@ -465,11 +531,11 @@ export default function CocinaPage() {
 
         <div className="mt-4 grid shrink-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <V2MetricCard
-            label="Comandas activas"
-            value={commands.length}
-            helper="Del día actual"
-            tone="slate"
-            icon={<ChefHat size={22} />}
+            label="En preparación"
+            value={preparing.length}
+            helper="En cocina"
+            tone="blue"
+            icon={<Flame size={22} />}
           />
           <V2MetricCard
             label="Pendientes"
@@ -479,15 +545,15 @@ export default function CocinaPage() {
             icon={<Clock3 size={22} />}
           />
           <V2MetricCard
-            label="En preparación"
-            value={preparing.length}
-            helper="En cocina"
-            tone="blue"
-            icon={<Flame size={22} />}
+            label="Terminadas"
+            value={ready.length}
+            helper="Listas para entregar"
+            tone="green"
+            icon={<ChefHat size={22} />}
           />
           <V2MetricCard
             label="Tiempo promedio"
-            value={`${averagePreparationMinutes} min`}
+            value={formatDuration(averagePreparationSeconds)}
             helper={`${ready.length} listas`}
             tone="green"
             icon={<CheckCircle2 size={22} />}
@@ -515,9 +581,9 @@ export default function CocinaPage() {
                   </div>
                 ) : (
                   column.commands.map((command) => {
-                    const elapsed = getElapsedMinutes(
+                    const elapsedSeconds = getElapsedSeconds(
                       command.startedAt ?? command.enteredAt,
-                      now,
+                      command.readyAt ? new Date(command.readyAt).getTime() : now,
                     );
 
                     return (
@@ -525,7 +591,11 @@ export default function CocinaPage() {
                         key={command.id}
                         className={cn(
                           "rounded-xl border p-3 shadow-sm",
-                          getCommandTone(elapsed, command.status),
+                          getCommandTone(
+                            elapsedSeconds,
+                            command.targetSeconds,
+                            command.status,
+                          ),
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -550,18 +620,15 @@ export default function CocinaPage() {
                             </p>
                           </div>
                           <V2Badge
-                            tone={
-                              command.status === "ready"
-                                ? "green"
-                                : elapsed >= 30
-                                  ? "red"
-                                  : elapsed >= 15
-                                    ? "orange"
-                                    : "slate"
-                            }
+                            tone={getTimerBadgeTone(
+                              elapsedSeconds,
+                              command.targetSeconds,
+                              command.status,
+                            )}
                             className="shrink-0"
                           >
-                            {formatElapsed(elapsed)}
+                            {formatDuration(elapsedSeconds)} /{" "}
+                            {formatDuration(command.targetSeconds)}
                           </V2Badge>
                         </div>
 

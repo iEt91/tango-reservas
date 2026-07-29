@@ -59,6 +59,7 @@ type V2RecipeConfig = {
   menuItemId: string;
   name: string;
   ingredients: V2RecipeIngredient[];
+  preparationTimeSeconds: number;
 };
 
 type V2RecipeMenuItem = {
@@ -102,8 +103,11 @@ type V2NewRecipePlateForm = {
   imageUrl: string;
   categoryId: string;
   price: string;
+  preparationTime: string;
   ingredients: V2RecipeIngredient[];
 };
+
+const DEFAULT_PREPARATION_TIME_SECONDS = 15 * 60;
 
 const RECIPE_UNIT_OPTIONS: V2RecipeUnit[] = [
   "g",
@@ -125,6 +129,7 @@ function createEmptyNewRecipePlateForm(): V2NewRecipePlateForm {
     imageUrl: "",
     categoryId: "",
     price: "",
+    preparationTime: "15:00",
     ingredients: [],
   };
 }
@@ -143,6 +148,38 @@ function formatCurrency(value?: number) {
     currency: "ARS",
     maximumFractionDigits: 0,
   }).format(Number(value) || 0);
+}
+
+function formatPreparationTime(totalSeconds?: number) {
+  const normalizedSeconds = Math.max(
+    1,
+    Math.round(Number(totalSeconds) || DEFAULT_PREPARATION_TIME_SECONDS),
+  );
+  const minutes = Math.floor(normalizedSeconds / 60);
+  const seconds = normalizedSeconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function parsePreparationTime(value: string) {
+  const [rawMinutes = "", rawSeconds = ""] = value.trim().split(":");
+  const minutes = Number(rawMinutes);
+  const seconds = Number(rawSeconds);
+
+  if (
+    !/^\d+$/.test(rawMinutes) ||
+    !/^\d{1,2}$/.test(rawSeconds) ||
+    !Number.isFinite(minutes) ||
+    !Number.isFinite(seconds) ||
+    minutes < 0 ||
+    seconds < 0 ||
+    seconds > 59 ||
+    minutes * 60 + seconds < 1
+  ) {
+    return null;
+  }
+
+  return minutes * 60 + seconds;
 }
 
 function readLocalStorageList<T>(key: string, fallback: T[]) {
@@ -205,6 +242,9 @@ function normalizeRecipes(value: unknown): V2RecipeConfig[] {
         id: currentRecipe.id || createId("recipe"),
         menuItemId: currentRecipe.menuItemId || "",
         name: currentRecipe.name || "Receta sin nombre",
+        preparationTimeSeconds:
+          Math.max(1, Number(currentRecipe.preparationTimeSeconds)) ||
+          DEFAULT_PREPARATION_TIME_SECONDS,
         ingredients: Array.isArray(currentRecipe.ingredients)
           ? currentRecipe.ingredients
               .map((ingredient) => normalizeIngredient(ingredient))
@@ -268,6 +308,8 @@ function syncRecipesWithMenu(
       id: storedRecipe?.id || `recipe-${item.id}`,
       menuItemId: item.id,
       name: item.name,
+      preparationTimeSeconds:
+        storedRecipe?.preparationTimeSeconds ?? DEFAULT_PREPARATION_TIME_SECONDS,
       ingredients: storedRecipe?.ingredients ?? [],
     };
   });
@@ -475,6 +517,19 @@ export default function MenuRecetasPage() {
     );
   }
 
+  function updateActiveRecipePreparationTime(value: string) {
+    if (!activeRecipe) return;
+
+    const preparationTimeSeconds = parsePreparationTime(value);
+    if (preparationTimeSeconds === null) return;
+
+    setRecipes((current) =>
+      current.map((recipe) =>
+        recipe.id === activeRecipe.id ? { ...recipe, preparationTimeSeconds } : recipe,
+      ),
+    );
+  }
+
   function addIngredient() {
     if (!activeRecipe) return;
 
@@ -646,6 +701,9 @@ export default function MenuRecetasPage() {
       id: `recipe-${newItemId}`,
       menuItemId: newItemId,
       name: cleanName,
+      preparationTimeSeconds:
+        parsePreparationTime(newPlateForm.preparationTime) ??
+        DEFAULT_PREPARATION_TIME_SECONDS,
       ingredients: newPlateForm.ingredients,
     };
 
@@ -883,6 +941,33 @@ export default function MenuRecetasPage() {
                         value={activeRecipe.name}
                         onChange={(event) => updateActiveRecipeName(event.target.value)}
                       />
+                    </V2Field>
+
+                    <V2Field label="Tiempo estimado de preparación (mm:ss)">
+                      <V2Input
+                        key={`${activeRecipe.id}-${activeRecipe.preparationTimeSeconds}`}
+                        inputMode="numeric"
+                        defaultValue={formatPreparationTime(
+                          activeRecipe.preparationTimeSeconds,
+                        )}
+                        placeholder="15:00"
+                        onBlur={(event) => {
+                          const parsedTime = parsePreparationTime(event.target.value);
+
+                          if (parsedTime === null) {
+                            event.target.value = formatPreparationTime(
+                              activeRecipe.preparationTimeSeconds,
+                            );
+                            return;
+                          }
+
+                          updateActiveRecipePreparationTime(event.target.value);
+                          event.target.value = formatPreparationTime(parsedTime);
+                        }}
+                      />
+                      <p className="mt-1 text-xs text-slate-500">
+                        Cocina usa este tiempo como objetivo automático del plato.
+                      </p>
                     </V2Field>
 
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -1164,6 +1249,30 @@ export default function MenuRecetasPage() {
                           />
                         </V2Field>
                       </div>
+
+                      <V2Field label="Tiempo estimado de preparación (mm:ss)">
+                        <V2Input
+                          inputMode="numeric"
+                          value={newPlateForm.preparationTime}
+                          onChange={(event) =>
+                            updateNewPlateForm({ preparationTime: event.target.value })
+                          }
+                          onBlur={(event) => {
+                            const parsedTime = parsePreparationTime(event.target.value);
+
+                            updateNewPlateForm({
+                              preparationTime:
+                                parsedTime === null
+                                  ? "15:00"
+                                  : formatPreparationTime(parsedTime),
+                            });
+                          }}
+                          placeholder="15:00"
+                        />
+                        <p className="mt-1 text-xs text-slate-500">
+                          Formato mm:ss. Ejemplo: 12:30.
+                        </p>
+                      </V2Field>
 
                       <V2Field label="Imagen del plato">
                         <div className="grid gap-3 md:grid-cols-[1fr_120px]">
