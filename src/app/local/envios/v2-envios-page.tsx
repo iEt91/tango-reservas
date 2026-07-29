@@ -38,6 +38,15 @@ type V2DeliveryOrderItem = {
   quantity: number;
 };
 
+type V2KitchenTicket = {
+  id: string;
+  status: "pending" | "preparing" | "ready";
+  items: V2DeliveryOrderItem[];
+  createdAt: string;
+  startedAt?: string;
+  readyAt?: string;
+};
+
 type V2DeliveryWhatsAppAction = "confirmation" | "modification" | "cancellation";
 type V2SortDirection = "asc" | "desc";
 type V2DateFilterMode = "single" | "range" | "all";
@@ -132,6 +141,10 @@ type V2Delivery = {
   onTheWayAt?: string;
   deliveredAt?: string;
   cancelledAt?: string;
+  kitchenStatus?: "pending" | "preparing" | "ready";
+  kitchenStartedAt?: string;
+  kitchenReadyAt?: string;
+  kitchenTickets?: V2KitchenTicket[];
 };
 
 type V2DeliveryFormState = {
@@ -870,6 +883,60 @@ function calculateOrderTotal(orderItems: V2DeliveryOrderItem[]) {
   );
 }
 
+function getAddedOrderItems(
+  previousItems: V2DeliveryOrderItem[],
+  nextItems: V2DeliveryOrderItem[],
+) {
+  return nextItems.flatMap((item) => {
+    const previousQuantity =
+      previousItems.find((previousItem) => previousItem.id === item.id)?.quantity ?? 0;
+    const addedQuantity = item.quantity - previousQuantity;
+
+    return addedQuantity > 0 ? [{ ...item, quantity: addedQuantity }] : [];
+  });
+}
+
+function appendDeliveryKitchenTicket(
+  tickets: V2KitchenTicket[],
+  items: V2DeliveryOrderItem[],
+  deliveryId: string,
+) {
+  const pendingTicketIndex = tickets.findLastIndex((ticket) => ticket.status === "pending");
+
+  if (pendingTicketIndex < 0) {
+    return [
+      ...tickets,
+      {
+        id: `kitchen-${deliveryId}-${Date.now()}`,
+        status: "pending" as const,
+        items,
+        createdAt: getNowTimestamp(),
+      },
+    ];
+  }
+
+  return tickets.map((ticket, index) => {
+    if (index !== pendingTicketIndex) return ticket;
+
+    const nextItems = [...ticket.items];
+
+    items.forEach((item) => {
+      const existingIndex = nextItems.findIndex((ticketItem) => ticketItem.id === item.id);
+
+      if (existingIndex >= 0) {
+        nextItems[existingIndex] = {
+          ...nextItems[existingIndex],
+          quantity: nextItems[existingIndex].quantity + item.quantity,
+        };
+      } else {
+        nextItems.push(item);
+      }
+    });
+
+    return { ...ticket, items: nextItems };
+  });
+}
+
 function V2DeliveryStatusBadge({ status }: { status: V2DeliveryStatus }) {
   const config: Record<
     V2DeliveryStatus,
@@ -1449,6 +1516,16 @@ export function V2EnviosPage() {
       return;
     }
 
+    const addedOrderItems = getAddedOrderItems(
+      existingDelivery?.orderItems ?? [],
+      hasMenuOrder ? nextOrderItems : existingDelivery?.orderItems ?? [],
+    );
+    const shouldCreateKitchenTicket =
+      Boolean(existingDelivery) &&
+      addedOrderItems.length > 0 &&
+      (existingDelivery?.kitchenStatus === "preparing" ||
+        existingDelivery?.kitchenStatus === "ready");
+
     let nextDelivery: V2Delivery = {
       id: existingDelivery?.id ?? `env-${Date.now()}`,
       date:
@@ -1484,6 +1561,16 @@ export function V2EnviosPage() {
       onTheWayAt: existingDelivery?.onTheWayAt,
       deliveredAt: existingDelivery?.deliveredAt,
       cancelledAt: existingDelivery?.cancelledAt,
+      kitchenStatus: existingDelivery?.kitchenStatus,
+      kitchenStartedAt: existingDelivery?.kitchenStartedAt,
+      kitchenReadyAt: existingDelivery?.kitchenReadyAt,
+      kitchenTickets: shouldCreateKitchenTicket
+        ? appendDeliveryKitchenTicket(
+            existingDelivery?.kitchenTickets ?? [],
+            addedOrderItems,
+            existingDelivery?.id ?? `env-${Date.now()}`,
+          )
+        : existingDelivery?.kitchenTickets,
     };
 
     const shouldAskStockReturn =

@@ -66,6 +66,54 @@ type V2ReservationOrderLineItem = {
   quantity: number;
 };
 
+type V2KitchenTicket = {
+  id: string;
+  status: "pending" | "preparing" | "ready";
+  items: V2ReservationOrderLineItem[];
+  createdAt: string;
+  startedAt?: string;
+  readyAt?: string;
+};
+
+function appendReservationKitchenTicket(
+  tickets: V2KitchenTicket[],
+  item: V2ReservationOrderLineItem,
+  reservationId: string,
+) {
+  const pendingTicketIndex = tickets.findLastIndex((ticket) => ticket.status === "pending");
+
+  if (pendingTicketIndex < 0) {
+    return [
+      ...tickets,
+      {
+        id: `kitchen-${reservationId}-${Date.now()}`,
+        status: "pending" as const,
+        items: [item],
+        createdAt: getNowTimestamp(),
+      },
+    ];
+  }
+
+  return tickets.map((ticket, index) => {
+    if (index !== pendingTicketIndex) return ticket;
+
+    const currentItem = ticket.items.find(
+      (ticketItem) => ticketItem.menuItemId === item.menuItemId,
+    );
+
+    return {
+      ...ticket,
+      items: currentItem
+        ? ticket.items.map((ticketItem) =>
+            ticketItem.menuItemId === item.menuItemId
+              ? { ...ticketItem, quantity: ticketItem.quantity + item.quantity }
+              : ticketItem,
+          )
+        : [...ticket.items, item],
+    };
+  });
+}
+
 type V2ReservationDraft = {
   id: string;
   date: string;
@@ -94,6 +142,10 @@ type V2ReservationDraft = {
   confirmedAt?: string;
   seatedAt?: string;
   consumptionStartedAt?: string;
+  kitchenStatus?: "pending" | "preparing" | "ready";
+  kitchenStartedAt?: string;
+  kitchenReadyAt?: string;
+  kitchenTickets?: V2KitchenTicket[];
   completedAt?: string;
   cancelledAt?: string;
   noShowAt?: string;
@@ -2733,6 +2785,21 @@ export function V2ReservasPage() {
         quantityDiff !== 0
           ? orderReservation.consumptionStartedAt ?? getNowTimestamp()
           : orderReservation.consumptionStartedAt,
+      kitchenTickets:
+        quantityDiff > 0 &&
+        (orderReservation.kitchenStatus === "preparing" ||
+          orderReservation.kitchenStatus === "ready")
+          ? appendReservationKitchenTicket(
+              orderReservation.kitchenTickets ?? [],
+              {
+                menuItemId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: quantityDiff,
+              },
+              orderReservation.id,
+            )
+          : orderReservation.kitchenTickets,
       note: formatReservationNote(orderReservation.note),
     });
   }
