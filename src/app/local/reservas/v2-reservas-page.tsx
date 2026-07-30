@@ -68,11 +68,12 @@ type V2ReservationOrderLineItem = {
 
 type V2KitchenTicket = {
   id: string;
-  status: "pending" | "preparing" | "ready";
+  status: "pending" | "preparing" | "ready" | "completed";
   items: V2ReservationOrderLineItem[];
   createdAt: string;
   startedAt?: string;
   readyAt?: string;
+  completedAt?: string;
 };
 
 function appendReservationKitchenTicket(
@@ -114,6 +115,47 @@ function appendReservationKitchenTicket(
   });
 }
 
+function subtractReservationKitchenTicketQuantity(
+  tickets: V2KitchenTicket[],
+  menuItemId: string,
+  quantityToRemove: number,
+) {
+  let remainingQuantity = Math.max(0, quantityToRemove);
+  const nextTickets = tickets.map((ticket) => ({
+    ...ticket,
+    items: ticket.items.map((item) => ({ ...item })),
+  }));
+  const removableStatuses: V2KitchenTicket["status"][] = [
+    "pending",
+    "preparing",
+    "ready",
+  ];
+
+  removableStatuses.forEach((status) => {
+    for (let index = nextTickets.length - 1; index >= 0 && remainingQuantity > 0; index -= 1) {
+      const ticket = nextTickets[index];
+      if (ticket.status !== status) continue;
+
+      const itemIndex = ticket.items.findIndex((item) => item.menuItemId === menuItemId);
+      if (itemIndex < 0) continue;
+
+      const currentItem = ticket.items[itemIndex];
+      const removedQuantity = Math.min(currentItem.quantity, remainingQuantity);
+      const nextQuantity = currentItem.quantity - removedQuantity;
+
+      remainingQuantity -= removedQuantity;
+      ticket.items =
+        nextQuantity > 0
+          ? ticket.items.map((item, currentIndex) =>
+              currentIndex === itemIndex ? { ...item, quantity: nextQuantity } : item,
+            )
+          : ticket.items.filter((_, currentIndex) => currentIndex !== itemIndex);
+    }
+  });
+
+  return nextTickets.filter((ticket) => ticket.items.length > 0);
+}
+
 type V2ReservationDraft = {
   id: string;
   date: string;
@@ -142,9 +184,10 @@ type V2ReservationDraft = {
   confirmedAt?: string;
   seatedAt?: string;
   consumptionStartedAt?: string;
-  kitchenStatus?: "pending" | "preparing" | "ready";
+  kitchenStatus?: "pending" | "preparing" | "ready" | "completed";
   kitchenStartedAt?: string;
   kitchenReadyAt?: string;
+  kitchenCompletedAt?: string;
   kitchenTickets?: V2KitchenTicket[];
   completedAt?: string;
   cancelledAt?: string;
@@ -2788,7 +2831,8 @@ export function V2ReservasPage() {
       kitchenTickets:
         quantityDiff > 0 &&
         (orderReservation.kitchenStatus === "preparing" ||
-          orderReservation.kitchenStatus === "ready")
+          orderReservation.kitchenStatus === "ready" ||
+          orderReservation.kitchenStatus === "completed")
           ? appendReservationKitchenTicket(
               orderReservation.kitchenTickets ?? [],
               {
@@ -2799,6 +2843,12 @@ export function V2ReservasPage() {
               },
               orderReservation.id,
             )
+          : quantityDiff < 0
+            ? subtractReservationKitchenTicketQuantity(
+                orderReservation.kitchenTickets ?? [],
+                item.id,
+                Math.abs(quantityDiff),
+              )
           : orderReservation.kitchenTickets,
       note: formatReservationNote(orderReservation.note),
     });
