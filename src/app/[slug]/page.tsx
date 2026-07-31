@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY,
   V2_WEB_TEMPLATE_STORAGE_KEY,
@@ -326,20 +327,20 @@ const DEFAULT_PUBLIC_ORDER_FORM: PublicOrderForm = {
   note: "",
 };
 
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
-const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
-const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
-const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
-const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
-const PUBLIC_MENU_SECTIONS_STORAGE_KEY = "tango-v2-public-menu-sections-v1";
-const PUBLIC_MENU_SECTIONS_EVENT = "tango-v2-public-menu-sections-updated";
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
+const FLOOR_TABLES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.floorTables;
+const FLOOR_TABLES_EVENT = V2_OPERATIONAL_EVENTS.floorTables;
+const WEB_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.webConfig;
+const WEB_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.webConfig;
+const PUBLIC_MENU_SECTIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.publicMenuSections;
+const PUBLIC_MENU_SECTIONS_EVENT = V2_OPERATIONAL_EVENTS.publicMenuSections;
 
 const DAY_NAMES = [
   "Domingo",

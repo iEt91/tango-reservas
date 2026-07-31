@@ -32,7 +32,7 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
-import { createV2OperationalId } from "@/lib/v2-operational-storage";
+import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2MenuCategories,
   v2MenuItems,
@@ -318,15 +318,15 @@ type V2MenuOrderItem = {
   category: string;
 };
 
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
-const STOCK_MOVEMENTS_STORAGE_KEY = "tango-v2-stock-movements";
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
-const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
+const STOCK_MOVEMENTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockMovements;
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
+const CASH_REGISTER_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.cashRegister;
 
 const DEFAULT_LOCAL_CONFIG: V2LocalConfigState = {
   businessHours: [
@@ -379,8 +379,8 @@ function getCashRegisterError(date: string) {
   }
 }
 
-const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
-const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
+const FLOOR_TABLES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.floorTables;
+const FLOOR_TABLES_EVENT = V2_OPERATIONAL_EVENTS.floorTables;
 
 const DEFAULT_FLOOR_TABLES: V2FloorPlanTable[] = [
   { id: "table-1", name: "Mesa 1", capacity: 4, status: "available" },
@@ -547,7 +547,31 @@ function writeStockProductsToStorage(products: V2StockProductDraft[]) {
 }
 
 function readStockMovementHistory() {
-  return readFromStorage<V2StockMovementLog[]>(STOCK_MOVEMENTS_STORAGE_KEY, []);
+  const history = readFromStorage<V2StockMovementLog[]>(STOCK_MOVEMENTS_STORAGE_KEY, []);
+  const consolidated = new Map<string, V2StockMovementLog>();
+
+  history.forEach((movement) => {
+    const key = [
+      movement.referenceId ?? movement.id,
+      movement.type,
+      movement.productId,
+      movement.label,
+      movement.detail ?? "",
+    ].join("::");
+    const current = consolidated.get(key);
+
+    if (!current) {
+      consolidated.set(key, movement);
+      return;
+    }
+
+    consolidated.set(key, {
+      ...current,
+      quantity: Number((current.quantity + movement.quantity).toFixed(2)),
+    });
+  });
+
+  return Array.from(consolidated.values());
 }
 
 function appendStockMovementHistory(
@@ -578,9 +602,37 @@ function appendStockMovementHistory(
     };
   });
 
-  const nextHistory = [...logs, ...readStockMovementHistory()].slice(0, 200);
+  const nextHistory = readStockMovementHistory();
 
-  window.localStorage.setItem(STOCK_MOVEMENTS_STORAGE_KEY, JSON.stringify(nextHistory));
+  logs.forEach((log) => {
+    const matchingIndex = nextHistory.findIndex(
+      (movement) =>
+        movement.referenceId === log.referenceId &&
+        movement.type === log.type &&
+        movement.productId === log.productId &&
+        movement.label === log.label &&
+        (movement.detail ?? "") === (log.detail ?? "")
+    );
+
+    if (matchingIndex === -1) {
+      nextHistory.unshift(log);
+      return;
+    }
+
+    nextHistory[matchingIndex] = {
+      ...nextHistory[matchingIndex],
+      createdAt: log.createdAt,
+      productName: log.productName,
+      unit: log.unit,
+      client: log.client,
+      quantity: Number((nextHistory[matchingIndex].quantity + log.quantity).toFixed(2)),
+    };
+  });
+
+  window.localStorage.setItem(
+    STOCK_MOVEMENTS_STORAGE_KEY,
+    JSON.stringify(nextHistory.slice(0, 200))
+  );
   window.dispatchEvent(new Event(STOCK_PRODUCTS_EVENT));
 }
 

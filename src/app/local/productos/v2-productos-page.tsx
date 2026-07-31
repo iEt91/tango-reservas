@@ -20,7 +20,7 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
-import { createV2OperationalId } from "@/lib/v2-operational-storage";
+import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2StockProducts,
   type V2StockUnit,
@@ -42,9 +42,9 @@ const stockUnits: V2StockUnit[] = [
   "lata",
 ];
 
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
-const STOCK_MOVEMENTS_STORAGE_KEY = "tango-v2-stock-movements";
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
+const STOCK_MOVEMENTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockMovements;
 
 type V2StockMovementType = "discount" | "return" | "manual";
 
@@ -118,12 +118,37 @@ function readStockMovementHistory() {
     usedIds.add(nextMovement.id);
     return nextMovement;
   });
+  const consolidated = new Map<string, V2StockMovementLog>();
+
+  normalizedHistory.forEach((movement) => {
+    const key = [
+      movement.referenceId ?? movement.id,
+      movement.type,
+      movement.productId,
+      movement.label,
+      movement.detail ?? "",
+    ].join("::");
+    const current = consolidated.get(key);
+
+    if (!current) {
+      consolidated.set(key, movement);
+      return;
+    }
+
+    repaired = true;
+    consolidated.set(key, {
+      ...current,
+      quantity: Number((current.quantity + movement.quantity).toFixed(2)),
+    });
+  });
+
+  const nextHistory = Array.from(consolidated.values());
 
   if (repaired && typeof window !== "undefined") {
-    window.localStorage.setItem(STOCK_MOVEMENTS_STORAGE_KEY, JSON.stringify(normalizedHistory));
+    window.localStorage.setItem(STOCK_MOVEMENTS_STORAGE_KEY, JSON.stringify(nextHistory));
   }
 
-  return normalizedHistory;
+  return nextHistory;
 }
 
 function formatMovementDate(value: string) {

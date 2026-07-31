@@ -17,14 +17,15 @@ import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import { cn } from "@/lib/v2/v2-utils";
 
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
 const DEFAULT_PREPARATION_TIME_SECONDS = 15 * 60;
 
 type KitchenStatus = "pending" | "preparing" | "ready" | "completed";

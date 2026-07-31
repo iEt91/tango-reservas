@@ -24,6 +24,7 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2MenuCategories,
   v2MenuItems,
@@ -84,11 +85,11 @@ function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
 
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
 const MENU_IMAGE_API_PATH = "/api/menu-images";
-const MENU_ITEMS_EVENT = "tango-v2-menu-items-updated";
-const MENU_CATEGORIES_EVENT = "tango-v2-menu-categories-updated";
+const MENU_ITEMS_EVENT = V2_OPERATIONAL_EVENTS.menuItems;
+const MENU_CATEGORIES_EVENT = V2_OPERATIONAL_EVENTS.menuCategories;
 
 function buildMenuImageUrl(productName: string) {
   const normalizedName = productName.trim();
@@ -98,12 +99,8 @@ function buildMenuImageUrl(productName: string) {
   return `${MENU_IMAGE_API_PATH}/${encodeURIComponent(normalizedName)}`;
 }
 
-function isAutoMenuImageUrl(value?: string) {
-  return Boolean(value && value.startsWith(`${MENU_IMAGE_API_PATH}/`));
-}
-
 function shouldAutoAssignMenuImage(item: Pick<V2MenuItemDraft, "name" | "imageUrl">) {
-  return !item.imageUrl || item.imageUrl.startsWith("blob:") || isAutoMenuImageUrl(item.imageUrl);
+  return !item.imageUrl || item.imageUrl.startsWith("blob:");
 }
 
 function applyAutomaticMenuImages(items: V2MenuItemDraft[]) {
@@ -639,8 +636,16 @@ export function V2MenuPage() {
 
     if (!file || !editingItem) return;
 
-    const imageUrl = URL.createObjectURL(file);
-    setEditingItem({ ...editingItem, imageUrl });
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+
+      setEditingItem((current) =>
+        current ? { ...current, imageUrl: reader.result as string } : current
+      );
+    };
+    reader.readAsDataURL(file);
   }
 
   function linkGeneratedMenuImages() {
@@ -1428,6 +1433,7 @@ export function V2MenuPage() {
                   />
                   <p className="mt-2 text-xs leading-5 text-slate-500">
                     Si existe una imagen en <code className="rounded bg-slate-100 px-1">src/app/local/menu/img</code> con el mismo nombre del producto, se vincula automáticamente.
+                    Al renombrar el producto se conserva la imagen ya vinculada.
                   </p>
                 </div>
 

@@ -2,6 +2,8 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+
 type V2DeliveryStatus = "confirmed" | "completed" | "cancelled";
 type V2DeliveryType = "delivery" | "pickup";
 
@@ -45,8 +47,8 @@ type TrackingPageProps = {
   }>;
 };
 
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
 const CLOSED_TRACKING_VISIBILITY_MINUTES = 1;
 
 const STEP_LABELS = {

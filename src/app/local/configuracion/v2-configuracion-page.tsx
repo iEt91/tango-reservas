@@ -19,6 +19,7 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2BusinessHours,
   v2DeliverySettings,
@@ -29,8 +30,8 @@ import {
 } from "@/lib/v2/v2-mock-data";
 
 
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
 
 type V2BusinessHourSlot = {
   open: string;

@@ -20,19 +20,20 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2MenuCategories,
   v2MenuItems,
   v2StockProducts,
 } from "@/lib/v2/v2-mock-data";
 
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const MENU_ITEMS_EVENT = "tango-v2-menu-items-updated";
-const MENU_CATEGORIES_EVENT = "tango-v2-menu-categories-updated";
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const MENU_ITEMS_EVENT = V2_OPERATIONAL_EVENTS.menuItems;
+const MENU_CATEGORIES_EVENT = V2_OPERATIONAL_EVENTS.menuCategories;
 
 type V2RecipeUnit =
   | "g"
@@ -307,7 +308,7 @@ function syncRecipesWithMenu(
     return {
       id: storedRecipe?.id || `recipe-${item.id}`,
       menuItemId: item.id,
-      name: item.name,
+      name: storedRecipe?.name || item.name,
       preparationTimeSeconds:
         storedRecipe?.preparationTimeSeconds ?? DEFAULT_PREPARATION_TIME_SECONDS,
       ingredients: storedRecipe?.ingredients ?? [],

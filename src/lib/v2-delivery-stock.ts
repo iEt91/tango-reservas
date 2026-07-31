@@ -1,9 +1,9 @@
-import { createV2OperationalId } from "@/lib/v2-operational-storage";
+import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
-const STOCK_MOVEMENTS_STORAGE_KEY = "tango-v2-stock-movements";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
+const STOCK_MOVEMENTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockMovements;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
 
 type DeliveryOrderItem = {
   id: string;

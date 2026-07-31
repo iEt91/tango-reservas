@@ -2,6 +2,8 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+
 type PublicReservationStatus = "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
 
 type PublicReservation = {
@@ -32,8 +34,8 @@ type ReservaTrackingPageProps = {
   }>;
 };
 
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
 const RESERVATION_TRACKING_GRACE_MINUTES = 10;
 
 const STATUS_LABELS: Record<PublicReservationStatus, string> = {

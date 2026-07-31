@@ -24,6 +24,7 @@ import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2Input, V2Select } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2Deliveries,
   v2Reservations,
@@ -32,10 +33,10 @@ import {
   type V2ReservationStatus,
 } from "@/lib/v2/v2-mock-data";
 
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
 
 type HistoryTab = "envios" | "reservas" | "cocina";
 type HistoryRange = "all" | "today" | "7d" | "30d" | "day" | "custom";

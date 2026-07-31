@@ -39,14 +39,14 @@ import { reserveStockForClientDelivery } from "@/lib/v2-delivery-stock";
 
 const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
 const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
-const CLIENTS_META_STORAGE_KEY = "tango-v2-clients-meta-v1";
-const MANUAL_CLIENTS_STORAGE_KEY = "tango-v2-manual-clients-v1";
-const MANUAL_CLIENTS_EVENT = "tango-v2-manual-clients-updated";
-const CLIENTS_META_EVENT = "tango-v2-clients-meta-updated";
+const CLIENTS_META_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.clientsMeta;
+const MANUAL_CLIENTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.manualClients;
+const MANUAL_CLIENTS_EVENT = V2_OPERATIONAL_EVENTS.manualClients;
+const CLIENTS_META_EVENT = V2_OPERATIONAL_EVENTS.clientsMeta;
 const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
 const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
 
 type V2MenuItem = {
   id: string;

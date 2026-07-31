@@ -26,6 +26,7 @@ import { V2Card } from "@/components/v2/v2-card";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import { v2Reservations } from "@/lib/v2/v2-mock-data";
 
 type V2TableStatus = "available" | "reserved" | "occupied" | "blocked";
@@ -107,14 +108,14 @@ type V2TableInteraction =
       startHeight: number;
     };
 
-const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
-const FLOOR_BACKGROUND_STORAGE_KEY = "tango-v2-floor-background";
-const FLOOR_BACKGROUND_SETTINGS_STORAGE_KEY = "tango-v2-floor-background-settings";
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
-const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
+const FLOOR_TABLES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.floorTables;
+const FLOOR_BACKGROUND_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.floorBackground;
+const FLOOR_BACKGROUND_SETTINGS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.floorBackgroundSettings;
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
+const FLOOR_TABLES_EVENT = V2_OPERATIONAL_EVENTS.floorTables;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
 
 const DEFAULT_LOCAL_CONFIG: V2LocalConfigState = {
   businessHours: [

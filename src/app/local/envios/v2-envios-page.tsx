@@ -22,7 +22,7 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
-import { createV2OperationalId } from "@/lib/v2-operational-storage";
+import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2Deliveries,
   v2MenuCategories,
@@ -161,15 +161,15 @@ type V2DeliveryFormState = {
   status: V2DeliveryStatus;
 };
 
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
-const STOCK_MOVEMENTS_STORAGE_KEY = "tango-v2-stock-movements";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
-const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
+const STOCK_MOVEMENTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockMovements;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
+const CASH_REGISTER_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.cashRegister;
 const DELIVERY_WHATSAPP_TEST_PHONE = "542216145679";
 const USE_DELIVERY_WHATSAPP_TEST_PHONE = false;
 function getTodayDateKey() {

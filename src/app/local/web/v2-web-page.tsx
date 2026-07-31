@@ -23,6 +23,7 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2WebConfig,
 } from "@/lib/v2/v2-mock-data";
@@ -84,14 +85,14 @@ type PublicMenuSection = {
   featuredProductIds?: string[];
 };
 
-const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
-const PUBLIC_MENU_SECTIONS_STORAGE_KEY = "tango-v2-public-menu-sections-v1";
-const PUBLIC_MENU_SECTIONS_EVENT = "tango-v2-public-menu-sections-updated";
-const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
-const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
-const MENU_ITEMS_EVENT = "tango-v2-menu-items-updated";
-const MENU_CATEGORIES_EVENT = "tango-v2-menu-categories-updated";
-const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
+const WEB_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.webConfig;
+const PUBLIC_MENU_SECTIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.publicMenuSections;
+const PUBLIC_MENU_SECTIONS_EVENT = V2_OPERATIONAL_EVENTS.publicMenuSections;
+const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
+const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
+const MENU_ITEMS_EVENT = V2_OPERATIONAL_EVENTS.menuItems;
+const MENU_CATEGORIES_EVENT = V2_OPERATIONAL_EVENTS.menuCategories;
+const WEB_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.webConfig;
 
 type LucideMenuIconComponent = React.ElementType<{
   size?: number | string;
