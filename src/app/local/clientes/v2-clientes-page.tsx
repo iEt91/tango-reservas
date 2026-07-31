@@ -22,15 +22,55 @@ import { V2ClientStatusBadge } from "@/components/v2/v2-badge";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
-import { v2Clients, v2Deliveries, v2Reservations } from "@/lib/v2/v2-mock-data";
+import {
+  v2Clients,
+  v2Deliveries,
+  v2MenuCategories,
+  v2MenuItems,
+  v2Reservations,
+} from "@/lib/v2/v2-mock-data";
+import {
+  createV2OperationalId,
+  createV2PublicCode,
+  V2_OPERATIONAL_EVENTS,
+  V2_OPERATIONAL_STORAGE_KEYS,
+} from "@/lib/v2-operational-storage";
+import { reserveStockForClientDelivery } from "@/lib/v2-delivery-stock";
 
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
 const CLIENTS_META_STORAGE_KEY = "tango-v2-clients-meta-v1";
 const MANUAL_CLIENTS_STORAGE_KEY = "tango-v2-manual-clients-v1";
 const MANUAL_CLIENTS_EVENT = "tango-v2-manual-clients-updated";
 const CLIENTS_META_EVENT = "tango-v2-clients-meta-updated";
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
+const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
+const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+
+type V2MenuItem = {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+};
+
+type V2StoredMenuItem = {
+  id: string;
+  name: string;
+  categoryId: string;
+  price: number;
+  status?: "available" | "paused";
+  visible?: boolean;
+};
+
+type V2StoredMenuCategory = {
+  id: string;
+  name: string;
+  order: number;
+  visible?: boolean;
+  active?: boolean;
+};
 
 type V2ClientStatus = (typeof v2Clients)[number]["status"];
 
@@ -95,6 +135,20 @@ type V2StoredDelivery = {
   payment: string;
   note: string;
   status: "confirmed" | "completed" | "cancelled";
+  source?: "web" | "manual";
+  needsAcceptance?: boolean;
+  stockDiscounted?: boolean;
+  stockReturned?: boolean;
+  stockMovements?: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+  }>;
+  trackingId?: string;
+  createdAt?: string;
+  acceptedAt?: string;
+  preparingAt?: string;
+  kitchenStatus?: "pending" | "preparing" | "ready" | "completed";
 };
 
 type V2RealClient = {
@@ -171,11 +225,31 @@ function readFromStorage<T>(key: string, fallback: T) {
   }
 }
 
-function writeToStorage<T>(key: string, value: T) {
+function writeToStorage<T>(key: string, value: T, eventName: string) {
   if (typeof window === "undefined") return;
 
   window.localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new Event("tango-v2-reservations-updated"));
+  window.dispatchEvent(new Event(eventName));
+}
+
+function readDeliveryMenuItems() {
+  const storedCategories = readFromStorage<V2StoredMenuCategory[]>(
+    MENU_CATEGORIES_STORAGE_KEY,
+    v2MenuCategories
+  );
+  const categoryNameById = new Map(
+    storedCategories.map((category) => [category.id, category.name])
+  );
+
+  return readFromStorage<V2StoredMenuItem[]>(MENU_ITEMS_STORAGE_KEY, v2MenuItems)
+    .filter((item) => item.visible !== false && item.status !== "paused")
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price) || 0,
+      category: categoryNameById.get(item.categoryId) ?? "Sin categoría",
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
 function writeClientMetaToStorage(value: Record<string, V2ClientMeta>) {
@@ -609,6 +683,11 @@ export function V2ClientesPage() {
   const [newDeliveryClientId, setNewDeliveryClientId] = useState<string | null>(null);
   const [newReservationClientId, setNewReservationClientId] = useState<string | null>(null);
   const [newClientModalOpen, setNewClientModalOpen] = useState(false);
+  const [deliveryMenuItems, setDeliveryMenuItems] = useState<V2MenuItem[]>([]);
+  const [selectedMenuCategory, setSelectedMenuCategory] = useState("Todos");
+  const [deliveryOrderQuantities, setDeliveryOrderQuantities] = useState<
+    Record<string, number>
+  >({});
   const [clientMeta, setClientMeta] = useState<Record<string, V2ClientMeta>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [clientFilter, setClientFilter] = useState<V2ClientFilter>("all");
@@ -635,14 +714,46 @@ export function V2ClientesPage() {
 
     window.addEventListener("focus", syncReservationsFromStorage);
     window.addEventListener("storage", handleStorage);
-    window.addEventListener("tango-v2-reservations-updated", syncReservationsFromStorage);
+    window.addEventListener(RESERVATIONS_EVENT, syncReservationsFromStorage);
 
     return () => {
       window.removeEventListener("focus", syncReservationsFromStorage);
       window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("tango-v2-reservations-updated", syncReservationsFromStorage);
+      window.removeEventListener(RESERVATIONS_EVENT, syncReservationsFromStorage);
     };
   }, []);
+
+  useEffect(() => {
+    function syncMenuFromStorage() {
+      setDeliveryMenuItems(readDeliveryMenuItems());
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (
+        event.key !== MENU_ITEMS_STORAGE_KEY &&
+        event.key !== MENU_CATEGORIES_STORAGE_KEY
+      ) {
+        return;
+      }
+      syncMenuFromStorage();
+    }
+
+    syncMenuFromStorage();
+    window.addEventListener("focus", syncMenuFromStorage);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("focus", syncMenuFromStorage);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!newDeliveryClientId) return;
+    setDeliveryOrderQuantities({});
+    setSelectedMenuCategory("Todos");
+    setDeliveryMenuItems(readDeliveryMenuItems());
+  }, [newDeliveryClientId]);
 
   useEffect(() => {
     function syncDeliveriesFromStorage() {
@@ -806,6 +917,28 @@ export function V2ClientesPage() {
     clients.find((client) => client.id === newDeliveryClientId) ?? null;
   const clientPendingReservation =
     clients.find((client) => client.id === newReservationClientId) ?? null;
+  const deliveryMenuCategories = [
+    "Todos",
+    ...Array.from(new Set(deliveryMenuItems.map((item) => item.category))).sort(
+      (a, b) => a.localeCompare(b, "es")
+    ),
+  ];
+  const filteredDeliveryMenuItems = deliveryMenuItems.filter(
+    (item) =>
+      selectedMenuCategory === "Todos" || item.category === selectedMenuCategory
+  );
+  const currentDeliveryOrderItems = deliveryMenuItems
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: deliveryOrderQuantities[item.id] ?? 0,
+    }))
+    .filter((item) => item.quantity > 0);
+  const currentDeliveryOrderTotal = currentDeliveryOrderItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   const frequentClients = clients.filter((item) => item.status === "frequent");
   const newClients = clients.filter((item) => item.status === "new");
@@ -895,10 +1028,9 @@ export function V2ClientesPage() {
     setDeliveries(nextDeliveries);
     setManualClients(nextManualClients);
     setClientMeta(nextClientMeta);
-    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations);
-    writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries);
+    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations, RESERVATIONS_EVENT);
+    writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries, DELIVERIES_EVENT);
     writeManualClientsToStorage(nextManualClients);
-    window.dispatchEvent(new Event(DELIVERIES_EVENT));
     writeClientMetaToStorage(nextClientMeta);
     setDeleteClientId(null);
     setDeleteConfirmationText("");
@@ -975,10 +1107,9 @@ export function V2ClientesPage() {
     setDeliveries(nextDeliveries);
     setManualClients(nextManualClients);
     setClientMeta(nextClientMeta);
-    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations);
-    writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries);
+    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations, RESERVATIONS_EVENT);
+    writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries, DELIVERIES_EVENT);
     writeManualClientsToStorage(nextManualClients);
-    window.dispatchEvent(new Event(DELIVERIES_EVENT));
     writeClientMetaToStorage(nextClientMeta);
     setSelectedClientId(nextClientId);
     setProfileClientId((current) => (current === client.id ? nextClientId : current));
@@ -1035,9 +1166,13 @@ export function V2ClientesPage() {
   }
 
   function saveClientDelivery(client: V2RealClient, formData: FormData) {
+    if (currentDeliveryOrderItems.length === 0) return;
+
     const deliveryType = String(formData.get("deliveryType") ?? "delivery") as "delivery" | "pickup";
-    const nextDelivery: V2StoredDelivery = {
-      id: `env-${Date.now()}`,
+    const deliveryId = createV2OperationalId("env");
+    const createdAt = new Date().toISOString();
+    const deliveryDraft: V2StoredDelivery = {
+      id: deliveryId,
       date: getTodayDateKey(),
       time: String(formData.get("time") ?? "").trim() || "20:00",
       client: String(formData.get("client") ?? client.name).trim() || client.name,
@@ -1047,12 +1182,23 @@ export function V2ClientesPage() {
           ? "Retira en local"
           : String(formData.get("address") ?? "").trim(),
       deliveryType,
-      order: String(formData.get("order") ?? "").trim() || "Pedido sin detalle",
-      total: Number(formData.get("total") ?? 0) || 0,
+      order: currentDeliveryOrderItems
+        .map((item) => `${item.quantity}x ${item.name}`)
+        .join(", "),
+      orderItems: currentDeliveryOrderItems,
+      total: currentDeliveryOrderTotal,
       payment: String(formData.get("payment") ?? "Efectivo").trim() || "Efectivo",
       note: String(formData.get("note") ?? "").trim() || "—",
       status: "confirmed",
+      source: "manual",
+      needsAcceptance: false,
+      trackingId: createV2PublicCode("PED", deliveryId),
+      createdAt,
+      acceptedAt: createdAt,
+      preparingAt: createdAt,
+      kitchenStatus: "pending",
     };
+    const nextDelivery = reserveStockForClientDelivery(deliveryDraft);
 
     const currentDeliveries = readFromStorage<V2StoredDelivery[]>(
       DELIVERIES_STORAGE_KEY,
@@ -1061,14 +1207,22 @@ export function V2ClientesPage() {
     const nextDeliveries = [nextDelivery, ...currentDeliveries];
 
     setDeliveries(nextDeliveries);
-    writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries);
-    window.dispatchEvent(new Event(DELIVERIES_EVENT));
+    writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries, DELIVERIES_EVENT);
+    setDeliveryOrderQuantities({});
     setNewDeliveryClientId(null);
+  }
+
+  function updateDeliveryOrderQuantity(itemId: string, quantity: number) {
+    const nextQuantity = Math.max(0, Math.floor(Number(quantity) || 0));
+    setDeliveryOrderQuantities((current) => ({
+      ...current,
+      [itemId]: nextQuantity,
+    }));
   }
 
   function saveClientReservation(client: V2RealClient, formData: FormData) {
     const nextReservation: V2StoredReservation = {
-      id: `res-${Date.now()}`,
+      id: createV2OperationalId("res"),
       client: String(formData.get("client") ?? client.name).trim() || client.name,
       email: String(formData.get("email") ?? client.email).trim(),
       phone: String(formData.get("phone") ?? client.phone).trim(),
@@ -1085,7 +1239,7 @@ export function V2ClientesPage() {
     const nextReservations = [nextReservation, ...reservations];
 
     setReservations(nextReservations);
-    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations);
+    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations, RESERVATIONS_EVENT);
     setSelectedClientId(client.id);
     setNewReservationClientId(null);
   }
@@ -1624,7 +1778,7 @@ export function V2ClientesPage() {
                 new FormData(event.currentTarget)
               );
             }}
-            className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl"
+            className="flex max-h-[calc(100vh-48px)] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
               <div>
@@ -1643,7 +1797,7 @@ export function V2ClientesPage() {
               </button>
             </div>
 
-            <div className="grid gap-4 p-6 md:grid-cols-2">
+            <div className="grid shrink-0 gap-4 px-6 py-4 md:grid-cols-4">
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 Cliente
                 <V2Input name="client" defaultValue={clientPendingDelivery.name} />
@@ -1663,17 +1817,9 @@ export function V2ClientesPage() {
                   <option value="pickup">Retira en local</option>
                 </V2Select>
               </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-3">
                 Dirección
                 <V2Input name="address" placeholder="Dirección de entrega" />
-              </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-                Pedido
-                <V2Textarea name="order" rows={4} placeholder="Detalle del pedido" />
-              </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                Total
-                <V2Input name="total" type="number" min="0" defaultValue="0" />
               </label>
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 Pago
@@ -1681,15 +1827,136 @@ export function V2ClientesPage() {
                   <option value="Efectivo">Efectivo</option>
                   <option value="Transferencia">Transferencia</option>
                   <option value="Tarjeta">Tarjeta</option>
+                  <option value="Mercado Pago">Mercado Pago</option>
                 </V2Select>
               </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-4">
                 Nota
-                <V2Textarea name="note" rows={3} placeholder="Indicaciones internas" />
+                <V2Textarea name="note" rows={2} placeholder="Indicaciones internas" />
               </label>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-slate-200 p-6">
+            <div className="grid min-h-0 flex-1 gap-4 overflow-hidden border-t border-slate-200 p-5 md:grid-cols-[130px_minmax(0,1fr)_285px]">
+              <aside className="min-h-0 overflow-y-auto pr-1">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Categorías
+                </h3>
+                <div className="mt-3 grid gap-1.5">
+                  {deliveryMenuCategories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setSelectedMenuCategory(category)}
+                      className={`rounded-xl border px-3 py-1.5 text-left text-xs font-semibold transition ${
+                        selectedMenuCategory === category
+                          ? "border-slate-950 bg-slate-950 text-white"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </aside>
+
+              <div className="flex min-h-0 flex-col">
+                <h3 className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Agregar productos del menú
+                </h3>
+                <div className="mt-3 grid min-h-0 flex-1 content-start overflow-y-auto pr-2">
+                  {filteredDeliveryMenuItems.map((item) => {
+                    const quantity = deliveryOrderQuantities[item.id] ?? 0;
+                    return (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-[92px_1fr_auto] items-center gap-3 border-b border-slate-100 bg-white py-2 text-sm transition last:border-b-0 hover:bg-purple-50"
+                      >
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDeliveryOrderQuantity(item.id, quantity - 1)
+                            }
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 bg-red-50 font-semibold text-red-700"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={quantity}
+                            onChange={(event) =>
+                              updateDeliveryOrderQuantity(
+                                item.id,
+                                Number(event.target.value)
+                              )
+                            }
+                            className="h-7 w-8 rounded-lg border border-slate-200 text-center text-xs font-semibold outline-none"
+                            aria-label={`Cantidad de ${item.name}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDeliveryOrderQuantity(item.id, quantity + 1)
+                            }
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 font-semibold text-emerald-700"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="font-medium text-slate-950">{item.name}</span>
+                        <span className="font-semibold text-slate-700">
+                          {formatMoney(item.price)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex min-h-0 flex-col rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pedido actual
+                </h3>
+                <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                  {currentDeliveryOrderItems.length > 0 ? (
+                    <div className="space-y-1">
+                      {currentDeliveryOrderItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-2 py-1.5"
+                        >
+                          <span>{item.name}</span>
+                          <span className="shrink-0 font-bold text-emerald-700">
+                            {item.quantity}x
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-500">Sin productos cargados.</p>
+                  )}
+                </div>
+                <div className="mt-3 rounded-xl bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Total
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-slate-950">
+                    {formatMoney(currentDeliveryOrderTotal)}
+                  </p>
+                </div>
+                <V2Button
+                  type="button"
+                  variant="secondary"
+                  className="mt-3"
+                  onClick={() => setDeliveryOrderQuantities({})}
+                >
+                  Vaciar pedido
+                </V2Button>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 p-5">
               <V2Button
                 type="button"
                 variant="secondary"
@@ -1697,7 +1964,11 @@ export function V2ClientesPage() {
               >
                 Cancelar
               </V2Button>
-              <V2Button type="submit" variant="primary">
+              <V2Button
+                type="submit"
+                variant="primary"
+                disabled={currentDeliveryOrderItems.length === 0}
+              >
                 Crear envío
               </V2Button>
             </div>

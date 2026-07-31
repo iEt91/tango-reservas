@@ -24,16 +24,17 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
-const RESERVATIONS_KEY = "tango-v2-reservations-calendar-v2";
-const DELIVERIES_KEY = "tango-v2-deliveries-v1";
-const EXPENSES_KEY = "tango-v2-expenses-v1";
-const CASH_REGISTER_KEY = "tango-v2-cash-register-v1";
+const RESERVATIONS_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const DELIVERIES_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const EXPENSES_KEY = V2_OPERATIONAL_STORAGE_KEYS.expenses;
+const CASH_REGISTER_KEY = V2_OPERATIONAL_STORAGE_KEYS.cashRegister;
 const SYNC_EVENTS = [
-  "tango-v2-reservations-updated",
-  "tango-v2-deliveries-updated",
-  "tango-v2-expenses-updated",
-  "tango-v2-cash-register-updated",
+  V2_OPERATIONAL_EVENTS.reservations,
+  V2_OPERATIONAL_EVENTS.deliveries,
+  V2_OPERATIONAL_EVENTS.expenses,
+  V2_OPERATIONAL_EVENTS.cashRegister,
 ];
 
 type PaymentTotals = { cash: number; card: number; mercadoPago: number; transfer: number };
@@ -217,6 +218,12 @@ export default function CajaPage() {
       .reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
     [expenses, selectedDate],
   );
+  const cardExpenses = useMemo(
+    () => expenses
+      .filter((item) => item.date === selectedDate && item.status === "paid" && paymentKey(item.paymentMethod) !== "cash")
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
+    [expenses, selectedDate],
+  );
   const openingAmount = Number(selectedClose?.openingAmount) || 0;
   const movements = selectedClose?.movements ?? [];
   const movementNet = movements.reduce(
@@ -229,7 +236,7 @@ export default function CajaPage() {
   function persist(next: CashClose[]) {
     setCloses(next);
     window.localStorage.setItem(CASH_REGISTER_KEY, JSON.stringify(next));
-    window.dispatchEvent(new Event("tango-v2-cash-register-updated"));
+    window.dispatchEvent(new Event(V2_OPERATIONAL_EVENTS.cashRegister));
   }
 
   function openCash() {
@@ -445,10 +452,11 @@ export default function CajaPage() {
           </V2Card>
         ) : null}
 
-        <div className="mt-3 grid shrink-0 grid-cols-4 gap-3">
+        <div className="mt-3 grid shrink-0 grid-cols-5 gap-3">
           <V2MetricCard label="Ventas cobradas" value={money(displayTotalSales)} helper="Operaciones completadas" tone="green" icon={<CircleDollarSign size={21} />} />
           <V2MetricCard label="Efectivo esperado" value={money(displayExpected)} helper="Fondo + efectivo - gastos" tone="green" icon={<Banknote size={21} />} />
           <V2MetricCard label="Gastos en efectivo" value={money(selectedClose?.status === "closed" ? Number(selectedClose.cashExpensesSnapshot) || 0 : cashExpenses)} helper="Gastos pagados del día" tone="orange" icon={<ArrowDownToLine size={21} />} />
+          <V2MetricCard label="Gastos de tarjeta" value={money(cardExpenses)} helper="Tarjeta, MP y transferencia" tone="blue" icon={<CreditCard size={21} />} />
           <V2MetricCard label="Diferencia" value={selectedClose?.status === "closed" ? money(Number(selectedClose.difference) || 0) : "—"} helper={selectedClose?.status === "closed" ? "Contado - esperado" : "Disponible al cerrar"} tone={selectedClose?.status === "closed" && Number(selectedClose.difference) !== 0 ? "red" : "slate"} icon={<LockKeyhole size={21} />} />
         </div>
 

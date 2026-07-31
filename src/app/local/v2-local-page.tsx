@@ -23,6 +23,7 @@ import { V2Badge, V2ReservationStatusBadge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2Deliveries,
   v2Reservations,
@@ -32,21 +33,31 @@ import {
   type V2ReservationStatus,
 } from "@/lib/v2/v2-mock-data";
 
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
 const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
 const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
-const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
+const CASH_REGISTER_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.cashRegister;
+const EXPENSES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.expenses;
 
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
 const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
-const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
-const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
+const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
 const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
-const CASH_REGISTER_EVENT = "tango-v2-cash-register-updated";
+const CASH_REGISTER_EVENT = V2_OPERATIONAL_EVENTS.cashRegister;
+const EXPENSES_EVENT = V2_OPERATIONAL_EVENTS.expenses;
+
+type V2KitchenStatus = "pending" | "preparing" | "ready" | "completed";
+
+type V2KitchenTicket = {
+  id: string;
+  status: V2KitchenStatus;
+  items?: Array<{ menuItemId?: string; id?: string; name?: string; quantity?: number }>;
+};
 
 type V2ReservationOrderLineItem = {
   menuItemId: string;
@@ -87,6 +98,8 @@ type V2ReservationDraft = {
   completedAt?: string;
   cancelledAt?: string;
   noShowAt?: string;
+  kitchenStatus?: V2KitchenStatus;
+  kitchenTickets?: V2KitchenTicket[];
 };
 
 type V2DeliveryOrderItem = {
@@ -113,6 +126,8 @@ type V2DeliveryDraft = {
   source?: "web" | "manual";
   needsAcceptance?: boolean;
   trackingId?: string;
+  kitchenStatus?: V2KitchenStatus;
+  kitchenTickets?: V2KitchenTicket[];
 };
 
 type V2FloorTableDraft = {
@@ -166,6 +181,14 @@ type V2CashRegister = {
     mercadoPago?: number;
     transfer?: number;
   } | null;
+};
+
+type V2Expense = {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  status: "paid" | "pending";
 };
 
 type AgendaItem = {
@@ -263,6 +286,32 @@ function isOpenTableReservation(reservation: V2ReservationDraft) {
       reservation.consumptionStartedAt ||
       hasReservationConsumption(reservation)
   );
+}
+
+function hasBaseKitchenItems(operation: V2ReservationDraft | V2DeliveryDraft) {
+  const possibleStructuredItems = "orderLineItems" in operation
+    ? operation.orderLineItems ?? []
+    : operation.orderItems ?? [];
+  const structuredItems = Array.isArray(possibleStructuredItems) ? possibleStructuredItems : [];
+
+  if (structuredItems.length === 0) {
+    const legacyItems = "order" in operation ? operation.order : operation.orderItems;
+    return typeof legacyItems === "string" && legacyItems.trim().length > 0;
+  }
+
+  const ticketQuantities = new Map<string, number>();
+  (operation.kitchenTickets ?? []).forEach((ticket) => {
+    (ticket.items ?? []).forEach((item) => {
+      const key = item.menuItemId ?? item.id ?? item.name?.trim().toLowerCase();
+      if (!key) return;
+      ticketQuantities.set(key, (ticketQuantities.get(key) ?? 0) + (Number(item.quantity) || 0));
+    });
+  });
+
+  return structuredItems.some((item) => {
+    const key = ("menuItemId" in item ? item.menuItemId : item.id) ?? item.name.trim().toLowerCase();
+    return (Number(item.quantity) || 0) > (ticketQuantities.get(key) ?? 0);
+  });
 }
 
 function getDeliveryLabel(delivery: V2DeliveryDraft) {
@@ -368,6 +417,7 @@ export function V2LocalPage() {
   const [localConfig, setLocalConfig] = useState<V2LocalConfigState>({});
   const [webConfig, setWebConfig] = useState<V2WebConfigState>({});
   const [cashRegisters, setCashRegisters] = useState<V2CashRegister[]>([]);
+  const [expenses, setExpenses] = useState<V2Expense[]>([]);
 
   useEffect(() => {
     function syncDashboardData() {
@@ -394,6 +444,7 @@ export function V2LocalPage() {
       setLocalConfig(readFromStorage<V2LocalConfigState>(LOCAL_CONFIG_STORAGE_KEY, {}));
       setWebConfig(readFromStorage<V2WebConfigState>(WEB_CONFIG_STORAGE_KEY, {}));
       setCashRegisters(readFromStorage<V2CashRegister[]>(CASH_REGISTER_STORAGE_KEY, []));
+      setExpenses(readFromStorage<V2Expense[]>(EXPENSES_STORAGE_KEY, []));
     }
 
     syncDashboardData();
@@ -407,6 +458,7 @@ export function V2LocalPage() {
     window.addEventListener(LOCAL_CONFIG_EVENT, syncDashboardData);
     window.addEventListener(WEB_CONFIG_EVENT, syncDashboardData);
     window.addEventListener(CASH_REGISTER_EVENT, syncDashboardData);
+    window.addEventListener(EXPENSES_EVENT, syncDashboardData);
 
     return () => {
       window.removeEventListener("focus", syncDashboardData);
@@ -418,6 +470,7 @@ export function V2LocalPage() {
       window.removeEventListener(LOCAL_CONFIG_EVENT, syncDashboardData);
       window.removeEventListener(WEB_CONFIG_EVENT, syncDashboardData);
       window.removeEventListener(CASH_REGISTER_EVENT, syncDashboardData);
+      window.removeEventListener(EXPENSES_EVENT, syncDashboardData);
     };
   }, []);
 
@@ -518,6 +571,26 @@ export function V2LocalPage() {
       !table.locked
   );
   const criticalStock = stockProducts.filter(isCriticalStock);
+  const activeKitchenOperations: Array<V2ReservationDraft | V2DeliveryDraft> = [
+    ...todayReservations.filter((reservation) => reservation.status === "confirmed"),
+    ...todayDeliveries.filter(
+      (delivery) => delivery.status === "confirmed" && !delivery.needsAcceptance,
+    ),
+  ];
+  const readyKitchenCommands = activeKitchenOperations.reduce(
+    (total, operation) =>
+      total +
+      (operation.kitchenStatus === "ready" && hasBaseKitchenItems(operation) ? 1 : 0) +
+      (operation.kitchenTickets ?? []).filter((ticket) => ticket.status === "ready").length,
+    0,
+  );
+  const overdueExpenses = expenses.filter(
+    (expense) => expense.status === "pending" && expense.date < todayDate,
+  );
+  const overdueExpensesTotal = overdueExpenses.reduce(
+    (total, expense) => total + (Number(expense.amount) || 0),
+    0,
+  );
 
   const agenda = useMemo<AgendaItem[]>(() => {
     const reservationItems: AgendaItem[] = todayReservations
@@ -594,6 +667,30 @@ export function V2LocalPage() {
         tone: "orange",
         label: "Revisar",
         priority: 2,
+      });
+    }
+
+    if (readyKitchenCommands > 0) {
+      items.push({
+        id: "kitchen-ready",
+        title: `${readyKitchenCommands} ${readyKitchenCommands === 1 ? "comanda lista" : "comandas listas"}`,
+        detail: "Cocina terminó la preparación y espera que el pedido sea servido o despachado.",
+        href: "/local/cocina",
+        tone: "green",
+        label: "Entregar",
+        priority: 1,
+      });
+    }
+
+    if (overdueExpenses.length > 0) {
+      items.push({
+        id: "expenses-overdue",
+        title: `${overdueExpenses.length} ${overdueExpenses.length === 1 ? "gasto vencido" : "gastos vencidos"}`,
+        detail: `${formatMoney(overdueExpensesTotal)} pendientes de pago fuera de fecha.`,
+        href: "/local/gastos",
+        tone: "red",
+        label: "Revisar",
+        priority: 1,
       });
     }
 
@@ -695,6 +792,9 @@ export function V2LocalPage() {
     openTableReservations,
     pendingDeliveries,
     pendingTodayReservations,
+    overdueExpenses.length,
+    overdueExpensesTotal,
+    readyKitchenCommands,
     closedSalesTotal,
     todayCashRegister,
     todayRevenue,

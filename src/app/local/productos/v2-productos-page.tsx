@@ -20,6 +20,7 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { createV2OperationalId } from "@/lib/v2-operational-storage";
 import {
   v2StockProducts,
   type V2StockUnit,
@@ -100,7 +101,29 @@ function readFromStorage<T>(key: string, fallback: T): T {
 }
 
 function readStockMovementHistory() {
-  return readFromStorage<V2StockMovementLog[]>(STOCK_MOVEMENTS_STORAGE_KEY, []);
+  const history = readFromStorage<V2StockMovementLog[]>(STOCK_MOVEMENTS_STORAGE_KEY, []);
+  const usedIds = new Set<string>();
+  let repaired = false;
+  const normalizedHistory = history.map((movement) => {
+    if (!usedIds.has(movement.id)) {
+      usedIds.add(movement.id);
+      return movement;
+    }
+
+    repaired = true;
+    const nextMovement = {
+      ...movement,
+      id: createV2OperationalId(`${movement.id}-recovered`),
+    };
+    usedIds.add(nextMovement.id);
+    return nextMovement;
+  });
+
+  if (repaired && typeof window !== "undefined") {
+    window.localStorage.setItem(STOCK_MOVEMENTS_STORAGE_KEY, JSON.stringify(normalizedHistory));
+  }
+
+  return normalizedHistory;
 }
 
 function formatMovementDate(value: string) {
@@ -354,7 +377,7 @@ export function V2ProductosPage() {
 
         if (discountedDiff !== 0) {
           const movement: V2StockMovementLog = {
-            id: `stock-mov-${Date.now()}`,
+            id: createV2OperationalId("stock-mov-manual"),
             createdAt: new Date().toISOString(),
             type: discountedDiff > 0 ? "discount" : "return",
             origin: "manual",
@@ -732,9 +755,9 @@ export function V2ProductosPage() {
               <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
                 <div className="space-y-2 text-sm">
                   {recentStockMovements.length > 0 ? (
-                    recentStockMovements.map((movement) => (
+                    recentStockMovements.map((movement, index) => (
                       <div
-                        key={movement.id}
+                        key={`${movement.id}-${index}`}
                         className={`rounded-2xl border p-3 shadow-sm ${getMovementCardToneClass(movement.type)}`}
                       >
                         <div className="flex items-start justify-between gap-3">

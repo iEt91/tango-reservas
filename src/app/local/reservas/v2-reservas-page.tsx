@@ -32,6 +32,7 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { createV2OperationalId } from "@/lib/v2-operational-storage";
 import {
   v2MenuCategories,
   v2MenuItems,
@@ -558,11 +559,11 @@ function appendStockMovementHistory(
   if (typeof window === "undefined" || movements.length === 0) return;
 
   const stockProducts = readStockProductsFromStorage();
-  const logs: V2StockMovementLog[] = movements.map((movement, index) => {
+  const logs: V2StockMovementLog[] = movements.map((movement) => {
     const product = stockProducts.find((item) => item.id === movement.productId);
 
     return {
-      id: `stock-mov-res-${Date.now()}-${index}`,
+      id: createV2OperationalId("stock-mov-res"),
       createdAt: new Date().toISOString(),
       type: direction,
       origin: "reservas",

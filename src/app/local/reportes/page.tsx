@@ -22,17 +22,20 @@ import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Input } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
-const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
-const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
-const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
-const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
-const EXPENSES_STORAGE_KEY = "tango-v2-expenses-v1";
-const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
-const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
-const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
-const EXPENSES_EVENT = "tango-v2-expenses-updated";
-const CASH_REGISTER_EVENT = "tango-v2-cash-register-updated";
+const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
+const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
+const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
+const EXPENSES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.expenses;
+const CASH_REGISTER_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.cashRegister;
+const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
+const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
+const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
+const EXPENSES_EVENT = V2_OPERATIONAL_EVENTS.expenses;
+const CASH_REGISTER_EVENT = V2_OPERATIONAL_EVENTS.cashRegister;
 
 type ReportRange = "day" | "custom" | "all";
 type PaymentBreakdown = {
@@ -290,6 +293,8 @@ export default function ReportesPage() {
     window.addEventListener("storage", sync);
     window.addEventListener(RESERVATIONS_EVENT, sync);
     window.addEventListener(DELIVERIES_EVENT, sync);
+    window.addEventListener(LOCAL_CONFIG_EVENT, sync);
+    window.addEventListener(STOCK_PRODUCTS_EVENT, sync);
     window.addEventListener(EXPENSES_EVENT, sync);
     window.addEventListener(CASH_REGISTER_EVENT, sync);
     return () => {
@@ -297,6 +302,8 @@ export default function ReportesPage() {
       window.removeEventListener("storage", sync);
       window.removeEventListener(RESERVATIONS_EVENT, sync);
       window.removeEventListener(DELIVERIES_EVENT, sync);
+      window.removeEventListener(LOCAL_CONFIG_EVENT, sync);
+      window.removeEventListener(STOCK_PRODUCTS_EVENT, sync);
       window.removeEventListener(EXPENSES_EVENT, sync);
       window.removeEventListener(CASH_REGISTER_EVENT, sync);
     };
