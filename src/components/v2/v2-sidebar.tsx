@@ -12,6 +12,7 @@ import {
   History,
   PackageCheck,
   ChartNoAxesCombined,
+  WalletCards,
   Settings,
   UsersRound,
   Utensils,
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/local/stock", label: "Stock", icon: Boxes },
   { href: "/local/historial", label: "Historial", icon: History },
   { href: "/local/reportes", label: "Reportes", icon: ChartNoAxesCombined },
+  { href: "/local/gastos", label: "Gastos", icon: WalletCards },
   { href: "/local/web", label: "Web", icon: Globe2 },
   { href: "/local/configuracion", label: "Configuración", icon: Settings },
 ];

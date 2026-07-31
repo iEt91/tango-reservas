@@ -26,8 +26,10 @@ const DELIVERIES_STORAGE_KEY = "tango-v2-deliveries-v1";
 const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
 const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
 const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
+const EXPENSES_STORAGE_KEY = "tango-v2-expenses-v1";
 const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
 const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
+const EXPENSES_EVENT = "tango-v2-expenses-updated";
 
 type ReportRange = "day" | "custom" | "all";
 type PaymentBreakdown = {
@@ -76,6 +78,7 @@ type Delivery = {
   paymentBreakdown?: Partial<PaymentBreakdown>;
   deliveredAt?: string;
 };
+type Expense = { id:string; date:string; amount:number; status:"paid"|"pending"; category?:string };
 
 function readStorage<T>(key: string): T[] {
   try {
@@ -257,6 +260,7 @@ export default function ReportesPage() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [stockProducts, setStockProducts] = useState<StockProduct[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
     function sync() {
@@ -265,17 +269,20 @@ export default function ReportesPage() {
       const config = readObject<{ recipes?: Recipe[] }>(LOCAL_CONFIG_STORAGE_KEY, {});
       setRecipes(Array.isArray(config.recipes) ? config.recipes : []);
       setStockProducts(readStorage<StockProduct>(STOCK_PRODUCTS_STORAGE_KEY));
+      setExpenses(readStorage<Expense>(EXPENSES_STORAGE_KEY));
     }
     sync();
     window.addEventListener("focus", sync);
     window.addEventListener("storage", sync);
     window.addEventListener(RESERVATIONS_EVENT, sync);
     window.addEventListener(DELIVERIES_EVENT, sync);
+    window.addEventListener(EXPENSES_EVENT, sync);
     return () => {
       window.removeEventListener("focus", sync);
       window.removeEventListener("storage", sync);
       window.removeEventListener(RESERVATIONS_EVENT, sync);
       window.removeEventListener(DELIVERIES_EVENT, sync);
+      window.removeEventListener(EXPENSES_EVENT, sync);
     };
   }, []);
 
@@ -377,6 +384,11 @@ export default function ReportesPage() {
     );
     const grossProfit = revenue - ingredientCost;
     const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+    const operationalExpenses = expenses
+      .filter((item) => item.status === "paid" && item.category !== "Compra de stock" && insideRange(item.date, range, selectedDate, startDate, endDate))
+      .reduce((total, item) => total + (Number(item.amount) || 0), 0);
+    const netResult = grossProfit - operationalExpenses;
+    const netMargin = revenue > 0 ? (netResult / revenue) * 100 : 0;
     const uncostedItems = soldItems.reduce((total, item) => {
       const hasCost = getRecipeUnitCost(item, recipes, stockProducts) > 0;
       return total + (hasCost ? 0 : Number(item.quantity) || 0);
@@ -394,9 +406,12 @@ export default function ReportesPage() {
       ingredientCost,
       grossProfit,
       grossMargin,
+      operationalExpenses,
+      netResult,
+      netMargin,
       uncostedItems,
     };
-  }, [deliveries, endDate, range, recipes, reservations, selectedDate, startDate, stockProducts]);
+  }, [deliveries, endDate, expenses, range, recipes, reservations, selectedDate, startDate, stockProducts]);
 
   function exportCsv() {
     const rows = [
@@ -410,6 +425,9 @@ export default function ReportesPage() {
       ["Costo estimado de insumos", report.ingredientCost],
       ["Ganancia bruta estimada", report.grossProfit],
       ["Margen bruto", `${report.grossMargin.toFixed(1)}%`],
+      ["Gastos operativos pagados", report.operationalExpenses],
+      ["Resultado neto estimado", report.netResult],
+      ["Margen neto estimado", `${report.netMargin.toFixed(1)}%`],
       ["Unidades sin costo configurado", report.uncostedItems],
       [],
       ["Método", "Importe"],
@@ -454,6 +472,9 @@ export default function ReportesPage() {
       ["Costo estimado de insumos", report.ingredientCost],
       ["Ganancia bruta estimada", report.grossProfit],
       ["Margen bruto", `${report.grossMargin.toFixed(1)}%`],
+      ["Gastos operativos pagados", report.operationalExpenses],
+      ["Resultado neto estimado", report.netResult],
+      ["Margen neto estimado", `${report.netMargin.toFixed(1)}%`],
       ["Unidades sin costo configurado", report.uncostedItems],
     ];
     const paymentRows = [
@@ -520,7 +541,9 @@ th{background:#f1f5f9}th:nth-child(n+3),td:nth-child(n+3){text-align:right}.note
 <div class="card"><div class="label">Facturación cobrada</div><div class="value">${money(report.revenue)}</div></div>
 <div class="card"><div class="label">Costo de insumos</div><div class="value">${money(report.ingredientCost)}</div></div>
 <div class="card"><div class="label">Ganancia bruta</div><div class="value profit">${money(report.grossProfit)}</div></div>
-<div class="card"><div class="label">Margen bruto</div><div class="value">${report.grossMargin.toFixed(1)}%</div></div>
+<div class="card"><div class="label">Gastos operativos</div><div class="value">${money(report.operationalExpenses)}</div></div>
+<div class="card"><div class="label">Resultado neto estimado</div><div class="value profit">${money(report.netResult)}</div></div>
+<div class="card"><div class="label">Margen neto estimado</div><div class="value">${report.netMargin.toFixed(1)}%</div></div>
 <div class="card"><div class="label">Operaciones</div><div class="value">${report.transactions}</div></div>
 <div class="card"><div class="label">Personas atendidas</div><div class="value">${report.guests}</div></div>
 </div>
@@ -532,7 +555,7 @@ th{background:#f1f5f9}th:nth-child(n+3),td:nth-child(n+3){text-align:right}.note
 <h2>Rentabilidad por producto</h2><table><tr><th>#</th><th>Producto</th><th>Unidades</th><th>Venta</th><th>Costo</th><th>Ganancia</th><th>Margen</th></tr>${products}</table>
 <h2>Insumos consumidos</h2><table><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th><th>Costo</th></tr>
 ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${item.quantity.toLocaleString("es-AR", { maximumFractionDigits: 3 })}</td><td>${escapeHtml(item.unit)}</td><td>${money(item.cost)}</td></tr>`).join("")}</table>
-<p class="note">La ganancia es bruta: contempla materia prima configurada en Recetas y Stock, pero no alquiler, sueldos, impuestos ni otros gastos.${report.uncostedItems > 0 ? ` Hay ${report.uncostedItems} unidades sin costo configurado.` : ""}</p>
+<p class="note">El resultado neto estimado descuenta materia prima y gastos marcados como pagados. Las compras de stock no se duplican.${report.uncostedItems > 0 ? ` Hay ${report.uncostedItems} unidades sin costo configurado.` : ""}</p>
 </body></html>`);
     printWindow.document.close();
     printWindow.focus();
@@ -769,7 +792,7 @@ ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${i
               ))}
             </div>
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Costo de insumos
@@ -788,16 +811,24 @@ ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${i
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Margen bruto
+                    Gastos operativos
                   </p>
-                  <p className="mt-1 text-lg font-bold text-blue-700">
-                    {report.grossMargin.toFixed(1)}%
+                  <p className="mt-1 text-lg font-bold text-orange-700">
+                    {money(report.operationalExpenses)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Resultado neto
+                  </p>
+                  <p className={`mt-1 text-lg font-bold ${report.netResult >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                    {money(report.netResult)}
                   </p>
                 </div>
               </div>
               <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
-                Materia prima según Recetas y Stock. No incluye alquiler, sueldos,
-                impuestos ni otros gastos.
+                Margen bruto: {report.grossMargin.toFixed(1)}% · Margen neto estimado: {report.netMargin.toFixed(1)}%.
+                Solo descuenta gastos pagados; las compras de stock no se duplican.
                 {report.uncostedItems > 0
                   ? ` Hay ${report.uncostedItems} unidades vendidas sin costo configurado.`
                   : ""}
