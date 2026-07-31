@@ -697,7 +697,8 @@ export function V2LocalPage() {
                 icon={<Warehouse size={22} />}
               />
 
-              <V2Card className="flex min-h-[86px] flex-col justify-between gap-1 px-2 py-2">
+              <Link href="/local/caja" className="block rounded-[14px] focus:outline-none focus:ring-2 focus:ring-emerald-600/20">
+              <V2Card className="flex min-h-[86px] flex-col justify-between gap-1 px-2 py-2 transition hover:border-emerald-300 hover:shadow-sm">
                 <div className="flex min-w-0 items-center justify-center gap-2">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                     <Banknote size={19} />
@@ -739,6 +740,7 @@ export function V2LocalPage() {
                   </div>
                 </div>
               </V2Card>
+              </Link>
 
               <V2MetricCard
                 label="Requiere atención"
