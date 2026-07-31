@@ -431,7 +431,7 @@ export function V2LocalPage() {
   );
   const todayRevenue =
     todayDeliveries
-      .filter((delivery) => delivery.status !== "cancelled")
+      .filter((delivery) => delivery.status === "completed")
       .reduce((total, delivery) => total + (Number(delivery.total) || 0), 0) +
     todayReservations
       .filter((reservation) => reservation.status === "completed")
@@ -443,7 +443,7 @@ export function V2LocalPage() {
 
   const paymentTotals = [
     ...todayDeliveries
-      .filter((delivery) => delivery.status !== "cancelled")
+      .filter((delivery) => delivery.status === "completed")
       .map((delivery) => ({
         method: normalizePaymentMethod(delivery.payment),
         amount: Number(delivery.total) || 0,
