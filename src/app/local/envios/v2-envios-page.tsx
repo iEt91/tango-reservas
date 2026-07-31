@@ -168,6 +168,7 @@ const STOCK_MOVEMENTS_STORAGE_KEY = "tango-v2-stock-movements";
 const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
 const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
 const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
 const DELIVERY_WHATSAPP_TEST_PHONE = "542216145679";
 const USE_DELIVERY_WHATSAPP_TEST_PHONE = false;
 function getTodayDateKey() {
@@ -177,6 +178,26 @@ function getTodayDateKey() {
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function getCashRegisterError(date: string) {
+  if (typeof window === "undefined") return "";
+
+  try {
+    const records = JSON.parse(
+      window.localStorage.getItem(CASH_REGISTER_STORAGE_KEY) ?? "[]"
+    ) as Array<{ date?: string; status?: string }>;
+    const cashRegister = records.find((record) => record.date === date);
+
+    if (cashRegister?.status === "open") return "";
+    if (cashRegister?.status === "closed") {
+      return "La caja de este día está cerrada. Reabrila antes de registrar el cobro.";
+    }
+
+    return "No hay una caja abierta para este día. Abrila antes de registrar el cobro.";
+  } catch {
+    return "No se pudo comprobar el estado de la caja. Revisala antes de registrar el cobro.";
+  }
 }
 
 const TODAY_DELIVERIES_DATE = getTodayDateKey();
@@ -1094,6 +1115,7 @@ export function V2EnviosPage() {
   const [acceptanceEtaMinutes, setAcceptanceEtaMinutes] = useState(45);
   const [stockReturnDeliveryId, setStockReturnDeliveryId] = useState<string | null>(null);
   const [openActionsDeliveryId, setOpenActionsDeliveryId] = useState<string | null>(null);
+  const [cashRegisterError, setCashRegisterError] = useState("");
   const [whatsAppDraft, setWhatsAppDraft] = useState<{
     delivery: V2Delivery;
     action: V2DeliveryWhatsAppAction;
@@ -1846,6 +1868,20 @@ export function V2EnviosPage() {
     });
 
     persistDeliveries(nextDeliveries);
+  }
+
+  function completeDelivery(id: string) {
+    const delivery = deliveries.find((item) => item.id === id);
+    if (!delivery) return;
+
+    const error = getCashRegisterError(delivery.date ?? TODAY_DELIVERIES_DATE);
+    if (error) {
+      setOpenActionsDeliveryId(null);
+      setCashRegisterError(error);
+      return;
+    }
+
+    updateDeliveryStatus(id, "completed");
   }
 
   function markDeliveryOnTheWay(id: string) {
@@ -3034,7 +3070,7 @@ export function V2EnviosPage() {
                       type="button"
                       onClick={() => {
                         setOpenActionsDeliveryId(null);
-                        updateDeliveryStatus(actionsDelivery.id, "completed");
+                        completeDelivery(actionsDelivery.id);
                       }}
                       className="flex w-full items-center gap-2 rounded-2xl border border-emerald-200 px-4 py-3 text-left text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
                     >
@@ -3622,6 +3658,47 @@ export function V2EnviosPage() {
 
 
           </form>
+        </div>
+      ) : null}
+
+      {cashRegisterError ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          onClick={() => setCashRegisterError("")}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
+              <div>
+                <p className="text-sm font-semibold text-amber-700">Cobro pendiente</p>
+                <h2 className="mt-1 text-xl font-semibold text-slate-950">
+                  No se puede marcar como entregado
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCashRegisterError("")}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+                aria-label="Cerrar aviso de caja"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="p-5 text-sm leading-6 text-slate-600">{cashRegisterError}</p>
+            <div className="flex justify-end gap-2 border-t border-slate-200 p-5">
+              <V2Button type="button" variant="secondary" onClick={() => setCashRegisterError("")}>
+                Volver
+              </V2Button>
+              <a
+                href="/local/caja"
+                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+              >
+                Ir a Caja
+              </a>
+            </div>
+          </div>
         </div>
       ) : null}
       </V2AppShell>

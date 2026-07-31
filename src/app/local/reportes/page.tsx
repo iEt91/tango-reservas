@@ -10,6 +10,7 @@ import {
   CreditCard,
   Download,
   FileSpreadsheet,
+  LockKeyhole,
   PackageCheck,
   Printer,
   ReceiptText,
@@ -27,9 +28,11 @@ const RESERVATIONS_STORAGE_KEY = "tango-v2-reservations-calendar-v2";
 const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
 const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
 const EXPENSES_STORAGE_KEY = "tango-v2-expenses-v1";
+const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
 const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
 const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
 const EXPENSES_EVENT = "tango-v2-expenses-updated";
+const CASH_REGISTER_EVENT = "tango-v2-cash-register-updated";
 
 type ReportRange = "day" | "custom" | "all";
 type PaymentBreakdown = {
@@ -79,6 +82,15 @@ type Delivery = {
   deliveredAt?: string;
 };
 type Expense = { id:string; date:string; amount:number; status:"paid"|"pending"; category?:string };
+type CashMovement = { id:string; type:"income"|"withdrawal"; amount:number; reason:string; createdAt:string };
+type CashRegister = {
+  id:string;
+  date:string;
+  status:"open"|"closed";
+  difference?:number|null;
+  adjustment?:number;
+  movements?:CashMovement[];
+};
 
 function readStorage<T>(key: string): T[] {
   try {
@@ -261,6 +273,7 @@ export default function ReportesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [stockProducts, setStockProducts] = useState<StockProduct[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
 
   useEffect(() => {
     function sync() {
@@ -270,6 +283,7 @@ export default function ReportesPage() {
       setRecipes(Array.isArray(config.recipes) ? config.recipes : []);
       setStockProducts(readStorage<StockProduct>(STOCK_PRODUCTS_STORAGE_KEY));
       setExpenses(readStorage<Expense>(EXPENSES_STORAGE_KEY));
+      setCashRegisters(readStorage<CashRegister>(CASH_REGISTER_STORAGE_KEY));
     }
     sync();
     window.addEventListener("focus", sync);
@@ -277,12 +291,14 @@ export default function ReportesPage() {
     window.addEventListener(RESERVATIONS_EVENT, sync);
     window.addEventListener(DELIVERIES_EVENT, sync);
     window.addEventListener(EXPENSES_EVENT, sync);
+    window.addEventListener(CASH_REGISTER_EVENT, sync);
     return () => {
       window.removeEventListener("focus", sync);
       window.removeEventListener("storage", sync);
       window.removeEventListener(RESERVATIONS_EVENT, sync);
       window.removeEventListener(DELIVERIES_EVENT, sync);
       window.removeEventListener(EXPENSES_EVENT, sync);
+      window.removeEventListener(CASH_REGISTER_EVENT, sync);
     };
   }, []);
 
@@ -393,6 +409,26 @@ export default function ReportesPage() {
       const hasCost = getRecipeUnitCost(item, recipes, stockProducts) > 0;
       return total + (hasCost ? 0 : Number(item.quantity) || 0);
     }, 0);
+    const periodCashRegisters = cashRegisters.filter((item) =>
+      insideRange(item.date, range, selectedDate, startDate, endDate),
+    );
+    const closedCashRegisters = periodCashRegisters.filter((item) => item.status === "closed");
+    const cashDifference = closedCashRegisters.reduce(
+      (total, item) => total + (Number(item.difference) || 0),
+      0,
+    );
+    const cashMovements = periodCashRegisters.flatMap((item) => item.movements ?? []);
+    const legacyCashAdjustments = periodCashRegisters
+      .filter((item) => !item.movements?.length && Number(item.adjustment) !== 0)
+      .map((item) => Number(item.adjustment) || 0);
+    const manualCashIncome = cashMovements
+      .filter((item) => item.type === "income")
+      .reduce((total, item) => total + (Number(item.amount) || 0), 0) +
+      legacyCashAdjustments.filter((amount) => amount > 0).reduce((total, amount) => total + amount, 0);
+    const manualCashWithdrawals = cashMovements
+      .filter((item) => item.type === "withdrawal")
+      .reduce((total, item) => total + (Number(item.amount) || 0), 0) +
+      legacyCashAdjustments.filter((amount) => amount < 0).reduce((total, amount) => total + Math.abs(amount), 0);
     return {
       closedReservations,
       closedDeliveries,
@@ -410,8 +446,12 @@ export default function ReportesPage() {
       netResult,
       netMargin,
       uncostedItems,
+      closedCashRegisters,
+      cashDifference,
+      manualCashIncome,
+      manualCashWithdrawals,
     };
-  }, [deliveries, endDate, expenses, range, recipes, reservations, selectedDate, startDate, stockProducts]);
+  }, [cashRegisters, deliveries, endDate, expenses, range, recipes, reservations, selectedDate, startDate, stockProducts]);
 
   function exportCsv() {
     const rows = [
@@ -429,6 +469,10 @@ export default function ReportesPage() {
       ["Resultado neto estimado", report.netResult],
       ["Margen neto estimado", `${report.netMargin.toFixed(1)}%`],
       ["Unidades sin costo configurado", report.uncostedItems],
+      ["Cajas cerradas", report.closedCashRegisters.length],
+      ["Diferencia acumulada de caja", report.cashDifference],
+      ["Ingresos manuales de efectivo", report.manualCashIncome],
+      ["Retiros manuales de efectivo", report.manualCashWithdrawals],
       [],
       ["Método", "Importe"],
       ["Efectivo", report.payments.cash],
@@ -476,6 +520,10 @@ export default function ReportesPage() {
       ["Resultado neto estimado", report.netResult],
       ["Margen neto estimado", `${report.netMargin.toFixed(1)}%`],
       ["Unidades sin costo configurado", report.uncostedItems],
+      ["Cajas cerradas", report.closedCashRegisters.length],
+      ["Diferencia acumulada de caja", report.cashDifference],
+      ["Ingresos manuales de efectivo", report.manualCashIncome],
+      ["Retiros manuales de efectivo", report.manualCashWithdrawals],
     ];
     const paymentRows = [
       ["Efectivo", report.payments.cash],
@@ -546,12 +594,18 @@ th{background:#f1f5f9}th:nth-child(n+3),td:nth-child(n+3){text-align:right}.note
 <div class="card"><div class="label">Margen neto estimado</div><div class="value">${report.netMargin.toFixed(1)}%</div></div>
 <div class="card"><div class="label">Operaciones</div><div class="value">${report.transactions}</div></div>
 <div class="card"><div class="label">Personas atendidas</div><div class="value">${report.guests}</div></div>
+<div class="card"><div class="label">Cajas cerradas</div><div class="value">${report.closedCashRegisters.length}</div></div>
+<div class="card"><div class="label">Diferencia acumulada de caja</div><div class="value">${money(report.cashDifference)}</div></div>
 </div>
 <h2>Ingresos por método</h2><table><tr><th>Método</th><th>Importe</th></tr>
 <tr><td>Efectivo</td><td>${money(report.payments.cash)}</td></tr>
 <tr><td>Tarjeta</td><td>${money(report.payments.card)}</td></tr>
 <tr><td>Mercado Pago</td><td>${money(report.payments.mercadoPago)}</td></tr>
 <tr><td>Transferencia</td><td>${money(report.payments.transfer)}</td></tr></table>
+<h2>Control de caja</h2><table><tr><th>Concepto</th><th>Importe</th></tr>
+<tr><td>Ingresos manuales</td><td>${money(report.manualCashIncome)}</td></tr>
+<tr><td>Retiros manuales</td><td>${money(report.manualCashWithdrawals)}</td></tr>
+<tr><td>Diferencia acumulada</td><td>${money(report.cashDifference)}</td></tr></table>
 <h2>Rentabilidad por producto</h2><table><tr><th>#</th><th>Producto</th><th>Unidades</th><th>Venta</th><th>Costo</th><th>Ganancia</th><th>Margen</th></tr>${products}</table>
 <h2>Insumos consumidos</h2><table><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th><th>Costo</th></tr>
 ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${item.quantity.toLocaleString("es-AR", { maximumFractionDigits: 3 })}</td><td>${escapeHtml(item.unit)}</td><td>${money(item.cost)}</td></tr>`).join("")}</table>
@@ -833,6 +887,21 @@ ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${i
                   ? ` Hay ${report.uncostedItems} unidades vendidas sin costo configurado.`
                   : ""}
               </p>
+            </div>
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <LockKeyhole size={18} className="text-slate-500" />
+                <div>
+                  <h3 className="font-semibold text-slate-950">Control de caja</h3>
+                  <p className="mt-0.5 text-xs text-slate-500">Auditoría operativa del período; no modifica la facturación ni el resultado neto.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Cajas cerradas</p><p className="mt-1 text-lg font-bold text-slate-950">{report.closedCashRegisters.length}</p></div>
+                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Diferencia acumulada</p><p className={`mt-1 text-lg font-bold ${report.cashDifference === 0 ? "text-emerald-700" : "text-red-700"}`}>{money(report.cashDifference)}</p></div>
+                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ingresos manuales</p><p className="mt-1 text-lg font-bold text-emerald-700">{money(report.manualCashIncome)}</p></div>
+                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Retiros manuales</p><p className="mt-1 text-lg font-bold text-orange-700">{money(report.manualCashWithdrawals)}</p></div>
+              </div>
             </div>
           </V2Card>
 

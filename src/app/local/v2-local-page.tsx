@@ -38,6 +38,7 @@ const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
 const STOCK_PRODUCTS_STORAGE_KEY = "tango-v2-stock-products";
 const LOCAL_CONFIG_STORAGE_KEY = "tango-v2-local-config-v1";
 const WEB_CONFIG_STORAGE_KEY = "tango-v2-local-web-config-v1";
+const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
 
 const RESERVATIONS_EVENT = "tango-v2-reservations-updated";
 const DELIVERIES_EVENT = "tango-v2-deliveries-updated";
@@ -45,6 +46,7 @@ const FLOOR_TABLES_EVENT = "tango-v2-floor-tables-updated";
 const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
 const LOCAL_CONFIG_EVENT = "tango-v2-local-config-updated";
 const WEB_CONFIG_EVENT = "tango-v2-local-web-config-updated";
+const CASH_REGISTER_EVENT = "tango-v2-cash-register-updated";
 
 type V2ReservationOrderLineItem = {
   menuItemId: string;
@@ -151,6 +153,19 @@ type V2WebConfigState = {
   showDelivery?: boolean;
   showGallery?: boolean;
   showMap?: boolean;
+};
+
+type V2CashRegister = {
+  id: string;
+  date: string;
+  status: "open" | "closed";
+  difference?: number | null;
+  salesSnapshot?: {
+    cash?: number;
+    card?: number;
+    mercadoPago?: number;
+    transfer?: number;
+  } | null;
 };
 
 type AgendaItem = {
@@ -352,6 +367,7 @@ export function V2LocalPage() {
   const [stockProducts, setStockProducts] = useState<V2StockProductDraft[]>([]);
   const [localConfig, setLocalConfig] = useState<V2LocalConfigState>({});
   const [webConfig, setWebConfig] = useState<V2WebConfigState>({});
+  const [cashRegisters, setCashRegisters] = useState<V2CashRegister[]>([]);
 
   useEffect(() => {
     function syncDashboardData() {
@@ -377,6 +393,7 @@ export function V2LocalPage() {
       );
       setLocalConfig(readFromStorage<V2LocalConfigState>(LOCAL_CONFIG_STORAGE_KEY, {}));
       setWebConfig(readFromStorage<V2WebConfigState>(WEB_CONFIG_STORAGE_KEY, {}));
+      setCashRegisters(readFromStorage<V2CashRegister[]>(CASH_REGISTER_STORAGE_KEY, []));
     }
 
     syncDashboardData();
@@ -389,6 +406,7 @@ export function V2LocalPage() {
     window.addEventListener(STOCK_PRODUCTS_EVENT, syncDashboardData);
     window.addEventListener(LOCAL_CONFIG_EVENT, syncDashboardData);
     window.addEventListener(WEB_CONFIG_EVENT, syncDashboardData);
+    window.addEventListener(CASH_REGISTER_EVENT, syncDashboardData);
 
     return () => {
       window.removeEventListener("focus", syncDashboardData);
@@ -399,6 +417,7 @@ export function V2LocalPage() {
       window.removeEventListener(STOCK_PRODUCTS_EVENT, syncDashboardData);
       window.removeEventListener(LOCAL_CONFIG_EVENT, syncDashboardData);
       window.removeEventListener(WEB_CONFIG_EVENT, syncDashboardData);
+      window.removeEventListener(CASH_REGISTER_EVENT, syncDashboardData);
     };
   }, []);
 
@@ -478,6 +497,13 @@ export function V2LocalPage() {
   const cardTotal = getPaymentMethodTotal(paymentTotals, ["tarjeta"]);
   const mercadoPagoTotal = getPaymentMethodTotal(paymentTotals, ["mercado pago"]);
   const transferTotal = getPaymentMethodTotal(paymentTotals, ["transferencia"]);
+  const todayCashRegister = cashRegisters.find((item) => item.date === todayDate) ?? null;
+  const closedSalesTotal = todayCashRegister?.salesSnapshot
+    ? Object.values(todayCashRegister.salesSnapshot).reduce(
+        (total, amount) => total + (Number(amount) || 0),
+        0,
+      )
+    : null;
 
   const openTableReservations = todayReservations.filter(isOpenTableReservation);
   const reservedOrOccupiedTables = floorTables.filter(
@@ -530,6 +556,46 @@ export function V2LocalPage() {
 
   const attentionItems = useMemo<AttentionItem[]>(() => {
     const items: AttentionItem[] = [];
+
+    if (!todayCashRegister && todayRevenue > 0) {
+      items.push({
+        id: "cash-register-not-opened",
+        title: "Hay ventas sin caja abierta",
+        detail: `${formatMoney(todayRevenue)} cobrados hoy sin registro de apertura.`,
+        href: "/local/caja",
+        tone: "red",
+        label: "Caja",
+        priority: 1,
+      });
+    }
+
+    if (
+      todayCashRegister?.status === "closed" &&
+      closedSalesTotal !== null &&
+      Math.abs(todayRevenue - closedSalesTotal) > 0.01
+    ) {
+      items.push({
+        id: "cash-register-new-sales-after-close",
+        title: "Hay cobros posteriores al cierre",
+        detail: `${formatMoney(Math.abs(todayRevenue - closedSalesTotal))} cobrados después del último cierre.`,
+        href: "/local/caja",
+        tone: "red",
+        label: "Reabrir",
+        priority: 1,
+      });
+    }
+
+    if (todayCashRegister?.status === "closed" && Number(todayCashRegister.difference) !== 0) {
+      items.push({
+        id: "cash-register-difference",
+        title: "Diferencia en el cierre de caja",
+        detail: `La caja cerró con una diferencia de ${formatMoney(Math.abs(Number(todayCashRegister.difference) || 0))}.`,
+        href: "/local/caja",
+        tone: "orange",
+        label: "Revisar",
+        priority: 2,
+      });
+    }
 
     pendingDeliveries.forEach((delivery) => {
       items.push({
@@ -619,7 +685,7 @@ export function V2LocalPage() {
       });
     }
 
-    return items.sort((a, b) => a.priority - b.priority).slice(0, 10);
+    return items.sort((a, b) => a.priority - b.priority);
   }, [
     activeTodayReservations,
     criticalStock,
@@ -629,6 +695,9 @@ export function V2LocalPage() {
     openTableReservations,
     pendingDeliveries,
     pendingTodayReservations,
+    closedSalesTotal,
+    todayCashRegister,
+    todayRevenue,
     webConfig.showDelivery,
     webConfig.showReservations,
   ]);
@@ -704,7 +773,12 @@ export function V2LocalPage() {
                     <Banknote size={19} />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-slate-500">Caja del día</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-xs font-semibold text-slate-500">Caja del día</p>
+                      <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${todayCashRegister?.status === "open" ? "bg-emerald-100 text-emerald-700" : todayCashRegister?.status === "closed" ? "bg-slate-100 text-slate-600" : "bg-orange-100 text-orange-700"}`}>
+                        {todayCashRegister?.status === "open" ? "Abierta" : todayCashRegister?.status === "closed" ? "Cerrada" : "Sin abrir"}
+                      </span>
+                    </div>
                     <p className="mt-0.5 text-xl font-bold leading-none text-slate-950">{formatMoney(todayRevenue)}</p>
                   </div>
                 </div>

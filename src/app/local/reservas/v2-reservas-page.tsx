@@ -325,6 +325,7 @@ const STOCK_PRODUCTS_EVENT = "tango-v2-stock-products-updated";
 const STOCK_MOVEMENTS_STORAGE_KEY = "tango-v2-stock-movements";
 const MENU_ITEMS_STORAGE_KEY = "tango-v2-menu-items";
 const MENU_CATEGORIES_STORAGE_KEY = "tango-v2-menu-categories";
+const CASH_REGISTER_STORAGE_KEY = "tango-v2-cash-register-v1";
 
 const DEFAULT_LOCAL_CONFIG: V2LocalConfigState = {
   businessHours: [
@@ -355,6 +356,26 @@ function getTodayDateKey() {
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function getCashRegisterError(date: string) {
+  if (typeof window === "undefined") return "";
+
+  try {
+    const records = JSON.parse(
+      window.localStorage.getItem(CASH_REGISTER_STORAGE_KEY) ?? "[]"
+    ) as Array<{ date?: string; status?: string }>;
+    const cashRegister = records.find((record) => record.date === date);
+
+    if (cashRegister?.status === "open") return "";
+    if (cashRegister?.status === "closed") {
+      return "La caja de este día está cerrada. Reabrila antes de registrar el cobro.";
+    }
+
+    return "No hay una caja abierta para este día. Abrila antes de registrar el cobro.";
+  } catch {
+    return "No se pudo comprobar el estado de la caja. Revisala antes de registrar el cobro.";
+  }
 }
 
 const FLOOR_TABLES_STORAGE_KEY = "tango-v2-floor-tables";
@@ -2688,6 +2709,12 @@ export function V2ReservasPage() {
   function completeReservationWithPayment() {
     if (!paymentCloseReservation) return;
 
+    const cashRegisterError = getCashRegisterError(paymentCloseReservation.date);
+    if (cashRegisterError) {
+      setPaymentCloseError(cashRegisterError);
+      return;
+    }
+
     const expectedTotal = Math.max(Number(paymentCloseReservation.orderTotal) || 0, 0);
     const paymentBreakdown = getPaymentBreakdownFromForm(paymentCloseForm);
     const paidAmount = Number(getPaymentBreakdownTotal(paymentBreakdown).toFixed(2));
@@ -3967,9 +3994,17 @@ export function V2ReservasPage() {
 
             <div className="space-y-4 p-5">
               {paymentCloseError ? (
-                <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                <div className="flex items-start justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   <AlertTriangle className="mt-0.5 shrink-0" size={17} />
-                  <p>{paymentCloseError}</p>
+                  <p className="flex-1">{paymentCloseError}</p>
+                  {paymentCloseError.toLowerCase().includes("caja") ? (
+                    <a
+                      href="/local/caja"
+                      className="shrink-0 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 font-semibold transition hover:bg-red-100"
+                    >
+                      Ir a Caja
+                    </a>
+                  ) : null}
                 </div>
               ) : null}
 
