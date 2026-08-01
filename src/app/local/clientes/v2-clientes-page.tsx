@@ -748,12 +748,12 @@ export function V2ClientesPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!newDeliveryClientId) return;
+  function openNewDelivery(clientId: string) {
     setDeliveryOrderQuantities({});
     setSelectedMenuCategory("Todos");
     setDeliveryMenuItems(readDeliveryMenuItems());
-  }, [newDeliveryClientId]);
+    setNewDeliveryClientId(clientId);
+  }
 
   useEffect(() => {
     function syncDeliveriesFromStorage() {
@@ -1666,7 +1666,7 @@ export function V2ClientesPage() {
                       variant="secondary"
                       icon={<PackageCheck size={16} />}
                       className="whitespace-nowrap"
-                      onClick={() => setNewDeliveryClientId(selectedClient.id)}
+                      onClick={() => openNewDelivery(selectedClient.id)}
                     >
                       Nuevo envío
                     </V2Button>
@@ -2476,7 +2476,7 @@ export function V2ClientesPage() {
                 className="min-w-[120px] whitespace-nowrap"
                 onClick={() => {
                   setProfileClientId(null);
-                  setNewDeliveryClientId(profileClient.id);
+                  openNewDelivery(profileClient.id);
                 }}
               >
                 Nuevo envío

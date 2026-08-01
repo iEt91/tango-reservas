@@ -423,7 +423,7 @@ export function V2ProductosPage() {
 
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        closeActivePopup();
+        closeEditor();
       }
     }
 

@@ -235,6 +235,7 @@ export function useLocalBusinessSelection({
     ownerBusinessReady,
     ownerBusinessSlug,
     queryBusinessSlug,
+    requestedBusiness,
     requestedBusinessState,
   ]);
 

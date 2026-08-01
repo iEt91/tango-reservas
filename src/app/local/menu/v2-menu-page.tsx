@@ -393,7 +393,12 @@ export function V2MenuPage() {
   const productsOutsideAssignCategory = useMemo(() => {
     if (!assignCategory) return [];
 
-    const categoryProductIds = new Set(getCategoryProductEntries(assignCategory).map((entry) => entry.productId));
+    const categoryProducts = assignCategory.isPromotion
+      ? assignCategory.products ?? []
+      : menuItems
+          .filter((item) => item.categoryId === assignCategory.id)
+          .map((item) => ({ productId: item.id, quantity: 1 }));
+    const categoryProductIds = new Set(categoryProducts.map((entry) => entry.productId));
 
     return menuItems.filter((item) => !categoryProductIds.has(item.id));
   }, [assignCategory, menuItems]);

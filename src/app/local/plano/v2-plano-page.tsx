@@ -1539,7 +1539,15 @@ export function V2PlanoPage() {
 
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        closeActivePopup();
+        if (isReleaseDialogOpen) {
+          setIsReleaseDialogOpen(false);
+        } else if (isAssignDialogOpen) {
+          setIsAssignDialogOpen(false);
+        } else if (isBackgroundDialogOpen) {
+          setIsBackgroundDialogOpen(false);
+        } else if (editingTable) {
+          setEditingTable(null);
+        }
       }
     }
 

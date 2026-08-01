@@ -1734,7 +1734,8 @@ export function V2ReservasPage() {
 
     function handleOrderPopupEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        closeOrderPopup();
+        resetStockMovementOperation();
+        setOrderReservation(null);
       }
     }
 

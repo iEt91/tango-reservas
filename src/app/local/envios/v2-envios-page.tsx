@@ -2011,7 +2011,17 @@ export function V2EnviosPage() {
 
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        closeActivePopup();
+        if (openActionsDeliveryId) {
+          setOpenActionsDeliveryId(null);
+        } else if (acceptanceDeliveryId) {
+          setAcceptanceDeliveryId(null);
+        } else if (stockReturnDeliveryId) {
+          setStockReturnDeliveryId(null);
+        } else if (whatsAppDraft) {
+          setWhatsAppDraft(null);
+        } else if (isNewDeliveryOpen) {
+          closeDeliveryModal();
+        }
       }
     }
 
