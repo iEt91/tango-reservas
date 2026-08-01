@@ -131,7 +131,19 @@ function readFromStorage<T>(key: string, fallback: T): T {
 function writeToStorage<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
 
-  window.localStorage.setItem(key, JSON.stringify(value));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "QuotaExceededError") {
+      console.error(
+        `[menu] No se pudo guardar ${key}: el almacenamiento local está lleno.`,
+        error
+      );
+      return;
+    }
+
+    throw error;
+  }
 
   if (key === MENU_ITEMS_STORAGE_KEY) {
     window.dispatchEvent(new Event(MENU_ITEMS_EVENT));
@@ -139,6 +151,50 @@ function writeToStorage<T>(key: string, value: T) {
 
   if (key === MENU_CATEGORIES_STORAGE_KEY) {
     window.dispatchEvent(new Event(MENU_CATEGORIES_EVENT));
+  }
+}
+
+const MAX_MENU_IMAGE_DATA_URL_LENGTH = 90_000;
+
+async function compressMenuImage(file: File) {
+  const sourceUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new window.Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("No se pudo leer la imagen seleccionada."));
+      nextImage.src = sourceUrl;
+    });
+
+    const longestSide = Math.max(image.naturalWidth, image.naturalHeight);
+    const initialScale = Math.min(1, 720 / Math.max(1, longestSide));
+    let width = Math.max(1, Math.round(image.naturalWidth * initialScale));
+    let height = Math.max(1, Math.round(image.naturalHeight * initialScale));
+    let quality = 0.78;
+    let result = "";
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("No se pudo procesar la imagen seleccionada.");
+
+      context.drawImage(image, 0, 0, width, height);
+      result = canvas.toDataURL("image/webp", quality);
+
+      if (result.length <= MAX_MENU_IMAGE_DATA_URL_LENGTH) return result;
+
+      width = Math.max(1, Math.round(width * 0.82));
+      height = Math.max(1, Math.round(height * 0.82));
+      quality = Math.max(0.48, quality - 0.06);
+    }
+
+    return result;
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
   }
 }
 
@@ -319,6 +375,53 @@ export function V2MenuPage() {
 
     writeToStorage(MENU_CATEGORIES_STORAGE_KEY, categories);
   }, [categories, hasLoadedStoredMenu]);
+
+  useEffect(() => {
+    const hasOpenModal = Boolean(
+      deleteTarget ||
+        removeFromCategoryTarget ||
+        assignCategory ||
+        editingCategory ||
+        editingItem
+    );
+
+    if (!hasOpenModal) return;
+
+    function handleModalEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+
+      if (deleteTarget) {
+        closeDeleteDialog();
+        return;
+      }
+
+      if (removeFromCategoryTarget) {
+        closeRemoveFromCategoryDialog();
+        return;
+      }
+
+      if (assignCategory) {
+        closeAssignProduct();
+        return;
+      }
+
+      if (editingCategory) {
+        closeCategoryEditor();
+        return;
+      }
+
+      closeEditor();
+    }
+
+    window.addEventListener("keydown", handleModalEscape);
+    return () => window.removeEventListener("keydown", handleModalEscape);
+  }, [
+    assignCategory,
+    deleteTarget,
+    editingCategory,
+    editingItem,
+    removeFromCategoryTarget,
+  ]);
 
   const orderedCategories = useMemo(() => {
     return [...categories].sort((a, b) => a.order - b.order);
@@ -636,21 +739,22 @@ export function V2MenuPage() {
     setHasQuickChanges(false);
   }
 
-  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file || !editingItem) return;
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result !== "string") return;
-
+    try {
+      const compressedImage = await compressMenuImage(file);
       setEditingItem((current) =>
-        current ? { ...current, imageUrl: reader.result as string } : current
+        current ? { ...current, imageUrl: compressedImage } : current
       );
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("[menu] No se pudo procesar la imagen seleccionada.", error);
+      window.alert("No se pudo procesar la imagen. Probá con otro archivo JPG, PNG o WEBP.");
+    } finally {
+      event.target.value = "";
+    }
   }
 
   function linkGeneratedMenuImages() {

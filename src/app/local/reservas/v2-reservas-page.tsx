@@ -1746,6 +1746,22 @@ export function V2ReservasPage() {
     };
   }, [orderReservation]);
 
+  useEffect(() => {
+    if (!editingReservation || isEditorCalendarOpen) return;
+
+    function handleReservationEditorEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeReservationEditor();
+      }
+    }
+
+    window.addEventListener("keydown", handleReservationEditorEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleReservationEditorEscape);
+    };
+  }, [editingReservation, isEditorCalendarOpen]);
+
   const calendarMonthData = useMemo(() => {
     return getMonthDays(calendarMonth);
   }, [calendarMonth]);
