@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -3941,12 +3942,12 @@ export function V2ReservasPage() {
                   <AlertTriangle className="mt-0.5 shrink-0" size={17} />
                   <p className="flex-1">{paymentCloseError}</p>
                   {paymentCloseError.toLowerCase().includes("caja") ? (
-                    <a
+                    <Link
                       href="/local/caja"
                       className="shrink-0 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 font-semibold transition hover:bg-red-100"
                     >
                       Ir a Caja
-                    </a>
+                    </Link>
                   ) : null}
                 </div>
               ) : null}

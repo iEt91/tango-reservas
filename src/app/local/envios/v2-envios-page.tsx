@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarDays,
@@ -3692,12 +3693,12 @@ export function V2EnviosPage() {
               <V2Button type="button" variant="secondary" onClick={() => setCashRegisterError("")}>
                 Volver
               </V2Button>
-              <a
+              <Link
                 href="/local/caja"
                 className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
               >
                 Ir a Caja
-              </a>
+              </Link>
             </div>
           </div>
         </div>

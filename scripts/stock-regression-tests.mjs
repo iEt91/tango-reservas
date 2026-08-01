@@ -2,7 +2,6 @@
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { pathToFileURL } from "node:url";
 import ts from "typescript";
 
 const sourceUrl = new URL("../src/lib/reservation-stock-core.ts", import.meta.url);

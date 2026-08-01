@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Banknote, CalendarDays, ChevronLeft, ChevronRight, Clock3, Pencil, Plus, ReceiptText, Search, Trash2, WalletCards, X } from "lucide-react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
@@ -430,7 +431,7 @@ export default function GastosPage() {
                 <div className="col-span-2 flex items-start justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   <AlertTriangle className="mt-0.5 shrink-0" size={17} />
                   <p className="flex-1">{cashRegisterError}</p>
-                  <a href="/local/caja" className="shrink-0 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 font-semibold transition hover:bg-red-100">Ir a Caja</a>
+                  <Link href="/local/caja" className="shrink-0 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 font-semibold transition hover:bg-red-100">Ir a Caja</Link>
                 </div>
               ) : null}
               <V2Field label="Fecha de pago o vencimiento"><V2Input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></V2Field>
@@ -456,7 +457,7 @@ export default function GastosPage() {
             <p className="p-5 text-sm leading-6 text-slate-600">{cashRegisterError}</p>
             <div className="flex justify-end gap-2 border-t border-slate-200 p-5">
               <V2Button variant="secondary" onClick={() => setCashRegisterError("")}>Volver</V2Button>
-              <a href="/local/caja" className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800">Ir a Caja</a>
+              <Link href="/local/caja" className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800">Ir a Caja</Link>
             </div>
           </div>
         </div>

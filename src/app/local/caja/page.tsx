@@ -24,7 +24,7 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
-import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
 const RESERVATIONS_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
 const DELIVERIES_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
@@ -319,7 +319,7 @@ export default function CajaPage() {
       });
     }
     previousMovements.push({
-      id: `movement-${Date.now()}`,
+      id: createV2OperationalId("cash-movement"),
       type: movementType,
       amount,
       reason: movementReason.trim(),
