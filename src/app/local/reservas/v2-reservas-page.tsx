@@ -34,6 +34,12 @@ import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
+  applyReservationStockMovements,
+  mergeReservationStockMovements,
+  resolveReservationStockMovements,
+  subtractReservationStockMovements,
+} from "@/lib/reservation-stock-core";
+import {
   v2MenuCategories,
   v2MenuItems,
   v2Reservations,
@@ -650,46 +656,6 @@ function readRecipesFromConfig() {
   }
 }
 
-function convertRecipeQuantityToStockUnit(quantity: number, fromUnit: string, toUnit: string) {
-  const from = normalizeTextForStock(fromUnit);
-  const to = normalizeTextForStock(toUnit);
-
-  if (from === to) return quantity;
-
-  if (from === "g" && to === "kg") return quantity / 1000;
-  if (from === "kg" && to === "g") return quantity * 1000;
-  if (from === "ml" && to === "l") return quantity / 1000;
-  if (from === "l" && to === "ml") return quantity * 1000;
-
-  return quantity;
-}
-
-function findStockProductByName(products: V2StockProductDraft[], search: string) {
-  const query = normalizeTextForStock(search);
-
-  return products.find((product) => {
-    const name = normalizeTextForStock(product.name);
-
-    return name === query || name.includes(query) || query.includes(name);
-  });
-}
-
-function addStockMovement(
-  movements: Map<string, V2ReservationStockMovement>,
-  stockProduct: V2StockProductDraft | undefined,
-  quantity: number
-) {
-  if (!stockProduct || quantity <= 0) return;
-
-  const current = movements.get(stockProduct.id);
-
-  movements.set(stockProduct.id, {
-    productId: stockProduct.id,
-    productName: stockProduct.name,
-    quantity: Number(((current?.quantity ?? 0) + quantity).toFixed(2)),
-  });
-}
-
 function resolveStockMovementsForMenuItem(
   item:
     | Pick<V2MenuOrderItem, "id" | "name">
@@ -697,83 +663,12 @@ function resolveStockMovementsForMenuItem(
     | string,
   quantity: number
 ) {
-  const stockProducts = readStockProductsFromStorage();
-  const recipes = readRecipesFromConfig();
-  const movements = new Map<string, V2ReservationStockMovement>();
-  const itemId =
-    typeof item === "string"
-      ? ""
-      : "menuItemId" in item
-        ? item.menuItemId
-        : item.id;
-  const itemName = typeof item === "string" ? item : item.name;
-  const normalizedItemName = normalizeTextForStock(itemName);
-  const recipe =
-    recipes.find((candidate) => candidate.menuItemId && candidate.menuItemId === itemId) ??
-    recipes.find((candidate) => normalizeTextForStock(candidate.name) === normalizedItemName);
-
-  if (recipe) {
-    recipe.ingredients.forEach((ingredient) => {
-      if (!ingredient.stockProductId) return;
-
-      const stockProduct = stockProducts.find(
-        (product) => product.id === ingredient.stockProductId
-      );
-
-      if (!stockProduct) return;
-
-      const movementQuantity = convertRecipeQuantityToStockUnit(
-        ingredient.quantity * quantity,
-        ingredient.unit,
-        stockProduct.unit
-      );
-
-      addStockMovement(movements, stockProduct, movementQuantity);
-    });
-
-    return Array.from(movements.values());
-  }
-
-  const stock = {
-    harina: findStockProductByName(stockProducts, "Harina 000"),
-    muzzarella: findStockProductByName(stockProducts, "Muzzarella"),
-    carne: findStockProductByName(stockProducts, "Carne picada"),
-    vino: findStockProductByName(stockProducts, "Vino Malbec"),
-    gaseosa: findStockProductByName(stockProducts, "Gaseosa cola 1.5L"),
-    cajasPizza: findStockProductByName(stockProducts, "Cajas de pizza grandes"),
-  };
-
-  if (
-    normalizedItemName.includes("pizza") ||
-    normalizedItemName.includes("muzzarella") ||
-    normalizedItemName.includes("fugazzeta")
-  ) {
-    addStockMovement(movements, stock.harina, quantity * 0.25);
-    addStockMovement(movements, stock.muzzarella, quantity * 0.35);
-    addStockMovement(movements, stock.cajasPizza, quantity);
-  }
-
-  if (normalizedItemName.includes("empanada")) {
-    addStockMovement(movements, stock.harina, quantity * 0.05);
-
-    if (normalizedItemName.includes("carne")) {
-      addStockMovement(movements, stock.carne, quantity * 0.08);
-    }
-
-    if (normalizedItemName.includes("jamon") || normalizedItemName.includes("queso")) {
-      addStockMovement(movements, stock.muzzarella, quantity * 0.04);
-    }
-  }
-
-  if (normalizedItemName.includes("gaseosa") || normalizedItemName.includes("cola")) {
-    addStockMovement(movements, stock.gaseosa, quantity);
-  }
-
-  if (normalizedItemName.includes("vino")) {
-    addStockMovement(movements, stock.vino, quantity);
-  }
-
-  return Array.from(movements.values());
+  return resolveReservationStockMovements(
+    item,
+    quantity,
+    readStockProductsFromStorage(),
+    readRecipesFromConfig()
+  );
 }
 
 function applyStockMovements(
@@ -786,22 +681,7 @@ function applyStockMovements(
   if (movements.length === 0) return;
 
   const stockProducts = readStockProductsFromStorage();
-  const multiplier = direction === "discount" ? 1 : -1;
-
-  const nextProducts = stockProducts.map((product) => {
-    const movement = movements.find((item) => item.productId === product.id);
-
-    if (!movement) return product;
-
-    return {
-      ...product,
-      consumedBySales: Math.max(
-        0,
-        Number((Number(product.consumedBySales) + movement.quantity * multiplier).toFixed(2))
-      ),
-      lastUpdated: "Hoy",
-    };
-  });
+  const nextProducts = applyReservationStockMovements(stockProducts, movements, direction);
 
   writeStockProductsToStorage(nextProducts);
 
@@ -814,42 +694,14 @@ function mergeStockMovements(
   baseMovements: V2ReservationStockMovement[],
   extraMovements: V2ReservationStockMovement[]
 ) {
-  const mergedMovements = new Map<string, V2ReservationStockMovement>();
-
-  [...baseMovements, ...extraMovements].forEach((movement) => {
-    const current = mergedMovements.get(movement.productId);
-
-    mergedMovements.set(movement.productId, {
-      ...movement,
-      quantity: Number(((current?.quantity ?? 0) + movement.quantity).toFixed(2)),
-    });
-  });
-
-  return Array.from(mergedMovements.values()).filter((movement) => movement.quantity > 0);
+  return mergeReservationStockMovements(baseMovements, extraMovements);
 }
 
 function subtractStockMovements(
   baseMovements: V2ReservationStockMovement[],
   returnedMovements: V2ReservationStockMovement[]
 ) {
-  const remainingMovements = new Map<string, V2ReservationStockMovement>();
-
-  baseMovements.forEach((movement) => {
-    remainingMovements.set(movement.productId, movement);
-  });
-
-  returnedMovements.forEach((movement) => {
-    const current = remainingMovements.get(movement.productId);
-
-    if (!current) return;
-
-    remainingMovements.set(movement.productId, {
-      ...current,
-      quantity: Number((current.quantity - movement.quantity).toFixed(2)),
-    });
-  });
-
-  return Array.from(remainingMovements.values()).filter((movement) => movement.quantity > 0);
+  return subtractReservationStockMovements(baseMovements, returnedMovements);
 }
 
 function formatStockMovementsSummary(movements: V2ReservationStockMovement[]) {
