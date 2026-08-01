@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "test:availability": "node scripts/availability-regression-tests.mjs",
-    "test:stock": "node scripts/stock-regression-tests.mjs"
+    "test:stock": "node scripts/stock-regression-tests.mjs",
+    "test:tracking": "node scripts/tracking-regression-tests.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

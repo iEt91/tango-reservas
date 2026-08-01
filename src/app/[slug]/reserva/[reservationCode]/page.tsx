@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 
+import { isReservationTrackingExpired } from "@/lib/public-tracking-core";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
 type PublicReservationStatus = "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
@@ -36,7 +37,6 @@ type ReservaTrackingPageProps = {
 
 const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
 const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
-const RESERVATION_TRACKING_GRACE_MINUTES = 10;
 
 const STATUS_LABELS: Record<PublicReservationStatus, string> = {
   pending: "Pendiente",
@@ -93,56 +93,6 @@ function formatTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function isTimestampExpired(value?: string) {
-  if (!value) return false;
-
-  const time = new Date(value).getTime();
-
-  if (Number.isNaN(time)) return false;
-
-  return Date.now() - time > RESERVATION_TRACKING_GRACE_MINUTES * 60 * 1000;
-}
-
-function getReservationTrackingExpiration(reservation: PublicReservation) {
-  const [year, month, day] = reservation.date.split("-").map(Number);
-  const [hour, minute] = reservation.time.split(":").map(Number);
-  const reservationTime = new Date(
-    year,
-    (month ?? 1) - 1,
-    day ?? 1,
-    hour ?? 0,
-    minute ?? 0,
-    0,
-    0,
-  );
-
-  if (Number.isNaN(reservationTime.getTime())) return null;
-
-  return new Date(
-    reservationTime.getTime() + RESERVATION_TRACKING_GRACE_MINUTES * 60 * 1000,
-  );
-}
-
-function isReservationTrackingExpired(reservation: PublicReservation) {
-  if (reservation.status === "cancelled") {
-    return reservation.cancelledAt
-      ? isTimestampExpired(reservation.cancelledAt)
-      : Date.now() > (getReservationTrackingExpiration(reservation)?.getTime() ?? Infinity);
-  }
-
-  if (reservation.status === "no_show") {
-    return reservation.noShowAt
-      ? isTimestampExpired(reservation.noShowAt)
-      : Date.now() > (getReservationTrackingExpiration(reservation)?.getTime() ?? Infinity);
-  }
-
-  const expiration = getReservationTrackingExpiration(reservation);
-
-  if (!expiration) return false;
-
-  return Date.now() > expiration.getTime();
 }
 
 function readReservations() {

@@ -2,6 +2,10 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 
+import {
+  CLOSED_DELIVERY_TRACKING_GRACE_MINUTES,
+  isClosedDeliveryTrackingExpired,
+} from "@/lib/public-tracking-core";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
 type V2DeliveryStatus = "confirmed" | "completed" | "cancelled";
@@ -49,7 +53,6 @@ type TrackingPageProps = {
 
 const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
 const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
-const CLOSED_TRACKING_VISIBILITY_MINUTES = 1;
 
 const STEP_LABELS = {
   entered: "Pedido recibido",
@@ -98,25 +101,6 @@ function formatTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function isClosedTrackingExpired(delivery: V2Delivery) {
-  if (delivery.status !== "completed" && delivery.status !== "cancelled") {
-    return false;
-  }
-
-  const closedAt =
-    delivery.status === "completed" ? delivery.deliveredAt : delivery.cancelledAt;
-
-  if (!closedAt) return false;
-
-  const closedTime = new Date(closedAt).getTime();
-
-  if (Number.isNaN(closedTime)) return false;
-
-  const expirationMs = CLOSED_TRACKING_VISIBILITY_MINUTES * 60 * 1000;
-
-  return Date.now() - closedTime > expirationMs;
 }
 
 function readDeliveries() {
@@ -180,7 +164,7 @@ export default function PedidoTrackingPage({ params }: TrackingPageProps) {
     [deliveries, trackingCode],
   );
 
-  const isTrackingExpired = delivery ? isClosedTrackingExpired(delivery) : false;
+  const isTrackingExpired = delivery ? isClosedDeliveryTrackingExpired(delivery) : false;
   void nowTick;
 
   const steps = useMemo(() => {
@@ -292,7 +276,7 @@ export default function PedidoTrackingPage({ params }: TrackingPageProps) {
                 <div className="mt-6 rounded-3xl border border-[#d6a96a]/20 bg-black/20 p-4 text-sm leading-6 text-[#cbb8a3]">
                   El seguimiento de este pedido ya no está activo porque el pedido
                   fue {delivery.status === "completed" ? "entregado" : "cancelado"}.
-                  Este link dejará de mostrar los datos del pedido después de {CLOSED_TRACKING_VISIBILITY_MINUTES} minutos.
+                  Este link dejará de mostrar los datos del pedido después de {CLOSED_DELIVERY_TRACKING_GRACE_MINUTES} minutos.
                 </div>
               ) : null}
 
