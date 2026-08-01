@@ -2543,6 +2543,13 @@ export function V2ReservasPage() {
     window.dispatchEvent(new Event(RESERVATIONS_EVENT));
 
     if (editingMode === "create") {
+      // La reserva recién creada debe quedar visible aunque hubiera una
+      // búsqueda, un estado o un rango activos que no coincidan con ella.
+      setSearchValue("");
+      setStatusFilter("all");
+      setDateFilterMode("single");
+      setSelectedDate(sanitizedReservation.date);
+      setCalendarMonth(sanitizedReservation.date);
       setSelectedReservation(sanitizedReservation);
     } else {
       setSelectedReservation(sanitizedReservation);
