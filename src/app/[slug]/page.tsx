@@ -1080,6 +1080,7 @@ function SectionTitle({ eyebrow, title }: { eyebrow?: string; title: string }) {
 
 export default function PublicTemplatePage() {
   const [activeTemplateId, setActiveTemplateId] = useState(v2WebTemplates[0].id);
+  const [isTemplateHydrated, setIsTemplateHydrated] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(menuCategories[0].title);
   const activeTemplate = useMemo(
     () => getV2WebTemplateById(activeTemplateId),
@@ -1131,6 +1132,7 @@ export default function PublicTemplatePage() {
 
       setActiveTemplateId(template.id);
       setContent(mergeV2WebTemplateContent(template, storedContent));
+      setIsTemplateHydrated(true);
     }
 
     loadPublicTemplate();
@@ -2428,11 +2430,13 @@ export default function PublicTemplatePage() {
 
       {content.visibleSections.hero ? (
         <section id="inicio" className="relative min-h-[760px] overflow-hidden bg-[#110e0b]">
-          <img
-            src={content.imageValues.hero ?? activeTemplate.previewImage}
-            alt={publicWebConfig.heroTitle || content.textValues.heroTitle}
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
-          />
+          {isTemplateHydrated ? (
+            <img
+              src={content.imageValues.hero ?? activeTemplate.previewImage}
+              alt={publicWebConfig.heroTitle || content.textValues.heroTitle}
+              className="absolute inset-0 h-full w-full object-cover opacity-70"
+            />
+          ) : null}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_34%,rgba(0,0,0,0.12),transparent_24%),linear-gradient(90deg,rgba(13,10,8,0.98),rgba(13,10,8,0.82)_35%,rgba(13,10,8,0.22)_72%,rgba(13,10,8,0.72))]" />
           <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#15110d] to-transparent" />
 
