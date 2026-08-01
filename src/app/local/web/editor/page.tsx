@@ -18,6 +18,10 @@ import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import {
+  compressBrowserImage,
+  writeLocalStorageSafely,
+} from "@/lib/browser-image-storage";
+import {
   V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY,
   V2_WEB_TEMPLATE_SECTION_LABELS,
   V2_WEB_TEMPLATE_STORAGE_KEY,
@@ -56,17 +60,22 @@ function readStoredTemplateContent(): Record<string, V2WebTemplateContent> {
 }
 
 function writeStoredTemplateContent(contentByTemplate: Record<string, V2WebTemplateContent>) {
-  window.localStorage.setItem(
+  const result = writeLocalStorageSafely(
     V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY,
     JSON.stringify(contentByTemplate)
   );
+
+  if (!result.ok) return false;
+
   window.dispatchEvent(new CustomEvent("tango-v2-web-template-content-updated"));
+  return true;
 }
 
 export default function V2WebEditorPage() {
   const [activeTemplateId, setActiveTemplateId] = useState(v2WebTemplates[0]?.id ?? "");
   const [activeTab, setActiveTab] = useState<EditorTab>("texts");
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
 
   const activeTemplate = useMemo(
     () => getV2WebTemplateById(activeTemplateId),
@@ -89,6 +98,7 @@ export default function V2WebEditorPage() {
 
   function markDirty() {
     setSaveStatus("idle");
+    setSaveError("");
   }
 
   function updateTextSlot(slotId: string, value: string) {
@@ -127,21 +137,24 @@ export default function V2WebEditorPage() {
     markDirty();
   }
 
-  function handleImageUpload(slotId: string, event: ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(slotId: string, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        updateImageSlot(slotId, reader.result);
-      }
-    };
-
-    reader.readAsDataURL(file);
     event.target.value = "";
+
+    try {
+      const imageDataUrl = await compressBrowserImage(file, {
+        maxWidth: 1400,
+        maxHeight: 900,
+        quality: 0.74,
+      });
+      updateImageSlot(slotId, imageDataUrl);
+    } catch (error) {
+      console.error("[web-editor] No se pudo procesar la imagen.", error);
+      setSaveStatus("error");
+      setSaveError("No se pudo procesar la imagen seleccionada");
+    }
   }
 
   function restoreImageSlot(slotId: string) {
@@ -164,10 +177,16 @@ export default function V2WebEditorPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    writeStoredTemplateContent({
+    const wasSaved = writeStoredTemplateContent({
       ...storedContent,
       [activeTemplate.id]: nextContent,
     });
+
+    if (!wasSaved) {
+      setSaveStatus("error");
+      setSaveError("No se pudo guardar: almacenamiento lleno");
+      return;
+    }
 
     setContent(nextContent);
     setSaveStatus("saved");
@@ -194,6 +213,10 @@ export default function V2WebEditorPage() {
               <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-700">
                 <Check size={17} />
                 Cambios guardados
+              </span>
+            ) : saveStatus === "error" ? (
+              <span className="inline-flex h-10 items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-700">
+                {saveError || "No se pudo guardar el contenido"}
               </span>
             ) : null}
             <Link
@@ -516,7 +539,14 @@ export default function V2WebEditorPage() {
                 Plantilla: <strong>{activeTemplate.id}</strong>
               </p>
               <p>
-                Estado: <strong>{saveStatus === "saved" ? "guardado" : "sin guardar"}</strong>
+                Estado:{" "}
+                <strong>
+                  {saveStatus === "saved"
+                    ? "guardado"
+                    : saveStatus === "error"
+                      ? "error de almacenamiento"
+                      : "sin guardar"}
+                </strong>
               </p>
             </div>
           </V2Card>

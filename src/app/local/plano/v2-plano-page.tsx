@@ -26,6 +26,10 @@ import { V2Card } from "@/components/v2/v2-card";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  compressBrowserImage,
+  writeLocalStorageSafely,
+} from "@/lib/browser-image-storage";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import { v2Reservations } from "@/lib/v2/v2-mock-data";
 
@@ -660,6 +664,7 @@ export function V2PlanoPage() {
   const [backgroundSettings, setBackgroundSettings] =
     useState<V2BackgroundSettings>(DEFAULT_BACKGROUND_SETTINGS);
   const [isBackgroundDialogOpen, setIsBackgroundDialogOpen] = useState(false);
+  const [backgroundStorageError, setBackgroundStorageError] = useState("");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
   const [isMergeMode, setIsMergeMode] = useState(false);
@@ -1303,26 +1308,37 @@ export function V2PlanoPage() {
     backgroundInputRef.current?.click();
   }
 
-  function handleBackgroundImageChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleBackgroundImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
+    event.target.value = "";
+    setBackgroundStorageError("");
 
-    const reader = new FileReader();
+    try {
+      const imageDataUrl = await compressBrowserImage(file, {
+        maxWidth: 1600,
+        maxHeight: 1100,
+        quality: 0.75,
+      });
+      const result = writeLocalStorageSafely(FLOOR_BACKGROUND_STORAGE_KEY, imageDataUrl);
 
-    reader.onload = () => {
-      const imageDataUrl = String(reader.result ?? "");
-
-      if (!imageDataUrl) return;
+      if (!result.ok) {
+        setBackgroundStorageError(
+          "No se pudo guardar la imagen porque el almacenamiento del navegador está lleno."
+        );
+        return;
+      }
 
       setBackgroundImageUrl(imageDataUrl);
-      window.localStorage.setItem(FLOOR_BACKGROUND_STORAGE_KEY, imageDataUrl);
       persistBackgroundSettings(backgroundSettings);
       setHasUnsavedChanges(true);
-    };
-
-    reader.readAsDataURL(file);
-    event.target.value = "";
+    } catch (error) {
+      console.error("[plano] No se pudo procesar la imagen de fondo.", error);
+      setBackgroundStorageError(
+        "No se pudo procesar la imagen. Probá con un archivo JPG, PNG o WebP."
+      );
+    }
   }
 
   function updateBackgroundSettings(nextSettings: V2BackgroundSettings) {
@@ -1335,6 +1351,7 @@ export function V2PlanoPage() {
 
   function removeBackgroundImage() {
     setBackgroundImageUrl("");
+    setBackgroundStorageError("");
     window.localStorage.removeItem(FLOOR_BACKGROUND_STORAGE_KEY);
     setHasUnsavedChanges(true);
   }
@@ -1501,7 +1518,18 @@ export function V2PlanoPage() {
     window.dispatchEvent(new Event(FLOOR_TABLES_EVENT));
 
     if (backgroundImageUrl) {
-      window.localStorage.setItem(FLOOR_BACKGROUND_STORAGE_KEY, backgroundImageUrl);
+      const result = writeLocalStorageSafely(
+        FLOOR_BACKGROUND_STORAGE_KEY,
+        backgroundImageUrl
+      );
+
+      if (!result.ok) {
+        setBackgroundStorageError(
+          "No se pudo guardar la imagen porque el almacenamiento del navegador está lleno."
+        );
+        setIsBackgroundDialogOpen(true);
+        return;
+      }
     } else {
       window.localStorage.removeItem(FLOOR_BACKGROUND_STORAGE_KEY);
     }
@@ -2482,6 +2510,12 @@ export function V2PlanoPage() {
                     Eliminar imagen
                   </V2Button>
                 </div>
+
+                {backgroundStorageError ? (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                    {backgroundStorageError}
+                  </div>
+                ) : null}
 
                 <V2Field label="Ajuste de imagen">
                   <V2Select
