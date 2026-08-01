@@ -597,8 +597,7 @@ function appendStockMovementHistory(
             movement.referenceId === log.referenceId &&
             movement.type === log.type &&
             movement.productId === log.productId &&
-            movement.label === log.label &&
-            (movement.detail ?? "") === (log.detail ?? "")
+            movement.label === log.label
         )
       : -1;
 
@@ -613,6 +612,7 @@ function appendStockMovementHistory(
       productName: log.productName,
       unit: log.unit,
       client: log.client,
+      detail: log.detail,
       quantity: Number((nextHistory[matchingIndex].quantity + log.quantity).toFixed(2)),
     };
   });
@@ -2523,17 +2523,23 @@ export function V2ReservasPage() {
       reservationToSave.status
     );
 
+    const nextReservations =
+      editingMode === "create"
+        ? [sanitizedReservation, ...reservations]
+        : reservations.map((reservation) =>
+            reservation.id === sanitizedReservation.id
+              ? sanitizedReservation
+              : reservation
+          );
+
+    // Persistimos antes de cerrar el modal para que un evento de foco no restaure
+    // accidentalmente la version anterior de localStorage.
+    writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations);
+    setReservations(nextReservations);
+
     if (editingMode === "create") {
-      setReservations((current) => [sanitizedReservation, ...current]);
       setSelectedReservation(sanitizedReservation);
     } else {
-      setReservations((current) =>
-        current.map((reservation) =>
-          reservation.id === sanitizedReservation.id
-            ? sanitizedReservation
-            : reservation
-        )
-      );
       setSelectedReservation(sanitizedReservation);
     }
 
