@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -214,6 +214,7 @@ type V2StockMovementLog = {
   detail?: string;
   referenceId?: string;
   client?: string;
+  operationId?: string;
 };
 
 type V2RecipeIngredient = {
@@ -547,38 +548,15 @@ function writeStockProductsToStorage(products: V2StockProductDraft[]) {
 }
 
 function readStockMovementHistory() {
-  const history = readFromStorage<V2StockMovementLog[]>(STOCK_MOVEMENTS_STORAGE_KEY, []);
-  const consolidated = new Map<string, V2StockMovementLog>();
-
-  history.forEach((movement) => {
-    const key = [
-      movement.referenceId ?? movement.id,
-      movement.type,
-      movement.productId,
-      movement.label,
-      movement.detail ?? "",
-    ].join("::");
-    const current = consolidated.get(key);
-
-    if (!current) {
-      consolidated.set(key, movement);
-      return;
-    }
-
-    consolidated.set(key, {
-      ...current,
-      quantity: Number((current.quantity + movement.quantity).toFixed(2)),
-    });
-  });
-
-  return Array.from(consolidated.values());
+  return readFromStorage<V2StockMovementLog[]>(STOCK_MOVEMENTS_STORAGE_KEY, []);
 }
 
 function appendStockMovementHistory(
   movements: V2ReservationStockMovement[],
   direction: "discount" | "return",
   reservation: V2ReservationDraft,
-  detail?: string
+  detail?: string,
+  operationId?: string
 ) {
   if (typeof window === "undefined" || movements.length === 0) return;
 
@@ -599,20 +577,24 @@ function appendStockMovementHistory(
       detail: detail ?? formatReservationOrderItems(reservation),
       referenceId: reservation.id,
       client: reservation.client,
+      operationId,
     };
   });
 
   const nextHistory = readStockMovementHistory();
 
   logs.forEach((log) => {
-    const matchingIndex = nextHistory.findIndex(
-      (movement) =>
-        movement.referenceId === log.referenceId &&
-        movement.type === log.type &&
-        movement.productId === log.productId &&
-        movement.label === log.label &&
-        (movement.detail ?? "") === (log.detail ?? "")
-    );
+    const matchingIndex = operationId
+      ? nextHistory.findIndex(
+          (movement) =>
+            movement.operationId === operationId &&
+            movement.referenceId === log.referenceId &&
+            movement.type === log.type &&
+            movement.productId === log.productId &&
+            movement.label === log.label &&
+            (movement.detail ?? "") === (log.detail ?? "")
+        )
+      : -1;
 
     if (matchingIndex === -1) {
       nextHistory.unshift(log);
@@ -798,7 +780,8 @@ function applyStockMovements(
   movements: V2ReservationStockMovement[],
   direction: "discount" | "return",
   reservation?: V2ReservationDraft,
-  detail?: string
+  detail?: string,
+  operationId?: string
 ) {
   if (movements.length === 0) return;
 
@@ -823,7 +806,7 @@ function applyStockMovements(
   writeStockProductsToStorage(nextProducts);
 
   if (reservation) {
-    appendStockMovementHistory(movements, direction, reservation, detail);
+    appendStockMovementHistory(movements, direction, reservation, detail, operationId);
   }
 }
 
@@ -1751,6 +1734,7 @@ export function V2ReservasPage() {
     useState<V2ReservationDraft | null>(null);
   const [orderReservationSnapshot, setOrderReservation] =
     useState<V2ReservationDraft | null>(null);
+  const stockMovementOperationId = useRef<string | null>(null);
   const selectedReservation = selectedReservationSnapshot
     ? reservations.find((reservation) => reservation.id === selectedReservationSnapshot.id) ??
       selectedReservationSnapshot
@@ -2826,10 +2810,12 @@ export function V2ReservasPage() {
   function openOrderPopup(reservation: V2ReservationDraft) {
     selectReservationWithTone(reservation);
     setSelectedMenuCategory("all");
+    stockMovementOperationId.current = createV2OperationalId("stock-operation-res");
     setOrderReservation(reservation);
   }
 
   function closeOrderPopup() {
+    stockMovementOperationId.current = null;
     setOrderReservation(null);
   }
 
@@ -2885,14 +2871,26 @@ export function V2ReservasPage() {
     if (quantityDiff > 0) {
       const stockMovements = resolveStockMovementsForMenuItem(item, quantityDiff);
 
-      applyStockMovements(stockMovements, "discount", orderReservation, item.name);
+      applyStockMovements(
+        stockMovements,
+        "discount",
+        orderReservation,
+        item.name,
+        stockMovementOperationId.current ?? undefined
+      );
       nextStockMovements = mergeStockMovements(nextStockMovements, stockMovements);
     }
 
     if (quantityDiff < 0) {
       const stockMovements = resolveStockMovementsForMenuItem(item, Math.abs(quantityDiff));
 
-      applyStockMovements(stockMovements, "return", orderReservation, item.name);
+      applyStockMovements(
+        stockMovements,
+        "return",
+        orderReservation,
+        item.name,
+        stockMovementOperationId.current ?? undefined
+      );
       nextStockMovements = subtractStockMovements(nextStockMovements, stockMovements);
     }
 
@@ -2958,7 +2956,8 @@ export function V2ReservasPage() {
         stockMovements,
         "return",
         orderReservation,
-        "Consumo de mesa vaciado"
+        "Consumo de mesa vaciado",
+        stockMovementOperationId.current ?? undefined
       );
     }
 

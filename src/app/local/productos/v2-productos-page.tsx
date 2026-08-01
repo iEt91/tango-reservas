@@ -63,6 +63,7 @@ type V2StockMovementLog = {
   detail?: string;
   referenceId?: string;
   client?: string;
+  operationId?: string;
 };
 
 function readStockProductsFromStorage() {
@@ -118,31 +119,7 @@ function readStockMovementHistory() {
     usedIds.add(nextMovement.id);
     return nextMovement;
   });
-  const consolidated = new Map<string, V2StockMovementLog>();
-
-  normalizedHistory.forEach((movement) => {
-    const key = [
-      movement.referenceId ?? movement.id,
-      movement.type,
-      movement.productId,
-      movement.label,
-      movement.detail ?? "",
-    ].join("::");
-    const current = consolidated.get(key);
-
-    if (!current) {
-      consolidated.set(key, movement);
-      return;
-    }
-
-    repaired = true;
-    consolidated.set(key, {
-      ...current,
-      quantity: Number((current.quantity + movement.quantity).toFixed(2)),
-    });
-  });
-
-  const nextHistory = Array.from(consolidated.values());
+  const nextHistory = normalizedHistory;
 
   if (repaired && typeof window !== "undefined") {
     window.localStorage.setItem(STOCK_MOVEMENTS_STORAGE_KEY, JSON.stringify(nextHistory));
