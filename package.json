@@ -30,5 +30,19 @@
     "eslint-config-next": "^16.2.12",
     "postcss": "^8.5.18",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "@eslint/eslintrc": {
+      "js-yaml": "4.3.0"
+    },
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.17"
+    },
+    "minimatch@10.2.5": {
+      "brace-expansion": "5.0.9"
+    },
+    "next": {
+      "sharp": "0.35.3"
+    }
   }
 }
