@@ -22,3 +22,7 @@ tsconfig.tsbuildinfo
 /npm
 /npx
 /tango-reservas@5.6.0-configuracion-lab
+
+# Artefactos temporales de los paquetes de instalacion entregados por chat
+/APLICAR_*.bat
+/archivos/
