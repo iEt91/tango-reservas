@@ -16,6 +16,8 @@ if errorlevel 8 (
 )
 
 rmdir /s /q "archivos_actualizacion"
+if exist "APLICAR_CORRECCION_RESERVAS.bat" del /f /q "APLICAR_CORRECCION_RESERVAS.bat"
+
 echo Correccion aplicada correctamente.
 start "" /b cmd /c "timeout /t 1 /nobreak ^>nul ^& del /f /q ""%~f0"""
 exit /b 0

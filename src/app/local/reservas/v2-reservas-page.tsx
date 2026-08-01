@@ -326,6 +326,7 @@ type V2MenuOrderItem = {
 };
 
 const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
+const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
 const LOCAL_CONFIG_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.localConfig;
 const LOCAL_CONFIG_EVENT = V2_OPERATIONAL_EVENTS.localConfig;
 const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
@@ -1587,6 +1588,7 @@ export function V2ReservasPage() {
   const [orderReservationSnapshot, setOrderReservation] =
     useState<V2ReservationDraft | null>(null);
   const stockMovementOperationId = useRef<string | null>(null);
+  const stockMovementDirection = useRef<"discount" | "return" | null>(null);
   const selectedReservation = selectedReservationSnapshot
     ? reservations.find((reservation) => reservation.id === selectedReservationSnapshot.id) ??
       selectedReservationSnapshot
@@ -1659,12 +1661,14 @@ export function V2ReservasPage() {
 
     window.addEventListener("focus", syncAllFromStorage);
     window.addEventListener("storage", handleStorage);
+    window.addEventListener(RESERVATIONS_EVENT, syncReservationsFromStorage);
     window.addEventListener(FLOOR_TABLES_EVENT, syncFloorTablesFromStorage);
     window.addEventListener(LOCAL_CONFIG_EVENT, syncLocalConfigFromStorage);
 
     return () => {
       window.removeEventListener("focus", syncAllFromStorage);
       window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(RESERVATIONS_EVENT, syncReservationsFromStorage);
       window.removeEventListener(FLOOR_TABLES_EVENT, syncFloorTablesFromStorage);
       window.removeEventListener(LOCAL_CONFIG_EVENT, syncLocalConfigFromStorage);
     };
@@ -2536,6 +2540,7 @@ export function V2ReservasPage() {
     // accidentalmente la version anterior de localStorage.
     writeToStorage(RESERVATIONS_STORAGE_KEY, nextReservations);
     setReservations(nextReservations);
+    window.dispatchEvent(new Event(RESERVATIONS_EVENT));
 
     if (editingMode === "create") {
       setSelectedReservation(sanitizedReservation);
@@ -2668,13 +2673,30 @@ export function V2ReservasPage() {
   function openOrderPopup(reservation: V2ReservationDraft) {
     selectReservationWithTone(reservation);
     setSelectedMenuCategory("all");
-    stockMovementOperationId.current = createV2OperationalId("stock-operation-res");
+    resetStockMovementOperation();
     setOrderReservation(reservation);
   }
 
   function closeOrderPopup() {
-    stockMovementOperationId.current = null;
+    resetStockMovementOperation();
     setOrderReservation(null);
+  }
+
+  function resetStockMovementOperation() {
+    stockMovementOperationId.current = null;
+    stockMovementDirection.current = null;
+  }
+
+  function getStockMovementOperationId(direction: "discount" | "return") {
+    if (
+      !stockMovementOperationId.current ||
+      stockMovementDirection.current !== direction
+    ) {
+      stockMovementOperationId.current = createV2OperationalId("stock-operation-res");
+      stockMovementDirection.current = direction;
+    }
+
+    return stockMovementOperationId.current;
   }
 
   function updateOrderReservation(nextReservation: V2ReservationDraft) {
@@ -2734,7 +2756,7 @@ export function V2ReservasPage() {
         "discount",
         orderReservation,
         item.name,
-        stockMovementOperationId.current ?? undefined
+        getStockMovementOperationId("discount")
       );
       nextStockMovements = mergeStockMovements(nextStockMovements, stockMovements);
     }
@@ -2747,7 +2769,7 @@ export function V2ReservasPage() {
         "return",
         orderReservation,
         item.name,
-        stockMovementOperationId.current ?? undefined
+        getStockMovementOperationId("return")
       );
       nextStockMovements = subtractStockMovements(nextStockMovements, stockMovements);
     }
@@ -2815,9 +2837,13 @@ export function V2ReservasPage() {
         "return",
         orderReservation,
         "Consumo de mesa vaciado",
-        stockMovementOperationId.current ?? undefined
+        getStockMovementOperationId("return")
       );
     }
+
+    // Vaciar cierra este bloque operativo: una carga posterior debe generar
+    // una tarjeta nueva y no acumularse con descuentos anteriores.
+    resetStockMovementOperation();
 
     updateOrderReservation({
       ...orderReservation,
