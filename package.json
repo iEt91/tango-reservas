@@ -13,7 +13,7 @@
     "test:storage": "node scripts/storage-contract-regression-tests.mjs",
     "test:backup": "node scripts/local-backup-regression-tests.mjs",
     "test:notifications": "node scripts/notification-settings-regression-tests.mjs",
-    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth && npm run test:security-foundation && npm run test:dependency-security && npm run test:staging-readiness",
+    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth && npm run test:security-foundation && npm run test:dependency-security && npm run test:staging-readiness && npm run test:remote-schema-history",
     "qa:prepare": "node scripts/prepare-qa.mjs && next typegen",
     "qa": "npm run qa:prepare && npm run security:scan && npm run security:env && eslint . && tsc --noEmit && npm run test:regression && next build",
     "test:architecture": "node scripts/architecture-regression-tests.mjs",
@@ -26,7 +26,8 @@
     "test:dependency-security": "node scripts/dependency-security-regression-tests.mjs",
     "staging:verify-migrations": "node scripts/migration-integrity-check.mjs",
     "staging:preflight": "node scripts/supabase-staging-preflight.mjs",
-    "test:staging-readiness": "node scripts/staging-readiness-regression-tests.mjs"
+    "test:staging-readiness": "node scripts/staging-readiness-regression-tests.mjs",
+    "test:remote-schema-history": "node scripts/remote-schema-history-regression-tests.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",

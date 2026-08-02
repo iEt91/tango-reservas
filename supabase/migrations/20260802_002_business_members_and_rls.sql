@@ -9,8 +9,10 @@ grant usage on schema private to authenticated;
 
 create table if not exists public.business_members (
   id uuid primary key default gen_random_uuid(),
-  business_id uuid not null references public.businesses(id) on delete cascade,
-  user_id uuid references auth.users(id) on delete cascade,
+  business_id uuid not null
+    references public.businesses(id) on delete cascade,
+  user_id uuid
+    references auth.users(id) on delete cascade,
   invited_email text,
   role text not null default 'staff'
     check (role in ('owner', 'admin', 'staff')),
@@ -18,7 +20,8 @@ create table if not exists public.business_members (
     check (status in ('active', 'invited', 'disabled')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint business_members_business_user_key unique (business_id, user_id),
+  constraint business_members_business_user_key
+    unique (business_id, user_id),
   constraint business_members_identity_check check (
     (
       status = 'invited'
@@ -31,18 +34,10 @@ create table if not exists public.business_members (
   )
 );
 
-comment on table public.business_members is
-  'Membresías y roles que autorizan a un usuario dentro de un negocio de Tango.';
-
-comment on column public.business_members.user_id is
-  'Usuario autenticado de Supabase. Puede ser null únicamente durante una invitación.';
-
-comment on column public.business_members.role is
-  'Rol interno del negocio: owner, admin o staff.';
-
 create unique index if not exists business_members_pending_email_key
   on public.business_members (business_id, lower(invited_email))
-  where status = 'invited' and invited_email is not null;
+  where status = 'invited'
+    and invited_email is not null;
 
 create index if not exists business_members_user_status_idx
   on public.business_members (user_id, status);
@@ -90,41 +85,6 @@ where profiles.business_id is not null
   and profiles.auth_user_id is not null
 on conflict (business_id, user_id) do nothing;
 
-create or replace function private.current_business_role(
-  target_business_id uuid
-)
-returns text
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select member.role
-  from public.business_members as member
-  where member.business_id = target_business_id
-    and member.user_id = (select auth.uid())
-    and member.status = 'active'
-  limit 1;
-$$;
-
-create or replace function private.is_business_member(
-  target_business_id uuid
-)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.business_members as member
-    where member.business_id = target_business_id
-      and member.user_id = (select auth.uid())
-      and member.status = 'active'
-  );
-$$;
-
 create or replace function private.has_business_role(
   target_business_id uuid,
   allowed_roles text[]
@@ -145,21 +105,12 @@ as $$
   );
 $$;
 
-revoke all on function private.tango_set_updated_at() from public;
-revoke all on function private.tango_set_updated_at() from anon;
-revoke all on function private.tango_set_updated_at() from authenticated;
+revoke all on function private.tango_set_updated_at()
+  from public, anon, authenticated;
 
-revoke all on function private.current_business_role(uuid) from public;
-revoke all on function private.current_business_role(uuid) from anon;
-revoke all on function private.current_business_role(uuid) from authenticated;
+revoke all on function private.has_business_role(uuid, text[])
+  from public, anon, authenticated;
 
-revoke all on function private.is_business_member(uuid) from public;
-revoke all on function private.is_business_member(uuid) from anon;
-revoke all on function private.is_business_member(uuid) from authenticated;
-
-revoke all on function private.has_business_role(uuid, text[]) from public;
-revoke all on function private.has_business_role(uuid, text[]) from anon;
-revoke all on function private.has_business_role(uuid, text[]) from authenticated;
 grant execute on function private.has_business_role(uuid, text[])
   to authenticated;
 
@@ -190,7 +141,6 @@ revoke all on table public.business_members from anon;
 revoke all on table public.business_members from authenticated;
 grant select on table public.business_members to authenticated;
 
--- Limpieza defensiva si una variante anterior se aplicó manualmente.
 drop function if exists public.has_business_role(uuid, text[]);
 drop function if exists public.is_business_member(uuid);
 drop function if exists public.current_business_role(uuid);
