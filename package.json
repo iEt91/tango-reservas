@@ -10,7 +10,8 @@
     "test:availability": "node scripts/availability-regression-tests.mjs",
     "test:stock": "node scripts/stock-regression-tests.mjs",
     "test:tracking": "node scripts/tracking-regression-tests.mjs",
-    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking",
+    "test:storage": "node scripts/storage-contract-regression-tests.mjs",
+    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage",
     "qa": "tsc --noEmit && npm run test:regression && next build"
   },
   "dependencies": {
