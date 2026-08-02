@@ -572,8 +572,6 @@ ${tableRows(report.ingredients.map((item) => [item.name, item.quantity, item.uni
   }
 
   function printReport() {
-    const printWindow = window.open("", "_blank", "width=1050,height=800");
-    if (!printWindow) return;
     const products = report.products.length
       ? report.products
           .map(
@@ -582,7 +580,7 @@ ${tableRows(report.ingredients.map((item) => [item.name, item.quantity, item.uni
           )
           .join("")
       : '<tr><td colspan="7">No hay ventas cerradas en este período.</td></tr>';
-    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8">
+    const printDocument = `<!doctype html><html><head><meta charset="utf-8">
 <title>Reporte Tango</title><style>
 @page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#0f172a;margin:0}
 h1{margin:0;font-size:26px}.subtitle{color:#64748b;margin:6px 0 24px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -617,10 +615,63 @@ th{background:#f1f5f9}th:nth-child(n+3),td:nth-child(n+3){text-align:right}.note
 <h2>Insumos consumidos</h2><table><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th><th>Costo</th></tr>
 ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${item.quantity.toLocaleString("es-AR", { maximumFractionDigits: 3 })}</td><td>${escapeHtml(item.unit)}</td><td>${money(item.cost)}</td></tr>`).join("")}</table>
 <p class="note">El resultado neto estimado descuenta materia prima y gastos marcados como pagados. Las compras de stock no se duplican.${report.uncostedItems > 0 ? ` Hay ${report.uncostedItems} unidades sin costo configurado.` : ""}</p>
-</body></html>`);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+</body></html>`;
+
+    const printUrl = URL.createObjectURL(
+      new Blob([printDocument], {
+        type: "text/html;charset=utf-8",
+      }),
+    );
+    const printFrame = document.createElement("iframe");
+    let cleanedUp = false;
+
+    function cleanupPrintFrame() {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      URL.revokeObjectURL(printUrl);
+      printFrame.remove();
+    }
+
+    printFrame.setAttribute(
+      "sandbox",
+      "allow-modals allow-same-origin",
+    );
+    printFrame.setAttribute(
+      "title",
+      "Reporte Tango para impresión",
+    );
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "1px";
+    printFrame.style.height = "1px";
+    printFrame.style.border = "0";
+    printFrame.style.opacity = "0";
+    printFrame.src = printUrl;
+
+    printFrame.addEventListener(
+      "load",
+      () => {
+        const printTarget = printFrame.contentWindow;
+
+        if (!printTarget) {
+          cleanupPrintFrame();
+          return;
+        }
+
+        printTarget.addEventListener(
+          "afterprint",
+          cleanupPrintFrame,
+          { once: true },
+        );
+        printTarget.focus();
+        printTarget.print();
+        window.setTimeout(cleanupPrintFrame, 60_000);
+      },
+      { once: true },
+    );
+
+    document.body.appendChild(printFrame);
   }
 
   const paymentCards = [

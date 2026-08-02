@@ -3,6 +3,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildLoginPath } from "@/lib/auth/redirects";
 import { getSupabasePublicConfig } from "./auth-config";
 
+function applyPrivateResponseHeaders(
+  response: NextResponse,
+): NextResponse {
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set(
+    "X-Robots-Tag",
+    "noindex, nofollow, noarchive",
+  );
+
+  return response;
+}
+
 function copyResponseCookies(
   source: NextResponse,
   target: NextResponse,
@@ -11,13 +24,15 @@ function copyResponseCookies(
     target.cookies.set(cookie);
   });
 
-  return target;
+  return applyPrivateResponseHeaders(target);
 }
 
 export async function updateSupabaseAuthSession(
   request: NextRequest,
 ): Promise<NextResponse> {
-  let supabaseResponse = NextResponse.next({ request });
+  let supabaseResponse = applyPrivateResponseHeaders(
+    NextResponse.next({ request }),
+  );
   const config = getSupabasePublicConfig();
   const isProtectedPilot = request.nextUrl.pathname.startsWith(
     "/local/seguridad",
@@ -28,9 +43,15 @@ export async function updateSupabaseAuthSession(
       return supabaseResponse;
     }
 
-    const loginUrl = new URL(buildLoginPath(request.nextUrl.pathname), request.url);
+    const loginUrl = new URL(
+      buildLoginPath(request.nextUrl.pathname),
+      request.url,
+    );
     loginUrl.searchParams.set("error", "config");
-    return NextResponse.redirect(loginUrl);
+
+    return applyPrivateResponseHeaders(
+      NextResponse.redirect(loginUrl),
+    );
   }
 
   const supabase = createServerClient(config.url, config.key, {
@@ -43,7 +64,9 @@ export async function updateSupabaseAuthSession(
           request.cookies.set(name, value);
         });
 
-        supabaseResponse = NextResponse.next({ request });
+        supabaseResponse = applyPrivateResponseHeaders(
+          NextResponse.next({ request }),
+        );
 
         cookiesToSet.forEach(({ name, value, options }) => {
           supabaseResponse.cookies.set(name, value, options);
@@ -62,12 +85,16 @@ export async function updateSupabaseAuthSession(
   } = await supabase.auth.getClaims();
 
   if (isProtectedPilot && (claimsError || !claimsData?.claims)) {
-    const loginUrl = new URL(buildLoginPath(request.nextUrl.pathname), request.url);
+    const loginUrl = new URL(
+      buildLoginPath(request.nextUrl.pathname),
+      request.url,
+    );
+
     return copyResponseCookies(
       supabaseResponse,
       NextResponse.redirect(loginUrl),
     );
   }
 
-  return supabaseResponse;
+  return applyPrivateResponseHeaders(supabaseResponse);
 }

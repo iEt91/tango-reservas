@@ -1,4 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { assertServerOnly } from "@/lib/security/server-only";
+
+assertServerOnly("El cliente privilegiado de Supabase");
 
 let supabaseServerClient: SupabaseClient | null = null;
 
@@ -18,6 +21,8 @@ export function hasSupabaseServerConfig() {
 }
 
 export function getSupabaseServerClient() {
+  assertServerOnly("El cliente privilegiado de Supabase");
+
   if (!hasSupabaseServerConfig()) {
     return null;
   }

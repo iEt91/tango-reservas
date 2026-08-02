@@ -1,0 +1,12 @@
+* @iEt91
+
+/.github/ @iEt91
+/next.config.ts @iEt91
+/src/proxy.ts @iEt91
+/src/app/auth/ @iEt91
+/src/lib/auth/ @iEt91
+/src/lib/security/ @iEt91
+/src/lib/supabase/ @iEt91
+/supabase/migrations/ @iEt91
+/supabase/rollbacks/ @iEt91
+/SECURITY.md @iEt91

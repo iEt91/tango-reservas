@@ -1,6 +1,8 @@
 ﻿import { getDataSource } from "@/lib/data/dataSource";
 import { checkSupabaseConnection } from "@/lib/data/supabase/health";
+import { notFound } from "next/navigation";
 import { hasSupabaseConfig } from "@/lib/supabase/client";
+import { hasSupabaseServerConfig } from "@/lib/supabase/server";
 
 function Badge({
   label,
@@ -18,10 +20,17 @@ function Badge({
 }
 
 export default async function SupabaseCheckPage() {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   const dataSource = getDataSource();
   const envUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim());
-  const envAnon = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim());
-  const envServiceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+  const envPublicKey = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+      || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
+  );
+  const envPrivilegedServer = hasSupabaseServerConfig();
   const health = await checkSupabaseConnection();
   const hasBusinesses = health.businesses.length > 0;
 
@@ -43,8 +52,14 @@ export default async function SupabaseCheckPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Badge label="Data source" value={dataSource} />
           <Badge label="NEXT_PUBLIC_SUPABASE_URL" value={envUrl ? "Presente" : "Falta"} />
-          <Badge label="NEXT_PUBLIC_SUPABASE_ANON_KEY" value={envAnon ? "Presente" : "Falta"} />
-          <Badge label="SUPABASE_SERVICE_ROLE_KEY" value={envServiceRole ? "Presente" : "Falta"} />
+          <Badge
+            label="Clave pública de Supabase"
+            value={envPublicKey ? "Presente" : "Falta"}
+          />
+          <Badge
+            label="Cliente privilegiado del servidor"
+            value={envPrivilegedServer ? "Presente" : "Falta"}
+          />
         </section>
 
         {!hasSupabaseConfig() ? (
