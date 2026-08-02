@@ -216,6 +216,19 @@ function readConfigFromStorage() {
         parsedConfig.autoAssignReservationTables ?? defaultConfig.autoAssignReservationTables,
       allowTableCombinations:
         parsedConfig.allowTableCombinations ?? defaultConfig.allowTableCombinations,
+      notifyNewReservations:
+        parsedConfig.notifyNewReservations ?? defaultConfig.notifyNewReservations,
+      notifyNewDeliveries:
+        parsedConfig.notifyNewDeliveries ?? defaultConfig.notifyNewDeliveries,
+      notifyLowStock: parsedConfig.notifyLowStock ?? defaultConfig.notifyLowStock,
+      notifyDailySummary:
+        parsedConfig.notifyDailySummary ?? defaultConfig.notifyDailySummary,
+      birthdayReminderEnabled:
+        parsedConfig.birthdayReminderEnabled ?? defaultConfig.birthdayReminderEnabled,
+      birthdayReminderDays: normalizeNumber(
+        parsedConfig.birthdayReminderDays,
+        defaultConfig.birthdayReminderDays
+      ),
       businessHours: (parsedConfig.businessHours ?? defaultConfig.businessHours).map((item) =>
         normalizeBusinessHour(item)
       ),
@@ -278,6 +291,36 @@ export function V2ConfiguracionPage() {
     () => config.businessHours.filter((item) => !item.enabled),
     [config.businessHours]
   );
+  const notificationOptions = [
+    {
+      key: "notifyNewReservations" as const,
+      title: "Nuevas reservas",
+      description: "Muestra alertas internas cuando entra una reserva pendiente.",
+      value: config.notifyNewReservations,
+    },
+    {
+      key: "notifyNewDeliveries" as const,
+      title: "Nuevos pedidos",
+      description: "Muestra alertas internas cuando entra un pedido web pendiente.",
+      value: config.notifyNewDeliveries,
+    },
+    {
+      key: "notifyLowStock" as const,
+      title: "Stock bajo",
+      description: "Muestra alertas internas conectadas al módulo Stock.",
+      value: config.notifyLowStock,
+    },
+    {
+      key: "notifyDailySummary" as const,
+      title: "Resumen diario",
+      description: "Deja activa la preferencia para el resumen operativo del cierre.",
+      value: config.notifyDailySummary,
+    },
+  ];
+  const activeNotificationCount = [
+    ...notificationOptions.map((option) => option.value),
+    config.birthdayReminderEnabled,
+  ].filter(Boolean).length;
 
   function updateConfig<K extends keyof V2LocalConfigState>(
     field: K,
@@ -732,34 +775,36 @@ export function V2ConfiguracionPage() {
                   </div>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-slate-950">Nuevas reservas</p>
-                      <V2Badge tone="slate">Próximamente</V2Badge>
+                  {notificationOptions.map((option) => (
+                    <div
+                      key={option.key}
+                      className={`rounded-2xl border p-4 ${
+                        option.value
+                          ? "border-emerald-200 bg-emerald-50"
+                          : "border-slate-200 bg-white"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-slate-950">{option.title}</p>
+                          <p className="mt-1 text-sm text-slate-500">{option.description}</p>
+                        </div>
+                        <V2Badge tone={option.value ? "green" : "slate"}>
+                          {option.value ? "Activada" : "Desactivada"}
+                        </V2Badge>
+                      </div>
+                      <V2Select
+                        className="mt-3"
+                        value={booleanSelectValue(option.value)}
+                        onChange={(event) =>
+                          updateConfig(option.key, booleanFromSelect(event.target.value))
+                        }
+                      >
+                        <option value="enabled">Activada</option>
+                        <option value="disabled">Desactivada</option>
+                      </V2Select>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">Alerta interna cuando entra una reserva nueva.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-slate-950">Nuevos pedidos</p>
-                      <V2Badge tone="slate">Próximamente</V2Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">Alerta interna cuando entra un pedido desde la web.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-slate-950">Stock bajo</p>
-                      <V2Badge tone="slate">Próximamente</V2Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">Aviso futuro conectado al módulo Stock.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-slate-950">Resumen diario</p>
-                      <V2Badge tone="slate">Próximamente</V2Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">Resumen operativo automático al cierre del día.</p>
-                  </div>
+                  ))}
                 </div>
                 <div className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
                   <V2Field label="Recordatorio de cumpleaños">
@@ -881,7 +926,7 @@ export function V2ConfiguracionPage() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Horarios</p><p className="mt-1 font-semibold text-slate-950">{openDays.length} abiertos / {closedDays.length} cerrados</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Reservas</p><p className="mt-1 font-semibold text-slate-950">{config.standardDurationMinutes} min · {config.bookingWindowDays} días visibles</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Envíos</p><p className="mt-1 font-semibold text-slate-950">{formatCurrency(config.fixedDeliveryCost)} costo fijo</p></div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alertas</p><p className="mt-1 font-semibold text-slate-950">Configuración futura</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alertas</p><p className="mt-1 font-semibold text-slate-950">{activeNotificationCount}/5 activas</p></div>
               </div>
             </V2Card>
 

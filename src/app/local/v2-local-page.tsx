@@ -159,6 +159,11 @@ type V2LocalConfigState = {
   deliveryEnabled?: boolean;
   pickupEnabled?: boolean;
   standardDurationMinutes?: number;
+  notifyNewReservations?: boolean;
+  notifyNewDeliveries?: boolean;
+  notifyLowStock?: boolean;
+  notifyDailySummary?: boolean;
+  birthdayReminderEnabled?: boolean;
 };
 
 type V2WebConfigState = {
@@ -694,29 +699,33 @@ export function V2LocalPage() {
       });
     }
 
-    pendingDeliveries.forEach((delivery) => {
-      items.push({
-        id: `delivery-pending-${delivery.id}`,
-        title: "Pedido pendiente de aceptación",
-        detail: `${delivery.time} · ${delivery.client} · ${formatMoney(delivery.total)}`,
-        href: "/local/envios",
-        tone: "red",
-        label: "Alta",
-        priority: 1,
+    if (localConfig.notifyNewDeliveries !== false) {
+      pendingDeliveries.forEach((delivery) => {
+        items.push({
+          id: `delivery-pending-${delivery.id}`,
+          title: "Pedido pendiente de aceptación",
+          detail: `${delivery.time} · ${delivery.client} · ${formatMoney(delivery.total)}`,
+          href: "/local/envios",
+          tone: "red",
+          label: "Alta",
+          priority: 1,
+        });
       });
-    });
+    }
 
-    pendingTodayReservations.forEach((reservation) => {
-      items.push({
-        id: `reservation-pending-${reservation.id}`,
-        title: "Reserva pendiente por confirmar",
-        detail: `${reservation.time} · ${reservation.client} · ${reservation.people} personas`,
-        href: "/local/reservas",
-        tone: "orange",
-        label: "Media",
-        priority: 2,
+    if (localConfig.notifyNewReservations !== false) {
+      pendingTodayReservations.forEach((reservation) => {
+        items.push({
+          id: `reservation-pending-${reservation.id}`,
+          title: "Reserva pendiente por confirmar",
+          detail: `${reservation.time} · ${reservation.client} · ${reservation.people} personas`,
+          href: "/local/reservas",
+          tone: "orange",
+          label: "Media",
+          priority: 2,
+        });
       });
-    });
+    }
 
     activeTodayReservations
       .filter((reservation) => !reservation.tableName)
@@ -746,17 +755,19 @@ export function V2LocalPage() {
       });
     });
 
-    criticalStock.slice(0, 6).forEach((product) => {
-      items.push({
-        id: `critical-stock-${product.id}`,
-        title: "Stock crítico",
-        detail: `${product.name}: restan ${formatStockAmount(getStockValue(product))} ${getStockUnit(product)} · alerta < ${formatStockAmount(getStockMinimum(product))} ${getStockUnit(product)}`,
-        href: "/local/stock",
-        tone: getStockValue(product) <= 0 ? "red" : "orange",
-        label: getStockValue(product) <= 0 ? "Sin stock" : "Bajo",
-        priority: getStockValue(product) <= 0 ? 1 : 3,
+    if (localConfig.notifyLowStock !== false) {
+      criticalStock.slice(0, 6).forEach((product) => {
+        items.push({
+          id: `critical-stock-${product.id}`,
+          title: "Stock crítico",
+          detail: `${product.name}: restan ${formatStockAmount(getStockValue(product))} ${getStockUnit(product)} · alerta < ${formatStockAmount(getStockMinimum(product))} ${getStockUnit(product)}`,
+          href: "/local/stock",
+          tone: getStockValue(product) <= 0 ? "red" : "orange",
+          label: getStockValue(product) <= 0 ? "Sin stock" : "Bajo",
+          priority: getStockValue(product) <= 0 ? 1 : 3,
+        });
       });
-    });
+    }
 
     if (webConfig.showReservations && localConfig.reservationEnabled === false) {
       items.push({
@@ -787,6 +798,9 @@ export function V2LocalPage() {
     activeTodayReservations,
     criticalStock,
     localConfig.deliveryEnabled,
+    localConfig.notifyLowStock,
+    localConfig.notifyNewDeliveries,
+    localConfig.notifyNewReservations,
     localConfig.pickupEnabled,
     localConfig.reservationEnabled,
     openTableReservations,
