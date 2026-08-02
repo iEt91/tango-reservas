@@ -15,6 +15,7 @@ import {
   ChartNoAxesCombined,
   WalletCards,
   Settings,
+  ShieldCheck,
   UsersRound,
   Utensils,
   ExternalLink,
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/local/gastos", label: "Gastos", icon: WalletCards },
   { href: "/local/web", label: "Web", icon: Globe2 },
   { href: "/local/configuracion", label: "Configuración", icon: Settings },
+  { href: "/local/seguridad", label: "Seguridad", icon: ShieldCheck },
 ];
 
 export function V2Sidebar() {

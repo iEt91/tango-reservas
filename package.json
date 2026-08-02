@@ -13,13 +13,15 @@
     "test:storage": "node scripts/storage-contract-regression-tests.mjs",
     "test:backup": "node scripts/local-backup-regression-tests.mjs",
     "test:notifications": "node scripts/notification-settings-regression-tests.mjs",
-    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security",
+    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth",
     "qa:prepare": "node scripts/prepare-qa.mjs && next typegen",
     "qa": "npm run qa:prepare && eslint . && tsc --noEmit && npm run test:regression && next build",
     "test:architecture": "node scripts/architecture-regression-tests.mjs",
-    "test:database-security": "node scripts/database-security-regression-tests.mjs"
+    "test:database-security": "node scripts/database-security-regression-tests.mjs",
+    "test:auth": "node scripts/auth-ssr-regression-tests.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "0.12.3",
     "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/postcss": "^4.3.0",
     "lucide-react": "^1.22.0",

@@ -11,7 +11,7 @@ type AppChromeProps = {
 };
 
 function shouldHideGlobalChrome(pathname: string) {
-  return pathname.startsWith("/local");
+  return pathname.startsWith("/local") || pathname.startsWith("/auth");
 }
 
 export function AppChrome({ children }: AppChromeProps) {
