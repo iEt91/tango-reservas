@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import type { Business, PublicWebContent } from "@/data/types";
@@ -265,12 +266,15 @@ export function PublicHero({
                 }}
               />
             </div>
-            <div className="mt-4 flex h-72 items-stretch overflow-hidden rounded-[1.5rem] border border-dashed border-white/15 bg-slate-950/35">
+            <div className="relative mt-4 flex h-72 items-stretch overflow-hidden rounded-[1.5rem] border border-dashed border-white/15 bg-slate-950/35">
               {heroImageSource && !imageFailed ? (
-                <img
+                <Image
                   src={heroImageSource}
                   alt={content.heroTitle || business.name}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  unoptimized
+                  className="object-cover"
                   onError={() => setImageFailed(true)}
                 />
               ) : (

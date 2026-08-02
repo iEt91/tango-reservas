@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   Check,
@@ -355,11 +356,16 @@ export default function V2WebEditorPage() {
                       key={slot.id}
                       className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
                     >
-                      <img
-                        src={content.imageValues[slot.id] ?? slot.defaultSrc}
-                        alt={slot.label}
-                        className="h-36 w-full object-cover"
-                      />
+                      <div className="relative h-36 w-full overflow-hidden">
+                        <Image
+                          src={content.imageValues[slot.id] ?? slot.defaultSrc}
+                          alt={slot.label}
+                          fill
+                          sizes="(min-width: 1024px) 50vw, 100vw"
+                          unoptimized
+                          className="object-cover"
+                        />
+                      </div>
                       <div className="space-y-3 p-3">
                         <div>
                           <p className="text-sm font-bold text-slate-950">{slot.label}</p>
@@ -448,10 +454,13 @@ export default function V2WebEditorPage() {
             <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-[24px] border border-slate-200 bg-stone-950 text-white shadow-sm">
               {content.visibleSections.hero ? (
                 <div className="relative h-[190px] overflow-hidden">
-                  <img
+                  <Image
                     src={content.imageValues.hero ?? activeTemplate.previewImage}
                     alt="Hero"
-                    className="h-full w-full object-cover opacity-70"
+                    fill
+                    sizes="(min-width: 1024px) 360px, 100vw"
+                    unoptimized
+                    className="object-cover opacity-70"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -479,11 +488,16 @@ export default function V2WebEditorPage() {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {["menu1", "menu2", "menu3", "menu4"].map((slotId, index) => (
                       <div key={slotId} className="rounded-2xl bg-white/5 p-2">
-                        <img
-                          src={content.imageValues[slotId]}
-                          alt={`Plato ${index + 1}`}
-                          className="h-14 w-full rounded-xl object-cover"
-                        />
+                        <div className="relative h-14 w-full overflow-hidden rounded-xl">
+                          <Image
+                            src={content.imageValues[slotId] || activeTemplate.previewImage}
+                            alt={`Plato ${index + 1}`}
+                            fill
+                            sizes="120px"
+                            unoptimized
+                            className="object-cover"
+                          />
+                        </div>
                         <p className="mt-1 text-[11px] font-bold">
                           Plato destacado {index + 1}
                         </p>
@@ -495,11 +509,16 @@ export default function V2WebEditorPage() {
 
               {content.visibleSections.experience ? (
                 <div className="border-t border-white/10 p-4">
-                  <img
-                    src={content.imageValues.espacio6}
-                    alt="Experiencia"
-                    className="h-16 w-full rounded-2xl object-cover"
-                  />
+                  <div className="relative h-16 w-full overflow-hidden rounded-2xl">
+                    <Image
+                      src={content.imageValues.espacio6 || activeTemplate.previewImage}
+                      alt="Experiencia"
+                      fill
+                      sizes="(min-width: 1024px) 360px, 100vw"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
                   <h4 className="mt-3 text-lg font-black">
                     {content.textValues.experienceTitle}
                   </h4>

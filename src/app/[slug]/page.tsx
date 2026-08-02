@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Bike,
   CalendarDays,
@@ -2133,11 +2134,16 @@ export default function PublicTemplatePage() {
                           key={item.id}
                           className="grid grid-cols-[96px_1fr] overflow-hidden rounded-2xl border border-[#c9a86a]/18 bg-black/18"
                         >
-                          <img
-                            src={item.imageUrl || content.imageValues[item.imageSlot]}
-                            alt={item.name}
-                            className="h-full min-h-[132px] w-24 object-cover"
-                          />
+                          <div className="relative h-full min-h-[132px] w-24 shrink-0 overflow-hidden">
+                            <Image
+                              src={item.imageUrl || content.imageValues[item.imageSlot] || activeTemplate.previewImage}
+                              alt={item.name}
+                              fill
+                              sizes="96px"
+                              unoptimized
+                              className="object-cover"
+                            />
+                          </div>
                           <div className="min-w-0 p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div>
@@ -2431,10 +2437,14 @@ export default function PublicTemplatePage() {
       {content.visibleSections.hero ? (
         <section id="inicio" className="relative min-h-[760px] overflow-hidden bg-[#110e0b]">
           {isTemplateHydrated ? (
-            <img
+            <Image
               src={content.imageValues.hero ?? activeTemplate.previewImage}
               alt={publicWebConfig.heroTitle || content.textValues.heroTitle}
-              className="absolute inset-0 h-full w-full object-cover opacity-70"
+              fill
+              priority
+              sizes="100vw"
+              unoptimized
+              className="object-cover opacity-70"
             />
           ) : null}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_34%,rgba(0,0,0,0.12),transparent_24%),linear-gradient(90deg,rgba(13,10,8,0.98),rgba(13,10,8,0.82)_35%,rgba(13,10,8,0.22)_72%,rgba(13,10,8,0.72))]" />
@@ -2586,11 +2596,16 @@ export default function PublicTemplatePage() {
                   key={item.id}
                   className="overflow-hidden rounded-xl border demuru-border bg-[#161410]/88 shadow-2xl shadow-black/30 transition hover:-translate-y-1 hover:border-[#c97048]/70"
                 >
-                  <img
-                    src={item.imageUrl || content.imageValues[item.imageSlot]}
-                    alt={item.name}
-                    className="h-44 w-full object-cover"
-                  />
+                  <div className="relative h-44 w-full overflow-hidden">
+                    <Image
+                      src={item.imageUrl || content.imageValues[item.imageSlot] || activeTemplate.previewImage}
+                      alt={item.name}
+                      fill
+                      sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="p-5 text-center">
                     <h3 className="demuru-serif text-xl font-bold text-[#fff2dd]">
                       {item.name}
@@ -2661,11 +2676,16 @@ export default function PublicTemplatePage() {
                     key={item.id}
                     className="w-[260px] min-w-[260px] shrink-0 overflow-hidden rounded-xl border demuru-border bg-[#0f0d0a]"
                   >
-                    <img
-                      src={item.imageUrl || content.imageValues[item.imageSlot]}
-                      alt={item.name}
-                      className="h-36 w-full object-cover"
-                    />
+                    <div className="relative h-36 w-full overflow-hidden">
+                      <Image
+                        src={item.imageUrl || content.imageValues[item.imageSlot] || activeTemplate.previewImage}
+                        alt={item.name}
+                        fill
+                        sizes="260px"
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </div>
                     <div className="p-4">
                       <h4 className="demuru-serif text-lg font-bold text-[#fff2dd]">
                         {item.name}
@@ -2694,10 +2714,13 @@ export default function PublicTemplatePage() {
                   key={image.id}
                   className="group relative h-56 overflow-hidden rounded-xl border demuru-border bg-black"
                 >
-                  <img
-                    src={content.imageValues[image.id]}
+                  <Image
+                    src={content.imageValues[image.id] || activeTemplate.previewImage}
                     alt={image.label}
-                    className="h-full w-full object-cover opacity-84 transition duration-500 group-hover:scale-105"
+                    fill
+                    sizes="(min-width: 1280px) 16vw, (min-width: 768px) 33vw, 100vw"
+                    unoptimized
+                    className="object-cover opacity-84 transition duration-500 group-hover:scale-105"
                   />
 
                 </div>

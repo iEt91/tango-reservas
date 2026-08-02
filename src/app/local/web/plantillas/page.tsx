@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Check, Eye, Image as ImageIcon, LayoutTemplate, Pencil, Sparkles } from "lucide-react";
 import { useMemo, useSyncExternalStore } from "react";
@@ -112,10 +113,13 @@ export default function V2WebTemplatesPage() {
                   )}
                 >
                   <div className="relative h-[220px] overflow-hidden bg-slate-950">
-                    <img
+                    <Image
                       src={template.previewImage}
                       alt={template.name}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(min-width: 1024px) 45vw, 100vw"
+                      unoptimized
+                      className="object-cover"
                     />
                     <div className={cn("absolute inset-0 bg-gradient-to-t opacity-70", template.accent)} />
                     <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-950">
@@ -218,11 +222,14 @@ export default function V2WebTemplatesPage() {
               </div>
             </div>
 
-            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
-              <img
+            <div className="relative mt-3 h-32 overflow-hidden rounded-2xl border border-slate-200">
+              <Image
                 src={activeTemplate.previewImage}
                 alt={activeTemplate.name}
-                className="h-32 w-full object-cover"
+                fill
+                sizes="320px"
+                unoptimized
+                className="object-cover"
               />
             </div>
 
@@ -252,11 +259,16 @@ export default function V2WebTemplatesPage() {
                   key={slot.id}
                   className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2"
                 >
-                  <img
-                    src={slot.defaultSrc}
-                    alt={slot.label}
-                    className="h-12 w-12 rounded-xl object-cover"
-                  />
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
+                    <Image
+                      src={slot.defaultSrc}
+                      alt={slot.label}
+                      fill
+                      sizes="48px"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-950">
                       {slot.label}

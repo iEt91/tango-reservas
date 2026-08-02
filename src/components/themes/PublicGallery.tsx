@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import type { PublicWebGalleryItem } from "@/data/types";
 import { useHasMounted } from "@/hooks/useHasMounted";
@@ -76,7 +77,7 @@ export function PublicGallery({
           activeItems.map((item) => {
             const imageSource = isMounted ? getItemImageSource(item) : "";
             const initials = item.imagePlaceholder?.trim() || getInitials(item.title);
-            const showImage = isMounted && imageSource && !brokenImages[item.id];
+            const showImage = isMounted && Boolean(imageSource) && !brokenImages[item.id];
 
             return (
               <article
@@ -85,12 +86,15 @@ export function PublicGallery({
                   compact ? "bg-slate-950/70" : "bg-slate-950/60"
                 }`}
               >
-                <div className="h-40 bg-gradient-to-br from-cyan-500/20 via-slate-900 to-slate-950">
+                <div className="relative h-40 overflow-hidden bg-gradient-to-br from-cyan-500/20 via-slate-900 to-slate-950">
                   {showImage ? (
-                    <img
+                    <Image
                       src={imageSource}
                       alt={getItemAltText(item)}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(min-width: 1024px) 33vw, 100vw"
+                      unoptimized
+                      className="object-cover"
                       onError={() =>
                         setBrokenImages((current) => ({ ...current, [item.id]: true }))
                       }

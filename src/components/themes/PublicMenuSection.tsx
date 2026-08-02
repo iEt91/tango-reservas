@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   getMenuCategoriesByBusinessId,
@@ -200,7 +201,7 @@ export function PublicMenuSection({
               {selectedItems.map((item) => {
                 const imageSource = getItemImageSource(item);
                 const initials = getInitials(item.name);
-                const showImage = imageSource && !brokenImages[item.id];
+                const showImage = Boolean(imageSource) && !brokenImages[item.id];
                 const price = formatCurrency(item.price);
 
                 return (
@@ -210,12 +211,15 @@ export function PublicMenuSection({
                       variant === "minimal" ? "bg-slate-950/60" : "bg-slate-950/75"
                     }`}
                   >
-                    <div className="h-36 bg-gradient-to-br from-cyan-500/20 via-slate-900 to-slate-950">
+                    <div className="relative h-36 overflow-hidden bg-gradient-to-br from-cyan-500/20 via-slate-900 to-slate-950">
                       {showImage ? (
-                        <img
+                        <Image
                           src={imageSource}
                           alt={item.name}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                          unoptimized
+                          className="object-cover"
                           onError={() =>
                             setBrokenImages((current) => ({ ...current, [item.id]: true }))
                           }
