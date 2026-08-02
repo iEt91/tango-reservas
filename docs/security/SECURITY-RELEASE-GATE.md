@@ -5,6 +5,8 @@ Una release es bloqueada cuando se cumple cualquiera de estas condiciones:
 - vulnerabilidad crítica o alta explotable;
 - tabla privada expuesta sin RLS;
 - prueba de acceso cruzado fallida;
+- staging y producción comparten project ref;
+- una migración no coincide con su manifiesto SHA-256;
 - secreto encontrado en Git o artefactos;
 - service role alcanzable desde cliente;
 - dependencia crítica alcanzable sin mitigación;
@@ -20,7 +22,10 @@ Una release es bloqueada cuando se cumple cualquiera de estas condiciones:
 - `npm run security:audit` en CI;
 - Security Gate de GitHub verde;
 - CodeQL sin alertas críticas/altas abiertas;
+- `npm run staging:verify-migrations`;
+- `npm run staging:preflight`;
 - pruebas RLS con dos negocios;
+- postflight SQL sin excepciones;
 - escaneo dinámico de staging;
 - restauración de backup;
 - revisión de secretos;

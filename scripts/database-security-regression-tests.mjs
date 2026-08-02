@@ -37,7 +37,7 @@ assert.match(
   migration,
   /unique\s*\(\s*business_id\s*,\s*user_id\s*\)/i,
 );
-console.log("✓ la migración es transaccional y vincula negocio con auth.users");
+console.log("✓ la migración vincula negocio con auth.users");
 
 for (const role of ["owner", "admin", "staff"]) {
   assert.match(migration, new RegExp(`'${role}'`));
@@ -49,25 +49,34 @@ assert.match(
   migration,
   /insert into public\.business_members[\s\S]+from public\.profiles/i,
 );
-console.log("✓ roles, estados y backfill desde profiles están definidos");
+console.log("✓ roles, estados y backfill están definidos");
 
+assert.match(
+  migration,
+  /create schema if not exists private/i,
+);
 for (const functionName of [
   "current_business_role",
   "is_business_member",
   "has_business_role",
+  "tango_set_updated_at",
 ]) {
   assert.match(
     migration,
-    new RegExp(`function public\\.${functionName}`, "i"),
+    new RegExp(`function private\\.${functionName}`, "i"),
+  );
+  assert.doesNotMatch(
+    migration,
+    new RegExp(`create or replace function public\\.${functionName}`, "i"),
   );
 }
 assert.match(migration, /security definer/gi);
-assert.match(migration, /set search_path = public, pg_temp/gi);
+assert.match(migration, /set search_path = ''/gi);
 assert.match(
   migration,
-  /revoke all on function public\.has_business_role/i,
+  /revoke all on schema private from public/i,
 );
-console.log("✓ los helpers fijan contexto y restringen su ejecución");
+console.log("✓ los helpers viven fuera del esquema expuesto");
 
 assert.match(
   migration,
@@ -75,18 +84,29 @@ assert.match(
 );
 assert.match(
   migration,
+  /alter table public\.business_members force row level security/i,
+);
+assert.match(
+  migration,
   /create policy business_members_select_own_or_manager/i,
 );
-assert.match(migration, /user_id = auth\.uid\(\)/i);
 assert.match(
   migration,
-  /revoke all on table public\.business_members from anon/i,
+  /\(select auth\.uid\(\)\) is not null/i,
 );
 assert.match(
   migration,
-  /revoke insert, update, delete on table public\.business_members[\s\S]+from authenticated/i,
+  /select private\.has_business_role/i,
 );
-console.log("✓ RLS protege membresías y bloquea escrituras directas");
+assert.match(
+  migration,
+  /revoke all on table public\.business_members from authenticated/i,
+);
+assert.match(
+  migration,
+  /grant select on table public\.business_members to authenticated/i,
+);
+console.log("✓ RLS usa default deny y bloquea escrituras");
 
 for (const operationalTable of [
   "businesses",
@@ -102,7 +122,7 @@ for (const operationalTable of [
     ),
   );
 }
-console.log("✓ la entrega no bloquea todavía las tablas operativas");
+console.log("✓ no se bloquean todavía tablas operativas");
 
 const rollback = await readFile(rollbackPath, "utf8");
 assert.match(
@@ -115,9 +135,10 @@ assert.match(
 );
 assert.match(
   rollback,
-  /drop function if exists public\.has_business_role/i,
+  /drop function if exists private\.has_business_role/i,
 );
-console.log("✓ el rollback revierte únicamente el bloque nuevo");
+assert.match(rollback, /drop schema if exists private/i);
+console.log("✓ el rollback revierte el bloque privado");
 
 const roleContract = await readFile(roleContractPath, "utf8");
 assert.match(
@@ -126,9 +147,11 @@ assert.match(
 );
 assert.match(roleContract, /canManageBusinessMembers/);
 assert.match(roleContract, /hasMinimumBusinessRole/);
-console.log("✓ TypeScript comparte el mismo contrato de roles");
+console.log("✓ TypeScript comparte el contrato de roles");
 
-const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+const packageJson = JSON.parse(
+  await readFile("package.json", "utf8"),
+);
 assert.equal(
   packageJson.scripts?.["test:database-security"],
   "node scripts/database-security-regression-tests.mjs",
@@ -139,13 +162,17 @@ assert.match(
 );
 console.log("✓ la seguridad multiempresa está integrada al QA");
 
-for (const [lineNumber, line] of migration.split("\n").entries()) {
-  assert.equal(
-    line.replace(/\s+$/u, ""),
-    line,
-    `espacio final en migración, línea ${lineNumber + 1}`,
-  );
+for (const path of [migrationPath, rollbackPath]) {
+  const content = await readFile(path, "utf8");
+
+  for (const [lineNumber, line] of content.split("\n").entries()) {
+    assert.equal(
+      line.replace(/\s+$/u, ""),
+      line,
+      `espacio final en ${path}, línea ${lineNumber + 1}`,
+    );
+  }
 }
-console.log("✓ la migración no contiene whitespace accidental");
+console.log("✓ SQL sin whitespace accidental");
 
 console.log("Todos los casos de seguridad multiempresa pasaron (8).");

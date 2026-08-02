@@ -1,0 +1,3 @@
+# Actualizar únicamente después de revisar el diff SQL.
+22d017b76add0bc47e769eab76c23ffae26ccd67222fdca037cf5432564aeb7a  supabase/migrations/20260802_001_business_members_and_rls.sql
+15c511313fa10f445f2341718ccb8f6243ebb5ea036714f8a1f955a4e4276e0d  supabase/rollbacks/20260802_001_business_members_and_rls.down.sql

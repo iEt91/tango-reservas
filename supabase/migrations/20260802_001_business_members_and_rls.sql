@@ -1,5 +1,12 @@
 begin;
 
+create schema if not exists private;
+
+revoke all on schema private from public;
+revoke all on schema private from anon;
+revoke all on schema private from authenticated;
+grant usage on schema private to authenticated;
+
 create table if not exists public.business_members (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
@@ -43,11 +50,11 @@ create index if not exists business_members_user_status_idx
 create index if not exists business_members_business_status_idx
   on public.business_members (business_id, status);
 
-create or replace function public.tango_set_updated_at()
+create or replace function private.tango_set_updated_at()
 returns trigger
 language plpgsql
 security invoker
-set search_path = public, pg_temp
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -61,7 +68,7 @@ drop trigger if exists business_members_set_updated_at
 create trigger business_members_set_updated_at
 before update on public.business_members
 for each row
-execute function public.tango_set_updated_at();
+execute function private.tango_set_updated_at();
 
 insert into public.business_members (
   business_id,
@@ -83,42 +90,42 @@ where profiles.business_id is not null
   and profiles.auth_user_id is not null
 on conflict (business_id, user_id) do nothing;
 
-create or replace function public.current_business_role(
+create or replace function private.current_business_role(
   target_business_id uuid
 )
 returns text
 language sql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = ''
 as $$
   select member.role
   from public.business_members as member
   where member.business_id = target_business_id
-    and member.user_id = auth.uid()
+    and member.user_id = (select auth.uid())
     and member.status = 'active'
   limit 1;
 $$;
 
-create or replace function public.is_business_member(
+create or replace function private.is_business_member(
   target_business_id uuid
 )
 returns boolean
 language sql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = ''
 as $$
   select exists (
     select 1
     from public.business_members as member
     where member.business_id = target_business_id
-      and member.user_id = auth.uid()
+      and member.user_id = (select auth.uid())
       and member.status = 'active'
   );
 $$;
 
-create or replace function public.has_business_role(
+create or replace function private.has_business_role(
   target_business_id uuid,
   allowed_roles text[]
 )
@@ -126,27 +133,38 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = ''
 as $$
   select exists (
     select 1
     from public.business_members as member
     where member.business_id = target_business_id
-      and member.user_id = auth.uid()
+      and member.user_id = (select auth.uid())
       and member.status = 'active'
       and member.role = any (allowed_roles)
   );
 $$;
 
-revoke all on function public.current_business_role(uuid) from public;
-revoke all on function public.is_business_member(uuid) from public;
-revoke all on function public.has_business_role(uuid, text[]) from public;
+revoke all on function private.tango_set_updated_at() from public;
+revoke all on function private.tango_set_updated_at() from anon;
+revoke all on function private.tango_set_updated_at() from authenticated;
 
-grant execute on function public.current_business_role(uuid) to authenticated;
-grant execute on function public.is_business_member(uuid) to authenticated;
-grant execute on function public.has_business_role(uuid, text[]) to authenticated;
+revoke all on function private.current_business_role(uuid) from public;
+revoke all on function private.current_business_role(uuid) from anon;
+revoke all on function private.current_business_role(uuid) from authenticated;
+
+revoke all on function private.is_business_member(uuid) from public;
+revoke all on function private.is_business_member(uuid) from anon;
+revoke all on function private.is_business_member(uuid) from authenticated;
+
+revoke all on function private.has_business_role(uuid, text[]) from public;
+revoke all on function private.has_business_role(uuid, text[]) from anon;
+revoke all on function private.has_business_role(uuid, text[]) from authenticated;
+grant execute on function private.has_business_role(uuid, text[])
+  to authenticated;
 
 alter table public.business_members enable row level security;
+alter table public.business_members force row level security;
 
 drop policy if exists business_members_select_own_or_manager
   on public.business_members;
@@ -156,16 +174,26 @@ on public.business_members
 for select
 to authenticated
 using (
-  user_id = auth.uid()
-  or public.has_business_role(
-    business_id,
-    array['owner', 'admin']::text[]
+  (select auth.uid()) is not null
+  and (
+    user_id = (select auth.uid())
+    or (
+      select private.has_business_role(
+        business_id,
+        array['owner', 'admin']::text[]
+      )
+    )
   )
 );
 
 revoke all on table public.business_members from anon;
-revoke insert, update, delete on table public.business_members
-  from authenticated;
+revoke all on table public.business_members from authenticated;
 grant select on table public.business_members to authenticated;
+
+-- Limpieza defensiva si una variante anterior se aplicó manualmente.
+drop function if exists public.has_business_role(uuid, text[]);
+drop function if exists public.is_business_member(uuid);
+drop function if exists public.current_business_role(uuid);
+drop function if exists public.tango_set_updated_at();
 
 commit;
