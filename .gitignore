@@ -13,6 +13,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 tsconfig.tsbuildinfo
+next-env.d.ts
 
 # Archivos vacíos creados accidentalmente al pegar comandos en Windows CMD
 /git
