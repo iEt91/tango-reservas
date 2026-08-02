@@ -11,7 +11,8 @@
     "test:stock": "node scripts/stock-regression-tests.mjs",
     "test:tracking": "node scripts/tracking-regression-tests.mjs",
     "test:storage": "node scripts/storage-contract-regression-tests.mjs",
-    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage",
+    "test:backup": "node scripts/local-backup-regression-tests.mjs",
+    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup",
     "qa": "eslint . && tsc --noEmit && npm run test:regression && next build"
   },
   "dependencies": {

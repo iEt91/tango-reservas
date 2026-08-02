@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertTriangle,
   Bell,
   CalendarClock,
   Clock3,
+  Database,
+  Download,
   ExternalLink,
   Globe2,
   MapPin,
   Save,
   ShoppingBag,
   SlidersHorizontal,
+  Upload,
   UsersRound,
 } from "lucide-react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
@@ -19,6 +23,12 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  createTangoLocalBackup,
+  parseTangoLocalBackup,
+  restoreTangoLocalBackup,
+  type TangoLocalBackup,
+} from "@/lib/local-backup";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2BusinessHours,
@@ -252,6 +262,9 @@ function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
 export function V2ConfiguracionPage() {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const [backupMessage, setBackupMessage] = useState("");
+  const [pendingBackup, setPendingBackup] = useState<TangoLocalBackup | null>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setConfig(readConfigFromStorage());
@@ -353,6 +366,49 @@ export function V2ConfiguracionPage() {
     setConfig(nextConfig);
     writeConfigToStorage(nextConfig);
     setSaveStatus("saved");
+  }
+
+  function exportBackup() {
+    try {
+      const backup = createTangoLocalBackup(window.localStorage, v2LocalSettings.version);
+      const file = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `tango-reservas-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setBackupMessage(`Respaldo descargado: ${Object.keys(backup.entries).length} registros.`);
+    } catch {
+      setBackupMessage("No se pudo generar el respaldo.");
+    }
+  }
+
+  async function selectBackup(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const backup = parseTangoLocalBackup(await file.text());
+      setPendingBackup(backup);
+      setBackupMessage("");
+    } catch (error) {
+      setPendingBackup(null);
+      setBackupMessage(error instanceof Error ? error.message : "El respaldo no es válido.");
+    }
+  }
+
+  function confirmRestore() {
+    if (!pendingBackup) return;
+
+    try {
+      restoreTangoLocalBackup(window.localStorage, pendingBackup);
+      window.location.reload();
+    } catch {
+      setPendingBackup(null);
+      setBackupMessage("No se pudo restaurar. Los datos anteriores se conservaron.");
+    }
   }
 
   return (
@@ -759,13 +815,49 @@ export function V2ConfiguracionPage() {
                     </div>
                     <div>
                       <h2 className="text-base font-semibold text-slate-950">Sistema</h2>
-                      <p className="mt-1 text-sm text-slate-500">Información técnica de referencia. No modifica reglas operativas del local.</p>
+                      <p className="mt-1 text-sm text-slate-500">Versión, respaldo y recuperación de los datos guardados en este dispositivo.</p>
                     </div>
                   </div>
 
                   <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Versión actual</p>
                     <p className="mt-1 text-lg font-bold text-slate-950">{v2LocalSettings.version}</p>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                        <Database size={18} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-950">Copia de seguridad local</p>
+                        <p className="mt-1 text-sm leading-5 text-slate-500">Incluye reservas, envíos, cocina, caja, gastos, stock, menú, imágenes, clientes, web y configuración.</p>
+                      </div>
+                    </div>
+
+                    <input ref={backupInputRef} type="file" accept="application/json,.json" className="hidden" onChange={selectBackup} />
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <V2Button variant="success" icon={<Download size={16} />} onClick={exportBackup}>Descargar respaldo</V2Button>
+                      <V2Button variant="secondary" icon={<Upload size={16} />} onClick={() => backupInputRef.current?.click()}>Restaurar respaldo</V2Button>
+                    </div>
+
+                    {backupMessage ? <p className="mt-3 text-sm font-medium text-slate-600">{backupMessage}</p> : null}
+
+                    {pendingBackup ? (
+                      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <div className="flex items-start gap-2 text-amber-900">
+                          <AlertTriangle className="mt-0.5 shrink-0" size={17} />
+                          <div>
+                            <p className="font-semibold">Confirmá la restauración</p>
+                            <p className="mt-1 text-sm leading-5">Reemplazará los datos actuales de Tango en este navegador por {Object.keys(pendingBackup.entries).length} registros del {new Date(pendingBackup.exportedAt).toLocaleString("es-AR")}.</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex justify-end gap-2">
+                          <V2Button size="sm" onClick={() => setPendingBackup(null)}>Cancelar</V2Button>
+                          <V2Button size="sm" variant="dangerSolid" onClick={confirmRestore}>Restaurar datos</V2Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </V2Card>
               </div>
