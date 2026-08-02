@@ -23,6 +23,10 @@ import { V2Badge, V2ReservationStatusBadge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  normalizeNotificationSettings,
+  type V2NotificationSettings,
+} from "@/lib/notification-settings";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2Deliveries,
@@ -154,16 +158,11 @@ type V2StockProductDraft = (typeof v2StockProducts)[number] & {
   status?: string;
 };
 
-type V2LocalConfigState = {
+type V2LocalConfigState = V2NotificationSettings & {
   reservationEnabled?: boolean;
   deliveryEnabled?: boolean;
   pickupEnabled?: boolean;
   standardDurationMinutes?: number;
-  notifyNewReservations?: boolean;
-  notifyNewDeliveries?: boolean;
-  notifyLowStock?: boolean;
-  notifyDailySummary?: boolean;
-  birthdayReminderEnabled?: boolean;
 };
 
 type V2WebConfigState = {
@@ -419,7 +418,9 @@ export function V2LocalPage() {
   const [deliveries, setDeliveries] = useState<V2DeliveryDraft[]>([]);
   const [floorTables, setFloorTables] = useState<V2FloorTableDraft[]>([]);
   const [stockProducts, setStockProducts] = useState<V2StockProductDraft[]>([]);
-  const [localConfig, setLocalConfig] = useState<V2LocalConfigState>({});
+  const [localConfig, setLocalConfig] = useState<V2LocalConfigState>(() => ({
+    ...normalizeNotificationSettings(),
+  }));
   const [webConfig, setWebConfig] = useState<V2WebConfigState>({});
   const [cashRegisters, setCashRegisters] = useState<V2CashRegister[]>([]);
   const [expenses, setExpenses] = useState<V2Expense[]>([]);
@@ -446,7 +447,14 @@ export function V2LocalPage() {
           v2StockProducts as V2StockProductDraft[]
         )
       );
-      setLocalConfig(readFromStorage<V2LocalConfigState>(LOCAL_CONFIG_STORAGE_KEY, {}));
+      const storedLocalConfig = readFromStorage<Partial<V2LocalConfigState>>(
+        LOCAL_CONFIG_STORAGE_KEY,
+        {}
+      );
+      setLocalConfig({
+        ...storedLocalConfig,
+        ...normalizeNotificationSettings(storedLocalConfig),
+      });
       setWebConfig(readFromStorage<V2WebConfigState>(WEB_CONFIG_STORAGE_KEY, {}));
       setCashRegisters(readFromStorage<V2CashRegister[]>(CASH_REGISTER_STORAGE_KEY, []));
       setExpenses(readFromStorage<V2Expense[]>(EXPENSES_STORAGE_KEY, []));
@@ -700,6 +708,8 @@ export function V2LocalPage() {
     }
 
     if (localConfig.notifyNewDeliveries !== false) {
+      const pendingDeliveryIds = new Set(pendingDeliveries.map((delivery) => delivery.id));
+
       pendingDeliveries.forEach((delivery) => {
         items.push({
           id: `delivery-pending-${delivery.id}`,
@@ -711,6 +721,20 @@ export function V2LocalPage() {
           priority: 1,
         });
       });
+
+      activeTodayDeliveries
+        .filter((delivery) => !pendingDeliveryIds.has(delivery.id))
+        .forEach((delivery) => {
+          items.push({
+            id: `delivery-active-${delivery.id}`,
+            title: "Nuevo pedido activo",
+            detail: `${delivery.time} · ${delivery.client} · ${formatMoney(delivery.total)}`,
+            href: "/local/envios",
+            tone: "blue",
+            label: "Ver",
+            priority: 4,
+          });
+        });
     }
 
     if (localConfig.notifyNewReservations !== false) {
@@ -725,6 +749,20 @@ export function V2LocalPage() {
           priority: 2,
         });
       });
+
+      activeTodayReservations
+        .filter((reservation) => reservation.status !== "pending")
+        .forEach((reservation) => {
+          items.push({
+            id: `reservation-active-${reservation.id}`,
+            title: "Nueva reserva confirmada",
+            detail: `${reservation.time} · ${reservation.client} · ${reservation.people} personas`,
+            href: "/local/reservas",
+            tone: "green",
+            label: "Ver",
+            priority: 4,
+          });
+        });
     }
 
     activeTodayReservations
@@ -795,6 +833,7 @@ export function V2LocalPage() {
 
     return items.sort((a, b) => a.priority - b.priority);
   }, [
+    activeTodayDeliveries,
     activeTodayReservations,
     criticalStock,
     localConfig.deliveryEnabled,

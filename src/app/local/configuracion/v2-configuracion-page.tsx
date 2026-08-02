@@ -29,13 +29,18 @@ import {
   restoreTangoLocalBackup,
   type TangoLocalBackup,
 } from "@/lib/local-backup";
+import {
+  V2_NOTIFICATION_OPTIONS,
+  countActiveNotificationSettings,
+  normalizeNotificationSettings,
+  type V2NotificationSettings,
+} from "@/lib/notification-settings";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2BusinessHours,
   v2DeliverySettings,
   v2LocalSettings,
   v2LocalUsers,
-  v2NotificationSettings,
   v2ReservationSettings,
 } from "@/lib/v2/v2-mock-data";
 
@@ -56,7 +61,7 @@ type V2BusinessHourConfig = {
   slots: V2BusinessHourSlot[];
 };
 
-type V2LocalConfigState = {
+type V2LocalConfigState = V2NotificationSettings & {
   businessName: string;
   businessType: string;
   publicUrl: string;
@@ -86,12 +91,6 @@ type V2LocalConfigState = {
   minimumOrder: number;
   paymentMethods: string;
   coverageZones: string;
-  notifyNewReservations: boolean;
-  notifyNewDeliveries: boolean;
-  notifyLowStock: boolean;
-  notifyDailySummary: boolean;
-  birthdayReminderEnabled: boolean;
-  birthdayReminderDays: number;
 };
 
 function normalizeNumber(value: unknown, fallback: number) {
@@ -188,12 +187,7 @@ function getDefaultConfig(): V2LocalConfigState {
     minimumOrder: normalizeNumber(v2DeliverySettings.minimumOrder, 0),
     paymentMethods: v2DeliverySettings.paymentMethods.join(", "),
     coverageZones: v2DeliverySettings.coverageZones.join(", "),
-    notifyNewReservations: Boolean(v2NotificationSettings.newReservations),
-    notifyNewDeliveries: Boolean(v2NotificationSettings.newDeliveries),
-    notifyLowStock: Boolean(v2NotificationSettings.lowStock),
-    notifyDailySummary: Boolean(v2NotificationSettings.dailySummary),
-    birthdayReminderEnabled: true,
-    birthdayReminderDays: 7,
+    ...normalizeNotificationSettings(),
   };
 }
 
@@ -216,19 +210,7 @@ function readConfigFromStorage() {
         parsedConfig.autoAssignReservationTables ?? defaultConfig.autoAssignReservationTables,
       allowTableCombinations:
         parsedConfig.allowTableCombinations ?? defaultConfig.allowTableCombinations,
-      notifyNewReservations:
-        parsedConfig.notifyNewReservations ?? defaultConfig.notifyNewReservations,
-      notifyNewDeliveries:
-        parsedConfig.notifyNewDeliveries ?? defaultConfig.notifyNewDeliveries,
-      notifyLowStock: parsedConfig.notifyLowStock ?? defaultConfig.notifyLowStock,
-      notifyDailySummary:
-        parsedConfig.notifyDailySummary ?? defaultConfig.notifyDailySummary,
-      birthdayReminderEnabled:
-        parsedConfig.birthdayReminderEnabled ?? defaultConfig.birthdayReminderEnabled,
-      birthdayReminderDays: normalizeNumber(
-        parsedConfig.birthdayReminderDays,
-        defaultConfig.birthdayReminderDays
-      ),
+      ...normalizeNotificationSettings(parsedConfig),
       businessHours: (parsedConfig.businessHours ?? defaultConfig.businessHours).map((item) =>
         normalizeBusinessHour(item)
       ),
@@ -291,36 +273,11 @@ export function V2ConfiguracionPage() {
     () => config.businessHours.filter((item) => !item.enabled),
     [config.businessHours]
   );
-  const notificationOptions = [
-    {
-      key: "notifyNewReservations" as const,
-      title: "Nuevas reservas",
-      description: "Muestra alertas internas cuando entra una reserva pendiente.",
-      value: config.notifyNewReservations,
-    },
-    {
-      key: "notifyNewDeliveries" as const,
-      title: "Nuevos pedidos",
-      description: "Muestra alertas internas cuando entra un pedido web pendiente.",
-      value: config.notifyNewDeliveries,
-    },
-    {
-      key: "notifyLowStock" as const,
-      title: "Stock bajo",
-      description: "Muestra alertas internas conectadas al módulo Stock.",
-      value: config.notifyLowStock,
-    },
-    {
-      key: "notifyDailySummary" as const,
-      title: "Resumen diario",
-      description: "Deja activa la preferencia para el resumen operativo del cierre.",
-      value: config.notifyDailySummary,
-    },
-  ];
-  const activeNotificationCount = [
-    ...notificationOptions.map((option) => option.value),
-    config.birthdayReminderEnabled,
-  ].filter(Boolean).length;
+  const notificationOptions = V2_NOTIFICATION_OPTIONS.map((option) => ({
+    ...option,
+    value: config[option.key],
+  }));
+  const activeNotificationCount = countActiveNotificationSettings(config);
 
   function updateConfig<K extends keyof V2LocalConfigState>(
     field: K,
