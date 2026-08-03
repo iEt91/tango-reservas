@@ -106,7 +106,7 @@ console.log("✓ la regresión de negocio activo forma parte del QA");
 
 for (const file of requiredFiles) {
   const content = await readFile(file, "utf8");
-  for (const [index, line] of content.split("\n").entries()) {
+  for (const [index, line] of content.split(/\r?\n/u).entries()) {
     assert.equal(
       line.replace(/\s+$/u, ""),
       line,
@@ -116,4 +116,4 @@ for (const file of requiredFiles) {
 }
 console.log("✓ archivos nuevos sin whitespace accidental");
 
-console.log("Todos los casos de negocio activo pasaron (10).");
+console.log("Todos los casos de negocio activo pasaron (11).");

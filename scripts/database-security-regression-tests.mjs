@@ -238,7 +238,7 @@ for (const path of [
 ]) {
   const content = await readFile(path, "utf8");
 
-  for (const [lineNumber, line] of content.split("\n").entries()) {
+  for (const [lineNumber, line] of content.split(/\r?\n/u).entries()) {
     assert.equal(
       line.replace(/\s+$/u, ""),
       line,
@@ -270,5 +270,5 @@ for (const path of obsoletePaths) {
 console.log("✓ no quedan archivos con el nombre de migración eliminado");
 
 console.log(
-  "Todos los casos de seguridad multiempresa pasaron (8).",
+  "Todos los casos de seguridad multiempresa pasaron (11).",
 );

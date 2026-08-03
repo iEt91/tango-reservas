@@ -36,6 +36,8 @@ import {
   type V2NotificationSettings,
 } from "@/lib/notification-settings";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+import { saveBusinessHoursAction } from "./actions";
+import { mergeBusinessHoursEditor } from "@/lib/configuration/business-hours-contract";
 import {
   v2BusinessHours,
   v2DeliverySettings,
@@ -112,6 +114,50 @@ function normalizeTimeToSelectOption(value: string, fallback: string) {
   return fallback;
 }
 
+function timeOptionToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function isNextDayClosingTime(
+  openTime: string,
+  closeTime: string
+) {
+  return (
+    timeOptionToMinutes(closeTime)
+    <= timeOptionToMinutes(openTime)
+  );
+}
+
+function getClosingTimeOptions(openTime: string) {
+  const openIndex = TIME_SELECT_OPTIONS.indexOf(openTime);
+
+  if (openIndex < 0) {
+    return TIME_SELECT_OPTIONS.map((value) => ({
+      value,
+      label: value,
+    }));
+  }
+
+  return Array.from(
+    { length: TIME_SELECT_OPTIONS.length - 1 },
+    (_, offset) => {
+      const index =
+        (openIndex + offset + 1)
+        % TIME_SELECT_OPTIONS.length;
+      const value = TIME_SELECT_OPTIONS[index];
+      const nextDay = index <= openIndex;
+
+      return {
+        value,
+        label: nextDay
+          ? `${value} (día siguiente)`
+          : value,
+      };
+    }
+  );
+}
+
 function normalizeBusinessHourSlots(
   item: Partial<V2BusinessHourConfig>
 ): V2BusinessHourSlot[] {
@@ -146,7 +192,14 @@ function normalizeBusinessHour(item: Partial<V2BusinessHourConfig>): V2BusinessH
 function formatBusinessHourSlots(item: V2BusinessHourConfig) {
   if (!item.enabled) return "Cerrado";
 
-  return item.slots.map((slot) => `${slot.open}–${slot.close}`).join(" / ");
+  return item.slots
+    .map((slot) => (
+      `${slot.open}–${slot.close}${isNextDayClosingTime(
+        slot.open,
+        slot.close
+      ) ? " (+1 día)" : ""}`
+    ))
+    .join(" / ");
 }
 
 function getDefaultConfig(): V2LocalConfigState {
@@ -254,16 +307,33 @@ function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
   return labels[role];
 }
 
-export function V2ConfiguracionPage() {
+export function V2ConfiguracionPage({
+  initialBusinessHours = null,
+  businessHoursPersistence = "local",
+}: {
+  initialBusinessHours?: V2BusinessHourConfig[] | null;
+  businessHoursPersistence?: "local" | "supabase";
+}) {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [saveError, setSaveError] = useState("");
   const [backupMessage, setBackupMessage] = useState("");
   const [pendingBackup, setPendingBackup] = useState<TangoLocalBackup | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setConfig(readConfigFromStorage());
-  }, []);
+    const localConfig = readConfigFromStorage();
+
+    setConfig({
+      ...localConfig,
+      businessHours: mergeBusinessHoursEditor(
+        localConfig.businessHours,
+        initialBusinessHours,
+      ),
+    });
+  }, [initialBusinessHours]);
 
   const openDays = useMemo(
     () => config.businessHours.filter((item) => item.enabled),
@@ -285,6 +355,7 @@ export function V2ConfiguracionPage() {
   ) {
     setConfig((current) => ({ ...current, [field]: value }));
     setSaveStatus("idle");
+    setSaveError("");
   }
 
   function updateBusinessHour(
@@ -313,9 +384,19 @@ export function V2ConfiguracionPage() {
         if (item.day !== day) return item;
 
         const nextSlots = normalizeBusinessHourSlots(item);
+        const currentSlot = nextSlots[slotIndex];
+        const nextClose =
+          field === "open" && currentSlot.close === value
+            ? getClosingTimeOptions(value)[0]?.value
+              ?? currentSlot.close
+            : currentSlot.close;
+
         nextSlots[slotIndex] = {
-          ...nextSlots[slotIndex],
+          ...currentSlot,
           [field]: value,
+          close: field === "open"
+            ? nextClose
+            : value,
         };
 
         return normalizeBusinessHour({ ...item, slots: nextSlots });
@@ -359,10 +440,33 @@ export function V2ConfiguracionPage() {
     setSaveStatus("idle");
   }
 
-  function saveConfig() {
-    const normalizedHours = config.businessHours.map((item) => normalizeBusinessHour(item));
+  async function saveConfig() {
+    const normalizedHours = config.businessHours.map((item) =>
+      normalizeBusinessHour(item)
+    );
+    let nextConfig = {
+      ...config,
+      businessHours: normalizedHours,
+    };
 
-    const nextConfig = { ...config, businessHours: normalizedHours };
+    setSaveStatus("saving");
+    setSaveError("");
+
+    if (businessHoursPersistence === "supabase") {
+      const result = await saveBusinessHoursAction(normalizedHours);
+
+      if (!result.ok) {
+        setSaveError(result.error);
+        setSaveStatus("error");
+        return;
+      }
+
+      nextConfig = {
+        ...nextConfig,
+        businessHours: result.businessHours,
+      };
+    }
+
     setConfig(nextConfig);
     writeConfigToStorage(nextConfig);
     setSaveStatus("saved");
@@ -422,9 +526,23 @@ export function V2ConfiguracionPage() {
               <V2Button variant="secondary" icon={<ExternalLink size={17} />}>
                 Ver sitio público
               </V2Button>
-              {saveStatus === "saved" ? <V2Badge tone="green">Cambios guardados</V2Badge> : null}
-              <V2Button variant="primary" icon={<Save size={17} />} onClick={saveConfig}>
-                Guardar cambios
+              {saveStatus === "saved" ? (
+                <V2Badge tone="green">Cambios guardados</V2Badge>
+              ) : null}
+              {saveStatus === "error" ? (
+                <V2Badge tone="red" className="max-w-64" >
+                  {saveError || "No se pudieron guardar los cambios"}
+                </V2Badge>
+              ) : null}
+              <V2Button
+                variant="primary"
+                icon={<Save size={17} />}
+                onClick={() => void saveConfig()}
+                disabled={saveStatus === "saving"}
+              >
+                {saveStatus === "saving"
+                  ? "Guardando..."
+                  : "Guardar cambios"}
               </V2Button>
             </>
           }
@@ -559,9 +677,12 @@ export function V2ConfiguracionPage() {
                                     updateBusinessHourSlot(item.day, slotIndex, "close", event.target.value)
                                   }
                                 >
-                                  {TIME_SELECT_OPTIONS.map((time) => (
-                                    <option key={`${item.day}-close-${slotIndex}-${time}`} value={time}>
-                                      {time}
+                                  {getClosingTimeOptions(slot.open).map((option) => (
+                                    <option
+                                      key={`${item.day}-close-${slotIndex}-${option.value}`}
+                                      value={option.value}
+                                    >
+                                      {option.label}
                                     </option>
                                   ))}
                                 </V2Select>

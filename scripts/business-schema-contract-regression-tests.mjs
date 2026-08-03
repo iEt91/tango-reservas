@@ -175,7 +175,7 @@ for (const file of requiredFiles) {
   const content = await readFile(file, "utf8");
 
   for (const [index, line] of content
-    .split("\n")
+    .split(/\r?\n/u)
     .entries()) {
     assert.equal(
       line.replace(/\s+$/u, ""),
@@ -187,5 +187,5 @@ for (const file of requiredFiles) {
 console.log("✓ archivos nuevos sin whitespace accidental");
 
 console.log(
-  "Todos los casos del contrato businesses pasaron (9).",
+  "Todos los casos del contrato businesses pasaron (10).",
 );

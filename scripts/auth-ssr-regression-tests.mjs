@@ -177,7 +177,7 @@ console.log("✓ despliegue, selección y límites de autorización están docum
 
 for (const file of requiredFiles) {
   const content = await readFile(file, "utf8");
-  for (const [index, line] of content.split("\n").entries()) {
+  for (const [index, line] of content.split(/\r?\n/u).entries()) {
     assert.equal(
       line.replace(/\s+$/u, ""),
       line,
@@ -187,4 +187,4 @@ for (const file of requiredFiles) {
 }
 console.log("✓ los archivos nuevos no contienen whitespace accidental");
 
-console.log("Todos los casos de autenticación SSR pasaron (10).");
+console.log("Todos los casos de autenticación SSR pasaron (11).");
