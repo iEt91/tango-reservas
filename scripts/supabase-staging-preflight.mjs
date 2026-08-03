@@ -6,6 +6,26 @@ await loadLocalEnv();
 
 const context = getStagingContext();
 
+function isOpaqueApiKey(value) {
+  return (
+    value.startsWith("sb_publishable_")
+    || value.startsWith("sb_secret_")
+  );
+}
+
+function buildHeaders() {
+  const headers = {
+    apikey: context.publicKey,
+    Accept: "application/json",
+  };
+
+  if (!isOpaqueApiKey(context.publicKey)) {
+    headers.Authorization = `Bearer ${context.publicKey}`;
+  }
+
+  return headers;
+}
+
 async function request(path) {
   const controller = new AbortController();
   const timeout = setTimeout(
@@ -17,11 +37,7 @@ async function request(path) {
     const response = await fetch(
       `${context.url}${path}`,
       {
-        headers: {
-          apikey: context.publicKey,
-          Authorization: `Bearer ${context.publicKey}`,
-          Accept: "application/json",
-        },
+        headers: buildHeaders(),
         signal: controller.signal,
         redirect: "error",
       },

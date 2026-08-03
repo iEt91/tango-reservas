@@ -65,9 +65,72 @@ function validatePublicKey(key) {
       "Una secret key fue colocada como clave pública.",
     );
   }
+
+  if (
+    key.includes("replace-with")
+    || key.includes("replace-staging")
+  ) {
+    throw new Error(
+      "La clave pública todavía contiene un placeholder.",
+    );
+  }
 }
 
-export function getStagingContext() {
+function validateServerSecret(secret, publicKey) {
+  if (
+    secret.includes("replace-with")
+    || secret.includes("replace-staging")
+  ) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY todavía contiene un placeholder.",
+    );
+  }
+
+  if (secret === publicKey) {
+    throw new Error(
+      "La clave privilegiada no puede ser la clave pública.",
+    );
+  }
+
+  const payload = decodeJwtPayload(secret);
+
+  if (payload && payload.role !== "service_role") {
+    throw new Error(
+      "La clave privilegiada JWT no declara service_role.",
+    );
+  }
+
+  if (!payload && !secret.startsWith("sb_secret_")) {
+    throw new Error(
+      "La clave privilegiada no tiene un formato reconocido.",
+    );
+  }
+}
+
+function validateEmail(name, value) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value)) {
+    throw new Error(`${name} no contiene un email válido.`);
+  }
+}
+
+function validatePassword(name, value) {
+  if (value.length < 20) {
+    throw new Error(
+      `${name} debe tener al menos 20 caracteres.`,
+    );
+  }
+
+  if (value.includes("replace-with")) {
+    throw new Error(
+      `${name} todavía contiene un placeholder.`,
+    );
+  }
+}
+
+export function getStagingContext({
+  requireServerSecret = false,
+  requireTestUsers = false,
+} = {}) {
   const environment = required("TANGO_ENVIRONMENT");
 
   if (environment !== "staging") {
@@ -112,11 +175,84 @@ export function getStagingContext() {
 
   validatePublicKey(publicKey);
 
-  return {
+  let serverSecret = null;
+
+  if (requireServerSecret) {
+    serverSecret = required("SUPABASE_SERVICE_ROLE_KEY");
+    validateServerSecret(serverSecret, publicKey);
+  }
+
+  const context = {
     environment,
     stagingProjectRef,
     productionProjectRef,
     url,
     publicKey,
+    serverSecret,
+  };
+
+  if (!requireTestUsers) {
+    return context;
+  }
+
+  const userAEmail = required("TANGO_TEST_USER_A_EMAIL");
+  const userAPassword = required(
+    "TANGO_TEST_USER_A_PASSWORD",
+  );
+  const userBEmail = required("TANGO_TEST_USER_B_EMAIL");
+  const userBPassword = required(
+    "TANGO_TEST_USER_B_PASSWORD",
+  );
+
+  validateEmail("TANGO_TEST_USER_A_EMAIL", userAEmail);
+  validateEmail("TANGO_TEST_USER_B_EMAIL", userBEmail);
+  validatePassword(
+    "TANGO_TEST_USER_A_PASSWORD",
+    userAPassword,
+  );
+  validatePassword(
+    "TANGO_TEST_USER_B_PASSWORD",
+    userBPassword,
+  );
+
+  if (userAEmail.toLowerCase() === userBEmail.toLowerCase()) {
+    throw new Error(
+      "Los usuarios de aislamiento deben ser diferentes.",
+    );
+  }
+
+  if (userAPassword === userBPassword) {
+    throw new Error(
+      "Los usuarios de prueba no pueden compartir contraseña.",
+    );
+  }
+
+  const businessASlug = required(
+    "TANGO_TEST_BUSINESS_A_SLUG",
+  );
+  const businessBSlug = required(
+    "TANGO_TEST_BUSINESS_B_SLUG",
+  );
+
+  if (businessASlug === businessBSlug) {
+    throw new Error(
+      "Los negocios de prueba deben usar slugs diferentes.",
+    );
+  }
+
+  return {
+    ...context,
+    userAEmail,
+    userAPassword,
+    userBEmail,
+    userBPassword,
+    businessASlug,
+    businessAName: required(
+      "TANGO_TEST_BUSINESS_A_NAME",
+    ),
+    businessBSlug,
+    businessBName: required(
+      "TANGO_TEST_BUSINESS_B_NAME",
+    ),
   };
 }

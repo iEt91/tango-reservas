@@ -59,8 +59,30 @@ const preflight = await readFile(
 assert.match(preflight, /lookup\(hostname/);
 assert.match(preflight, /\/auth\/v1\/settings/);
 assert.match(preflight, /\/rest\/v1\//);
-assert.doesNotMatch(preflight, /console\.log\([^)]*publicKey/u);
-console.log("✓ el preflight valida DNS, Auth y REST sin imprimir claves");
+assert.match(preflight, /function isOpaqueApiKey/);
+assert.match(
+  preflight,
+  /value\.startsWith\("sb_publishable_"\)/,
+);
+assert.match(
+  preflight,
+  /if \(!isOpaqueApiKey\(context\.publicKey\)\)/,
+);
+assert.match(
+  preflight,
+  /headers\.Authorization = `Bearer \$\{context\.publicKey\}`/,
+);
+assert.doesNotMatch(
+  preflight,
+  /Authorization:\s*`Bearer \$\{context\.publicKey\}`/,
+);
+assert.doesNotMatch(
+  preflight,
+  /console\.log\([^)]*publicKey/u,
+);
+console.log(
+  "✓ el preflight separa API keys opacas de JWT legacy",
+);
 
 const preflightSql = await readFile(
   "supabase/preflight/20260802_001_staging_preflight.sql",
