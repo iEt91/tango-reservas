@@ -22,6 +22,27 @@ export type BusinessServiceActionResult =
       error: string;
     };
 
+function formatBusinessServiceMutationError(
+  error: {
+    code?: string | null;
+  } | null,
+  fallback: string,
+) {
+  if (error?.code === "23505") {
+    return "Ya existe un servicio con ese nombre.";
+  }
+
+  if (error?.code === "42501") {
+    return "No tenés permisos para modificar este servicio.";
+  }
+
+  if (error?.code === "22023") {
+    return "Los datos del servicio no son válidos.";
+  }
+
+  return fallback;
+}
+
 async function resolveAuthorizedServiceContext() {
   const activeBusiness = await resolveActiveBusiness();
 
@@ -92,7 +113,10 @@ export async function saveBusinessServiceAction(
 
       return {
         ok: false,
-        error: "No se pudo guardar el servicio en Supabase.",
+        error: formatBusinessServiceMutationError(
+          error,
+          "No se pudo guardar el servicio en Supabase.",
+        ),
       };
     }
 
@@ -156,8 +180,10 @@ export async function setBusinessServiceActiveAction(
 
       return {
         ok: false,
-        error:
+        error: formatBusinessServiceMutationError(
+          error,
           "No se pudo actualizar el estado del servicio.",
+        ),
       };
     }
 

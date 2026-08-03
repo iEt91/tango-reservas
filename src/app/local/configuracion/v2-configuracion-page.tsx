@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   Bell,
+  Briefcase,
   CalendarClock,
   Clock3,
   Database,
@@ -11,6 +12,9 @@ import {
   ExternalLink,
   Globe2,
   MapPin,
+  Pencil,
+  Plus,
+  Power,
   Save,
   ShoppingBag,
   SlidersHorizontal,
@@ -22,6 +26,7 @@ import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
+import { V2Modal } from "@/components/v2/v2-modal";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import {
   createTangoLocalBackup,
@@ -40,12 +45,20 @@ import {
   saveBusinessHoursAction,
   saveReservationConfigurationAction,
 } from "./actions";
+import {
+  saveBusinessServiceAction,
+  setBusinessServiceActiveAction,
+} from "./service-actions";
 import { mergeBusinessHoursEditor } from "@/lib/configuration/business-hours-contract";
 import {
   mergeReservationSettingsEditor,
   normalizeReservationSettingsEditor,
   type ReservationSettingsEditor,
 } from "@/lib/configuration/reservation-settings-contract";
+import {
+  normalizeBusinessService,
+  type BusinessServiceEditor,
+} from "@/lib/services/business-service-contract";
 import {
   v2BusinessHours,
   v2DeliverySettings,
@@ -315,16 +328,54 @@ function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
   return labels[role];
 }
 
+function createEmptyBusinessService(): BusinessServiceEditor {
+  return {
+    id: null,
+    name: "",
+    description: "",
+    durationMinutes: 60,
+    capacity: 1,
+    price: null,
+    isActive: true,
+  };
+}
+
+function sortBusinessServices(
+  services: BusinessServiceEditor[],
+) {
+  return [...services].sort((left, right) => {
+    const orderDifference =
+      (left.sortOrder ?? Number.MAX_SAFE_INTEGER)
+      - (right.sortOrder ?? Number.MAX_SAFE_INTEGER);
+
+    if (orderDifference !== 0) {
+      return orderDifference;
+    }
+
+    return left.name.localeCompare(
+      right.name,
+      "es",
+      { sensitivity: "base" },
+    );
+  });
+}
+
 export function V2ConfiguracionPage({
   initialBusinessHours = null,
   initialReservationSettings = null,
+  initialBusinessServices = null,
   businessHoursPersistence = "local",
   reservationSettingsPersistence = "local",
+  businessServicesPersistence = "local",
+  canManageBusinessServices = false,
 }: {
   initialBusinessHours?: V2BusinessHourConfig[] | null;
   initialReservationSettings?: ReservationSettingsEditor | null;
+  initialBusinessServices?: BusinessServiceEditor[] | null;
   businessHoursPersistence?: "local" | "supabase";
   reservationSettingsPersistence?: "local" | "supabase";
+  businessServicesPersistence?: "local" | "supabase";
+  canManageBusinessServices?: boolean;
 }) {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
   const [saveStatus, setSaveStatus] = useState<
@@ -334,6 +385,20 @@ export function V2ConfiguracionPage({
   const [backupMessage, setBackupMessage] = useState("");
   const [pendingBackup, setPendingBackup] = useState<TangoLocalBackup | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
+  const [businessServices, setBusinessServices] =
+    useState<BusinessServiceEditor[]>(() =>
+      sortBusinessServices(
+        initialBusinessServices ?? [],
+      )
+    );
+  const [serviceEditor, setServiceEditor] =
+    useState<BusinessServiceEditor | null>(null);
+  const [serviceMutationStatus, setServiceMutationStatus] =
+    useState<"idle" | "saving" | "saved" | "error">(
+      "idle",
+    );
+  const [serviceMutationError, setServiceMutationError] =
+    useState("");
 
   useEffect(() => {
     const localConfig = readConfigFromStorage();
@@ -353,6 +418,14 @@ export function V2ConfiguracionPage({
     });
   }, [initialBusinessHours, initialReservationSettings]);
 
+  useEffect(() => {
+    setBusinessServices(
+      sortBusinessServices(
+        initialBusinessServices ?? [],
+      ),
+    );
+  }, [initialBusinessServices]);
+
   const openDays = useMemo(
     () => config.businessHours.filter((item) => item.enabled),
     [config.businessHours]
@@ -366,6 +439,10 @@ export function V2ConfiguracionPage({
     value: config[option.key],
   }));
   const activeNotificationCount = countActiveNotificationSettings(config);
+  const activeBusinessServiceCount =
+    businessServices.filter(
+      (service) => service.isActive,
+    ).length;
 
   function updateConfig<K extends keyof V2LocalConfigState>(
     field: K,
@@ -482,6 +559,160 @@ export function V2ConfiguracionPage({
       }),
     }));
     setSaveStatus("idle");
+  }
+
+  function openNewBusinessService() {
+    if (
+      !canManageBusinessServices
+      || businessServicesPersistence !== "supabase"
+    ) {
+      setServiceMutationStatus("error");
+      setServiceMutationError(
+        "La edición de servicios no está disponible.",
+      );
+      return;
+    }
+
+    setServiceEditor(createEmptyBusinessService());
+    setServiceMutationStatus("idle");
+    setServiceMutationError("");
+  }
+
+  function openBusinessServiceEditor(
+    service: BusinessServiceEditor,
+  ) {
+    if (
+      !canManageBusinessServices
+      || businessServicesPersistence !== "supabase"
+    ) {
+      return;
+    }
+
+    setServiceEditor({ ...service });
+    setServiceMutationStatus("idle");
+    setServiceMutationError("");
+  }
+
+  function closeBusinessServiceEditor() {
+    if (serviceMutationStatus === "saving") {
+      return;
+    }
+
+    setServiceEditor(null);
+    setServiceMutationStatus("idle");
+    setServiceMutationError("");
+  }
+
+  function updateBusinessServiceEditor<
+    K extends keyof BusinessServiceEditor,
+  >(
+    field: K,
+    value: BusinessServiceEditor[K],
+  ) {
+    setServiceEditor((current) =>
+      current
+        ? {
+            ...current,
+            [field]: value,
+          }
+        : current
+    );
+    setServiceMutationStatus("idle");
+    setServiceMutationError("");
+  }
+
+  function replaceBusinessService(
+    service: BusinessServiceEditor,
+  ) {
+    setBusinessServices((current) => {
+      const exists = current.some(
+        (item) => item.id === service.id,
+      );
+
+      return sortBusinessServices(
+        exists
+          ? current.map((item) =>
+              item.id === service.id
+                ? service
+                : item
+            )
+          : [...current, service],
+      );
+    });
+  }
+
+  async function saveBusinessServiceEditor() {
+    if (
+      !serviceEditor
+      || !canManageBusinessServices
+      || businessServicesPersistence !== "supabase"
+    ) {
+      setServiceMutationStatus("error");
+      setServiceMutationError(
+        "La edición de servicios no está disponible.",
+      );
+      return;
+    }
+
+    try {
+      const normalized =
+        normalizeBusinessService(serviceEditor);
+
+      setServiceMutationStatus("saving");
+      setServiceMutationError("");
+
+      const result = await saveBusinessServiceAction({
+        serviceId: normalized.id ?? null,
+        service: normalized,
+      });
+
+      if (!result.ok) {
+        setServiceMutationStatus("error");
+        setServiceMutationError(result.error);
+        return;
+      }
+
+      replaceBusinessService(result.service);
+      setServiceEditor(null);
+      setServiceMutationStatus("saved");
+    } catch (error) {
+      setServiceMutationStatus("error");
+      setServiceMutationError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo validar el servicio.",
+      );
+    }
+  }
+
+  async function toggleBusinessService(
+    service: BusinessServiceEditor,
+  ) {
+    if (
+      !service.id
+      || !canManageBusinessServices
+      || businessServicesPersistence !== "supabase"
+    ) {
+      return;
+    }
+
+    setServiceMutationStatus("saving");
+    setServiceMutationError("");
+
+    const result =
+      await setBusinessServiceActiveAction({
+        serviceId: service.id,
+        isActive: !service.isActive,
+      });
+
+    if (!result.ok) {
+      setServiceMutationStatus("error");
+      setServiceMutationError(result.error);
+      return;
+    }
+
+    replaceBusinessService(result.service);
+    setServiceMutationStatus("saved");
   }
 
   async function saveConfig() {
@@ -624,6 +855,7 @@ export function V2ConfiguracionPage({
                   <a href="#config-contacto" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Contacto</a>
                   <a href="#config-horarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Horarios</a>
                   <a href="#config-reservas" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Reservas</a>
+                  <a href="#config-servicios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Servicios</a>
                   <a href="#config-envios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Envíos</a>
                   <a href="#config-notificaciones" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Notificaciones</a>
                   <a href="#config-usuarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Usuarios</a>
@@ -881,6 +1113,140 @@ export function V2ConfiguracionPage({
                 </V2Card>
               </div>
 
+              <div id="config-servicios" className="scroll-mt-20">
+                <V2Card>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700">
+                        <Briefcase size={20} />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-semibold text-slate-950">
+                          Catálogo de servicios
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Duración, capacidad, precio y disponibilidad de cada servicio.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <V2Badge tone="blue">
+                        {activeBusinessServiceCount} activos
+                      </V2Badge>
+                      {canManageBusinessServices
+                        && businessServicesPersistence === "supabase" ? (
+                        <V2Button
+                          size="sm"
+                          variant="success"
+                          icon={<Plus size={16} />}
+                          onClick={openNewBusinessService}
+                        >
+                          Nuevo servicio
+                        </V2Button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {serviceMutationStatus === "error" ? (
+                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {serviceMutationError}
+                    </div>
+                  ) : null}
+
+                  {!canManageBusinessServices
+                    && businessServicesPersistence === "supabase" ? (
+                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                      Modo de solo lectura. Solo el dueño o un administrador pueden modificar servicios.
+                    </div>
+                  ) : null}
+
+                  {businessServicesPersistence !== "supabase" ? (
+                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      El catálogo persistente estará disponible al conectar Supabase.
+                    </div>
+                  ) : null}
+
+                  <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
+                    {businessServices.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <p className="font-semibold text-slate-950">
+                          No hay servicios cargados
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Creá el primer servicio para definir su duración y capacidad.
+                        </p>
+                      </div>
+                    ) : (
+                      businessServices.map((service) => (
+                        <div
+                          key={service.id ?? service.name}
+                          className="border-b border-slate-100 px-4 py-4 last:border-b-0"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-semibold text-slate-950">
+                                  {service.name}
+                                </p>
+                                <V2Badge tone={service.isActive ? "green" : "slate"}>
+                                  {service.isActive ? "Activo" : "Inactivo"}
+                                </V2Badge>
+                              </div>
+                              <p className="mt-1 text-sm leading-5 text-slate-500">
+                                {service.description || "Sin descripción"}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <V2Badge tone="blue">
+                                  {service.durationMinutes} min
+                                </V2Badge>
+                                <V2Badge tone="slate">
+                                  Capacidad {service.capacity}
+                                </V2Badge>
+                                <V2Badge tone="slate">
+                                  {service.price === null
+                                    ? "Sin precio"
+                                    : formatCurrency(service.price)}
+                                </V2Badge>
+                              </div>
+                            </div>
+
+                            {canManageBusinessServices
+                              && businessServicesPersistence === "supabase" ? (
+                              <div className="flex flex-wrap gap-2">
+                                <V2Button
+                                  size="sm"
+                                  variant="secondary"
+                                  icon={<Pencil size={15} />}
+                                  onClick={() =>
+                                    openBusinessServiceEditor(service)
+                                  }
+                                  disabled={serviceMutationStatus === "saving"}
+                                >
+                                  Editar
+                                </V2Button>
+                                <V2Button
+                                  size="sm"
+                                  variant="secondary"
+                                  icon={<Power size={15} />}
+                                  onClick={() =>
+                                    void toggleBusinessService(service)
+                                  }
+                                  disabled={serviceMutationStatus === "saving"}
+                                >
+                                  {service.isActive
+                                    ? "Desactivar"
+                                    : "Activar"}
+                                </V2Button>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </V2Card>
+              </div>
+
               <div id="config-envios" className="scroll-mt-20">
                 <V2Card>
                 <div className="flex items-start gap-3">
@@ -1070,6 +1436,7 @@ export function V2ConfiguracionPage({
               <div className="v2-config-scrollbar mt-4 grid h-[calc(100%-2.25rem)] content-start gap-3 overflow-y-auto pr-1 text-sm">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Horarios</p><p className="mt-1 font-semibold text-slate-950">{openDays.length} abiertos / {closedDays.length} cerrados</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Reservas</p><p className="mt-1 font-semibold text-slate-950">{config.standardDurationMinutes} min · {config.bookingWindowDays} días visibles</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Servicios activos</p><p className="mt-1 font-semibold text-slate-950">{activeBusinessServiceCount} de {businessServices.length}</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Envíos</p><p className="mt-1 font-semibold text-slate-950">{formatCurrency(config.fixedDeliveryCost)} costo fijo</p></div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alertas</p><p className="mt-1 font-semibold text-slate-950">{activeNotificationCount}/5 activas</p></div>
               </div>
@@ -1078,6 +1445,150 @@ export function V2ConfiguracionPage({
           </aside>
         </div>
       </div>
+
+      <V2Modal
+        open={serviceEditor !== null}
+        title={
+          serviceEditor?.id
+            ? "Editar servicio"
+            : "Servicio nuevo"
+        }
+        description="Los cambios se guardan únicamente en el negocio activo."
+        onClose={closeBusinessServiceEditor}
+        footer={
+          <>
+            <V2Button
+              variant="secondary"
+              onClick={closeBusinessServiceEditor}
+              disabled={serviceMutationStatus === "saving"}
+            >
+              Cancelar
+            </V2Button>
+            <V2Button
+              variant="success"
+              onClick={() =>
+                void saveBusinessServiceEditor()
+              }
+              disabled={
+                serviceMutationStatus === "saving"
+                || !serviceEditor
+              }
+            >
+              {serviceMutationStatus === "saving"
+                ? "Guardando..."
+                : "Guardar servicio"}
+            </V2Button>
+          </>
+        }
+      >
+        {serviceEditor ? (
+          <div className="grid gap-4">
+            <V2Field label="Nombre del servicio">
+              <V2Input
+                value={serviceEditor.name}
+                maxLength={120}
+                onChange={(event) =>
+                  updateBusinessServiceEditor(
+                    "name",
+                    event.target.value,
+                  )
+                }
+              />
+            </V2Field>
+
+            <V2Field label="Descripción">
+              <V2Textarea
+                value={serviceEditor.description}
+                maxLength={1000}
+                onChange={(event) =>
+                  updateBusinessServiceEditor(
+                    "description",
+                    event.target.value,
+                  )
+                }
+              />
+            </V2Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <V2Field label="Duración en minutos">
+                <V2Input
+                  type="number"
+                  min={15}
+                  max={1440}
+                  step={15}
+                  value={serviceEditor.durationMinutes}
+                  onChange={(event) =>
+                    updateBusinessServiceEditor(
+                      "durationMinutes",
+                      Number(event.target.value),
+                    )
+                  }
+                />
+              </V2Field>
+
+              <V2Field label="Capacidad">
+                <V2Input
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={serviceEditor.capacity}
+                  onChange={(event) =>
+                    updateBusinessServiceEditor(
+                      "capacity",
+                      Number(event.target.value),
+                    )
+                  }
+                />
+              </V2Field>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <V2Field label="Precio opcional">
+                <V2Input
+                  type="number"
+                  min={0}
+                  max={99999999.99}
+                  step="0.01"
+                  value={serviceEditor.price ?? ""}
+                  onChange={(event) =>
+                    updateBusinessServiceEditor(
+                      "price",
+                      event.target.value === ""
+                        ? null
+                        : Number(event.target.value),
+                    )
+                  }
+                />
+              </V2Field>
+
+              <V2Field label="Estado">
+                <V2Select
+                  value={booleanSelectValue(
+                    serviceEditor.isActive,
+                  )}
+                  onChange={(event) =>
+                    updateBusinessServiceEditor(
+                      "isActive",
+                      booleanFromSelect(
+                        event.target.value,
+                      ),
+                    )
+                  }
+                >
+                  <option value="enabled">Activo</option>
+                  <option value="disabled">Inactivo</option>
+                </V2Select>
+              </V2Field>
+            </div>
+
+            {serviceMutationStatus === "error" ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {serviceMutationError}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </V2Modal>
 
       <style jsx global>{`
         .v2-config-scrollbar {

@@ -4,6 +4,7 @@ import { resolveActiveBusiness } from "@/lib/auth/active-business";
 import { buildLoginPath } from "@/lib/auth/redirects";
 import { getDataSource } from "@/lib/data/dataSource";
 import { getBusinessHoursForBusiness } from "@/lib/data/server/business-hours";
+import { getBusinessServicesForBusiness } from "@/lib/data/server/business-services";
 import { getReservationSettingsForBusiness } from "@/lib/data/server/reservation-settings";
 
 export default async function Page() {
@@ -37,17 +38,26 @@ export default async function Page() {
   const [
     initialBusinessHours,
     initialReservationSettings,
+    initialBusinessServices,
   ] = await Promise.all([
     getBusinessHoursForBusiness(businessId),
     getReservationSettingsForBusiness(businessId),
+    getBusinessServicesForBusiness(businessId),
   ]);
+
+  const canManageBusinessServices =
+    activeBusiness.membership.role === "owner"
+    || activeBusiness.membership.role === "admin";
 
   return (
     <V2ConfiguracionPage
       initialBusinessHours={initialBusinessHours}
       initialReservationSettings={initialReservationSettings}
+      initialBusinessServices={initialBusinessServices}
       businessHoursPersistence="supabase"
       reservationSettingsPersistence="supabase"
+      businessServicesPersistence="supabase"
+      canManageBusinessServices={canManageBusinessServices}
     />
   );
 }
