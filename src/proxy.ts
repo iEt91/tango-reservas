@@ -8,6 +8,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/auth/:path*",
-    "/local/seguridad/:path*",
+    "/local/:path*",
   ],
 };

@@ -1,20 +1,20 @@
 # Autenticación SSR — despliegue y QA
 
-## Alcance
+## Alcance actual
 
-Esta entrega añade autenticación de correo y contraseña con sesiones almacenadas en cookies:
+La autenticación utiliza sesiones Supabase almacenadas en cookies:
 
 - cliente de navegador con `createBrowserClient`;
 - cliente de servidor con `createServerClient`;
-- `src/proxy.ts` para renovación de tokens;
-- login;
-- recuperación de contraseña;
-- actualización de contraseña;
-- callback PKCE;
-- logout;
-- ruta piloto `/local/seguridad`.
+- `src/proxy.ts` para renovación y validación temprana;
+- login, recuperación, callback PKCE, actualización y logout;
+- protección de todo `/local`;
+- resolución del negocio activo desde `business_members`;
+- selector seguro cuando una cuenta tiene más de un negocio.
 
-No protege todavía todo `/local`. Esa activación se realizará después de aplicar y validar `business_members` en staging.
+La cookie `tango_active_business` es `httpOnly`, `sameSite=lax` y contiene
+solamente un UUID validado contra una membresía activa. No reemplaza RLS ni se
+confía como fuente de autorización.
 
 ## Variables aceptadas
 
@@ -29,7 +29,32 @@ También se mantiene compatibilidad temporal con:
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
 ```
 
-La service role no se usa en el navegador ni en estas rutas.
+La service role no se usa en el navegador, el Proxy, el layout ni el selector.
+
+## Sincronizar la app local con staging
+
+```text
+npm run staging:sync-app-env
+```
+
+El comando copia únicamente la URL y la clave pública desde
+`.env.staging.local`. Elimina claves privilegiadas de `.env.local`, conserva el
+resto de variables y guarda el contenido anterior en
+`.tango/env-local-before-staging-sync`.
+
+No imprime claves.
+
+## Flujo de protección
+
+1. El Proxy renueva cookies y rechaza `/local` sin claims válidos.
+2. `src/app/local/layout.tsx` vuelve a validar en el servidor.
+3. La consulta a `business_members` incluye el `user_id` autenticado y estado
+   `active`.
+4. La fila de `businesses` se obtiene únicamente para esos IDs autorizados.
+5. Sin membresía se muestra acceso denegado.
+6. Con varias membresías se exige seleccionar negocio.
+7. La selección se valida nuevamente antes de establecer la cookie privada.
+8. RLS continúa siendo la barrera primaria en PostgreSQL.
 
 ## Configuración necesaria en Supabase
 
@@ -38,47 +63,38 @@ En Auth → URL Configuration:
 - Site URL de desarrollo: `http://localhost:3000`
 - Redirect URL de desarrollo:
   `http://localhost:3000/auth/callback`
-- Añadir después las URLs equivalentes de staging y producción.
-
-En Auth → Providers → Email:
-
-- Email habilitado.
-- Para staging puede crearse manualmente un usuario de prueba.
-- La confirmación de correo puede mantenerse activa en producción.
+- Añadir las URLs equivalentes de staging y producción.
 
 ## QA manual local
 
-1. Ejecutar `npm run dev`.
-2. Abrir `http://localhost:3000/auth/login`.
-3. Confirmar que no aparece el header global viejo.
-4. Abrir `http://localhost:3000/auth/forgot-password`.
-5. Abrir directamente `http://localhost:3000/local/seguridad`.
-6. Sin sesión, debe volver a `/auth/login` conservando
-   `next=/local/seguridad`.
-7. Las rutas `/local`, `/local/reservas` y `/local/configuracion`
-   deben continuar funcionando como antes.
-8. Con un usuario de prueba válido, iniciar sesión.
-9. Debe abrir `/local/seguridad` y mostrar el correo autenticado.
-10. Pulsar “Cerrar sesión”.
-11. Volver a abrir `/local/seguridad`; debe redirigir al login.
+1. Ejecutar `npm run staging:sync-app-env`.
+2. Ejecutar `npm run dev`.
+3. Abrir `http://localhost:3000/local` sin sesión.
+4. Debe volver a `/auth/login` conservando `next=/local`.
+5. Iniciar sesión con el usuario A del fixture.
+6. Debe abrir `/local` sin mostrar datos de B.
+7. Abrir `/local/configuracion` y `/local/reservas`.
+8. Ambas rutas deben conservar la sesión.
+9. Pulsar “Cerrar sesión”.
+10. Volver a `/local`; debe redirigir al login.
+11. Confirmar que la cookie `tango_active_business` fue eliminada.
 
-## QA de recuperación
+## QA con múltiples negocios
 
-Solo después de configurar la redirect URL:
+Cuando una cuenta tenga dos membresías activas:
 
-1. Solicitar recuperación.
-2. Abrir el enlace recibido.
-3. Debe entrar por `/auth/callback`.
-4. Debe terminar en `/auth/update-password`.
-5. Guardar una contraseña de ocho o más caracteres.
-6. Debe cerrar la sesión y volver al login.
-7. Iniciar sesión con la contraseña nueva.
+1. Abrir `/auth/select-business?change=1&next=/local`.
+2. Elegir un negocio.
+3. Confirmar que el POST usa `/auth/select-business/activate`.
+4. Confirmar que un UUID ajeno devuelve acceso denegado.
+5. Confirmar que el negocio elegido pertenece a la sesión actual.
 
 ## Criterios de aprobación
 
 - No se utiliza `getSession()` para proteger rutas.
-- Proxy y página usan validación de identidad.
-- Cookies se renuevan con `getAll` y `setAll`.
-- No existe service role en código cliente.
+- Todo `/local` es dinámico y requiere sesión.
+- El negocio activo se resuelve desde membresías, no desde datos del cliente.
+- El selector revalida usuario, negocio, estado y origen del POST.
+- La cookie de contexto es privada y se elimina al cerrar sesión.
+- No existe service role en el flujo.
 - Los redirects internos rechazan URLs externas.
-- El resto del prototipo no queda bloqueado.

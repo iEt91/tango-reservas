@@ -1,5 +1,12 @@
-import type { Business, BusinessStatus, PublicTemplateId } from "@/data/types";
-import { getDataSource, type DataSource } from "@/lib/data/dataSource";
+import type {
+  Business,
+  BusinessFormValues,
+  BusinessStatus,
+} from "@/data/types";
+import {
+  getDataSource,
+  type DataSource,
+} from "@/lib/data/dataSource";
 import {
   archiveBusiness as archiveLocalBusiness,
   createBusiness as createLocalBusiness,
@@ -9,16 +16,16 @@ import {
   getBusinessBySlug as getLocalBusinessBySlug,
   getBusinesses as getLocalBusinesses,
   getEmptyBusinessFormValues,
-  subscribeBusinesses as subscribeLocalBusinesses,
   restoreBusiness as restoreLocalBusiness,
+  subscribeBusinesses as subscribeLocalBusinesses,
   toBusinessFormValues,
   updateBusiness as updateLocalBusiness,
 } from "@/lib/data/businesses";
 import {
   createSupabaseBusiness,
-  fetchSupabaseBusinesses,
   deleteSupabaseBusiness,
   duplicateSupabaseBusiness,
+  fetchSupabaseBusinesses,
   getSupabaseBusinessById,
   getSupabaseBusinessBySlug,
   setSupabaseBusinessStatus,
@@ -31,7 +38,6 @@ import {
   duplicateFloorPlanSettings,
   duplicateServices,
 } from "@/lib/data/supabase/business-related";
-import type { BusinessFormValues } from "@/data/types";
 
 export type AdminBusinessesSnapshot = {
   requestedSource: DataSource;
@@ -46,13 +52,9 @@ export type LoadAdminBusinessesSnapshotOptions = {
   allowFallback?: boolean;
 };
 
-const SUPABASE_TEMPLATE_TO_THEME: Record<PublicTemplateId, Business["themeId"]> = {
-  "restaurant-elegant": "restaurant_elegant",
-  "compact-premium": "restaurant_elegant",
-  "minimal-cafe": "cafe_minimal",
-};
-
-function normalizeBusinessStatus(value: string | null | undefined): BusinessStatus {
+function normalizeBusinessStatus(
+  value: string | null | undefined,
+): BusinessStatus {
   if (value === "draft" || value === "inactive") {
     return value;
   }
@@ -60,21 +62,25 @@ function normalizeBusinessStatus(value: string | null | undefined): BusinessStat
   return "active";
 }
 
-function mapTemplateToThemeId(templateId: string | null | undefined): Business["themeId"] {
+function normalizeThemeId(
+  value: string | null | undefined,
+): Business["themeId"] {
   if (
-    templateId === "restaurant-elegant" ||
-    templateId === "compact-premium" ||
-    templateId === "minimal-cafe"
+    value === "beach_club_dark"
+    || value === "cafe_minimal"
   ) {
-    return SUPABASE_TEMPLATE_TO_THEME[templateId];
+    return value;
   }
 
-  return getEmptyBusinessFormValues().themeId;
+  return "restaurant_elegant";
 }
 
-export function mapSupabaseBusinessToBusiness(row: SupabaseBusinessRow): Business {
+export function mapSupabaseBusinessToBusiness(
+  row: SupabaseBusinessRow,
+): Business {
   const defaults = getEmptyBusinessFormValues();
-  const createdAt = row.created_at ?? new Date(0).toISOString();
+  const createdAt =
+    row.created_at ?? new Date(0).toISOString();
   const updatedAt = row.updated_at ?? createdAt;
 
   return {
@@ -84,38 +90,48 @@ export function mapSupabaseBusinessToBusiness(row: SupabaseBusinessRow): Busines
     slug: row.slug,
     category: row.category ?? defaults.category,
     city: row.city ?? defaults.city,
-    description: row.description ?? defaults.description,
+    description:
+      row.description ?? defaults.description,
     phone: row.phone ?? defaults.phone,
     whatsapp: row.whatsapp ?? defaults.whatsapp,
     email: row.email ?? defaults.email,
     address: row.address ?? defaults.address,
-    googleMapsUrl: row.google_maps_url ?? defaults.googleMapsUrl,
-    instagramUrl: row.instagram_url ?? defaults.instagramUrl,
-    facebookUrl: row.facebook_url ?? defaults.facebookUrl,
-    websiteUrl: row.website_url ?? defaults.websiteUrl,
-    logoUrl: defaults.logoUrl,
-    coverImageUrl: defaults.coverImageUrl,
-    primaryColor: defaults.primaryColor,
-    secondaryColor: defaults.secondaryColor,
-    themeId: mapTemplateToThemeId(row.public_template_id),
-    heroTitle: defaults.heroTitle || row.name,
-    heroSubtitle: defaults.heroSubtitle,
-    aboutTitle: defaults.aboutTitle,
-    aboutText: row.description ?? defaults.aboutText,
-    menuTitle: defaults.menuTitle,
-    reservationTitle: defaults.reservationTitle,
-    ctaLabel: defaults.ctaLabel,
-    showHero: defaults.showHero,
-    showAbout: defaults.showAbout,
-    showGallery: defaults.showGallery,
-    showMenu: defaults.showMenu,
-    showLocation: defaults.showLocation,
-    showReservation: defaults.showReservation,
-    showWhatsappButton: defaults.showWhatsappButton,
+    googleMapsUrl:
+      row.google_maps_url ?? defaults.googleMapsUrl,
+    instagramUrl:
+      row.instagram_url ?? defaults.instagramUrl,
+    facebookUrl:
+      row.facebook_url ?? defaults.facebookUrl,
+    websiteUrl:
+      row.website_url ?? defaults.websiteUrl,
+    logoUrl: row.logo_url ?? defaults.logoUrl,
+    coverImageUrl:
+      row.cover_image_url ?? defaults.coverImageUrl,
+    primaryColor:
+      row.primary_color ?? defaults.primaryColor,
+    secondaryColor:
+      row.secondary_color ?? defaults.secondaryColor,
+    themeId: normalizeThemeId(row.theme_id),
+    heroTitle: row.hero_title ?? defaults.heroTitle,
+    heroSubtitle:
+      row.hero_subtitle ?? defaults.heroSubtitle,
+    aboutTitle:
+      row.about_title ?? defaults.aboutTitle,
+    aboutText: row.about_text ?? defaults.aboutText,
+    menuTitle: row.menu_title ?? defaults.menuTitle,
+    reservationTitle:
+      row.reservation_title
+      ?? defaults.reservationTitle,
+    ctaLabel: row.cta_label ?? defaults.ctaLabel,
+    showHero: row.show_hero,
+    showAbout: row.show_about,
+    showGallery: row.show_gallery,
+    showMenu: row.show_menu,
+    showLocation: row.show_location,
+    showReservation: row.show_reservation,
+    showWhatsappButton: row.show_whatsapp_button,
     autoConfirmReservations:
-      typeof row.auto_confirm_reservations === "boolean"
-        ? row.auto_confirm_reservations
-        : defaults.autoConfirmReservations,
+      defaults.autoConfirmReservations,
     status: normalizeBusinessStatus(row.status),
     createdAt,
     updatedAt,
@@ -130,20 +146,36 @@ export function getBusinessBySlug(slug: string) {
   const source = getDataSource();
 
   if (source === "supabase") {
-    return getSupabaseBusinessBySlug(slug).then((row) => (row ? mapSupabaseBusinessToBusiness(row) : null));
+    return getSupabaseBusinessBySlug(slug).then(
+      (row) => (
+        row
+          ? mapSupabaseBusinessToBusiness(row)
+          : null
+      ),
+    );
   }
 
-  return Promise.resolve(getLocalBusinessBySlug(slug) ?? null);
+  return Promise.resolve(
+    getLocalBusinessBySlug(slug) ?? null,
+  );
 }
 
 export function getBusinessById(id: string) {
   const source = getDataSource();
 
   if (source === "supabase") {
-    return getSupabaseBusinessById(id).then((row) => (row ? mapSupabaseBusinessToBusiness(row) : null));
+    return getSupabaseBusinessById(id).then(
+      (row) => (
+        row
+          ? mapSupabaseBusinessToBusiness(row)
+          : null
+      ),
+    );
   }
 
-  return Promise.resolve(getLocalBusinessById(id) ?? null);
+  return Promise.resolve(
+    getLocalBusinessById(id) ?? null,
+  );
 }
 
 export async function getBusinesses() {
@@ -174,10 +206,20 @@ export async function loadAdminBusinessesSnapshot(
 
       const fallbackBusinesses = getLocalBusinesses();
       const warning = result.error
-        ? `Supabase fallÃ³ y se usÃ³ local/mock como fallback: ${result.error.message}`
-        : "Supabase fallÃ³ y se usÃ³ local/mock como fallback.";
+        ? (
+            "Supabase falló y se usó local/mock "
+            + `como fallback: ${result.error.message}`
+          )
+        : (
+            "Supabase falló y se usó local/mock "
+            + "como fallback."
+          );
 
-      console.warn("[admin-businesses] Supabase fallback to local/mock", result.error);
+      console.warn(
+        "[admin-businesses] Supabase fallback "
+        + "to local/mock",
+        result.error,
+      );
 
       return {
         requestedSource,
@@ -195,10 +237,15 @@ export async function loadAdminBusinessesSnapshot(
       fallbackUsed: false,
       warning:
         result.businesses.length === 0
-          ? "Supabase responde, pero public.businesses no devolviÃ³ registros."
+          ? (
+              "Supabase responde, pero "
+              + "public.businesses no devolvió registros."
+            )
           : null,
       error: null,
-      businesses: result.businesses.map(mapSupabaseBusinessToBusiness),
+      businesses: result.businesses.map(
+        mapSupabaseBusinessToBusiness,
+      ),
     };
   }
 
@@ -212,15 +259,26 @@ export async function loadAdminBusinessesSnapshot(
   };
 }
 
-export function getAdminBusinessesSourceLabel(snapshot?: Pick<AdminBusinessesSnapshot, "resolvedSource">) {
-  return snapshot?.resolvedSource === "supabase" ? "Supabase" : "local/mock";
+export function getAdminBusinessesSourceLabel(
+  snapshot?: Pick<
+    AdminBusinessesSnapshot,
+    "resolvedSource"
+  >,
+) {
+  return snapshot?.resolvedSource === "supabase"
+    ? "Supabase"
+    : "local/mock";
 }
 
-export function getStatsBusinessForAdmin(business: Business) {
+export function getStatsBusinessForAdmin(
+  business: Business,
+) {
   return resolveStatsBusiness(business);
 }
 
-export function subscribeBusinesses(listener: () => void) {
+export function subscribeBusinesses(
+  listener: () => void,
+) {
   const source = getDataSource();
 
   if (source === "supabase") {
@@ -230,39 +288,61 @@ export function subscribeBusinesses(listener: () => void) {
   return subscribeLocalBusinesses(listener);
 }
 
-function mapAdminMutationBusiness(business: Business | null) {
+function mapAdminMutationBusiness(
+  business: Business | null,
+) {
   if (!business) {
-    throw new Error("No se pudo completar la operaciÃ³n sobre el negocio.");
+    throw new Error(
+      "No se pudo completar la operación "
+      + "sobre el negocio.",
+    );
   }
 
   return business;
 }
 
-export async function createAdminBusiness(data: BusinessFormValues) {
+export async function createAdminBusiness(
+  data: BusinessFormValues,
+) {
   const requestedSource = getDataSource();
 
   if (requestedSource === "supabase") {
     const row = await createSupabaseBusiness(data);
-    const business = mapSupabaseBusinessToBusiness(row);
+    const business =
+      mapSupabaseBusinessToBusiness(row);
 
     try {
       await createBusinessBaseRecords(business);
     } catch (error) {
-      await deleteSupabaseBusiness(business.id).catch(() => undefined);
+      await deleteSupabaseBusiness(
+        business.id,
+      ).catch(() => undefined);
+
       throw new Error(
         error instanceof Error
-          ? `Se creÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base: ${error.message}`
-          : "Se creÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base.",
+          ? (
+              "Se creó el negocio, pero falló "
+              + `la configuración base: ${error.message}`
+            )
+          : (
+              "Se creó el negocio, pero falló "
+              + "la configuración base."
+            ),
       );
     }
 
     return business;
   }
 
-  return mapAdminMutationBusiness(createLocalBusiness(data));
+  return mapAdminMutationBusiness(
+    createLocalBusiness(data),
+  );
 }
 
-export async function updateAdminBusiness(id: string, data: BusinessFormValues) {
+export async function updateAdminBusiness(
+  id: string,
+  data: BusinessFormValues,
+) {
   const requestedSource = getDataSource();
 
   if (requestedSource === "supabase") {
@@ -270,42 +350,71 @@ export async function updateAdminBusiness(id: string, data: BusinessFormValues) 
     return mapSupabaseBusinessToBusiness(row);
   }
 
-  return mapAdminMutationBusiness(updateLocalBusiness(id, data));
+  return mapAdminMutationBusiness(
+    updateLocalBusiness(id, data),
+  );
 }
 
-export async function duplicateAdminBusiness(id: string) {
+export async function duplicateAdminBusiness(
+  id: string,
+) {
   const requestedSource = getDataSource();
 
   if (requestedSource === "supabase") {
     const row = await duplicateSupabaseBusiness(id);
-    const business = mapSupabaseBusinessToBusiness(row);
+    const business =
+      mapSupabaseBusinessToBusiness(row);
 
     try {
-      const original = await getSupabaseBusinessById(id);
+      const original =
+        await getSupabaseBusinessById(id);
 
       if (original) {
-        await duplicateBusinessWebContent(original.id, business.id, business);
-        await duplicateFloorPlanSettings(original.id, business.id);
-        await duplicateServices(original.id, business.id);
+        await duplicateBusinessWebContent(
+          original.id,
+          business.id,
+          business,
+        );
+        await duplicateFloorPlanSettings(
+          original.id,
+          business.id,
+        );
+        await duplicateServices(
+          original.id,
+          business.id,
+        );
       } else {
         await createBusinessBaseRecords(business);
       }
     } catch (error) {
-      await deleteSupabaseBusiness(business.id).catch(() => undefined);
+      await deleteSupabaseBusiness(
+        business.id,
+      ).catch(() => undefined);
+
       throw new Error(
         error instanceof Error
-          ? `Se duplicÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base: ${error.message}`
-          : "Se duplicÃ³ el negocio, pero fallÃ³ la configuraciÃ³n base.",
+          ? (
+              "Se duplicó el negocio, pero falló "
+              + `la configuración base: ${error.message}`
+            )
+          : (
+              "Se duplicó el negocio, pero falló "
+              + "la configuración base."
+            ),
       );
     }
 
     return business;
   }
 
-  return mapAdminMutationBusiness(duplicateLocalBusiness(id));
+  return mapAdminMutationBusiness(
+    duplicateLocalBusiness(id),
+  );
 }
 
-export async function deleteAdminBusiness(id: string) {
+export async function deleteAdminBusiness(
+  id: string,
+) {
   const requestedSource = getDataSource();
 
   if (requestedSource === "supabase") {
@@ -318,7 +427,10 @@ export async function deleteAdminBusiness(id: string) {
   if (!result.success) {
     throw new Error(
       result.reason === "protected"
-        ? "Este negocio base no se puede eliminar en modo mock. PodÃ©s desactivarlo."
+        ? (
+            "Este negocio base no se puede eliminar "
+            + "en modo mock. Podés desactivarlo."
+          )
         : "No pudimos eliminar el negocio.",
     );
   }
@@ -326,33 +438,47 @@ export async function deleteAdminBusiness(id: string) {
   return result.business;
 }
 
-export async function setAdminBusinessStatus(id: string, status: Business["status"]) {
+export async function setAdminBusinessStatus(
+  id: string,
+  status: Business["status"],
+) {
   const requestedSource = getDataSource();
 
   if (requestedSource === "supabase") {
-    const row = await setSupabaseBusinessStatus(id, status);
+    const row = await setSupabaseBusinessStatus(
+      id,
+      status,
+    );
     return mapSupabaseBusinessToBusiness(row);
   }
 
   const current = getLocalBusinessById(id);
 
   if (!current) {
-    throw new Error("No se encontrÃ³ el negocio para actualizar.");
+    throw new Error(
+      "No se encontró el negocio para actualizar.",
+    );
   }
 
   if (status === "inactive") {
-    return mapAdminMutationBusiness(archiveLocalBusiness(id));
+    return mapAdminMutationBusiness(
+      archiveLocalBusiness(id),
+    );
   }
 
   if (status === "active") {
-    return mapAdminMutationBusiness(restoreLocalBusiness(id));
+    return mapAdminMutationBusiness(
+      restoreLocalBusiness(id),
+    );
   }
 
   return mapAdminMutationBusiness(
-    updateLocalBusiness(id, {
-      ...toBusinessFormValues(current),
-      status,
-    }),
+    updateLocalBusiness(
+      id,
+      {
+        ...toBusinessFormValues(current),
+        status,
+      },
+    ),
   );
 }
-

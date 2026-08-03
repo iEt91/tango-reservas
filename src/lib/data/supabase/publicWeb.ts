@@ -133,6 +133,20 @@ async function getBusinessBySlugOrId(slug: string) {
   return businesses.find((entry) => entry.id === normalized) ?? null;
 }
 
+function mapThemeIdToPublicTemplateId(
+  value: SupabaseBusinessRow["theme_id"] | null | undefined,
+): PublicTemplateId {
+  if (value === "beach_club_dark") {
+    return "compact-premium";
+  }
+
+  if (value === "cafe_minimal") {
+    return "minimal-cafe";
+  }
+
+  return "restaurant-elegant";
+}
+
 function applyTemplateFallback(
   content: PublicWebContent,
   business: Business,
@@ -140,12 +154,9 @@ function applyTemplateFallback(
 ): PublicWebContent {
   return {
     ...content,
-    publicTemplateId:
-      businessRow?.public_template_id === "restaurant-elegant" ||
-      businessRow?.public_template_id === "compact-premium" ||
-      businessRow?.public_template_id === "minimal-cafe"
-        ? businessRow.public_template_id
-        : content.publicTemplateId ?? "restaurant-elegant",
+    publicTemplateId: businessRow
+      ? mapThemeIdToPublicTemplateId(businessRow.theme_id)
+      : content.publicTemplateId ?? "restaurant-elegant",
     showFeaturedMenu: content.showFeaturedMenu !== false,
     showMenu: content.showMenu,
     showReservations: content.showReservations ?? content.showReservation,
@@ -202,12 +213,9 @@ export async function getSupabasePublicWebSnapshot(slug: string): Promise<Supaba
       services: services.filter((service) => service.isActive),
       menuCategories: menu.categories.filter((category) => category.isActive),
       menuItems: menu.items.filter((item) => item.isActive),
-      templateId:
-        businessRow.public_template_id === "compact-premium" ||
-        businessRow.public_template_id === "minimal-cafe" ||
-        businessRow.public_template_id === "restaurant-elegant"
-          ? businessRow.public_template_id
-          : "restaurant-elegant",
+      templateId: mapThemeIdToPublicTemplateId(
+        businessRow.theme_id,
+      ),
       flags: buildFlags(applyTemplateFallback(webContent, business, businessRow)),
     };
 

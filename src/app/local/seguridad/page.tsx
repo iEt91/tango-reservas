@@ -31,13 +31,13 @@ export default async function SecurityPilotPage() {
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
               <ShieldCheck size={14} />
-              Ruta piloto protegida
+              Área privada protegida
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-950">
               Seguridad y sesión
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Esta pantalla valida la identidad en el servidor antes de renderizar.
+              Proxy, layout y membresía validan la sesión antes de renderizar.
             </p>
           </div>
 
@@ -69,21 +69,21 @@ export default async function SecurityPilotPage() {
                   {user?.email ?? "Usuario autenticado"}
                 </p>
                 <p className="mt-4 text-sm leading-6 text-slate-600">
-                  El Proxy renueva las cookies y esta página vuelve a comprobar
-                  el token mediante Supabase antes de mostrar contenido.
+                  Todas las rutas de `/local` exigen identidad válida y una
+                  membresía activa antes de mostrar contenido privado.
                 </p>
               </div>
             </div>
           </section>
 
-          <aside className="rounded-[20px] border border-amber-200 bg-amber-50 p-6">
-            <h2 className="text-base font-bold text-amber-950">
-              Alcance de esta fase
+          <aside className="rounded-[20px] border border-emerald-200 bg-emerald-50 p-6">
+            <h2 className="text-base font-bold text-emerald-950">
+              Aislamiento activo
             </h2>
-            <p className="mt-2 text-sm leading-6 text-amber-900/80">
-              Solo esta sección exige autenticación. Las demás páginas de
-              `/local` permanecen abiertas hasta aplicar la migración de
-              membresías en staging y validar los roles.
+            <p className="mt-2 text-sm leading-6 text-emerald-900/80">
+              El negocio activo se obtiene desde `business_members`. Una cookie
+              privada solo conserva un UUID previamente validado contra la
+              membresía del usuario.
             </p>
           </aside>
         </div>

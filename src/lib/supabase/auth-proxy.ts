@@ -34,17 +34,18 @@ export async function updateSupabaseAuthSession(
     NextResponse.next({ request }),
   );
   const config = getSupabasePublicConfig();
-  const isProtectedPilot = request.nextUrl.pathname.startsWith(
-    "/local/seguridad",
-  );
+  const pathname = request.nextUrl.pathname;
+  const isProtectedLocal =
+    pathname === "/local" || pathname.startsWith("/local/");
+  const requestedPath = `${pathname}${request.nextUrl.search}`;
 
   if (!config) {
-    if (!isProtectedPilot) {
+    if (!isProtectedLocal) {
       return supabaseResponse;
     }
 
     const loginUrl = new URL(
-      buildLoginPath(request.nextUrl.pathname),
+      buildLoginPath(requestedPath),
       request.url,
     );
     loginUrl.searchParams.set("error", "config");
@@ -84,9 +85,9 @@ export async function updateSupabaseAuthSession(
     error: claimsError,
   } = await supabase.auth.getClaims();
 
-  if (isProtectedPilot && (claimsError || !claimsData?.claims)) {
+  if (isProtectedLocal && (claimsError || !claimsData?.claims)) {
     const loginUrl = new URL(
-      buildLoginPath(request.nextUrl.pathname),
+      buildLoginPath(requestedPath),
       request.url,
     );
 
