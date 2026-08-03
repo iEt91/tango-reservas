@@ -5,9 +5,12 @@ const initialPath =
   "supabase/migrations/20260802_001_initial_schema_lockdown.sql";
 const membersPath =
   "supabase/migrations/20260802_002_business_members_and_rls.sql";
+const identityPath =
+  "supabase/migrations/20260802_003_business_identity_read_rls.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
+const identity = await readFile(identityPath, "utf8");
 
 const tables = [
   "businesses",
@@ -47,7 +50,6 @@ for (const table of tables) {
     ),
   );
 }
-
 console.log("✓ las tablas iniciales nacen bloqueadas");
 
 assert.match(
@@ -58,25 +60,15 @@ assert.match(
   initial,
   /role text not null default 'owner'\s+check \(role in \('owner', 'admin', 'staff'\)\)/u,
 );
-
 console.log("✓ profiles referencia Auth y restringe roles");
 
-assert.match(
-  members,
-  /create schema if not exists private/u,
-);
-assert.match(
-  members,
-  /function private\.has_business_role/u,
-);
+assert.match(members, /create schema if not exists private/u);
+assert.match(members, /function private\.has_business_role/u);
 assert.match(
   members,
   /security definer\s+set search_path = ''/u,
 );
-assert.match(
-  members,
-  /force row level security/u,
-);
+assert.match(members, /force row level security/u);
 assert.match(
   members,
   /grant select on table public\.business_members to authenticated/u,
@@ -85,13 +77,29 @@ assert.doesNotMatch(
   members,
   /create or replace function public\.has_business_role/u,
 );
-
 console.log("✓ membresías usan helper privado y RLS");
+
+assert.match(
+  identity,
+  /create policy businesses_select_active_member/u,
+);
+assert.match(
+  identity,
+  /create policy profiles_select_self_or_manager/u,
+);
+assert.match(
+  identity,
+  /grant select on table public\.businesses to authenticated/u,
+);
+assert.match(
+  identity,
+  /grant select on table public\.profiles to authenticated/u,
+);
+assert.doesNotMatch(identity, /grant\s+(insert|update|delete|all)/iu);
 
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
-
 assert.equal(
   packageJson.scripts?.["test:remote-schema-history"],
   "node scripts/remote-schema-history-regression-tests.mjs",
@@ -100,6 +108,6 @@ assert.match(
   packageJson.scripts?.["test:regression"] ?? "",
   /test:remote-schema-history/u,
 );
+console.log("✓ identidad multiempresa y su historial forman parte del QA");
 
-console.log("✓ el historial remoto forma parte del QA");
 console.log("Todos los casos del historial remoto pasaron (4).");

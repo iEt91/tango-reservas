@@ -26,7 +26,12 @@ function buildHeaders() {
   return headers;
 }
 
-async function request(path) {
+async function request(
+  path,
+  {
+    method = "GET",
+  } = {},
+) {
   const controller = new AbortController();
   const timeout = setTimeout(
     () => controller.abort(),
@@ -37,17 +42,26 @@ async function request(path) {
     const response = await fetch(
       `${context.url}${path}`,
       {
+        method,
         headers: buildHeaders(),
         signal: controller.signal,
         redirect: "error",
       },
     );
 
-    await response.body?.cancel();
+    await response.arrayBuffer();
     return response.status;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function isReachableRestStatus(status) {
+  return (
+    (status >= 200 && status < 400)
+    || status === 401
+    || status === 403
+  );
 }
 
 console.log("Ejecutando preflight seguro de Supabase staging...");
@@ -72,14 +86,19 @@ if (authStatus < 200 || authStatus >= 300) {
 
 console.log("✓ Auth reconoce la clave pública");
 
-const restStatus = await request("/rest/v1/");
+const restStatus = await request(
+  "/rest/v1/business_members?select=id&limit=0",
+  {
+    method: "HEAD",
+  },
+);
 
-if (restStatus < 200 || restStatus >= 400) {
+if (!isReachableRestStatus(restStatus)) {
   throw new Error(
     `PostgREST no respondió correctamente: HTTP ${restStatus}.`,
   );
 }
 
-console.log("✓ PostgREST está accesible");
+console.log("✓ PostgREST está accesible y aplica permisos");
 console.log("✓ staging y producción tienen referencias diferentes");
 console.log("Preflight remoto aprobado (4 controles).");

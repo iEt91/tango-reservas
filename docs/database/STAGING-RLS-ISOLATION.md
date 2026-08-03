@@ -5,7 +5,7 @@
 - Nombre: `tango-resto`
 - Project ref: `yzkeugxygfdgzhlwdeek`
 - Región: São Paulo
-- Contenido previo al fixture: vacío
+- Fixture: dos usuarios owner y dos negocios independientes
 
 Los scripts rechazan cualquier URL cuyo project ref no coincida con staging y
 también rechazan que staging y producción compartan referencia.
@@ -16,65 +16,48 @@ también rechazan que staging y producción compartan referencia.
 
 Nunca pegar la secret key en el chat, una captura, un commit, un issue o un log.
 
-El instalador genera localmente dos contraseñas aleatorias diferentes. Solamente
-queda pendiente completar `SUPABASE_SERVICE_ROLE_KEY` con la secret key de
-`tango-resto`.
+La clave privilegiada se utiliza únicamente para preparar o eliminar el fixture.
+La prueba RLS usa la publishable key y sesiones reales de A y B.
 
-La clave privilegiada se usa únicamente desde Node.js para:
+## Fixture
 
-- crear o actualizar dos usuarios de prueba;
-- confirmar sus emails ficticios;
-- preparar dos negocios;
-- preparar perfiles y membresías;
-- eliminar el fixture cuando deje de ser necesario.
-
-La prueba RLS no utiliza esa clave. Se autentica con la publishable key y las
-sesiones reales de A y B.
-
-## Preparación
-
-1. Abrir `.env.staging.local` con Bloc de notas.
-2. Reemplazar únicamente:
+El fixture se prepara con:
 
 ```text
-SUPABASE_SERVICE_ROLE_KEY=REPLACE_WITH_STAGING_SECRET_KEY
-```
-
-3. Guardar y cerrar.
-4. No enviar el contenido del archivo.
-
-## Crear fixture
-
-```text
-npm run staging:preflight
 npm run staging:seed-isolation
 ```
 
-El seed es idempotente. Si A y B ya existen, actualiza sus contraseñas y vuelve a
-crear sus membresías exclusivas.
+Es idempotente. No debe ejecutarse `staging:cleanup-isolation` mientras se
+desarrollan las políticas operativas.
 
-## Ejecutar aislamiento
+## Prueba de aislamiento
+
+Después de aplicar la migración 003 sobre businesses y profiles:
 
 ```text
 npm run staging:test-isolation
 ```
 
-La prueba debe aprobar ocho controles:
+La prueba debe aprobar doce controles:
 
-1. anon no consulta tablas privadas;
+1. anon no consulta membresías, businesses ni profiles;
 2. A y B se autentican;
-3. cada uno ve su membresía owner;
-4. una consulta amplia devuelve solo su negocio;
-5. la lectura cruzada devuelve cero filas;
-6. INSERT, UPDATE y DELETE están bloqueados;
-7. las tablas operativas continúan default deny;
-8. ambas sesiones se cierran.
+3. cada usuario ve su membresía owner;
+4. la consulta amplia de membresías devuelve solo su tenant;
+5. cada usuario ve exactamente su fila de businesses;
+6. cada usuario ve exactamente su fila de profiles;
+7. membresías, negocios y perfiles cruzados devuelven cero filas;
+8. las escrituras de business_members siguen bloqueadas;
+9. las escrituras de businesses están bloqueadas;
+10. las escrituras de profiles están bloqueadas;
+11. services y reservations continúan en default deny;
+12. ambas sesiones se cierran.
 
-Cualquier fila cruzada es un fallo P0 y bloquea el lanzamiento.
+Cualquier fila cruzada es un fallo P0.
 
-## Evidencia
+## Evidencia permitida
 
-Puede compartirse la consola de los comandos porque los scripts no imprimen:
+Puede compartirse la consola porque los scripts no imprimen:
 
 - passwords;
 - publishable keys;
@@ -82,16 +65,15 @@ Puede compartirse la consola de los comandos porque los scripts no imprimen:
 - access tokens;
 - refresh tokens.
 
-No compartir `.env.staging.local`.
+No compartir `.env.staging.local` ni `.tango/staging-isolation.json`.
 
-## Limpieza opcional
+## Limpieza futura
 
-El fixture debe conservarse mientras se desarrollan las siguientes políticas RLS.
-
-Para eliminarlo más adelante:
+Cuando el fixture ya no sea necesario:
 
 ```text
 npm run staging:cleanup-isolation
 ```
 
-El cleanup verifica primero que el fixture pertenezca a `tango-resto`.
+El cleanup verifica que la evidencia local pertenezca a `tango-resto` antes de
+eliminar datos.

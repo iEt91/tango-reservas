@@ -99,7 +99,7 @@ async function assertOwnMembership(
   }
 }
 
-async function assertOnlyOwnBusiness(
+async function assertOnlyOwnMembershipBusiness(
   session,
   businessId,
 ) {
@@ -116,19 +116,69 @@ async function assertOnlyOwnBusiness(
     || data[0].business_id !== businessId
   ) {
     throw new Error(
-      `El usuario ${session.label} recibió filas de otro negocio.`,
+      `El usuario ${session.label} recibió membresías de otro negocio.`,
     );
   }
 }
 
-async function assertCrossBusinessHidden(
+async function assertOwnBusinessRow(
   session,
-  otherBusinessId,
+  businessId,
+  businessSlug,
 ) {
   const { data, error } = await session.supabase
-    .from("business_members")
+    .from("businesses")
+    .select("id, slug, name, status");
+
+  if (error) {
+    throw error;
+  }
+
+  if (
+    data.length !== 1
+    || data[0].id !== businessId
+    || data[0].slug !== businessSlug
+  ) {
+    throw new Error(
+      `El usuario ${session.label} no recibió exactamente su negocio.`,
+    );
+  }
+}
+
+async function assertOwnProfileRow(
+  session,
+  businessId,
+) {
+  const { data, error } = await session.supabase
+    .from("profiles")
+    .select("business_id, auth_user_id, full_name, role");
+
+  if (error) {
+    throw error;
+  }
+
+  if (
+    data.length !== 1
+    || data[0].business_id !== businessId
+    || data[0].auth_user_id !== session.user.id
+    || data[0].role !== "owner"
+  ) {
+    throw new Error(
+      `El usuario ${session.label} no recibió exactamente su perfil.`,
+    );
+  }
+}
+
+async function assertCrossRowHidden(
+  session,
+  table,
+  column,
+  otherId,
+) {
+  const { data, error } = await session.supabase
+    .from(table)
     .select("id")
-    .eq("business_id", otherBusinessId);
+    .eq(column, otherId);
 
   if (error) {
     throw error;
@@ -136,12 +186,12 @@ async function assertCrossBusinessHidden(
 
   if (data.length !== 0) {
     throw new Error(
-      `El usuario ${session.label} pudo leer otro negocio.`,
+      `El usuario ${session.label} pudo leer una fila cruzada en ${table}.`,
     );
   }
 }
 
-async function assertWritesDenied(
+async function assertMembershipWritesDenied(
   session,
   ownBusinessId,
 ) {
@@ -180,27 +230,53 @@ async function assertWritesDenied(
   );
 }
 
+async function assertBusinessIdentityWritesDenied(
+  session,
+  ownBusinessId,
+) {
+  await expectPermissionDenied(
+    () => session.supabase
+      .from("businesses")
+      .update({ name: "Cambio bloqueado" })
+      .eq("id", ownBusinessId),
+    `El usuario ${session.label} pudo editar businesses.`,
+  );
+
+  await expectPermissionDenied(
+    () => session.supabase
+      .from("profiles")
+      .update({ role: "admin" })
+      .eq("auth_user_id", session.user.id),
+    `El usuario ${session.label} pudo editar profiles.`,
+  );
+
+  await expectPermissionDenied(
+    () => session.supabase
+      .from("profiles")
+      .delete()
+      .eq("auth_user_id", session.user.id),
+    `El usuario ${session.label} pudo eliminar profiles.`,
+  );
+}
+
 console.log("Ejecutando prueba real de aislamiento RLS...");
 
 const anonymous = publicClient();
 
-await expectPermissionDenied(
-  () => anonymous
-    .from("business_members")
-    .select("id")
-    .limit(1),
-  "Una solicitud anónima pudo consultar membresías.",
-);
-
-await expectPermissionDenied(
-  () => anonymous
-    .from("businesses")
-    .select("id")
-    .limit(1),
-  "Una solicitud anónima pudo consultar negocios.",
-);
-
-console.log("✓ anon no puede consultar tablas privadas");
+for (const table of [
+  "business_members",
+  "businesses",
+  "profiles",
+]) {
+  await expectPermissionDenied(
+    () => anonymous
+      .from(table)
+      .select("id")
+      .limit(1),
+    `Una solicitud anónima pudo consultar ${table}.`,
+  );
+}
+console.log("✓ anon no puede consultar identidad ni membresías");
 
 const sessionA = await signIn(
   "A",
@@ -221,67 +297,112 @@ if (
     "Los usuarios autenticados no coinciden con el fixture.",
   );
 }
-
 console.log("✓ ambos usuarios se autenticaron");
 
-await assertOwnMembership(
-  sessionA,
-  fixture.businessAId,
-);
-await assertOwnMembership(
-  sessionB,
-  fixture.businessBId,
-);
+await assertOwnMembership(sessionA, fixture.businessAId);
+await assertOwnMembership(sessionB, fixture.businessBId);
 console.log("✓ cada usuario ve su membresía owner");
 
-await assertOnlyOwnBusiness(
+await assertOnlyOwnMembershipBusiness(
   sessionA,
   fixture.businessAId,
 );
-await assertOnlyOwnBusiness(
+await assertOnlyOwnMembershipBusiness(
   sessionB,
   fixture.businessBId,
 );
-console.log("✓ la consulta amplia devuelve solo el negocio propio");
+console.log("✓ la consulta de membresías devuelve solo el tenant propio");
 
-await assertCrossBusinessHidden(
-  sessionA,
-  fixture.businessBId,
-);
-await assertCrossBusinessHidden(
-  sessionB,
-  fixture.businessAId,
-);
-console.log("✓ la lectura cruzada devuelve cero filas");
-
-await assertWritesDenied(
+await assertOwnBusinessRow(
   sessionA,
   fixture.businessAId,
+  fixture.businessASlug,
 );
-await assertWritesDenied(
+await assertOwnBusinessRow(
+  sessionB,
+  fixture.businessBId,
+  fixture.businessBSlug,
+);
+console.log("✓ cada usuario ve exactamente su negocio");
+
+await assertOwnProfileRow(sessionA, fixture.businessAId);
+await assertOwnProfileRow(sessionB, fixture.businessBId);
+console.log("✓ cada usuario ve exactamente su perfil");
+
+await assertCrossRowHidden(
+  sessionA,
+  "business_members",
+  "business_id",
+  fixture.businessBId,
+);
+await assertCrossRowHidden(
+  sessionB,
+  "business_members",
+  "business_id",
+  fixture.businessAId,
+);
+await assertCrossRowHidden(
+  sessionA,
+  "businesses",
+  "id",
+  fixture.businessBId,
+);
+await assertCrossRowHidden(
+  sessionB,
+  "businesses",
+  "id",
+  fixture.businessAId,
+);
+await assertCrossRowHidden(
+  sessionA,
+  "profiles",
+  "auth_user_id",
+  fixture.userBId,
+);
+await assertCrossRowHidden(
+  sessionB,
+  "profiles",
+  "auth_user_id",
+  fixture.userAId,
+);
+console.log("✓ membresías, negocios y perfiles cruzados devuelven cero filas");
+
+await assertMembershipWritesDenied(
+  sessionA,
+  fixture.businessAId,
+);
+await assertMembershipWritesDenied(
   sessionB,
   fixture.businessBId,
 );
-console.log("✓ INSERT, UPDATE y DELETE están bloqueados");
+console.log("✓ las escrituras de membresías siguen bloqueadas");
 
-await expectPermissionDenied(
-  () => sessionA.supabase
-    .from("businesses")
-    .select("id")
-    .limit(1),
-  "Un usuario autenticado pudo consultar businesses antes de su política.",
+await assertBusinessIdentityWritesDenied(
+  sessionA,
+  fixture.businessAId,
 );
-await expectPermissionDenied(
-  () => sessionB.supabase
-    .from("profiles")
-    .select("id")
-    .limit(1),
-  "Un usuario autenticado pudo consultar profiles antes de su política.",
+await assertBusinessIdentityWritesDenied(
+  sessionB,
+  fixture.businessBId,
 );
-console.log("✓ las tablas operativas permanecen default deny");
+console.log("✓ las escrituras de businesses y profiles están bloqueadas");
+
+for (const [session, table] of [
+  [sessionA, "services"],
+  [sessionB, "reservations"],
+]) {
+  await expectPermissionDenied(
+    () => session.supabase
+      .from(table)
+      .select("id")
+      .limit(1),
+    `El usuario ${session.label} pudo consultar ${table} antes de su política.`,
+  );
+}
+console.log("✓ las tablas operativas restantes siguen default deny");
 
 await sessionA.supabase.auth.signOut();
 await sessionB.supabase.auth.signOut();
 console.log("✓ las sesiones fueron cerradas");
 
-console.log("Aislamiento multiempresa aprobado (8 controles).");
+console.log("Aislamiento multiempresa aprobado (12 controles).");

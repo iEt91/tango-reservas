@@ -29,14 +29,8 @@ assert.match(
   envTemplate,
   /TANGO_PRODUCTION_PROJECT_REF=ekyfplzpbirsjwluktda/u,
 );
-assert.match(
-  envTemplate,
-  /TANGO_TEST_USER_A_PASSWORD/u,
-);
-assert.match(
-  envTemplate,
-  /TANGO_TEST_USER_B_PASSWORD/u,
-);
+assert.match(envTemplate, /TANGO_TEST_USER_A_PASSWORD/u);
+assert.match(envTemplate, /TANGO_TEST_USER_B_PASSWORD/u);
 assert.doesNotMatch(
   envTemplate,
   /sb_secret_[A-Za-z0-9_-]{20,}/u,
@@ -78,13 +72,22 @@ const isolation = await readFile(
   "utf8",
 );
 assert.match(isolation, /signInWithPassword/u);
-assert.match(isolation, /pudo leer otro negocio/u);
+assert.match(isolation, /assertOwnBusinessRow/u);
+assert.match(isolation, /assertOwnProfileRow/u);
+assert.match(isolation, /assertCrossRowHidden/u);
 assert.match(isolation, /pudo insertar membresías/u);
-assert.match(isolation, /pudo editar su rol/u);
-assert.match(isolation, /pudo eliminar su membresía/u);
-assert.match(isolation, /tablas operativas permanecen default deny/u);
+assert.match(isolation, /pudo editar businesses/u);
+assert.match(isolation, /pudo editar profiles/u);
+assert.match(
+  isolation,
+  /tablas operativas restantes siguen default deny/u,
+);
+assert.match(
+  isolation,
+  /Aislamiento multiempresa aprobado \(12 controles\)/u,
+);
 assert.doesNotMatch(isolation, /SUPABASE_SERVICE_ROLE_KEY/u);
-console.log("✓ la prueba usa sesiones públicas y cubre BOLA y escrituras");
+console.log("✓ la prueba usa sesiones públicas y cubre identidad, BOLA y escrituras");
 
 const cleanup = await readFile(
   "scripts/supabase-isolation-cleanup.mjs",
@@ -137,8 +140,9 @@ assert.match(
 );
 assert.match(documentation, /staging:seed-isolation/u);
 assert.match(documentation, /staging:test-isolation/u);
-assert.match(documentation, /ocho controles/u);
-console.log("✓ el runbook define manejo seguro y evidencia");
+assert.match(documentation, /doce controles/u);
+assert.match(documentation, /businesses y profiles/u);
+console.log("✓ el runbook define acceso propio y evidencia");
 
 for (const path of requiredFiles) {
   const content = await readFile(path, "utf8");
