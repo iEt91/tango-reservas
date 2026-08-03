@@ -36,8 +36,16 @@ import {
   type V2NotificationSettings,
 } from "@/lib/notification-settings";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
-import { saveBusinessHoursAction } from "./actions";
+import {
+  saveBusinessHoursAction,
+  saveReservationConfigurationAction,
+} from "./actions";
 import { mergeBusinessHoursEditor } from "@/lib/configuration/business-hours-contract";
+import {
+  mergeReservationSettingsEditor,
+  normalizeReservationSettingsEditor,
+  type ReservationSettingsEditor,
+} from "@/lib/configuration/reservation-settings-contract";
 import {
   v2BusinessHours,
   v2DeliverySettings,
@@ -309,10 +317,14 @@ function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
 
 export function V2ConfiguracionPage({
   initialBusinessHours = null,
+  initialReservationSettings = null,
   businessHoursPersistence = "local",
+  reservationSettingsPersistence = "local",
 }: {
   initialBusinessHours?: V2BusinessHourConfig[] | null;
+  initialReservationSettings?: ReservationSettingsEditor | null;
   businessHoursPersistence?: "local" | "supabase";
+  reservationSettingsPersistence?: "local" | "supabase";
 }) {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
   const [saveStatus, setSaveStatus] = useState<
@@ -325,15 +337,21 @@ export function V2ConfiguracionPage({
 
   useEffect(() => {
     const localConfig = readConfigFromStorage();
+    const reservationSettings =
+      mergeReservationSettingsEditor(
+        normalizeReservationSettingsEditor(localConfig),
+        initialReservationSettings,
+      );
 
     setConfig({
       ...localConfig,
+      ...reservationSettings,
       businessHours: mergeBusinessHoursEditor(
         localConfig.businessHours,
         initialBusinessHours,
       ),
     });
-  }, [initialBusinessHours]);
+  }, [initialBusinessHours, initialReservationSettings]);
 
   const openDays = useMemo(
     () => config.businessHours.filter((item) => item.enabled),
@@ -354,6 +372,32 @@ export function V2ConfiguracionPage({
     value: V2LocalConfigState[K]
   ) {
     setConfig((current) => ({ ...current, [field]: value }));
+    setSaveStatus("idle");
+    setSaveError("");
+  }
+
+  function updateConfirmationMode(
+    value: V2LocalConfigState["confirmationMode"]
+  ) {
+    setConfig((current) => ({
+      ...current,
+      confirmationMode: value,
+      defaultReservationStatus:
+        value === "automatic" ? "confirmed" : "pending",
+    }));
+    setSaveStatus("idle");
+    setSaveError("");
+  }
+
+  function updateDefaultReservationStatus(
+    value: V2LocalConfigState["defaultReservationStatus"]
+  ) {
+    setConfig((current) => ({
+      ...current,
+      defaultReservationStatus: value,
+      confirmationMode:
+        value === "confirmed" ? "automatic" : "manual",
+    }));
     setSaveStatus("idle");
     setSaveError("");
   }
@@ -444,15 +488,38 @@ export function V2ConfiguracionPage({
     const normalizedHours = config.businessHours.map((item) =>
       normalizeBusinessHour(item)
     );
+    const normalizedReservationSettings =
+      normalizeReservationSettingsEditor(config);
     let nextConfig = {
       ...config,
+      ...normalizedReservationSettings,
       businessHours: normalizedHours,
     };
 
     setSaveStatus("saving");
     setSaveError("");
 
-    if (businessHoursPersistence === "supabase") {
+    if (
+      businessHoursPersistence === "supabase"
+      && reservationSettingsPersistence === "supabase"
+    ) {
+      const result = await saveReservationConfigurationAction({
+        businessHours: normalizedHours,
+        reservationSettings: normalizedReservationSettings,
+      });
+
+      if (!result.ok) {
+        setSaveError(result.error);
+        setSaveStatus("error");
+        return;
+      }
+
+      nextConfig = {
+        ...nextConfig,
+        ...result.reservationSettings,
+        businessHours: result.businessHours,
+      };
+    } else if (businessHoursPersistence === "supabase") {
       const result = await saveBusinessHoursAction(normalizedHours);
 
       if (!result.ok) {
@@ -751,7 +818,7 @@ export function V2ConfiguracionPage({
                     </V2Select>
                   </V2Field>
                   <V2Field label="Confirmación">
-                    <V2Select value={config.confirmationMode} onChange={(event) => updateConfig("confirmationMode", event.target.value as V2LocalConfigState["confirmationMode"])}>
+                    <V2Select value={config.confirmationMode} onChange={(event) => updateConfirmationMode(event.target.value as V2LocalConfigState["confirmationMode"])}>
                       <option value="manual">Manual</option>
                       <option value="automatic">Automática</option>
                     </V2Select>
@@ -759,7 +826,7 @@ export function V2ConfiguracionPage({
                   <V2Field label="Estado inicial">
                     <V2Select
                       value={config.defaultReservationStatus}
-                      onChange={(event) => updateConfig("defaultReservationStatus", event.target.value as V2LocalConfigState["defaultReservationStatus"])}
+                      onChange={(event) => updateDefaultReservationStatus(event.target.value as V2LocalConfigState["defaultReservationStatus"])}
                     >
                       <option value="pending">Pendiente</option>
                       <option value="confirmed">Confirmada</option>
@@ -792,9 +859,9 @@ export function V2ConfiguracionPage({
                       <option value="disabled">Bloquear</option>
                     </V2Select>
                   </V2Field>
-                  <V2Field label="Anticipación mínima"><V2Input type="number" value={config.minimumNoticeHours} onChange={(event) => updateConfig("minimumNoticeHours", Number(event.target.value))} /></V2Field>
-                  <V2Field label="Días hacia adelante"><V2Input type="number" value={config.bookingWindowDays} onChange={(event) => updateConfig("bookingWindowDays", Number(event.target.value))} /></V2Field>
-                  <V2Field label="Capacidad máxima por horario"><V2Input type="number" value={config.maxPeoplePerSlot} onChange={(event) => updateConfig("maxPeoplePerSlot", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Anticipación mínima"><V2Input type="number" min={0} max={168} step="0.5" value={config.minimumNoticeHours} onChange={(event) => updateConfig("minimumNoticeHours", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Días hacia adelante"><V2Input type="number" min={1} max={365} value={config.bookingWindowDays} onChange={(event) => updateConfig("bookingWindowDays", Number(event.target.value))} /></V2Field>
+                  <V2Field label="Capacidad máxima por horario"><V2Input type="number" min={1} max={1000} value={config.maxPeoplePerSlot} onChange={(event) => updateConfig("maxPeoplePerSlot", Number(event.target.value))} /></V2Field>
                 </div>
 
                 <div className="mt-5 grid gap-4 md:grid-cols-2">

@@ -7,12 +7,28 @@ import {
   toBusinessHoursRpcPayload,
   type BusinessHourEditorDay,
 } from "@/lib/configuration/business-hours-contract";
+import {
+  normalizeReservationSettingsEditor,
+  toReservationSettingsRpcPayload,
+  type ReservationSettingsEditor,
+} from "@/lib/configuration/reservation-settings-contract";
 import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
 
 export type SaveBusinessHoursResult =
   | {
       ok: true;
       businessHours: BusinessHourEditorDay[];
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export type SaveReservationConfigurationResult =
+  | {
+      ok: true;
+      businessHours: BusinessHourEditorDay[];
+      reservationSettings: ReservationSettingsEditor;
     }
   | {
       ok: false;
@@ -85,6 +101,93 @@ export async function saveBusinessHoursAction(
         error instanceof Error
           ? error.message
           : "No se pudieron validar los horarios.",
+    };
+  }
+}
+
+export async function saveReservationConfigurationAction(
+  input: unknown,
+): Promise<SaveReservationConfigurationResult> {
+  try {
+    if (!input || typeof input !== "object") {
+      throw new Error("La configuración recibida es inválida.");
+    }
+
+    const data = input as Record<string, unknown>;
+    const businessHours = normalizeBusinessHoursEditor(
+      data.businessHours,
+    );
+    const reservationSettings =
+      normalizeReservationSettingsEditor(
+        data.reservationSettings,
+      );
+    const activeBusiness = await resolveActiveBusiness();
+
+    if (activeBusiness.status !== "ready") {
+      return {
+        ok: false,
+        error: "La sesión o el negocio activo ya no son válidos.",
+      };
+    }
+
+    if (
+      activeBusiness.membership.role !== "owner"
+      && activeBusiness.membership.role !== "admin"
+    ) {
+      return {
+        ok: false,
+        error:
+          "Solo el dueño o un administrador pueden cambiar la configuración.",
+      };
+    }
+
+    const supabase = await createSupabaseAuthServerClient();
+
+    if (!supabase) {
+      return {
+        ok: false,
+        error: "No se pudo crear el cliente autenticado.",
+      };
+    }
+
+    const { error } = await supabase.rpc(
+      "save_reservation_configuration",
+      {
+        p_business_id: activeBusiness.membership.businessId,
+        p_hours: toBusinessHoursRpcPayload(businessHours),
+        p_settings:
+          toReservationSettingsRpcPayload(
+            reservationSettings,
+          ),
+      },
+    );
+
+    if (error) {
+      console.error("[reservation-configuration] RPC failed", {
+        code: error.code ?? null,
+      });
+
+      return {
+        ok: false,
+        error:
+          "No se pudo guardar la configuración de reservas en Supabase.",
+      };
+    }
+
+    revalidatePath("/local/configuracion");
+
+    return {
+      ok: true,
+      businessHours,
+      reservationSettings,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo validar la configuración de reservas.",
     };
   }
 }

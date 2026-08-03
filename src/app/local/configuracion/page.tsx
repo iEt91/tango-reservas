@@ -4,6 +4,7 @@ import { resolveActiveBusiness } from "@/lib/auth/active-business";
 import { buildLoginPath } from "@/lib/auth/redirects";
 import { getDataSource } from "@/lib/data/dataSource";
 import { getBusinessHoursForBusiness } from "@/lib/data/server/business-hours";
+import { getReservationSettingsForBusiness } from "@/lib/data/server/reservation-settings";
 
 export default async function Page() {
   if (getDataSource() !== "supabase") {
@@ -32,14 +33,21 @@ export default async function Page() {
     );
   }
 
-  const initialBusinessHours = await getBusinessHoursForBusiness(
-    activeBusiness.membership.businessId,
-  );
+  const businessId = activeBusiness.membership.businessId;
+  const [
+    initialBusinessHours,
+    initialReservationSettings,
+  ] = await Promise.all([
+    getBusinessHoursForBusiness(businessId),
+    getReservationSettingsForBusiness(businessId),
+  ]);
 
   return (
     <V2ConfiguracionPage
       initialBusinessHours={initialBusinessHours}
+      initialReservationSettings={initialReservationSettings}
       businessHoursPersistence="supabase"
+      reservationSettingsPersistence="supabase"
     />
   );
 }

@@ -9,12 +9,24 @@ const identityPath =
   "supabase/migrations/20260802_003_business_identity_read_rls.sql";
 const reservationConfigPath =
   "supabase/migrations/20260802_004_reservation_config_read_rls.sql";
+const businessHoursWritePath =
+  "supabase/migrations/20260803_005_business_hours_write_rpc.sql";
+const reservationSettingsWritePath =
+  "supabase/migrations/20260803_006_reservation_settings_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
 const identity = await readFile(identityPath, "utf8");
 const reservationConfig = await readFile(
   reservationConfigPath,
+  "utf8",
+);
+const businessHoursWrite = await readFile(
+  businessHoursWritePath,
+  "utf8",
+);
+const reservationSettingsWrite = await readFile(
+  reservationSettingsWritePath,
   "utf8",
 );
 
@@ -130,6 +142,33 @@ assert.doesNotMatch(
 );
 console.log("✓ configuración de reservas abre solo lectura por tenant");
 
+assert.match(businessHoursWrite, /replace_business_hours/u);
+assert.match(businessHoursWrite, /security definer/u);
+assert.match(businessHoursWrite, /private\.has_business_role/u);
+assert.match(
+  businessHoursWrite,
+  /revoke insert, update, delete on table public\.business_hours/u,
+);
+console.log("✓ horarios agregan escritura RPC sin DML directo");
+
+assert.match(
+  reservationSettingsWrite,
+  /save_reservation_configuration/u,
+);
+assert.match(
+  reservationSettingsWrite,
+  /hours_result := public\.replace_business_hours/u,
+);
+assert.match(
+  reservationSettingsWrite,
+  /on conflict \(business_id\)/u,
+);
+assert.match(
+  reservationSettingsWrite,
+  /revoke insert, update, delete on table public\.reservation_rules/u,
+);
+console.log("✓ reglas agregan guardado atómico sin relajar RLS");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -143,4 +182,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (5).");
+console.log("Todos los casos del historial remoto pasaron (7).");

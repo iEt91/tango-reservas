@@ -234,6 +234,50 @@ async function assertSingleConfigurationRow({
   return data[0];
 }
 
+async function assertBusinessHoursRows({
+  session,
+  businessId,
+  expectedId,
+  expectedDay,
+}) {
+  const { data, error } = await session.supabase
+    .from("business_hours")
+    .select(
+      "id, business_id, day_of_week, open_time, close_time",
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  const uniqueDays = new Set(
+    data.map((row) => row.day_of_week),
+  );
+  const includesFixtureRow = data.some(
+    (row) => (
+      row.id === expectedId
+      && row.business_id === businessId
+      && row.day_of_week === expectedDay
+    ),
+  );
+
+  if (
+    data.length < 1
+    || data.length > 7
+    || uniqueDays.size !== data.length
+    || data.some(
+      (row) => row.business_id !== businessId,
+    )
+    || !includesFixtureRow
+  ) {
+    throw new Error(
+      `El usuario ${session.label} no recibió solo sus horarios válidos.`,
+    );
+  }
+
+  return data;
+}
+
 async function assertMembershipWritesDenied(
   session,
   ownBusinessId,
@@ -448,28 +492,19 @@ await assertBusinessIdentityWritesDenied(
 );
 console.log("✓ las escrituras de identidad siguen bloqueadas");
 
-const hourA = await assertSingleConfigurationRow({
+await assertBusinessHoursRows({
   session: sessionA,
-  table: "business_hours",
   businessId: fixture.businessAId,
   expectedId: fixture.businessHourAId,
-  select: "id, business_id, day_of_week, open_time, close_time",
+  expectedDay: "monday",
 });
-const hourB = await assertSingleConfigurationRow({
+await assertBusinessHoursRows({
   session: sessionB,
-  table: "business_hours",
   businessId: fixture.businessBId,
   expectedId: fixture.businessHourBId,
-  select: "id, business_id, day_of_week, open_time, close_time",
+  expectedDay: "tuesday",
 });
-
-if (
-  hourA.day_of_week !== "monday"
-  || hourB.day_of_week !== "tuesday"
-) {
-  throw new Error("Los horarios no coinciden con el fixture esperado.");
-}
-console.log("✓ cada usuario ve exactamente su horario");
+console.log("✓ cada usuario ve solo sus horarios propios");
 
 const ruleA = await assertSingleConfigurationRow({
   session: sessionA,
@@ -534,9 +569,15 @@ for (const [session, businessId] of [
       throw error;
     }
 
+    const maximumRows =
+      table === "business_hours" ? 7 : 1;
+
     if (
-      data.length !== 1
-      || data[0].business_id !== businessId
+      data.length < 1
+      || data.length > maximumRows
+      || data.some(
+        (row) => row.business_id !== businessId,
+      )
     ) {
       throw new Error(
         `El usuario ${session.label} recibió configuración de otro tenant en ${table}.`,

@@ -31,9 +31,14 @@ Es idempotente y prepara para cada negocio:
 
 - un owner y su perfil;
 - una membresía activa;
-- una fila de `business_hours`;
+- una fila inicial de `business_hours`;
 - una fila de `reservation_rules`;
 - una fila de `services`.
+
+Después del cutover de horarios, `business_hours` puede crecer de una fila
+inicial a un máximo de siete filas por negocio, una por día. La prueba exige días
+únicos, conserva la fila original del fixture y rechaza cualquier `business_id`
+ajeno.
 
 No debe ejecutarse `staging:cleanup-isolation` mientras se desarrollan las
 políticas operativas.
@@ -57,7 +62,7 @@ La prueba debe aprobar diecisiete controles:
 7. la identidad cruzada devuelve cero filas;
 8. las escrituras de membresías siguen bloqueadas;
 9. las escrituras de identidad siguen bloqueadas;
-10. cada usuario ve exactamente su horario;
+10. cada usuario ve entre uno y siete horarios propios, sin días duplicados;
 11. cada usuario ve exactamente sus reglas de reserva;
 12. cada usuario ve exactamente su servicio;
 13. las consultas amplias de configuración devuelven solo su tenant;

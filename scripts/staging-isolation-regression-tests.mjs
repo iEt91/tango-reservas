@@ -78,6 +78,9 @@ assert.match(isolation, /signInWithPassword/u);
 assert.match(isolation, /assertOwnBusinessRow/u);
 assert.match(isolation, /assertOwnProfileRow/u);
 assert.match(isolation, /assertSingleConfigurationRow/u);
+assert.match(isolation, /assertBusinessHoursRows/u);
+assert.match(isolation, /data\.length > 7/u);
+assert.match(isolation, /new Set/u);
 assert.match(isolation, /assertReservationConfigWritesDenied/u);
 assert.match(isolation, /configuración cruzada devuelve cero filas/u);
 assert.match(
@@ -151,7 +154,7 @@ console.log("✓ el runbook define configuración propia y evidencia");
 for (const path of requiredFiles) {
   const content = await readFile(path, "utf8");
 
-  for (const [index, line] of content.split("\n").entries()) {
+  for (const [index, line] of content.split(/\r?\n/u).entries()) {
     assert.equal(
       line.replace(/\s+$/u, ""),
       line,
