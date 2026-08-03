@@ -124,7 +124,7 @@ assert.match(remoteTest, /assertOwnBusinessRow/u);
 assert.match(remoteTest, /assertOwnProfileRow/u);
 assert.match(remoteTest, /assertCrossRowHidden/u);
 assert.match(remoteTest, /assertBusinessIdentityWritesDenied/u);
-assert.match(remoteTest, /tablas operativas restantes siguen default deny/u);
+assert.match(remoteTest, /las tablas restantes siguen default deny/u);
 assert.doesNotMatch(remoteTest, /SUPABASE_SERVICE_ROLE_KEY/u);
 console.log("✓ la prueba remota cubre BOLA, perfiles y escrituras");
 

@@ -62,10 +62,13 @@ assert.match(seed, /auth\.admin\.createUser/u);
 assert.match(seed, /auth\.admin\.updateUserById/u);
 assert.match(seed, /email_confirm:\s*true/u);
 assert.match(seed, /business_members/u);
+assert.match(seed, /business_hours/u);
+assert.match(seed, /reservation_rules/u);
+assert.match(seed, /services/u);
 assert.match(seed, /\.tango\/staging-isolation\.json/u);
 assert.doesNotMatch(seed, /console\.log\([^)]*Password/u);
 assert.doesNotMatch(seed, /console\.log\([^)]*serverSecret/u);
-console.log("✓ el seed es idempotente y no imprime credenciales");
+console.log("✓ el seed es idempotente y prepara configuración exclusiva");
 
 const isolation = await readFile(
   "scripts/supabase-isolation-test.mjs",
@@ -74,20 +77,19 @@ const isolation = await readFile(
 assert.match(isolation, /signInWithPassword/u);
 assert.match(isolation, /assertOwnBusinessRow/u);
 assert.match(isolation, /assertOwnProfileRow/u);
-assert.match(isolation, /assertCrossRowHidden/u);
-assert.match(isolation, /pudo insertar membresías/u);
-assert.match(isolation, /pudo editar businesses/u);
-assert.match(isolation, /pudo editar profiles/u);
+assert.match(isolation, /assertSingleConfigurationRow/u);
+assert.match(isolation, /assertReservationConfigWritesDenied/u);
+assert.match(isolation, /configuración cruzada devuelve cero filas/u);
 assert.match(
   isolation,
-  /tablas operativas restantes siguen default deny/u,
+  /las tablas restantes siguen default deny/u,
 );
 assert.match(
   isolation,
-  /Aislamiento multiempresa aprobado \(12 controles\)/u,
+  /Aislamiento multiempresa aprobado \(17 controles\)/u,
 );
 assert.doesNotMatch(isolation, /SUPABASE_SERVICE_ROLE_KEY/u);
-console.log("✓ la prueba usa sesiones públicas y cubre identidad, BOLA y escrituras");
+console.log("✓ la prueba pública cubre identidad, configuración, BOLA y DML");
 
 const cleanup = await readFile(
   "scripts/supabase-isolation-cleanup.mjs",
@@ -99,7 +101,7 @@ assert.match(
   /fixture\.projectRef !== context\.stagingProjectRef/u,
 );
 assert.match(cleanup, /businesses/u);
-console.log("✓ el cleanup está limitado al fixture del proyecto");
+console.log("✓ el cleanup elimina configuración mediante cascada controlada");
 
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
@@ -140,9 +142,11 @@ assert.match(
 );
 assert.match(documentation, /staging:seed-isolation/u);
 assert.match(documentation, /staging:test-isolation/u);
-assert.match(documentation, /doce controles/u);
-assert.match(documentation, /businesses y profiles/u);
-console.log("✓ el runbook define acceso propio y evidencia");
+assert.match(documentation, /diecisiete controles/u);
+assert.match(documentation, /business_hours/u);
+assert.match(documentation, /reservation_rules/u);
+assert.match(documentation, /services/u);
+console.log("✓ el runbook define configuración propia y evidencia");
 
 for (const path of requiredFiles) {
   const content = await readFile(path, "utf8");

@@ -27,31 +27,44 @@ El fixture se prepara con:
 npm run staging:seed-isolation
 ```
 
-Es idempotente. No debe ejecutarse `staging:cleanup-isolation` mientras se
-desarrollan las políticas operativas.
+Es idempotente y prepara para cada negocio:
+
+- un owner y su perfil;
+- una membresía activa;
+- una fila de `business_hours`;
+- una fila de `reservation_rules`;
+- una fila de `services`.
+
+No debe ejecutarse `staging:cleanup-isolation` mientras se desarrollan las
+políticas operativas.
 
 ## Prueba de aislamiento
 
-Después de aplicar la migración 003 sobre businesses y profiles:
+Después de aplicar la migración 004:
 
 ```text
 npm run staging:test-isolation
 ```
 
-La prueba debe aprobar doce controles:
+La prueba debe aprobar diecisiete controles:
 
-1. anon no consulta membresías, businesses ni profiles;
+1. anon no consulta identidad ni configuración;
 2. A y B se autentican;
 3. cada usuario ve su membresía owner;
-4. la consulta amplia de membresías devuelve solo su tenant;
-5. cada usuario ve exactamente su fila de businesses;
-6. cada usuario ve exactamente su fila de profiles;
-7. membresías, negocios y perfiles cruzados devuelven cero filas;
-8. las escrituras de business_members siguen bloqueadas;
-9. las escrituras de businesses están bloqueadas;
-10. las escrituras de profiles están bloqueadas;
-11. services y reservations continúan en default deny;
-12. ambas sesiones se cierran.
+4. la consulta de membresías devuelve solo su tenant;
+5. cada usuario ve exactamente su negocio;
+6. cada usuario ve exactamente su perfil;
+7. la identidad cruzada devuelve cero filas;
+8. las escrituras de membresías siguen bloqueadas;
+9. las escrituras de identidad siguen bloqueadas;
+10. cada usuario ve exactamente su horario;
+11. cada usuario ve exactamente sus reglas de reserva;
+12. cada usuario ve exactamente su servicio;
+13. las consultas amplias de configuración devuelven solo su tenant;
+14. la configuración cruzada devuelve cero filas;
+15. INSERT, UPDATE y DELETE de configuración están bloqueados;
+16. las tablas restantes continúan en default deny;
+17. ambas sesiones se cierran.
 
 Cualquier fila cruzada es un fallo P0.
 
@@ -75,5 +88,5 @@ Cuando el fixture ya no sea necesario:
 npm run staging:cleanup-isolation
 ```
 
-El cleanup verifica que la evidencia local pertenezca a `tango-resto` antes de
-eliminar datos.
+El cleanup elimina el negocio y su configuración mediante cascadas de claves
+foráneas, y verifica primero que la evidencia local pertenezca a `tango-resto`.

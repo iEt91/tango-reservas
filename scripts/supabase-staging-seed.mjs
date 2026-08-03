@@ -28,6 +28,15 @@ const admin = createClient(
   },
 );
 
+const FIXTURE_IDS = {
+  businessHourA: "20000000-0000-4000-8000-00000000000a",
+  businessHourB: "20000000-0000-4000-8000-00000000000b",
+  reservationRuleA: "30000000-0000-4000-8000-00000000000a",
+  reservationRuleB: "30000000-0000-4000-8000-00000000000b",
+  serviceA: "40000000-0000-4000-8000-00000000000a",
+  serviceB: "40000000-0000-4000-8000-00000000000b",
+};
+
 async function findUserByEmail(email) {
   let page = 1;
 
@@ -159,6 +168,115 @@ async function ensureProfile(user, business, label) {
   }
 }
 
+async function ensureBusinessHour({
+  id,
+  businessId,
+  dayOfWeek,
+  openTime,
+  closeTime,
+}) {
+  const { data, error } = await admin
+    .from("business_hours")
+    .upsert(
+      {
+        id,
+        business_id: businessId,
+        day_of_week: dayOfWeek,
+        is_open: true,
+        open_time: openTime,
+        close_time: closeTime,
+        break_start_time: null,
+        break_end_time: null,
+      },
+      {
+        onConflict: "id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error(
+      `No se pudo preparar business_hours ${id}.`,
+    );
+  }
+
+  return data.id;
+}
+
+async function ensureReservationRule({
+  id,
+  businessId,
+  slotDurationMinutes,
+  maxReservationsPerSlot,
+}) {
+  const { data, error } = await admin
+    .from("reservation_rules")
+    .upsert(
+      {
+        id,
+        business_id: businessId,
+        slot_duration_minutes: slotDurationMinutes,
+        max_reservations_per_slot: maxReservationsPerSlot,
+        min_notice_minutes: 30,
+        max_days_ahead: 14,
+        requires_confirmation: true,
+        allow_cancellation: true,
+        cancellation_limit_hours: 4,
+      },
+      {
+        onConflict: "id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error(
+      `No se pudo preparar reservation_rules ${id}.`,
+    );
+  }
+
+  return data.id;
+}
+
+async function ensureService({
+  id,
+  businessId,
+  name,
+  durationMinutes,
+  capacity,
+  price,
+}) {
+  const { data, error } = await admin
+    .from("services")
+    .upsert(
+      {
+        id,
+        business_id: businessId,
+        name,
+        description: "Fixture de aislamiento multiempresa",
+        duration_minutes: durationMinutes,
+        capacity,
+        price,
+        is_active: true,
+      },
+      {
+        onConflict: "id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error(
+      `No se pudo preparar services ${id}.`,
+    );
+  }
+
+  return data.id;
+}
+
 console.log("Preparando fixture RLS exclusivamente en STAGING...");
 console.log(`Proyecto: ${context.stagingProjectRef}`);
 
@@ -231,6 +349,53 @@ if (membershipError) {
 
 console.log("✓ perfiles y membresías exclusivas preparados");
 
+const businessHourAId = await ensureBusinessHour({
+  id: FIXTURE_IDS.businessHourA,
+  businessId: businessA.id,
+  dayOfWeek: "monday",
+  openTime: "09:00",
+  closeTime: "18:00",
+});
+const businessHourBId = await ensureBusinessHour({
+  id: FIXTURE_IDS.businessHourB,
+  businessId: businessB.id,
+  dayOfWeek: "tuesday",
+  openTime: "10:00",
+  closeTime: "20:00",
+});
+
+const reservationRuleAId = await ensureReservationRule({
+  id: FIXTURE_IDS.reservationRuleA,
+  businessId: businessA.id,
+  slotDurationMinutes: 30,
+  maxReservationsPerSlot: 4,
+});
+const reservationRuleBId = await ensureReservationRule({
+  id: FIXTURE_IDS.reservationRuleB,
+  businessId: businessB.id,
+  slotDurationMinutes: 45,
+  maxReservationsPerSlot: 6,
+});
+
+const serviceAId = await ensureService({
+  id: FIXTURE_IDS.serviceA,
+  businessId: businessA.id,
+  name: "Isolation Service A",
+  durationMinutes: 60,
+  capacity: 10,
+  price: 100,
+});
+const serviceBId = await ensureService({
+  id: FIXTURE_IDS.serviceB,
+  businessId: businessB.id,
+  name: "Isolation Service B",
+  durationMinutes: 90,
+  capacity: 20,
+  price: 200,
+});
+
+console.log("✓ horarios, reglas y servicios exclusivos preparados");
+
 await mkdir(".tango", { recursive: true });
 await writeFile(
   ".tango/staging-isolation.json",
@@ -243,11 +408,18 @@ await writeFile(
       businessBId: businessB.id,
       businessASlug: businessA.slug,
       businessBSlug: businessB.slug,
+      businessHourAId,
+      businessHourBId,
+      reservationRuleAId,
+      reservationRuleBId,
+      serviceAId,
+      serviceBId,
       createdAt: new Date().toISOString(),
     },
     null,
     2,
-  )}\n`,
+  )}
+`,
   "utf8",
 );
 

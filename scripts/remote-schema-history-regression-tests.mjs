@@ -7,10 +7,16 @@ const membersPath =
   "supabase/migrations/20260802_002_business_members_and_rls.sql";
 const identityPath =
   "supabase/migrations/20260802_003_business_identity_read_rls.sql";
+const reservationConfigPath =
+  "supabase/migrations/20260802_004_reservation_config_read_rls.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
 const identity = await readFile(identityPath, "utf8");
+const reservationConfig = await readFile(
+  reservationConfigPath,
+  "utf8",
+);
 
 const tables = [
   "businesses",
@@ -96,6 +102,33 @@ assert.match(
   /grant select on table public\.profiles to authenticated/u,
 );
 assert.doesNotMatch(identity, /grant\s+(insert|update|delete|all)/iu);
+console.log("✓ identidad multiempresa conserva lectura mínima");
+
+for (const table of [
+  "business_hours",
+  "reservation_rules",
+  "services",
+]) {
+  assert.match(
+    reservationConfig,
+    new RegExp(
+      `create policy ${table}_select_active_member`,
+      "u",
+    ),
+  );
+  assert.match(
+    reservationConfig,
+    new RegExp(
+      `grant select on table public\\.${table} to authenticated`,
+      "u",
+    ),
+  );
+}
+assert.doesNotMatch(
+  reservationConfig,
+  /grant\s+(insert|update|delete|all)/iu,
+);
+console.log("✓ configuración de reservas abre solo lectura por tenant");
 
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
@@ -108,6 +141,6 @@ assert.match(
   packageJson.scripts?.["test:regression"] ?? "",
   /test:remote-schema-history/u,
 );
-console.log("✓ identidad multiempresa y su historial forman parte del QA");
+console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (4).");
+console.log("Todos los casos del historial remoto pasaron (5).");

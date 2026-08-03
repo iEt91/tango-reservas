@@ -28,6 +28,21 @@ if (fixture.projectRef !== context.stagingProjectRef) {
   );
 }
 
+for (const key of [
+  "businessHourAId",
+  "businessHourBId",
+  "reservationRuleAId",
+  "reservationRuleBId",
+  "serviceAId",
+  "serviceBId",
+]) {
+  if (!fixture[key]) {
+    throw new Error(
+      `El fixture local no contiene ${key}. Ejecuta staging:seed-isolation.`,
+    );
+  }
+}
+
 function publicClient() {
   return createClient(
     context.url,
@@ -191,6 +206,34 @@ async function assertCrossRowHidden(
   }
 }
 
+async function assertSingleConfigurationRow({
+  session,
+  table,
+  businessId,
+  expectedId,
+  select,
+}) {
+  const { data, error } = await session.supabase
+    .from(table)
+    .select(select);
+
+  if (error) {
+    throw error;
+  }
+
+  if (
+    data.length !== 1
+    || data[0].id !== expectedId
+    || data[0].business_id !== businessId
+  ) {
+    throw new Error(
+      `El usuario ${session.label} no recibió exactamente su fila de ${table}.`,
+    );
+  }
+
+  return data[0];
+}
+
 async function assertMembershipWritesDenied(
   session,
   ownBusinessId,
@@ -259,6 +302,42 @@ async function assertBusinessIdentityWritesDenied(
   );
 }
 
+async function assertReservationConfigWritesDenied({
+  session,
+  businessId,
+  businessHourId,
+  reservationRuleId,
+}) {
+  await expectPermissionDenied(
+    () => session.supabase
+      .from("services")
+      .insert({
+        business_id: businessId,
+        name: `Blocked Service ${session.label}`,
+        duration_minutes: 30,
+        capacity: 1,
+        is_active: true,
+      }),
+    `El usuario ${session.label} pudo insertar services.`,
+  );
+
+  await expectPermissionDenied(
+    () => session.supabase
+      .from("business_hours")
+      .update({ close_time: "23:59" })
+      .eq("id", businessHourId),
+    `El usuario ${session.label} pudo editar business_hours.`,
+  );
+
+  await expectPermissionDenied(
+    () => session.supabase
+      .from("reservation_rules")
+      .delete()
+      .eq("id", reservationRuleId),
+    `El usuario ${session.label} pudo eliminar reservation_rules.`,
+  );
+}
+
 console.log("Ejecutando prueba real de aislamiento RLS...");
 
 const anonymous = publicClient();
@@ -267,6 +346,9 @@ for (const table of [
   "business_members",
   "businesses",
   "profiles",
+  "business_hours",
+  "reservation_rules",
+  "services",
 ]) {
   await expectPermissionDenied(
     () => anonymous
@@ -276,7 +358,7 @@ for (const table of [
     `Una solicitud anónima pudo consultar ${table}.`,
   );
 }
-console.log("✓ anon no puede consultar identidad ni membresías");
+console.log("✓ anon no puede consultar identidad ni configuración");
 
 const sessionA = await signIn(
   "A",
@@ -329,43 +411,22 @@ await assertOwnProfileRow(sessionA, fixture.businessAId);
 await assertOwnProfileRow(sessionB, fixture.businessBId);
 console.log("✓ cada usuario ve exactamente su perfil");
 
-await assertCrossRowHidden(
-  sessionA,
-  "business_members",
-  "business_id",
-  fixture.businessBId,
-);
-await assertCrossRowHidden(
-  sessionB,
-  "business_members",
-  "business_id",
-  fixture.businessAId,
-);
-await assertCrossRowHidden(
-  sessionA,
-  "businesses",
-  "id",
-  fixture.businessBId,
-);
-await assertCrossRowHidden(
-  sessionB,
-  "businesses",
-  "id",
-  fixture.businessAId,
-);
-await assertCrossRowHidden(
-  sessionA,
-  "profiles",
-  "auth_user_id",
-  fixture.userBId,
-);
-await assertCrossRowHidden(
-  sessionB,
-  "profiles",
-  "auth_user_id",
-  fixture.userAId,
-);
-console.log("✓ membresías, negocios y perfiles cruzados devuelven cero filas");
+for (const [session, table, column, otherId] of [
+  [sessionA, "business_members", "business_id", fixture.businessBId],
+  [sessionB, "business_members", "business_id", fixture.businessAId],
+  [sessionA, "businesses", "id", fixture.businessBId],
+  [sessionB, "businesses", "id", fixture.businessAId],
+  [sessionA, "profiles", "auth_user_id", fixture.userBId],
+  [sessionB, "profiles", "auth_user_id", fixture.userAId],
+]) {
+  await assertCrossRowHidden(
+    session,
+    table,
+    column,
+    otherId,
+  );
+}
+console.log("✓ identidad cruzada devuelve cero filas");
 
 await assertMembershipWritesDenied(
   sessionA,
@@ -385,24 +446,160 @@ await assertBusinessIdentityWritesDenied(
   sessionB,
   fixture.businessBId,
 );
-console.log("✓ las escrituras de businesses y profiles están bloqueadas");
+console.log("✓ las escrituras de identidad siguen bloqueadas");
 
-for (const [session, table] of [
-  [sessionA, "services"],
-  [sessionB, "reservations"],
-]) {
-  await expectPermissionDenied(
-    () => session.supabase
-      .from(table)
-      .select("id")
-      .limit(1),
-    `El usuario ${session.label} pudo consultar ${table} antes de su política.`,
-  );
+const hourA = await assertSingleConfigurationRow({
+  session: sessionA,
+  table: "business_hours",
+  businessId: fixture.businessAId,
+  expectedId: fixture.businessHourAId,
+  select: "id, business_id, day_of_week, open_time, close_time",
+});
+const hourB = await assertSingleConfigurationRow({
+  session: sessionB,
+  table: "business_hours",
+  businessId: fixture.businessBId,
+  expectedId: fixture.businessHourBId,
+  select: "id, business_id, day_of_week, open_time, close_time",
+});
+
+if (
+  hourA.day_of_week !== "monday"
+  || hourB.day_of_week !== "tuesday"
+) {
+  throw new Error("Los horarios no coinciden con el fixture esperado.");
 }
-console.log("✓ las tablas operativas restantes siguen default deny");
+console.log("✓ cada usuario ve exactamente su horario");
+
+const ruleA = await assertSingleConfigurationRow({
+  session: sessionA,
+  table: "reservation_rules",
+  businessId: fixture.businessAId,
+  expectedId: fixture.reservationRuleAId,
+  select: "id, business_id, slot_duration_minutes, max_reservations_per_slot",
+});
+const ruleB = await assertSingleConfigurationRow({
+  session: sessionB,
+  table: "reservation_rules",
+  businessId: fixture.businessBId,
+  expectedId: fixture.reservationRuleBId,
+  select: "id, business_id, slot_duration_minutes, max_reservations_per_slot",
+});
+
+if (
+  ruleA.slot_duration_minutes !== 30
+  || ruleB.slot_duration_minutes !== 45
+) {
+  throw new Error("Las reglas no coinciden con el fixture esperado.");
+}
+console.log("✓ cada usuario ve exactamente sus reglas de reserva");
+
+const serviceA = await assertSingleConfigurationRow({
+  session: sessionA,
+  table: "services",
+  businessId: fixture.businessAId,
+  expectedId: fixture.serviceAId,
+  select: "id, business_id, name, duration_minutes, capacity",
+});
+const serviceB = await assertSingleConfigurationRow({
+  session: sessionB,
+  table: "services",
+  businessId: fixture.businessBId,
+  expectedId: fixture.serviceBId,
+  select: "id, business_id, name, duration_minutes, capacity",
+});
+
+if (
+  serviceA.name !== "Isolation Service A"
+  || serviceB.name !== "Isolation Service B"
+) {
+  throw new Error("Los servicios no coinciden con el fixture esperado.");
+}
+console.log("✓ cada usuario ve exactamente su servicio");
+
+for (const [session, businessId] of [
+  [sessionA, fixture.businessAId],
+  [sessionB, fixture.businessBId],
+]) {
+  for (const table of [
+    "business_hours",
+    "reservation_rules",
+    "services",
+  ]) {
+    const { data, error } = await session.supabase
+      .from(table)
+      .select("business_id");
+
+    if (error) {
+      throw error;
+    }
+
+    if (
+      data.length !== 1
+      || data[0].business_id !== businessId
+    ) {
+      throw new Error(
+        `El usuario ${session.label} recibió configuración de otro tenant en ${table}.`,
+      );
+    }
+  }
+}
+console.log("✓ las consultas amplias de configuración devuelven solo el tenant propio");
+
+for (const [session, otherBusinessId] of [
+  [sessionA, fixture.businessBId],
+  [sessionB, fixture.businessAId],
+]) {
+  for (const table of [
+    "business_hours",
+    "reservation_rules",
+    "services",
+  ]) {
+    await assertCrossRowHidden(
+      session,
+      table,
+      "business_id",
+      otherBusinessId,
+    );
+  }
+}
+console.log("✓ la configuración cruzada devuelve cero filas");
+
+await assertReservationConfigWritesDenied({
+  session: sessionA,
+  businessId: fixture.businessAId,
+  businessHourId: fixture.businessHourAId,
+  reservationRuleId: fixture.reservationRuleAId,
+});
+await assertReservationConfigWritesDenied({
+  session: sessionB,
+  businessId: fixture.businessBId,
+  businessHourId: fixture.businessHourBId,
+  reservationRuleId: fixture.reservationRuleBId,
+});
+console.log("✓ INSERT, UPDATE y DELETE de configuración están bloqueados");
+
+for (const session of [sessionA, sessionB]) {
+  for (const table of [
+    "business_profiles",
+    "business_sections",
+    "business_images",
+    "customers",
+    "reservations",
+  ]) {
+    await expectPermissionDenied(
+      () => session.supabase
+        .from(table)
+        .select("id")
+        .limit(1),
+      `El usuario ${session.label} pudo consultar ${table} antes de su política.`,
+    );
+  }
+}
+console.log("✓ las tablas restantes siguen default deny");
 
 await sessionA.supabase.auth.signOut();
 await sessionB.supabase.auth.signOut();
 console.log("✓ las sesiones fueron cerradas");
 
-console.log("Aislamiento multiempresa aprobado (12 controles).");
+console.log("Aislamiento multiempresa aprobado (17 controles).");

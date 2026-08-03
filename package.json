@@ -13,7 +13,7 @@
     "test:storage": "node scripts/storage-contract-regression-tests.mjs",
     "test:backup": "node scripts/local-backup-regression-tests.mjs",
     "test:notifications": "node scripts/notification-settings-regression-tests.mjs",
-    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth && npm run test:security-foundation && npm run test:dependency-security && npm run test:staging-readiness && npm run test:remote-schema-history && npm run test:staging-isolation && npm run test:business-identity-rls",
+    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth && npm run test:security-foundation && npm run test:dependency-security && npm run test:staging-readiness && npm run test:remote-schema-history && npm run test:staging-isolation && npm run test:business-identity-rls && npm run test:reservation-config-rls",
     "qa:prepare": "node scripts/prepare-qa.mjs && next typegen",
     "qa": "npm run qa:prepare && npm run security:scan && npm run security:env && eslint . && tsc --noEmit && npm run test:regression && next build",
     "test:architecture": "node scripts/architecture-regression-tests.mjs",
@@ -32,7 +32,8 @@
     "staging:test-isolation": "node scripts/supabase-isolation-test.mjs",
     "staging:cleanup-isolation": "node scripts/supabase-isolation-cleanup.mjs",
     "test:staging-isolation": "node scripts/staging-isolation-regression-tests.mjs",
-    "test:business-identity-rls": "node scripts/business-identity-rls-regression-tests.mjs"
+    "test:business-identity-rls": "node scripts/business-identity-rls-regression-tests.mjs",
+    "test:reservation-config-rls": "node scripts/reservation-config-rls-regression-tests.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
