@@ -13,6 +13,8 @@ const businessHoursWritePath =
   "supabase/migrations/20260803_005_business_hours_write_rpc.sql";
 const reservationSettingsWritePath =
   "supabase/migrations/20260803_006_reservation_settings_write_rpc.sql";
+const servicesWritePath =
+  "supabase/migrations/20260803_007_services_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -27,6 +29,10 @@ const businessHoursWrite = await readFile(
 );
 const reservationSettingsWrite = await readFile(
   reservationSettingsWritePath,
+  "utf8",
+);
+const servicesWrite = await readFile(
+  servicesWritePath,
   "utf8",
 );
 
@@ -113,7 +119,10 @@ assert.match(
   identity,
   /grant select on table public\.profiles to authenticated/u,
 );
-assert.doesNotMatch(identity, /grant\s+(insert|update|delete|all)/iu);
+assert.doesNotMatch(
+  identity,
+  /grant\s+(insert|update|delete|all)/iu,
+);
 console.log("✓ identidad multiempresa conserva lectura mínima");
 
 for (const table of [
@@ -169,6 +178,16 @@ assert.match(
 );
 console.log("✓ reglas agregan guardado atómico sin relajar RLS");
 
+assert.match(servicesWrite, /save_business_service/u);
+assert.match(servicesWrite, /set_business_service_active/u);
+assert.match(servicesWrite, /private\.has_business_role/u);
+assert.match(servicesWrite, /sort_order/u);
+assert.match(
+  servicesWrite,
+  /revoke insert, update, delete on table public\.services/u,
+);
+console.log("✓ servicios agregan RPC segura sin DML directo");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -182,4 +201,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (7).");
+console.log("Todos los casos del historial remoto pasaron (8).");
