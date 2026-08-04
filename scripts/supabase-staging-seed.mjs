@@ -35,6 +35,8 @@ const FIXTURE_IDS = {
   reservationRuleB: "30000000-0000-4000-8000-00000000000b",
   serviceA: "40000000-0000-4000-8000-00000000000a",
   serviceB: "40000000-0000-4000-8000-00000000000b",
+  customerA: "50000000-0000-4000-8000-00000000000a",
+  customerB: "50000000-0000-4000-8000-00000000000b",
 };
 
 async function findUserByEmail(email) {
@@ -277,6 +279,44 @@ async function ensureService({
   return data.id;
 }
 
+async function ensureCustomer({
+  id,
+  businessId,
+  fullName,
+  email,
+  phone,
+}) {
+  const { data, error } = await admin
+    .from("customers")
+    .upsert(
+      {
+        id,
+        business_id: businessId,
+        full_name: fullName,
+        email,
+        phone,
+        birth_date: "1990-01-01",
+        notes: "Fixture de aislamiento multiempresa",
+        preferences: "Sin preferencias",
+        tags: ["fixture"],
+        is_active: true,
+      },
+      {
+        onConflict: "id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error(
+      `No se pudo preparar customers ${id}.`,
+    );
+  }
+
+  return data.id;
+}
+
 console.log("Preparando fixture RLS exclusivamente en STAGING...");
 console.log(`Proyecto: ${context.stagingProjectRef}`);
 
@@ -394,7 +434,22 @@ const serviceBId = await ensureService({
   price: 200,
 });
 
-console.log("✓ horarios, reglas y servicios exclusivos preparados");
+const customerAId = await ensureCustomer({
+  id: FIXTURE_IDS.customerA,
+  businessId: businessA.id,
+  fullName: "Isolation Customer A",
+  email: "isolation-customer-a@example.com",
+  phone: "541100000001",
+});
+const customerBId = await ensureCustomer({
+  id: FIXTURE_IDS.customerB,
+  businessId: businessB.id,
+  fullName: "Isolation Customer B",
+  email: "isolation-customer-b@example.com",
+  phone: "541100000002",
+});
+
+console.log("✓ horarios, reglas, servicios y clientes exclusivos preparados");
 
 await mkdir(".tango", { recursive: true });
 await writeFile(
@@ -414,6 +469,8 @@ await writeFile(
       reservationRuleBId,
       serviceAId,
       serviceBId,
+      customerAId,
+      customerBId,
       createdAt: new Date().toISOString(),
     },
     null,

@@ -33,7 +33,8 @@ Es idempotente y prepara para cada negocio:
 - una membresía activa;
 - una fila inicial de `business_hours`;
 - una fila de `reservation_rules`;
-- una fila de `services`.
+- una fila de `services`;
+- una fila de `customers`.
 
 Después del cutover de horarios, `business_hours` puede crecer de una fila
 inicial a un máximo de siete filas por negocio, una por día. La prueba exige días
@@ -51,7 +52,7 @@ Después de aplicar la migración 004:
 npm run staging:test-isolation
 ```
 
-La prueba debe aprobar diecisiete controles:
+La prueba debe aprobar diecinueve controles:
 
 1. anon no consulta identidad ni configuración;
 2. A y B se autentican;
@@ -65,11 +66,13 @@ La prueba debe aprobar diecisiete controles:
 10. cada usuario ve entre uno y siete horarios propios, sin días duplicados;
 11. cada usuario ve exactamente sus reglas de reserva;
 12. cada usuario ve exactamente su servicio;
-13. las consultas amplias de configuración devuelven solo su tenant;
-14. la configuración cruzada devuelve cero filas;
-15. INSERT, UPDATE y DELETE de configuración están bloqueados;
-16. las tablas restantes continúan en default deny;
-17. ambas sesiones se cierran.
+13. cada usuario ve exactamente su cliente;
+14. las consultas amplias de configuración y clientes devuelven solo su tenant;
+15. la configuración y los clientes cruzados devuelven cero filas;
+16. INSERT, UPDATE y DELETE de configuración están bloqueados;
+17. INSERT, UPDATE y DELETE directos de clientes están bloqueados;
+18. las tablas restantes continúan en default deny;
+19. ambas sesiones se cierran.
 
 Cualquier fila cruzada es un fallo P0.
 

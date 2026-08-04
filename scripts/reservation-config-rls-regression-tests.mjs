@@ -135,7 +135,7 @@ const remoteTest = await readFile(
 assert.match(remoteTest, /assertSingleConfigurationRow/u);
 assert.match(remoteTest, /assertReservationConfigWritesDenied/u);
 assert.match(remoteTest, /configuración cruzada devuelve cero filas/u);
-assert.match(remoteTest, /Aislamiento multiempresa aprobado \(17 controles\)/u);
+assert.match(remoteTest, /Aislamiento multiempresa aprobado \(19 controles\)/u);
 assert.doesNotMatch(remoteTest, /SUPABASE_SERVICE_ROLE_KEY/u);
 console.log("✓ la prueba remota cubre lectura propia, BOLA y DML bloqueado");
 
