@@ -32,6 +32,7 @@ import {
 } from "@/lib/browser-image-storage";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import { v2Reservations } from "@/lib/v2/v2-mock-data";
+import type { V2FloorPlanSnapshot } from "@/lib/floor-plan/v2-floor-plan-cutover";
 
 type V2TableStatus = "available" | "reserved" | "occupied" | "blocked";
 type V2TableShape = "round" | "square" | "rectangle";
@@ -90,6 +91,15 @@ type V2BackgroundSettings = {
   positionX: number;
   positionY: number;
   fade: number;
+};
+
+type V2PlanoPageProps = {
+  initialTables?: V2FloorPlanSnapshot["initialTables"];
+  initialReservations?: V2FloorPlanSnapshot["initialReservations"];
+  initialLocalConfig?: V2FloorPlanSnapshot["initialLocalConfig"];
+  initialBackgroundImageUrl?: string;
+  initialBackgroundSettings?: V2FloorPlanSnapshot["initialBackgroundSettings"];
+  floorPlanPersistence?: "local" | "supabase";
 };
 
 type V2TableInteraction =
@@ -647,22 +657,46 @@ function persistBackgroundSettings(settings: V2BackgroundSettings) {
   );
 }
 
-export function V2PlanoPage() {
-  const [tables, setTables] = useState<V2FloorTable[]>(INITIAL_TABLES);
-  const [selectedTableId, setSelectedTableId] = useState(INITIAL_TABLES[2]?.id ?? "");
+export function V2PlanoPage({
+  initialTables,
+  initialReservations,
+  initialLocalConfig,
+  initialBackgroundImageUrl,
+  initialBackgroundSettings,
+  floorPlanPersistence = "local",
+}: V2PlanoPageProps = {}) {
+  const isSupabasePersistence =
+    floorPlanPersistence === "supabase";
+  const resolvedInitialTables =
+    initialTables ?? INITIAL_TABLES;
+  const [tables, setTables] = useState<V2FloorTable[]>(
+    resolvedInitialTables,
+  );
+  const [selectedTableId, setSelectedTableId] = useState(
+    resolvedInitialTables[0]?.id ?? "",
+  );
   const [selectedDate, setSelectedDate] = useState(TODAY_DATE);
   const [selectedTime, setSelectedTime] = useState("19:00");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(TODAY_DATE);
   const [activeBusinessSlotIndex, setActiveBusinessSlotIndex] = useState(0);
   const [localConfig, setLocalConfig] =
-    useState<V2LocalConfigState>(() => DEFAULT_LOCAL_CONFIG);
+    useState<V2LocalConfigState>(
+      () => initialLocalConfig ?? DEFAULT_LOCAL_CONFIG,
+    );
   const [planoReservations, setPlanoReservations] =
-    useState<V2PlanoReservation[]>(v2Reservations);
+    useState<V2PlanoReservation[]>(
+      initialReservations ?? v2Reservations,
+    );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(
+    initialBackgroundImageUrl ?? "",
+  );
   const [backgroundSettings, setBackgroundSettings] =
-    useState<V2BackgroundSettings>(DEFAULT_BACKGROUND_SETTINGS);
+    useState<V2BackgroundSettings>(
+      initialBackgroundSettings
+      ?? DEFAULT_BACKGROUND_SETTINGS,
+    );
   const [isBackgroundDialogOpen, setIsBackgroundDialogOpen] = useState(false);
   const [backgroundStorageError, setBackgroundStorageError] = useState("");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
@@ -823,6 +857,7 @@ export function V2PlanoPage() {
   }
 
   function persistReservations(nextReservations: V2PlanoReservation[]) {
+    if (isSupabasePersistence) return;
     setPlanoReservations(nextReservations);
     window.localStorage.setItem(
       RESERVATIONS_STORAGE_KEY,
@@ -854,6 +889,8 @@ export function V2PlanoPage() {
   }
 
   useEffect(() => {
+    if (isSupabasePersistence) return;
+
     function loadConfigFromStorage() {
       setLocalConfig(loadLocalConfigFromStorage());
     }
@@ -946,7 +983,7 @@ export function V2PlanoPage() {
       window.removeEventListener(FLOOR_TABLES_EVENT, loadTablesFromStorage);
       window.removeEventListener(LOCAL_CONFIG_EVENT, loadConfigFromStorage);
     };
-  }, []);
+  }, [isSupabasePersistence]);
 
   useEffect(() => {
     function handleDocumentMouseDown(event: globalThis.MouseEvent) {
@@ -1074,6 +1111,7 @@ export function V2PlanoPage() {
   }
 
   function startMoveTable(event: MouseEvent<HTMLButtonElement>, table: V2FloorTable) {
+    if (isSupabasePersistence) return;
     event.preventDefault();
 
     if (isMergeMode) return;
@@ -1097,6 +1135,7 @@ export function V2PlanoPage() {
   }
 
   function startResizeTable(event: MouseEvent<HTMLSpanElement>, table: V2FloorTable) {
+    if (isSupabasePersistence) return;
     event.preventDefault();
     event.stopPropagation();
 
@@ -1115,6 +1154,7 @@ export function V2PlanoPage() {
   }
 
   function updateSelectedTableStatus(status: V2TableStatus) {
+    if (isSupabasePersistence) return;
     if (!selectedTable) return;
 
     setTables((current) =>
@@ -1135,6 +1175,7 @@ export function V2PlanoPage() {
   }
 
   function addMockTable() {
+    if (isSupabasePersistence) return;
     const nextNumber = tables.length + 1;
     const nextTable: V2FloorTable = {
       id: `table-${Date.now()}`,
@@ -1156,6 +1197,7 @@ export function V2PlanoPage() {
   }
 
   function deleteSelectedTable() {
+    if (isSupabasePersistence) return;
     if (!selectedTable) return;
 
     const nextReservations = planoReservations.map((reservation) =>
@@ -1180,6 +1222,7 @@ export function V2PlanoPage() {
   }
 
   function deleteEditingTable() {
+    if (isSupabasePersistence) return;
     if (!editingTable) return;
 
     const tableToDelete = editingTable;
@@ -1208,6 +1251,7 @@ export function V2PlanoPage() {
   }
 
   function startMergeMode() {
+    if (isSupabasePersistence) return;
     if (!selectedTable) return;
 
     const initialSelection =
@@ -1223,6 +1267,7 @@ export function V2PlanoPage() {
   }
 
   function mergeSelectedTables() {
+    if (isSupabasePersistence) return;
     if (mergeSelectionIds.length < 2) return;
 
     const rawTablesToMerge = tables.filter((table) =>
@@ -1277,6 +1322,7 @@ export function V2PlanoPage() {
   }
 
   function separateSelectedTable() {
+    if (isSupabasePersistence) return;
     if (!selectedTable?.mergedTables?.length) return;
 
     setTables((current) => [
@@ -1305,10 +1351,12 @@ export function V2PlanoPage() {
   }
 
   function triggerBackgroundImageUpload() {
+    if (isSupabasePersistence) return;
     backgroundInputRef.current?.click();
   }
 
   async function handleBackgroundImageChange(event: ChangeEvent<HTMLInputElement>) {
+    if (isSupabasePersistence) return;
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -1342,6 +1390,7 @@ export function V2PlanoPage() {
   }
 
   function updateBackgroundSettings(nextSettings: V2BackgroundSettings) {
+    if (isSupabasePersistence) return;
     const normalizedSettings = normalizeBackgroundSettings(nextSettings);
 
     setBackgroundSettings(normalizedSettings);
@@ -1350,6 +1399,7 @@ export function V2PlanoPage() {
   }
 
   function removeBackgroundImage() {
+    if (isSupabasePersistence) return;
     setBackgroundImageUrl("");
     setBackgroundStorageError("");
     window.localStorage.removeItem(FLOOR_BACKGROUND_STORAGE_KEY);
@@ -1365,11 +1415,13 @@ export function V2PlanoPage() {
   }
 
   function toggleLayoutLock() {
+    if (isSupabasePersistence) return;
     setIsLayoutUnlocked((current) => !current);
     setActiveTableInteraction(null);
   }
 
   function openSelectedTableEditor() {
+    if (isSupabasePersistence) return;
     if (!selectedTable) return;
 
     setEditingTable({ ...selectedTable });
@@ -1380,6 +1432,7 @@ export function V2PlanoPage() {
   }
 
   function saveTableEditor() {
+    if (isSupabasePersistence) return;
     if (!editingTable) return;
 
     const previousTable = tables.find((table) => table.id === editingTable.id);
@@ -1420,6 +1473,7 @@ export function V2PlanoPage() {
   }
 
   function openAssignDialog() {
+    if (isSupabasePersistence) return;
     setAssignReservationError("");
     setIsAssignDialogOpen(true);
   }
@@ -1430,6 +1484,7 @@ export function V2PlanoPage() {
   }
 
   function assignReservationToSelectedTable(reservationId: string) {
+    if (isSupabasePersistence) return;
     if (!selectedTable) return;
 
     if (selectedTable.status === "blocked" || selectedTable.locked) {
@@ -1480,6 +1535,7 @@ export function V2PlanoPage() {
   }
 
   function openReleaseDialog() {
+    if (isSupabasePersistence) return;
     if (!selectedTable?.reservationId) return;
 
     setIsReleaseDialogOpen(true);
@@ -1490,6 +1546,7 @@ export function V2PlanoPage() {
   }
 
   function clearSelectedReservation() {
+    if (isSupabasePersistence) return;
     if (!selectedTable?.reservationId) return;
 
     const nextReservations = planoReservations.map((reservation) =>
@@ -1506,6 +1563,7 @@ export function V2PlanoPage() {
   }
 
   function restoreInitialLayout() {
+    if (isSupabasePersistence) return;
     setTables(INITIAL_TABLES);
     setSelectedTableId(INITIAL_TABLES[0]?.id ?? "");
     window.localStorage.removeItem(FLOOR_TABLES_STORAGE_KEY);
@@ -1514,6 +1572,7 @@ export function V2PlanoPage() {
   }
 
   function saveChanges() {
+    if (isSupabasePersistence) return;
     window.localStorage.setItem(FLOOR_TABLES_STORAGE_KEY, JSON.stringify(tables));
     window.dispatchEvent(new Event(FLOOR_TABLES_EVENT));
 
@@ -1637,7 +1696,7 @@ export function V2PlanoPage() {
                   </V2Button>
                 ) : null}
 
-                <V2Button variant="primary" onClick={saveChanges}>
+                <V2Button variant="primary" onClick={saveChanges} disabled={isSupabasePersistence}>
                   Guardar cambios
                 </V2Button>
               </div>
@@ -1647,7 +1706,7 @@ export function V2PlanoPage() {
                   variant="danger"
                   icon={<Trash2 size={17} />}
                   onClick={deleteSelectedTable}
-                  disabled={!selectedTable}
+                  disabled={!selectedTable || isSupabasePersistence}
                 >
                   Eliminar mesa
                 </V2Button>
@@ -1656,6 +1715,7 @@ export function V2PlanoPage() {
                   variant="secondary"
                   icon={<RotateCcw size={17} />}
                   onClick={restoreInitialLayout}
+                  disabled={isSupabasePersistence}
                 >
                   Restaurar layout
                 </V2Button>
@@ -1664,6 +1724,7 @@ export function V2PlanoPage() {
                   variant="primary"
                   icon={<Plus size={17} />}
                   onClick={addMockTable}
+                  disabled={isSupabasePersistence}
                 >
                   Agregar mesa
                 </V2Button>
@@ -1672,6 +1733,7 @@ export function V2PlanoPage() {
                   variant="secondary"
                   icon={<Layers size={17} />}
                   onClick={openBackgroundDialog}
+                  disabled={isSupabasePersistence}
                 >
                   Imagen de fondo
                 </V2Button>
@@ -1679,6 +1741,14 @@ export function V2PlanoPage() {
             </div>
           }
         />
+
+        {isSupabasePersistence ? (
+          <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <strong>Plano conectado a Supabase en modo lectura.</strong>{" "}
+            Mesas, reservas, horarios y asignaciones provienen del negocio activo.
+            La edición visual se habilitará en la próxima entrega.
+          </div>
+        ) : null}
 
         <input
           ref={backgroundInputRef}
@@ -2071,6 +2141,7 @@ export function V2PlanoPage() {
                   <button
                     type="button"
                     onClick={toggleLayoutLock}
+                    disabled={isSupabasePersistence}
                     className={`absolute bottom-3 left-3 z-20 flex h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold shadow-sm backdrop-blur transition ${
                       isLayoutUnlocked
                         ? "border-emerald-200 bg-emerald-600 text-white hover:bg-emerald-700"
@@ -2087,6 +2158,7 @@ export function V2PlanoPage() {
                     <button
                       type="button"
                       onClick={openBackgroundDialog}
+                      disabled={isSupabasePersistence}
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100"
                       aria-label="Configurar imagen de fondo"
                       title="Configurar imagen de fondo"
@@ -2133,6 +2205,7 @@ export function V2PlanoPage() {
                     key={reservation.id}
                     type="button"
                     onClick={openAssignDialog}
+                    disabled={isSupabasePersistence}
                     className="flex w-full items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/40 p-2.5 text-left text-xs transition hover:bg-amber-50"
                   >
                     <span className="min-w-[42px] font-semibold text-orange-600">
@@ -2219,6 +2292,7 @@ export function V2PlanoPage() {
                         variant="secondary"
                         icon={<Pencil size={16} />}
                         onClick={openSelectedTableEditor}
+                        disabled={isSupabasePersistence}
                         title="Editar mesa"
                       >
                         <span className="sr-only">Editar mesa</span>
@@ -2229,6 +2303,7 @@ export function V2PlanoPage() {
                           variant="success"
                           icon={<Unlock size={16} />}
                           onClick={() => updateSelectedTableStatus("available")}
+                          disabled={isSupabasePersistence}
                           title="Activar mesa"
                         >
                           <span className="sr-only">Activar mesa</span>
@@ -2238,6 +2313,7 @@ export function V2PlanoPage() {
                           variant="secondary"
                           icon={<Lock size={16} />}
                           onClick={() => updateSelectedTableStatus("blocked")}
+                          disabled={isSupabasePersistence}
                           title="Bloquear mesa"
                         >
                           <span className="sr-only">Bloquear mesa</span>
@@ -2249,7 +2325,7 @@ export function V2PlanoPage() {
                           variant="secondary"
                           icon={<Maximize2 size={16} />}
                           onClick={separateSelectedTable}
-                          disabled={Boolean(selectedTable.reservationClient)}
+                          disabled={isSupabasePersistence || Boolean(selectedTable.reservationClient)}
                           title="Separar mesas"
                         >
                           <span className="sr-only">Separar mesas</span>
@@ -2260,6 +2336,7 @@ export function V2PlanoPage() {
                           icon={<Minimize2 size={16} />}
                           onClick={startMergeMode}
                           disabled={
+                            isSupabasePersistence ||
                             selectedTable.status !== "available" ||
                             Boolean(selectedTable.locked) ||
                             Boolean(selectedTable.reservationClient)
@@ -2276,6 +2353,7 @@ export function V2PlanoPage() {
                         variant="secondary"
                         icon={<X size={16} />}
                         onClick={openReleaseDialog}
+                        disabled={isSupabasePersistence}
                       >
                         Quitar reserva
                       </V2Button>
@@ -2284,7 +2362,7 @@ export function V2PlanoPage() {
                         variant="primary"
                         icon={<CheckCircle2 size={16} />}
                         onClick={openAssignDialog}
-                        disabled={!selectedTable || selectedTable.status === "blocked" || selectedTable.locked}
+                        disabled={isSupabasePersistence || !selectedTable || selectedTable.status === "blocked" || selectedTable.locked}
                       >
                         Asignar reserva
                       </V2Button>
