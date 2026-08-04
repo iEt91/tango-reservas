@@ -33,6 +33,7 @@ import {
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import { v2Reservations } from "@/lib/v2/v2-mock-data";
 import type { V2FloorPlanSnapshot } from "@/lib/floor-plan/v2-floor-plan-cutover";
+import { setBusinessReservationTablesAction } from "./actions";
 
 type V2TableStatus = "available" | "reserved" | "occupied" | "blocked";
 type V2TableShape = "round" | "square" | "rectangle";
@@ -100,6 +101,7 @@ type V2PlanoPageProps = {
   initialBackgroundImageUrl?: string;
   initialBackgroundSettings?: V2FloorPlanSnapshot["initialBackgroundSettings"];
   floorPlanPersistence?: "local" | "supabase";
+  canAssignFloorPlan?: boolean;
 };
 
 type V2TableInteraction =
@@ -664,9 +666,13 @@ export function V2PlanoPage({
   initialBackgroundImageUrl,
   initialBackgroundSettings,
   floorPlanPersistence = "local",
+  canAssignFloorPlan = true,
 }: V2PlanoPageProps = {}) {
   const isSupabasePersistence =
     floorPlanPersistence === "supabase";
+  const canAssignPersistentReservations =
+    !isSupabasePersistence
+    || canAssignFloorPlan;
   const resolvedInitialTables =
     initialTables ?? INITIAL_TABLES;
   const [tables, setTables] = useState<V2FloorTable[]>(
@@ -704,6 +710,9 @@ export function V2PlanoPage({
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [mergeSelectionIds, setMergeSelectionIds] = useState<string[]>([]);
   const [assignReservationError, setAssignReservationError] = useState("");
+  const [isAssignmentMutating, setIsAssignmentMutating] = useState(false);
+  const [floorPlanOperationError, setFloorPlanOperationError] = useState("");
+  const [floorPlanOperationMessage, setFloorPlanOperationMessage] = useState("");
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLayoutUnlocked, setIsLayoutUnlocked] = useState(false);
   const [editingTable, setEditingTable] = useState<V2FloorTable | null>(null);
@@ -1473,8 +1482,16 @@ export function V2PlanoPage({
   }
 
   function openAssignDialog() {
-    if (isSupabasePersistence) return;
+    if (
+      !canAssignPersistentReservations
+      || isAssignmentMutating
+    ) {
+      return;
+    }
+
     setAssignReservationError("");
+    setFloorPlanOperationError("");
+    setFloorPlanOperationMessage("");
     setIsAssignDialogOpen(true);
   }
 
@@ -1483,9 +1500,15 @@ export function V2PlanoPage({
     setIsAssignDialogOpen(false);
   }
 
-  function assignReservationToSelectedTable(reservationId: string) {
-    if (isSupabasePersistence) return;
-    if (!selectedTable) return;
+  async function assignReservationToSelectedTable(reservationId: string) {
+    if (!selectedTable || isAssignmentMutating) return;
+
+    if (!canAssignPersistentReservations) {
+      setAssignReservationError(
+        "No tenés permisos para asignar reservas.",
+      );
+      return;
+    }
 
     if (selectedTable.status === "blocked" || selectedTable.locked) {
       setAssignReservationError("No se puede asignar una reserva a una mesa bloqueada.");
@@ -1520,6 +1543,51 @@ export function V2PlanoPage({
       return;
     }
 
+    if (isSupabasePersistence) {
+      setIsAssignmentMutating(true);
+      setAssignReservationError("");
+      setFloorPlanOperationError("");
+      setFloorPlanOperationMessage("");
+
+      try {
+        const result =
+          await setBusinessReservationTablesAction({
+            reservationId,
+            tableIds: [selectedTable.id],
+          });
+
+        if (!result.ok) {
+          setAssignReservationError(result.error);
+          setFloorPlanOperationError(result.error);
+          return;
+        }
+
+        setPlanoReservations((current) =>
+          current.map((reservation) =>
+            reservation.id === reservationId
+              ? {
+                  ...reservation,
+                  tableName: selectedTable.name,
+                }
+              : reservation
+          )
+        );
+        setFloorPlanOperationMessage(
+          `Reserva asignada a ${selectedTable.name}.`,
+        );
+        setIsAssignDialogOpen(false);
+      } catch {
+        const message =
+          "No se pudo completar la asignación.";
+        setAssignReservationError(message);
+        setFloorPlanOperationError(message);
+      } finally {
+        setIsAssignmentMutating(false);
+      }
+
+      return;
+    }
+
     const nextReservations = planoReservations.map((reservation) =>
       reservation.id === reservationId
         ? {
@@ -1535,9 +1603,16 @@ export function V2PlanoPage({
   }
 
   function openReleaseDialog() {
-    if (isSupabasePersistence) return;
-    if (!selectedTable?.reservationId) return;
+    if (
+      !canAssignPersistentReservations
+      || isAssignmentMutating
+      || !selectedTable?.reservationId
+    ) {
+      return;
+    }
 
+    setFloorPlanOperationError("");
+    setFloorPlanOperationMessage("");
     setIsReleaseDialogOpen(true);
   }
 
@@ -1545,12 +1620,68 @@ export function V2PlanoPage({
     setIsReleaseDialogOpen(false);
   }
 
-  function clearSelectedReservation() {
-    if (isSupabasePersistence) return;
-    if (!selectedTable?.reservationId) return;
+  async function clearSelectedReservation() {
+    if (
+      !selectedTable?.reservationId
+      || isAssignmentMutating
+    ) {
+      return;
+    }
+
+    const reservationId =
+      selectedTable.reservationId;
+
+    if (!canAssignPersistentReservations) {
+      setFloorPlanOperationError(
+        "No tenés permisos para liberar reservas.",
+      );
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      setIsAssignmentMutating(true);
+      setFloorPlanOperationError("");
+      setFloorPlanOperationMessage("");
+
+      try {
+        const result =
+          await setBusinessReservationTablesAction({
+            reservationId,
+            tableIds: [],
+          });
+
+        if (!result.ok) {
+          setFloorPlanOperationError(result.error);
+          return;
+        }
+
+        setPlanoReservations((current) =>
+          current.map((reservation) =>
+            reservation.id === reservationId
+              ? {
+                  ...reservation,
+                  tableName: "",
+                }
+              : reservation
+          )
+        );
+        setFloorPlanOperationMessage(
+          "La reserva quedó sin mesa asignada.",
+        );
+        setIsReleaseDialogOpen(false);
+      } catch {
+        setFloorPlanOperationError(
+          "No se pudo liberar la mesa.",
+        );
+      } finally {
+        setIsAssignmentMutating(false);
+      }
+
+      return;
+    }
 
     const nextReservations = planoReservations.map((reservation) =>
-      reservation.id === selectedTable.reservationId
+      reservation.id === reservationId
         ? {
             ...reservation,
             tableName: "",
@@ -1744,9 +1875,21 @@ export function V2PlanoPage({
 
         {isSupabasePersistence ? (
           <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-            <strong>Plano conectado a Supabase en modo lectura.</strong>{" "}
-            Mesas, reservas, horarios y asignaciones provienen del negocio activo.
-            La edición visual se habilitará en la próxima entrega.
+            <strong>Plano conectado a Supabase.</strong>{" "}
+            La lectura y las asignaciones de reservas son persistentes.
+            La edición física de mesas y del fondo continúa bloqueada.
+          </div>
+        ) : null}
+
+        {floorPlanOperationError ? (
+          <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {floorPlanOperationError}
+          </div>
+        ) : null}
+
+        {floorPlanOperationMessage ? (
+          <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            {floorPlanOperationMessage}
           </div>
         ) : null}
 
@@ -2205,7 +2348,7 @@ export function V2PlanoPage({
                     key={reservation.id}
                     type="button"
                     onClick={openAssignDialog}
-                    disabled={isSupabasePersistence}
+                    disabled={!canAssignPersistentReservations || isAssignmentMutating}
                     className="flex w-full items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/40 p-2.5 text-left text-xs transition hover:bg-amber-50"
                   >
                     <span className="min-w-[42px] font-semibold text-orange-600">
@@ -2353,7 +2496,7 @@ export function V2PlanoPage({
                         variant="secondary"
                         icon={<X size={16} />}
                         onClick={openReleaseDialog}
-                        disabled={isSupabasePersistence}
+                        disabled={!canAssignPersistentReservations || isAssignmentMutating}
                       >
                         Quitar reserva
                       </V2Button>
@@ -2362,7 +2505,7 @@ export function V2PlanoPage({
                         variant="primary"
                         icon={<CheckCircle2 size={16} />}
                         onClick={openAssignDialog}
-                        disabled={isSupabasePersistence || !selectedTable || selectedTable.status === "blocked" || selectedTable.locked}
+                        disabled={!canAssignPersistentReservations || isAssignmentMutating || !selectedTable || selectedTable.status === "blocked" || selectedTable.locked}
                       >
                         Asignar reserva
                       </V2Button>
@@ -2425,8 +2568,12 @@ export function V2PlanoPage({
                 <V2Button variant="secondary" onClick={closeReleaseDialog}>
                   Cancelar
                 </V2Button>
-                <V2Button variant="danger" onClick={clearSelectedReservation}>
-                  Liberar mesa
+                <V2Button
+                  variant="danger"
+                  onClick={clearSelectedReservation}
+                  disabled={isAssignmentMutating}
+                >
+                  {isAssignmentMutating ? "Liberando..." : "Liberar mesa"}
                 </V2Button>
               </div>
             </div>
@@ -2522,9 +2669,9 @@ export function V2PlanoPage({
                         <V2Button
                           variant="primary"
                           onClick={() => assignReservationToSelectedTable(reservation.id)}
-                          disabled={!selectedTable || selectedTable.status === "blocked" || selectedTable.locked || capacityWarning}
+                          disabled={isAssignmentMutating || !canAssignPersistentReservations || !selectedTable || selectedTable.status === "blocked" || selectedTable.locked || capacityWarning}
                         >
-                          Asignar
+                          {isAssignmentMutating ? "Asignando..." : "Asignar"}
                         </V2Button>
                       </div>
                     );

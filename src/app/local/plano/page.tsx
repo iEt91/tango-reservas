@@ -80,11 +80,17 @@ export default async function PlanoPage() {
     businessHours,
     reservationSettings,
   });
+  const canAssignFloorPlan = [
+    "owner",
+    "admin",
+    "staff",
+  ].includes(activeBusiness.membership.role);
 
   return (
     <V2PlanoPage
       {...snapshot}
       floorPlanPersistence="supabase"
+      canAssignFloorPlan={canAssignFloorPlan}
     />
   );
 }

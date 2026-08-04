@@ -188,10 +188,16 @@ check(
 );
 
 check(
-  "las mutaciones visuales quedan bloqueadas durante el corte de lectura",
+  "las mutaciones físicas continúan bloqueadas al habilitar asignaciones",
   sources.ui.includes(
-    "Plano conectado a Supabase en modo lectura",
+    "Plano conectado a Supabase.",
   )
+    && sources.ui.includes(
+      "La edición física de mesas y del fondo continúa bloqueada.",
+    )
+    && sources.ui.includes(
+      "disabled={!selectedTable || isSupabasePersistence}",
+    )
     && sources.ui.includes(
       "disabled={isSupabasePersistence}",
     ),
