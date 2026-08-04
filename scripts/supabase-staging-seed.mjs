@@ -37,6 +37,8 @@ const FIXTURE_IDS = {
   serviceB: "40000000-0000-4000-8000-00000000000b",
   customerA: "50000000-0000-4000-8000-00000000000a",
   customerB: "50000000-0000-4000-8000-00000000000b",
+  reservationA: "60000000-0000-4000-8000-00000000000a",
+  reservationB: "60000000-0000-4000-8000-00000000000b",
 };
 
 async function findUserByEmail(email) {
@@ -317,6 +319,72 @@ async function ensureCustomer({
   return data.id;
 }
 
+function nextWeekday(targetDay) {
+  const date = new Date();
+  date.setUTCHours(12, 0, 0, 0);
+
+  const distance =
+    (targetDay - date.getUTCDay() + 7) % 7 || 7;
+  date.setUTCDate(date.getUTCDate() + distance);
+
+  return date.toISOString().slice(0, 10);
+}
+
+async function ensureReservation({
+  id,
+  businessId,
+  serviceId,
+  customerId,
+  customerName,
+  customerPhone,
+  customerEmail,
+  reservationDate,
+  reservationTime,
+  durationMinutes,
+  publicCode,
+  idempotencyKey,
+}) {
+  const { data, error } = await admin
+    .from("reservations")
+    .upsert(
+      {
+        id,
+        business_id: businessId,
+        service_id: serviceId,
+        customer_id: customerId,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_email: customerEmail,
+        reservation_date: reservationDate,
+        reservation_time: reservationTime,
+        party_size: 2,
+        status: "pending",
+        notes: "Fixture de aislamiento multiempresa",
+        source: "manual",
+        duration_minutes: durationMinutes,
+        public_code: publicCode,
+        idempotency_key: idempotencyKey,
+        confirmed_at: null,
+        completed_at: null,
+        cancelled_at: null,
+        no_show_at: null,
+      },
+      {
+        onConflict: "id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error(
+      "No se pudo preparar reservations " + id + ".",
+    );
+  }
+
+  return data.id;
+}
+
 console.log("Preparando fixture RLS exclusivamente en STAGING...");
 console.log(`Proyecto: ${context.stagingProjectRef}`);
 
@@ -449,7 +517,36 @@ const customerBId = await ensureCustomer({
   phone: "541100000002",
 });
 
-console.log("✓ horarios, reglas, servicios y clientes exclusivos preparados");
+const reservationAId = await ensureReservation({
+  id: FIXTURE_IDS.reservationA,
+  businessId: businessA.id,
+  serviceId: serviceAId,
+  customerId: customerAId,
+  customerName: "Isolation Customer A",
+  customerPhone: "541100000001",
+  customerEmail: "isolation-customer-a@example.com",
+  reservationDate: nextWeekday(1),
+  reservationTime: "14:00",
+  durationMinutes: 60,
+  publicCode: "RES-00000000000A",
+  idempotencyKey: "fixture-reservation-a",
+});
+const reservationBId = await ensureReservation({
+  id: FIXTURE_IDS.reservationB,
+  businessId: businessB.id,
+  serviceId: serviceBId,
+  customerId: customerBId,
+  customerName: "Isolation Customer B",
+  customerPhone: "541100000002",
+  customerEmail: "isolation-customer-b@example.com",
+  reservationDate: nextWeekday(2),
+  reservationTime: "15:00",
+  durationMinutes: 90,
+  publicCode: "RES-00000000000B",
+  idempotencyKey: "fixture-reservation-b",
+});
+
+console.log("✓ horarios, reglas, servicios, clientes y reservas exclusivos preparados");
 
 await mkdir(".tango", { recursive: true });
 await writeFile(
@@ -471,6 +568,8 @@ await writeFile(
       serviceBId,
       customerAId,
       customerBId,
+      reservationAId,
+      reservationBId,
       createdAt: new Date().toISOString(),
     },
     null,

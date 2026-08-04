@@ -67,6 +67,9 @@ assert.match(seed, /reservation_rules/u);
 assert.match(seed, /services/u);
 assert.match(seed, /customers/u);
 assert.match(seed, /ensureCustomer/u);
+assert.match(seed, /ensureReservation/u);
+assert.match(seed, /reservationAId/u);
+assert.match(seed, /reservationBId/u);
 assert.match(seed, /\.tango\/staging-isolation\.json/u);
 assert.doesNotMatch(seed, /console\.log\([^)]*Password/u);
 assert.doesNotMatch(seed, /console\.log\([^)]*serverSecret/u);
@@ -86,14 +89,16 @@ assert.match(isolation, /new Set/u);
 assert.match(isolation, /assertReservationConfigWritesDenied/u);
 assert.match(isolation, /assertCustomerWritesDenied/u);
 assert.match(isolation, /customerAId/u);
-assert.match(isolation, /configuración cruzada devuelve cero filas/u);
+assert.match(isolation, /reservationAId/u);
+assert.match(isolation, /assertReservationWritesDenied/u);
+assert.match(isolation, /reservas cruzadas devuelven cero filas/u);
 assert.match(
   isolation,
   /las tablas restantes siguen default deny/u,
 );
 assert.match(
   isolation,
-  /Aislamiento multiempresa aprobado \(19 controles\)/u,
+  /Aislamiento multiempresa aprobado \(21 controles\)/u,
 );
 assert.doesNotMatch(isolation, /SUPABASE_SERVICE_ROLE_KEY/u);
 console.log("✓ la prueba pública cubre identidad, configuración, BOLA y DML");
@@ -149,11 +154,12 @@ assert.match(
 );
 assert.match(documentation, /staging:seed-isolation/u);
 assert.match(documentation, /staging:test-isolation/u);
-assert.match(documentation, /diecinueve controles/u);
+assert.match(documentation, /veintiún controles/u);
 assert.match(documentation, /business_hours/u);
 assert.match(documentation, /reservation_rules/u);
 assert.match(documentation, /services/u);
 assert.match(documentation, /customers/u);
+assert.match(documentation, /reservations/u);
 console.log("✓ el runbook define configuración propia y evidencia");
 
 for (const path of requiredFiles) {

@@ -34,7 +34,13 @@ Es idempotente y prepara para cada negocio:
 - una fila inicial de `business_hours`;
 - una fila de `reservation_rules`;
 - una fila de `services`;
-- una fila de `customers`.
+- una fila fixture mínima de `customers`;
+- una fila fixture mínima de `reservations`.
+
+`customers` y `reservations` son tablas de colección. La prueba exige
+que cada usuario vea su fila fixture y que todas las filas visibles
+pertenezcan a su propio negocio, pero permite filas adicionales del
+mismo tenant creadas por pruebas funcionales o por uso normal.
 
 Después del cutover de horarios, `business_hours` puede crecer de una fila
 inicial a un máximo de siete filas por negocio, una por día. La prueba exige días
@@ -52,7 +58,7 @@ Después de aplicar la migración 004:
 npm run staging:test-isolation
 ```
 
-La prueba debe aprobar diecinueve controles:
+La prueba debe aprobar veintiún controles:
 
 1. anon no consulta identidad ni configuración;
 2. A y B se autentican;
@@ -67,12 +73,14 @@ La prueba debe aprobar diecinueve controles:
 11. cada usuario ve exactamente sus reglas de reserva;
 12. cada usuario ve exactamente su servicio;
 13. cada usuario ve exactamente su cliente;
-14. las consultas amplias de configuración y clientes devuelven solo su tenant;
-15. la configuración y los clientes cruzados devuelven cero filas;
-16. INSERT, UPDATE y DELETE de configuración están bloqueados;
-17. INSERT, UPDATE y DELETE directos de clientes están bloqueados;
-18. las tablas restantes continúan en default deny;
-19. ambas sesiones se cierran.
+14. cada usuario ve exactamente su reserva;
+15. las consultas amplias de configuración, clientes y reservas devuelven solo su tenant;
+16. la configuración, los clientes y las reservas cruzados devuelven cero filas;
+17. INSERT, UPDATE y DELETE de configuración están bloqueados;
+18. INSERT, UPDATE y DELETE directos de clientes están bloqueados;
+19. INSERT, UPDATE y DELETE directos de reservas están bloqueados;
+20. las tablas restantes continúan en default deny;
+21. ambas sesiones se cierran.
 
 Cualquier fila cruzada es un fallo P0.
 

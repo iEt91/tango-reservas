@@ -14,6 +14,8 @@ const publicWebPath =
   "src/lib/data/supabase/publicWeb.ts";
 const reservationsPath =
   "src/lib/data/supabase/reservations.ts";
+const reservationsWriteMigrationPath =
+  "supabase/migrations/20260804_009_reservations_write_rpc.sql";
 const documentationPath =
   "docs/database/BUSINESS-SCHEMA-CONTRACT.md";
 
@@ -23,6 +25,7 @@ const requiredFiles = [
   adminAdapterPath,
   publicWebPath,
   reservationsPath,
+  reservationsWriteMigrationPath,
   documentationPath,
 ];
 
@@ -42,6 +45,10 @@ const adminAdapter = await readFile(
 const publicWeb = await readFile(publicWebPath, "utf8");
 const reservations = await readFile(
   reservationsPath,
+  "utf8",
+);
+const reservationsWriteMigration = await readFile(
+  reservationsWriteMigrationPath,
   "utf8",
 );
 
@@ -93,7 +100,10 @@ for (const obsoleteColumn of [
 }
 assert.match(publicWeb, /businessRow\.theme_id/u);
 assert.match(publicWeb, /mapThemeIdToPublicTemplateId/u);
-assert.match(reservations, /requiresConfirmation/u);
+assert.match(
+  reservationsWriteMigration,
+  /rule_row\.requires_confirmation/u,
+);
 console.log("✓ adaptador y consumidores no usan columnas inexistentes");
 
 assert.match(
@@ -143,8 +153,12 @@ assert.doesNotMatch(
   /row\.auto_confirm_reservations/u,
 );
 assert.match(
-  reservations,
-  /getReservationRules\(safeBusinessId\)\?\.requiresConfirmation/u,
+  reservationsWriteMigration,
+  /when rule_row\.requires_confirmation[\s\S]+then 'pending'[\s\S]+else 'confirmed'/u,
+);
+assert.match(
+  reservationsWriteMigration,
+  /when rule_row\.requires_confirmation[\s\S]+then null[\s\S]+else now\(\)/u,
 );
 console.log("✓ auto confirm depende de reglas y falla en pendiente");
 

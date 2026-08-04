@@ -212,10 +212,18 @@ assert.match(seed, /customerA/u);
 assert.match(seed, /customerB/u);
 assert.match(seed, /ensureCustomer/u);
 assert.match(isolation, /customerAId/u);
+assert.match(
+  isolation,
+  /assertTenantCollectionFixtureRow/u,
+);
+assert.match(
+  isolation,
+  /cliente fixture y solo clientes propios/u,
+);
 assert.match(isolation, /assertCustomerWritesDenied/u);
 assert.match(
   isolation,
-  /Aislamiento multiempresa aprobado \(19 controles\)/u,
+  /Aislamiento multiempresa aprobado \(21 controles\)/u,
 );
 console.log("✓ el fixture y aislamiento incorporan clientes A/B");
 

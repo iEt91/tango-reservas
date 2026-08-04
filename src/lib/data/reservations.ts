@@ -224,7 +224,7 @@ export async function updateReservationAssignedTables(reservationId: string, tab
 
 export async function deleteReservationsByIds(reservationIds: string[]) {
   if (isSupabaseMode()) {
-    const results = [];
+    const results: Reservation[] = [];
 
     for (const reservationId of reservationIds) {
       results.push(await supabaseReservations.deleteSupabaseReservation(reservationId));

@@ -268,7 +268,13 @@ export type FloorTable = {
   updatedAt: string;
 };
 
-export type ReservationSource = "web" | "whatsapp" | "instagram" | "manual" | "admin";
+export type ReservationSource =
+  | "web"
+  | "whatsapp"
+  | "phone"
+  | "instagram"
+  | "manual"
+  | "admin";
 
 export type DepositStatus =
   | "not_required"

@@ -17,6 +17,8 @@ const servicesWritePath =
   "supabase/migrations/20260803_007_services_write_rpc.sql";
 const customersWritePath =
   "supabase/migrations/20260803_008_customers_write_rpc.sql";
+const reservationsWritePath =
+  "supabase/migrations/20260804_009_reservations_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -39,6 +41,10 @@ const servicesWrite = await readFile(
 );
 const customersWrite = await readFile(
   customersWritePath,
+  "utf8",
+);
+const reservationsWrite = await readFile(
+  reservationsWritePath,
   "utf8",
 );
 
@@ -209,6 +215,28 @@ assert.match(
 );
 console.log("✓ clientes agregan lectura RLS y RPC segura");
 
+assert.match(
+  reservationsWrite,
+  /save_business_reservation/u,
+);
+assert.match(
+  reservationsWrite,
+  /set_business_reservation_status/u,
+);
+assert.match(
+  reservationsWrite,
+  /reservations_select_active_member/u,
+);
+assert.match(
+  reservationsWrite,
+  /pg_advisory_xact_lock/u,
+);
+assert.match(
+  reservationsWrite,
+  /revoke insert, update, delete[\s\S]+public\.reservations/u,
+);
+console.log("✓ reservas agregan disponibilidad transaccional sin DML directo");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -222,4 +250,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (9).");
+console.log("Todos los casos del historial remoto pasaron (10).");
