@@ -19,6 +19,8 @@ const customersWritePath =
   "supabase/migrations/20260803_008_customers_write_rpc.sql";
 const reservationsWritePath =
   "supabase/migrations/20260804_009_reservations_write_rpc.sql";
+const floorPlanWritePath =
+  "supabase/migrations/20260804_010_floor_plan_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -45,6 +47,10 @@ const customersWrite = await readFile(
 );
 const reservationsWrite = await readFile(
   reservationsWritePath,
+  "utf8",
+);
+const floorPlanWrite = await readFile(
+  floorPlanWritePath,
   "utf8",
 );
 
@@ -237,6 +243,41 @@ assert.match(
 );
 console.log("✓ reservas agregan disponibilidad transaccional sin DML directo");
 
+for (const table of [
+  "floor_plan_settings",
+  "floor_tables",
+  "reservation_table_assignments",
+]) {
+  assert.match(
+    floorPlanWrite,
+    new RegExp(
+      `create table if not exists[\\s\\S]+public\\.${table}`,
+      "u",
+    ),
+  );
+}
+assert.match(
+  floorPlanWrite,
+  /set_business_reservation_tables/u,
+);
+assert.match(
+  floorPlanWrite,
+  /reservations_validate_table_assignments/u,
+);
+assert.match(
+  floorPlanWrite,
+  /floor_tables_validate_assignments/u,
+);
+assert.match(
+  floorPlanWrite,
+  /reservation_rules_validate_table_assignments/u,
+);
+assert.match(
+  floorPlanWrite,
+  /revoke insert, update, delete[\s\S]+public\.reservation_table_assignments/u,
+);
+console.log("✓ plano y asignaciones agregan integridad transaccional");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -250,4 +291,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (10).");
+console.log("Todos los casos del historial remoto pasaron (11).");
