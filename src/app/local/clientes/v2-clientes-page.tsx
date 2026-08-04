@@ -6,7 +6,7 @@ import {
   Mail,
   PackageCheck,
   Pencil,
-  Trash2,
+  Archive,
   Plus,
   Search,
   Star,
@@ -36,6 +36,11 @@ import {
   V2_OPERATIONAL_STORAGE_KEYS,
 } from "@/lib/v2-operational-storage";
 import { reserveStockForClientDelivery } from "@/lib/v2-delivery-stock";
+import {
+  saveBusinessCustomerAction,
+  setBusinessCustomerActiveAction,
+} from "./actions";
+import type { BusinessCustomerEditor } from "@/lib/customers/business-customer-contract";
 
 const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
 const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
@@ -47,6 +52,13 @@ const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
 const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
 const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
 const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
+
+type V2ClientesPageProps = {
+  initialBusinessCustomers?: BusinessCustomerEditor[];
+  businessCustomersPersistence?: "local" | "supabase";
+  canWriteBusinessCustomers?: boolean;
+  canArchiveBusinessCustomers?: boolean;
+};
 
 type V2MenuItem = {
   id: string;
@@ -113,11 +125,15 @@ type V2ClientMeta = {
 
 type V2ManualClient = {
   id: string;
+  backendId?: string;
   name: string;
   email: string;
   phone: string;
   birthDate: string;
   internalNotes: string;
+  preferences: string;
+  tags: string[];
+  isActive: boolean;
   createdAt: string;
 };
 
@@ -179,6 +195,10 @@ type V2RealClient = {
   favoriteItems: string;
   birthDate: string;
   internalNotes: string;
+  backendId?: string;
+  preferences: string;
+  tags: string[];
+  isActive: boolean;
 };
 
 type V2ClientFilter = "all" | "frequent" | "new" | "notes" | "no_show";
@@ -429,13 +449,46 @@ function normalizeManualClient(client: Partial<V2ManualClient>): V2ManualClient 
 
   return {
     id: getClientStableId({ name, phone, email, fallbackId: client.id }),
+    backendId: client.backendId,
     name,
     email,
     phone,
     birthDate: client.birthDate?.trim() ?? "",
     internalNotes: client.internalNotes?.trim() ?? "",
+    preferences: client.preferences?.trim() ?? "",
+    tags: Array.isArray(client.tags)
+      ? client.tags.map((tag) => tag.trim()).filter(Boolean)
+      : [],
+    isActive: client.isActive !== false,
     createdAt: client.createdAt || getTodayDateKey(),
   };
+}
+
+function businessCustomerToManualClient(
+  customer: BusinessCustomerEditor,
+): V2ManualClient {
+  const name = customer.fullName.trim();
+  const phone = customer.phone.trim();
+  const email = customer.email.trim();
+
+  return normalizeManualClient({
+    id: getClientStableId({
+      name,
+      phone,
+      email,
+      fallbackId: customer.id ?? undefined,
+    }),
+    backendId: customer.id ?? undefined,
+    name,
+    email,
+    phone,
+    birthDate: customer.birthDate,
+    internalNotes: customer.internalNotes,
+    preferences: customer.preferences,
+    tags: customer.tags,
+    isActive: customer.isActive,
+    createdAt: getTodayDateKey(),
+  });
 }
 
 function manualClientToRealClient(client: V2ManualClient): V2RealClient {
@@ -467,6 +520,10 @@ function manualClientToRealClient(client: V2ManualClient): V2RealClient {
     favoriteItems: "Sin historial de consumo todavía.",
     birthDate: client.birthDate,
     internalNotes: client.internalNotes,
+    backendId: client.backendId,
+    preferences: client.preferences,
+    tags: [...client.tags],
+    isActive: client.isActive,
   };
 }
 
@@ -665,16 +722,34 @@ function buildClientsFromReservations(
       favoriteItems: getFavoriteItems(orderedReservations),
       birthDate: "",
       internalNotes: notes[0] ?? "",
+      backendId: undefined,
+      preferences: "",
+      tags: [],
+      isActive: true,
     };
 
     return client;
   });
 }
 
-export function V2ClientesPage() {
+export function V2ClientesPage({
+  initialBusinessCustomers = [],
+  businessCustomersPersistence = "local",
+  canWriteBusinessCustomers = true,
+  canArchiveBusinessCustomers = true,
+}: V2ClientesPageProps = {}) {
+  const usesSupabaseCustomers =
+    businessCustomersPersistence === "supabase";
   const [reservations, setReservations] = useState<V2StoredReservation[]>([]);
   const [deliveries, setDeliveries] = useState<V2StoredDelivery[]>([]);
-  const [manualClients, setManualClients] = useState<V2ManualClient[]>([]);
+  const [manualClients, setManualClients] = useState<V2ManualClient[]>(
+    () =>
+      usesSupabaseCustomers
+        ? initialBusinessCustomers
+            .filter((customer) => customer.isActive)
+            .map(businessCustomerToManualClient)
+        : [],
+  );
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [profileClientId, setProfileClientId] = useState<string | null>(null);
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
@@ -688,7 +763,31 @@ export function V2ClientesPage() {
   const [deliveryOrderQuantities, setDeliveryOrderQuantities] = useState<
     Record<string, number>
   >({});
-  const [clientMeta, setClientMeta] = useState<Record<string, V2ClientMeta>>({});
+  const [clientMeta, setClientMeta] = useState<Record<string, V2ClientMeta>>(
+    () =>
+      usesSupabaseCustomers
+        ? Object.fromEntries(
+            initialBusinessCustomers
+              .filter((customer) => customer.isActive)
+              .map((customer) => {
+                const mapped =
+                  businessCustomerToManualClient(customer);
+
+                return [
+                  mapped.id,
+                  {
+                    birthDate: mapped.birthDate,
+                    internalNotes: mapped.internalNotes,
+                  },
+                ];
+              }),
+          )
+        : {},
+  );
+  const [customerMutationError, setCustomerMutationError] =
+    useState("");
+  const [customerMutationPending, setCustomerMutationPending] =
+    useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [clientFilter, setClientFilter] = useState<V2ClientFilter>("all");
   const [clientSort, setClientSort] = useState<V2ClientSort>("name");
@@ -785,6 +884,8 @@ export function V2ClientesPage() {
   }, []);
 
   useEffect(() => {
+    if (usesSupabaseCustomers) return;
+
     function syncClientMetaFromStorage() {
       setClientMeta(
         readFromStorage<Record<string, V2ClientMeta>>(CLIENTS_META_STORAGE_KEY, {})
@@ -808,9 +909,11 @@ export function V2ClientesPage() {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener(CLIENTS_META_EVENT, syncClientMetaFromStorage);
     };
-  }, []);
+  }, [usesSupabaseCustomers]);
 
   useEffect(() => {
+    if (usesSupabaseCustomers) return;
+
     function syncManualClientsFromStorage() {
       setManualClients(
         readFromStorage<V2ManualClient[]>(MANUAL_CLIENTS_STORAGE_KEY, []).map(
@@ -836,29 +939,75 @@ export function V2ClientesPage() {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener(MANUAL_CLIENTS_EVENT, syncManualClientsFromStorage);
     };
-  }, []);
-
+  }, [usesSupabaseCustomers]);
 
   const clients = useMemo(() => {
-    const generatedClients = buildClientsFromReservations(reservations, deliveries);
-    const generatedClientIds = new Set(generatedClients.map((client) => client.id));
+    const generatedClients = buildClientsFromReservations(
+      reservations,
+      deliveries,
+    );
+    const generatedById = new Map(
+      generatedClients.map((client) => [client.id, client]),
+    );
+
+    if (usesSupabaseCustomers) {
+      return manualClients
+        .filter((client) => client.isActive)
+        .map((canonicalClient) => {
+          const derivedClient =
+            generatedById.get(canonicalClient.id)
+            ?? manualClientToRealClient(canonicalClient);
+
+          return {
+            ...derivedClient,
+            id: canonicalClient.id,
+            backendId: canonicalClient.backendId,
+            initials: getInitials(canonicalClient.name),
+            name: canonicalClient.name,
+            email: canonicalClient.email || "Sin email",
+            phone: canonicalClient.phone || "Sin teléfono",
+            birthDate: canonicalClient.birthDate,
+            internalNotes: canonicalClient.internalNotes,
+            note: canonicalClient.internalNotes,
+            preference:
+              canonicalClient.preferences
+              || derivedClient.preference,
+            preferences: canonicalClient.preferences,
+            tags: [...canonicalClient.tags],
+            isActive: canonicalClient.isActive,
+          };
+        });
+    }
+
+    const generatedClientIds = new Set(
+      generatedClients.map((client) => client.id),
+    );
     const manualOnlyClients = manualClients
       .filter((client) => !generatedClientIds.has(client.id))
       .map((client) => manualClientToRealClient(client));
 
-    return [...generatedClients, ...manualOnlyClients].map((client) => {
-      const meta = clientMeta[client.id];
+    return [...generatedClients, ...manualOnlyClients].map(
+      (client) => {
+        const meta = clientMeta[client.id];
 
-      return meta
-        ? {
-            ...client,
-            birthDate: meta.birthDate ?? client.birthDate,
-            internalNotes: meta.internalNotes ?? client.internalNotes,
-            note: meta.internalNotes ?? client.note,
-          }
-        : client;
-    });
-  }, [clientMeta, deliveries, manualClients, reservations]);
+        return meta
+          ? {
+              ...client,
+              birthDate: meta.birthDate ?? client.birthDate,
+              internalNotes:
+                meta.internalNotes ?? client.internalNotes,
+              note: meta.internalNotes ?? client.note,
+            }
+          : client;
+      },
+    );
+  }, [
+    clientMeta,
+    deliveries,
+    manualClients,
+    reservations,
+    usesSupabaseCustomers,
+  ]);
 
   const filteredClients = useMemo(() => {
     const normalizedQuery = normalizeSearch(searchQuery);
@@ -994,17 +1143,76 @@ export function V2ClientesPage() {
   }
 
   function editClient(client: V2RealClient) {
+    setCustomerMutationError("");
     setSelectedClientId(client.id);
     setEditingClientId(client.id);
   }
 
   function deleteClient(client: V2RealClient) {
+    if (
+      usesSupabaseCustomers
+      && !canArchiveBusinessCustomers
+    ) {
+      setCustomerMutationError(
+        "No tenés permisos para archivar clientes.",
+      );
+      return;
+    }
+
+    setCustomerMutationError("");
     setSelectedClientId(client.id);
     setDeleteClientId(client.id);
     setDeleteConfirmationText("");
   }
 
-  function confirmDeleteClient(client: V2RealClient) {
+  async function confirmDeleteClient(client: V2RealClient) {
+    if (usesSupabaseCustomers) {
+      if (
+        !canArchiveBusinessCustomers
+        || !client.backendId
+      ) {
+        setCustomerMutationError(
+          "No se pudo identificar o archivar el cliente.",
+        );
+        return;
+      }
+
+      setCustomerMutationError("");
+      setCustomerMutationPending(true);
+
+      try {
+        const result =
+          await setBusinessCustomerActiveAction({
+            customerId: client.backendId,
+            isActive: false,
+          });
+
+        if (!result.ok) {
+          setCustomerMutationError(result.error);
+          window.alert(result.error);
+          return;
+        }
+
+        const nextClientMeta = { ...clientMeta };
+        delete nextClientMeta[client.id];
+
+        setManualClients((current) =>
+          current.filter(
+            (item) => item.backendId !== client.backendId,
+          ),
+        );
+        setClientMeta(nextClientMeta);
+        setDeleteClientId(null);
+        setDeleteConfirmationText("");
+        setProfileClientId(null);
+        setEditingClientId(null);
+        setSelectedClientId("");
+      } finally {
+        setCustomerMutationPending(false);
+      }
+
+      return;
+    }
     const reservationIdsToRemove = new Set(
       client.reservationsHistory
         .filter((reservation) => !reservation.id.startsWith("delivery-"))
@@ -1038,14 +1246,136 @@ export function V2ClientesPage() {
     setEditingClientId(null);
   }
 
-  function saveClientEdition(client: V2RealClient, formData: FormData) {
+  async function saveClientEdition(
+    client: V2RealClient,
+    formData: FormData,
+  ) {
     const nextName = String(formData.get("name") ?? "").trim();
     const nextPhone = String(formData.get("phone") ?? "").trim();
     const nextEmail = String(formData.get("email") ?? "").trim();
     const nextBirthDate = String(formData.get("birthDate") ?? "").trim();
     const nextInternalNotes = String(formData.get("internalNotes") ?? "").trim();
 
-    if (!nextName) return;
+    if (!nextName) {
+      setCustomerMutationError(
+        "El nombre del cliente es obligatorio.",
+      );
+      return;
+    }
+
+    if (usesSupabaseCustomers) {
+      if (!client.backendId) {
+        setCustomerMutationError(
+          "No se pudo identificar el cliente persistido.",
+        );
+        return;
+      }
+
+      setCustomerMutationError("");
+      setCustomerMutationPending(true);
+
+      try {
+        const result = await saveBusinessCustomerAction({
+          customerId: client.backendId,
+          customer: {
+            id: client.backendId,
+            fullName: nextName,
+            phone: nextPhone,
+            email: nextEmail,
+            birthDate: nextBirthDate,
+            internalNotes: nextInternalNotes,
+            preferences: client.preferences,
+            tags: client.tags,
+            isActive: true,
+          },
+        });
+
+        if (!result.ok) {
+          setCustomerMutationError(result.error);
+          window.alert(result.error);
+          return;
+        }
+
+        const savedManual =
+          businessCustomerToManualClient(result.customer);
+        const reservationIdsToUpdate = new Set(
+          client.reservationsHistory
+            .filter(
+              (reservation) =>
+                !reservation.id.startsWith("delivery-"),
+            )
+            .map((reservation) => reservation.id),
+        );
+        const deliveryIdsToUpdate = new Set(
+          client.deliveriesHistory.map(
+            (delivery) => delivery.id,
+          ),
+        );
+        const nextReservations = reservations.map(
+          (reservation) =>
+            reservationIdsToUpdate.has(reservation.id)
+              ? {
+                  ...reservation,
+                  client: savedManual.name,
+                  phone: savedManual.phone,
+                  email: savedManual.email,
+                }
+              : reservation,
+        );
+        const nextDeliveries = deliveries.map(
+          (delivery) =>
+            deliveryIdsToUpdate.has(delivery.id)
+              ? {
+                  ...delivery,
+                  client: savedManual.name,
+                  phone: savedManual.phone,
+                }
+              : delivery,
+        );
+        const nextClientMeta = { ...clientMeta };
+
+        if (client.id !== savedManual.id) {
+          delete nextClientMeta[client.id];
+        }
+
+        nextClientMeta[savedManual.id] = {
+          birthDate: savedManual.birthDate,
+          internalNotes: savedManual.internalNotes,
+        };
+
+        setReservations(nextReservations);
+        setDeliveries(nextDeliveries);
+        setManualClients((current) =>
+          current.map((item) =>
+            item.backendId === client.backendId
+              ? savedManual
+              : item,
+          ),
+        );
+        setClientMeta(nextClientMeta);
+        writeToStorage(
+          RESERVATIONS_STORAGE_KEY,
+          nextReservations,
+          RESERVATIONS_EVENT,
+        );
+        writeToStorage(
+          DELIVERIES_STORAGE_KEY,
+          nextDeliveries,
+          DELIVERIES_EVENT,
+        );
+        setSelectedClientId(savedManual.id);
+        setProfileClientId((current) =>
+          current === client.id
+            ? savedManual.id
+            : current,
+        );
+        setEditingClientId(null);
+      } finally {
+        setCustomerMutationPending(false);
+      }
+
+      return;
+    }
 
     const reservationIdsToUpdate = new Set(
       client.reservationsHistory.map((reservation) => reservation.id)
@@ -1128,14 +1458,79 @@ export function V2ClientesPage() {
     );
   }
 
-  function saveNewClient(formData: FormData) {
+  async function saveNewClient(formData: FormData) {
     const nextName = String(formData.get("name") ?? "").trim();
     const nextPhone = String(formData.get("phone") ?? "").trim();
     const nextEmail = String(formData.get("email") ?? "").trim();
     const nextBirthDate = String(formData.get("birthDate") ?? "").trim();
     const nextInternalNotes = String(formData.get("internalNotes") ?? "").trim();
 
-    if (!nextName) return;
+    if (!nextName) {
+      setCustomerMutationError(
+        "El nombre del cliente es obligatorio.",
+      );
+      return;
+    }
+
+    if (usesSupabaseCustomers) {
+      if (!canWriteBusinessCustomers) {
+        setCustomerMutationError(
+          "No tenés permisos para crear clientes.",
+        );
+        return;
+      }
+
+      setCustomerMutationError("");
+      setCustomerMutationPending(true);
+
+      try {
+        const result = await saveBusinessCustomerAction({
+          customerId: null,
+          customer: {
+            id: null,
+            fullName: nextName,
+            phone: nextPhone,
+            email: nextEmail,
+            birthDate: nextBirthDate,
+            internalNotes: nextInternalNotes,
+            preferences: "",
+            tags: [],
+            isActive: true,
+          },
+        });
+
+        if (!result.ok) {
+          setCustomerMutationError(result.error);
+          window.alert(result.error);
+          return;
+        }
+
+        const savedManual =
+          businessCustomerToManualClient(result.customer);
+        const nextClientMeta = {
+          ...clientMeta,
+          [savedManual.id]: {
+            birthDate: savedManual.birthDate,
+            internalNotes: savedManual.internalNotes,
+          },
+        };
+
+        setManualClients((current) => [
+          savedManual,
+          ...current.filter(
+            (client) =>
+              client.backendId !== savedManual.backendId,
+          ),
+        ]);
+        setClientMeta(nextClientMeta);
+        setSelectedClientId(savedManual.id);
+        setNewClientModalOpen(false);
+      } finally {
+        setCustomerMutationPending(false);
+      }
+
+      return;
+    }
 
     const manualClient = normalizeManualClient({
       name: nextName,
@@ -1283,12 +1678,29 @@ export function V2ClientesPage() {
             <V2Button
               variant="primary"
               icon={<Plus size={18} />}
-              onClick={() => setNewClientModalOpen(true)}
+              disabled={!canWriteBusinessCustomers}
+              onClick={() => {
+                setCustomerMutationError("");
+                setNewClientModalOpen(true);
+              }}
             >
               Nuevo cliente
             </V2Button>
           }
         />
+        {customerMutationError ? (
+          <div className="mt-3 flex shrink-0 items-start justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <span>{customerMutationError}</span>
+            <button
+              type="button"
+              onClick={() => setCustomerMutationError("")}
+              className="font-semibold"
+              aria-label="Cerrar error"
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
         <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_340px]">
           <div className="flex min-h-0 flex-col gap-4">
             <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -1541,15 +1953,28 @@ export function V2ClientesPage() {
                       <Pencil size={16} />
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => deleteClient(selectedClient)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 transition hover:bg-red-50 hover:text-red-700"
-                      aria-label="Eliminar cliente"
-                      title="Eliminar cliente"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {(
+                      !usesSupabaseCustomers
+                      || canArchiveBusinessCustomers
+                    ) ? (
+                      <button
+                        type="button"
+                        onClick={() => deleteClient(selectedClient)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 transition hover:bg-red-50 hover:text-red-700"
+                        aria-label={
+                          usesSupabaseCustomers
+                            ? "Archivar cliente"
+                            : "Eliminar cliente"
+                        }
+                        title={
+                          usesSupabaseCustomers
+                            ? "Archivar cliente"
+                            : "Eliminar cliente"
+                        }
+                      >
+                        <Archive size={16} />
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -1756,8 +2181,14 @@ export function V2ClientesPage() {
               <V2Button type="button" variant="secondary" onClick={closeAllClientModals}>
                 Cancelar
               </V2Button>
-              <V2Button type="submit" variant="primary">
-                Crear cliente
+              <V2Button
+                type="submit"
+                variant="primary"
+                disabled={customerMutationPending}
+              >
+                {customerMutationPending
+                  ? "Creando..."
+                  : "Crear cliente"}
               </V2Button>
             </div>
           </form>
@@ -2072,7 +2503,11 @@ export function V2ClientesPage() {
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
               <div>
-                <p className="text-sm text-slate-500">Eliminar cliente</p>
+                <p className="text-sm text-slate-500">
+                  {usesSupabaseCustomers
+                    ? "Archivar cliente"
+                    : "Eliminar cliente"}
+                </p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-950">
                   {clientPendingDelete.name}
                 </h2>
@@ -2093,8 +2528,9 @@ export function V2ClientesPage() {
 
             <div className="space-y-4 p-6">
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
-                Esta acción eliminará el cliente del prototipo y quitará sus reservas locales asociadas.
-                Para confirmar, escribí exactamente el nombre del cliente.
+                {usesSupabaseCustomers
+                  ? "Esta acción archivará el cliente sin eliminar su historial, reservas ni envíos. Para confirmar, escribí exactamente el nombre del cliente."
+                  : "Esta acción eliminará el cliente del prototipo y quitará sus reservas locales asociadas. Para confirmar, escribí exactamente el nombre del cliente."}
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -2107,7 +2543,11 @@ export function V2ClientesPage() {
               </div>
 
               <label className="grid gap-2 text-sm font-medium text-slate-700">
-                Escribí el nombre para eliminar
+                Escribí el nombre para {
+                  usesSupabaseCustomers
+                    ? "archivar"
+                    : "eliminar"
+                }
                 <V2Input
                   value={deleteConfirmationText}
                   onChange={(event) => setDeleteConfirmationText(event.target.value)}
@@ -2130,10 +2570,20 @@ export function V2ClientesPage() {
               <V2Button
                 type="button"
                 variant="dangerSolid"
-                disabled={deleteConfirmationText.trim() !== clientPendingDelete.name}
-                onClick={() => confirmDeleteClient(clientPendingDelete)}
+                disabled={
+                  customerMutationPending
+                  || deleteConfirmationText.trim()
+                    !== clientPendingDelete.name
+                }
+                onClick={() => {
+                  void confirmDeleteClient(clientPendingDelete);
+                }}
               >
-                Eliminar cliente
+                {customerMutationPending
+                  ? "Procesando..."
+                  : usesSupabaseCustomers
+                    ? "Archivar cliente"
+                    : "Eliminar cliente"}
               </V2Button>
             </div>
           </div>
@@ -2186,12 +2636,27 @@ export function V2ClientesPage() {
 
                     <label className="grid gap-2 text-sm font-medium text-slate-700">
                       Teléfono
-                      <V2Input name="phone" defaultValue={editingClient.phone} />
+                      <V2Input
+                        name="phone"
+                        defaultValue={
+                          editingClient.phone === "Sin teléfono"
+                            ? ""
+                            : editingClient.phone
+                        }
+                      />
                     </label>
 
                     <label className="grid gap-2 text-sm font-medium text-slate-700">
                       Email
-                      <V2Input name="email" type="email" defaultValue={editingClient.email} />
+                      <V2Input
+                        name="email"
+                        type="email"
+                        defaultValue={
+                          editingClient.email === "Sin email"
+                            ? ""
+                            : editingClient.email
+                        }
+                      />
                     </label>
 
                     <label className="grid gap-2 text-sm font-medium text-slate-700">
@@ -2217,7 +2682,9 @@ export function V2ClientesPage() {
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
                     Podés editar todos los datos del cliente que no dependen de reservas ni consumos.
                     Si cargás fecha de nacimiento, el sistema avisa automáticamente 7 días antes.
-                    Los campos de nombre, teléfono y email también actualizan sus reservas locales del prototipo.
+                    {usesSupabaseCustomers
+                      ? "Los datos principales se guardan en PostgreSQL. Las reservas y envíos locales se sincronizan temporalmente para conservar las métricas hasta su migración."
+                      : "Los campos de nombre, teléfono y email también actualizan sus reservas locales del prototipo."}
                   </div>
                 </div>
 
@@ -2229,8 +2696,14 @@ export function V2ClientesPage() {
                   >
                     Cancelar
                   </V2Button>
-                  <V2Button type="submit" variant="primary">
-                    Guardar cambios
+                  <V2Button
+                    type="submit"
+                    variant="primary"
+                    disabled={customerMutationPending}
+                  >
+                    {customerMutationPending
+                      ? "Guardando..."
+                      : "Guardar cambios"}
                   </V2Button>
                 </div>
               </form>
