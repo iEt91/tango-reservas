@@ -27,6 +27,12 @@ export type V2FloorPlanTableSnapshot = {
   width: number;
   height: number;
   rotation: number;
+  physicalStatus:
+    | "available"
+    | "blocked"
+    | "out_of_service";
+  cornerRadius: number;
+  canJoin: boolean;
   reservationId?: string;
   reservationClient?: string;
   reservationTime?: string;
@@ -100,12 +106,16 @@ function clamp(
   );
 }
 
-function mapFloorTable(
+export function mapFloorTableToV2Snapshot(
   table: FloorTable,
 ): V2FloorPlanTableSnapshot {
-  const isBlocked =
+  const physicalStatus =
     table.status === "blocked"
-    || table.status === "out_of_service";
+    || table.status === "out_of_service"
+      ? table.status
+      : "available";
+  const isBlocked =
+    physicalStatus !== "available";
 
   return {
     id: table.id,
@@ -119,6 +129,9 @@ function mapFloorTable(
     width: table.width,
     height: table.height,
     rotation: table.rotation,
+    physicalStatus,
+    cornerRadius: table.cornerRadius,
+    canJoin: table.isJoinable,
     note:
       table.status === "out_of_service"
         ? "Fuera de servicio."
@@ -237,7 +250,7 @@ export function buildV2FloorPlanSnapshot({
     | null;
 }): V2FloorPlanSnapshot {
   const initialTables =
-    floorPlan.tables.map(mapFloorTable);
+    floorPlan.tables.map(mapFloorTableToV2Snapshot);
   const tableLabelsById = new Map(
     initialTables.map(
       (table) => [table.id, table.name],

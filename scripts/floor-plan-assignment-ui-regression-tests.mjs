@@ -146,10 +146,16 @@ check(
 );
 
 check(
-  "la edición física de mesas continúa bloqueada en Supabase",
+  "las asignaciones siguen separadas del movimiento, las uniones y el fondo",
   sources.ui.includes(
-    "disabled={!selectedTable || isSupabasePersistence}",
+    "function startMoveTable",
   )
+    && sources.ui.includes(
+      "function startMergeMode",
+    )
+    && sources.ui.includes(
+      "function triggerBackgroundImageUpload",
+    )
     && sources.ui.includes(
       "disabled={isSupabasePersistence}",
     ),

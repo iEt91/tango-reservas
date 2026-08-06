@@ -32,8 +32,22 @@ import {
 } from "@/lib/browser-image-storage";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import { v2Reservations } from "@/lib/v2/v2-mock-data";
-import type { V2FloorPlanSnapshot } from "@/lib/floor-plan/v2-floor-plan-cutover";
-import { setBusinessReservationTablesAction } from "./actions";
+import {
+  mapFloorTableToV2Snapshot,
+  type V2FloorPlanSnapshot,
+} from "@/lib/floor-plan/v2-floor-plan-cutover";
+import {
+  createPersistentFloorTableDraft,
+  getV2FloorTablePhysicalStatus,
+  replaceAssignedTableLabel,
+  toBusinessFloorTableActionInput,
+  type V2PhysicalTableStatus,
+} from "@/lib/floor-plan/v2-floor-table-persistence";
+import {
+  saveBusinessFloorTableAction,
+  setBusinessFloorTableActiveAction,
+  setBusinessReservationTablesAction,
+} from "./actions";
 
 type V2TableStatus = "available" | "reserved" | "occupied" | "blocked";
 type V2TableShape = "round" | "square" | "rectangle";
@@ -51,6 +65,10 @@ type V2FloorTable = {
   width: number;
   height: number;
   rotation: number;
+  physicalStatus?: V2PhysicalTableStatus;
+  cornerRadius?: number;
+  canJoin?: boolean;
+  isDraft?: boolean;
   reservationId?: string;
   reservationClient?: string;
   reservationTime?: string;
@@ -102,6 +120,7 @@ type V2PlanoPageProps = {
   initialBackgroundSettings?: V2FloorPlanSnapshot["initialBackgroundSettings"];
   floorPlanPersistence?: "local" | "supabase";
   canAssignFloorPlan?: boolean;
+  canManageFloorPlan?: boolean;
 };
 
 type V2TableInteraction =
@@ -667,12 +686,16 @@ export function V2PlanoPage({
   initialBackgroundSettings,
   floorPlanPersistence = "local",
   canAssignFloorPlan = true,
+  canManageFloorPlan = true,
 }: V2PlanoPageProps = {}) {
   const isSupabasePersistence =
     floorPlanPersistence === "supabase";
   const canAssignPersistentReservations =
     !isSupabasePersistence
     || canAssignFloorPlan;
+  const canManagePersistentTables =
+    !isSupabasePersistence
+    || canManageFloorPlan;
   const resolvedInitialTables =
     initialTables ?? INITIAL_TABLES;
   const [tables, setTables] = useState<V2FloorTable[]>(
@@ -711,6 +734,7 @@ export function V2PlanoPage({
   const [mergeSelectionIds, setMergeSelectionIds] = useState<string[]>([]);
   const [assignReservationError, setAssignReservationError] = useState("");
   const [isAssignmentMutating, setIsAssignmentMutating] = useState(false);
+  const [isTableMutating, setIsTableMutating] = useState(false);
   const [floorPlanOperationError, setFloorPlanOperationError] = useState("");
   const [floorPlanOperationMessage, setFloorPlanOperationMessage] = useState("");
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -1162,9 +1186,63 @@ export function V2PlanoPage({
     });
   }
 
-  function updateSelectedTableStatus(status: V2TableStatus) {
-    if (isSupabasePersistence) return;
-    if (!selectedTable) return;
+  async function updateSelectedTableStatus(status: V2TableStatus) {
+    if (!selectedTable || isTableMutating) return;
+
+    if (isSupabasePersistence) {
+      if (!canManagePersistentTables) {
+        setFloorPlanOperationError(
+          "No tenés permisos para modificar mesas.",
+        );
+        return;
+      }
+
+      if (status !== "available" && status !== "blocked") {
+        return;
+      }
+
+      setIsTableMutating(true);
+      setFloorPlanOperationError("");
+      setFloorPlanOperationMessage("");
+
+      try {
+        const result = await saveBusinessFloorTableAction({
+          tableId: selectedTable.id,
+          table: toBusinessFloorTableActionInput({
+            ...selectedTable,
+            physicalStatus: status,
+          }),
+        });
+
+        if (!result.ok) {
+          setFloorPlanOperationError(result.error);
+          return;
+        }
+
+        const savedTable =
+          mapFloorTableToV2Snapshot(result.table);
+        setTables((current) =>
+          current.map((table) =>
+            table.id === savedTable.id
+              ? savedTable
+              : table
+          )
+        );
+        setFloorPlanOperationMessage(
+          status === "blocked"
+            ? `${savedTable.name} quedó bloqueada.`
+            : `${savedTable.name} quedó disponible.`,
+        );
+      } catch {
+        setFloorPlanOperationError(
+          "No se pudo actualizar el estado de la mesa.",
+        );
+      } finally {
+        setIsTableMutating(false);
+      }
+
+      return;
+    }
 
     setTables((current) =>
       current.map((table) =>
@@ -1184,7 +1262,20 @@ export function V2PlanoPage({
   }
 
   function addMockTable() {
-    if (isSupabasePersistence) return;
+    if (isSupabasePersistence) {
+      if (
+        !canManagePersistentTables
+        || isTableMutating
+      ) {
+        return;
+      }
+
+      setFloorPlanOperationError("");
+      setFloorPlanOperationMessage("");
+      setEditingTable(createPersistentFloorTableDraft(tables));
+      return;
+    }
+
     const nextNumber = tables.length + 1;
     const nextTable: V2FloorTable = {
       id: `table-${Date.now()}`,
@@ -1205,9 +1296,67 @@ export function V2PlanoPage({
     setHasUnsavedChanges(true);
   }
 
-  function deleteSelectedTable() {
-    if (isSupabasePersistence) return;
+  async function archivePersistentTable(
+    tableToArchive: V2FloorTable,
+  ) {
+    if (
+      !canManagePersistentTables
+      || isTableMutating
+      || tableToArchive.isDraft
+    ) {
+      return false;
+    }
+
+    setIsTableMutating(true);
+    setFloorPlanOperationError("");
+    setFloorPlanOperationMessage("");
+
+    try {
+      const result =
+        await setBusinessFloorTableActiveAction({
+          tableId: tableToArchive.id,
+          isActive: false,
+        });
+
+      if (!result.ok) {
+        setFloorPlanOperationError(result.error);
+        return false;
+      }
+
+      setTables((current) => {
+        const nextTables = current.filter(
+          (table) => table.id !== tableToArchive.id,
+        );
+        setSelectedTableId((currentId) =>
+          currentId === tableToArchive.id
+            ? nextTables[0]?.id ?? ""
+            : currentId
+        );
+
+        return nextTables;
+      });
+      setFloorPlanOperationMessage(
+        `${tableToArchive.name} fue archivada.`,
+      );
+
+      return true;
+    } catch {
+      setFloorPlanOperationError(
+        "No se pudo archivar la mesa.",
+      );
+      return false;
+    } finally {
+      setIsTableMutating(false);
+    }
+  }
+
+  async function deleteSelectedTable() {
     if (!selectedTable) return;
+
+    if (isSupabasePersistence) {
+      await archivePersistentTable(selectedTable);
+      return;
+    }
 
     const nextReservations = planoReservations.map((reservation) =>
       normalizeTableName(reservation.tableName) === normalizeTableName(selectedTable.name)
@@ -1230,9 +1379,19 @@ export function V2PlanoPage({
     setHasUnsavedChanges(true);
   }
 
-  function deleteEditingTable() {
-    if (isSupabasePersistence) return;
+  async function deleteEditingTable() {
     if (!editingTable) return;
+
+    if (isSupabasePersistence) {
+      const archived =
+        await archivePersistentTable(editingTable);
+
+      if (archived) {
+        closeTableEditor();
+      }
+
+      return;
+    }
 
     const tableToDelete = editingTable;
     const nextReservations = planoReservations.map((reservation) =>
@@ -1430,9 +1589,20 @@ export function V2PlanoPage({
   }
 
   function openSelectedTableEditor() {
-    if (isSupabasePersistence) return;
     if (!selectedTable) return;
 
+    if (
+      isSupabasePersistence
+      && (
+        !canManagePersistentTables
+        || isTableMutating
+      )
+    ) {
+      return;
+    }
+
+    setFloorPlanOperationError("");
+    setFloorPlanOperationMessage("");
     setEditingTable({ ...selectedTable });
   }
 
@@ -1440,19 +1610,102 @@ export function V2PlanoPage({
     setEditingTable(null);
   }
 
-  function saveTableEditor() {
-    if (isSupabasePersistence) return;
-    if (!editingTable) return;
+  async function saveTableEditor() {
+    if (!editingTable || isTableMutating) return;
 
-    const previousTable = tables.find((table) => table.id === editingTable.id);
-
+    const previousTable = tables.find(
+      (table) => table.id === editingTable.id,
+    );
     const sanitizedTable: V2FloorTable = {
       ...editingTable,
       name: editingTable.name.trim() || "Mesa sin nombre",
       capacity: Math.max(Number(editingTable.capacity) || 1, 1),
       note: editingTable.note?.trim() ?? "",
-      locked: editingTable.status === "blocked",
+      locked:
+        getV2FloorTablePhysicalStatus(editingTable)
+        !== "available",
     };
+
+    if (isSupabasePersistence) {
+      if (!canManagePersistentTables) {
+        setFloorPlanOperationError(
+          "No tenés permisos para modificar mesas.",
+        );
+        return;
+      }
+
+      setIsTableMutating(true);
+      setFloorPlanOperationError("");
+      setFloorPlanOperationMessage("");
+
+      try {
+        const tableId =
+          editingTable.isDraft ? null : editingTable.id;
+        const result = await saveBusinessFloorTableAction({
+          tableId,
+          table:
+            toBusinessFloorTableActionInput(
+              sanitizedTable,
+            ),
+        });
+
+        if (!result.ok) {
+          setFloorPlanOperationError(result.error);
+          return;
+        }
+
+        const savedTable =
+          mapFloorTableToV2Snapshot(result.table);
+
+        if (editingTable.isDraft) {
+          setTables((current) => [
+            ...current,
+            savedTable,
+          ]);
+        } else {
+          setTables((current) =>
+            current.map((table) =>
+              table.id === savedTable.id
+                ? savedTable
+                : table
+            )
+          );
+        }
+
+        if (
+          previousTable
+          && normalizeTableName(previousTable.name)
+            !== normalizeTableName(savedTable.name)
+        ) {
+          setPlanoReservations((current) =>
+            current.map((reservation) => ({
+              ...reservation,
+              tableName: replaceAssignedTableLabel(
+                reservation.tableName,
+                previousTable.name,
+                savedTable.name,
+              ),
+            }))
+          );
+        }
+
+        setSelectedTableId(savedTable.id);
+        setFloorPlanOperationMessage(
+          editingTable.isDraft
+            ? `${savedTable.name} fue creada.`
+            : `${savedTable.name} fue actualizada.`,
+        );
+        closeTableEditor();
+      } catch {
+        setFloorPlanOperationError(
+          "No se pudo guardar la mesa.",
+        );
+      } finally {
+        setIsTableMutating(false);
+      }
+
+      return;
+    }
 
     setTables((current) =>
       current.map((table) =>
@@ -1837,9 +2090,21 @@ export function V2PlanoPage({
                   variant="danger"
                   icon={<Trash2 size={17} />}
                   onClick={deleteSelectedTable}
-                  disabled={!selectedTable || isSupabasePersistence}
+                  disabled={
+                    !selectedTable
+                    || (
+                      isSupabasePersistence
+                      && (
+                        !canManagePersistentTables
+                        || isTableMutating
+                        || Boolean(selectedTable.reservationClient)
+                      )
+                    )
+                  }
                 >
-                  Eliminar mesa
+                  {isSupabasePersistence
+                    ? "Archivar mesa"
+                    : "Eliminar mesa"}
                 </V2Button>
 
                 <V2Button
@@ -1855,9 +2120,17 @@ export function V2PlanoPage({
                   variant="primary"
                   icon={<Plus size={17} />}
                   onClick={addMockTable}
-                  disabled={isSupabasePersistence}
+                  disabled={
+                    isSupabasePersistence
+                    && (
+                      !canManagePersistentTables
+                      || isTableMutating
+                    )
+                  }
                 >
-                  Agregar mesa
+                  {isTableMutating
+                    ? "Guardando..."
+                    : "Agregar mesa"}
                 </V2Button>
 
                 <V2Button
@@ -1876,8 +2149,8 @@ export function V2PlanoPage({
         {isSupabasePersistence ? (
           <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <strong>Plano conectado a Supabase.</strong>{" "}
-            La lectura y las asignaciones de reservas son persistentes.
-            La edición física de mesas y del fondo continúa bloqueada.
+            La lectura, las asignaciones y la administración básica de mesas son persistentes.
+            El movimiento, las uniones y el fondo continúan bloqueados.
           </div>
         ) : null}
 
@@ -2435,7 +2708,13 @@ export function V2PlanoPage({
                         variant="secondary"
                         icon={<Pencil size={16} />}
                         onClick={openSelectedTableEditor}
-                        disabled={isSupabasePersistence}
+                        disabled={
+                          isSupabasePersistence
+                          && (
+                            !canManagePersistentTables
+                            || isTableMutating
+                          )
+                        }
                         title="Editar mesa"
                       >
                         <span className="sr-only">Editar mesa</span>
@@ -2446,7 +2725,13 @@ export function V2PlanoPage({
                           variant="success"
                           icon={<Unlock size={16} />}
                           onClick={() => updateSelectedTableStatus("available")}
-                          disabled={isSupabasePersistence}
+                          disabled={
+                            isSupabasePersistence
+                            && (
+                              !canManagePersistentTables
+                              || isTableMutating
+                            )
+                          }
                           title="Activar mesa"
                         >
                           <span className="sr-only">Activar mesa</span>
@@ -2456,7 +2741,14 @@ export function V2PlanoPage({
                           variant="secondary"
                           icon={<Lock size={16} />}
                           onClick={() => updateSelectedTableStatus("blocked")}
-                          disabled={isSupabasePersistence}
+                          disabled={
+                            isSupabasePersistence
+                            && (
+                              !canManagePersistentTables
+                              || isTableMutating
+                              || Boolean(selectedTable.reservationClient)
+                            )
+                          }
                           title="Bloquear mesa"
                         >
                           <span className="sr-only">Bloquear mesa</span>
@@ -2895,7 +3187,11 @@ export function V2PlanoPage({
             className="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
               <div>
-                <p className="text-sm text-slate-500">Editar mesa</p>
+                <p className="text-sm text-slate-500">
+                  {editingTable.isDraft
+                    ? "Nueva mesa"
+                    : "Editar mesa"}
+                </p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-950">
                   {editingTable.name}
                 </h2>
@@ -2956,31 +3252,67 @@ export function V2PlanoPage({
 
                 <V2Field label="Estado">
                   <V2Select
-                    value={editingTable.status}
-                    onChange={(event) =>
+                    value={
+                      isSupabasePersistence
+                        ? getV2FloorTablePhysicalStatus(editingTable)
+                        : editingTable.status
+                    }
+                    onChange={(event) => {
+                      if (isSupabasePersistence) {
+                        const physicalStatus =
+                          event.target.value as V2PhysicalTableStatus;
+                        setEditingTable({
+                          ...editingTable,
+                          physicalStatus,
+                          status:
+                            physicalStatus === "available"
+                              ? "available"
+                              : "blocked",
+                          locked:
+                            physicalStatus !== "available",
+                        });
+                        return;
+                      }
+
                       setEditingTable({
                         ...editingTable,
                         status: event.target.value as V2TableStatus,
                         locked: event.target.value === "blocked",
-                      })
-                    }
+                      });
+                    }}
                   >
-                    <option value="available">Disponible</option>
-                    <option value="reserved">Reservada</option>
-                    <option value="occupied">Ocupada</option>
-                    <option value="blocked">Bloqueada</option>
+                    {isSupabasePersistence ? (
+                      <>
+                        <option value="available">Disponible</option>
+                        <option value="blocked">Bloqueada</option>
+                        <option value="out_of_service">Fuera de servicio</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="available">Disponible</option>
+                        <option value="reserved">Reservada</option>
+                        <option value="occupied">Ocupada</option>
+                        <option value="blocked">Bloqueada</option>
+                      </>
+                    )}
                   </V2Select>
                 </V2Field>
               </div>
 
-              <V2Field label="Notas">
-                <V2Textarea
-                  value={editingTable.note ?? ""}
-                  onChange={(event) =>
-                    setEditingTable({ ...editingTable, note: event.target.value })
-                  }
-                />
-              </V2Field>
+              {!isSupabasePersistence ? (
+                <V2Field label="Notas">
+                  <V2Textarea
+                    value={editingTable.note ?? ""}
+                    onChange={(event) =>
+                      setEditingTable({ ...editingTable, note: event.target.value })
+                    }
+                  />
+                </V2Field>
+              ) : (
+                <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+                  Las notas propias de mesa no forman parte del esquema persistente actual.
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-200 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -2988,22 +3320,50 @@ export function V2PlanoPage({
                 variant="danger"
                 icon={<Trash2 size={16} />}
                 onClick={deleteEditingTable}
-                disabled={Boolean(editingTable.reservationClient)}
+                disabled={
+                  Boolean(editingTable.reservationClient)
+                  || editingTable.isDraft
+                  || (
+                    isSupabasePersistence
+                    && (
+                      !canManagePersistentTables
+                      || isTableMutating
+                    )
+                  )
+                }
                 title={
-                  editingTable.reservationClient
-                    ? "No se puede eliminar una mesa con reserva activa en este horario"
-                    : "Eliminar mesa"
+                  editingTable.isDraft
+                    ? "La mesa todavía no fue creada"
+                    : editingTable.reservationClient
+                      ? "No se puede archivar una mesa con reserva activa en este horario"
+                      : isSupabasePersistence
+                        ? "Archivar mesa"
+                        : "Eliminar mesa"
                 }
               >
-                Eliminar mesa
+                {isSupabasePersistence
+                  ? "Archivar mesa"
+                  : "Eliminar mesa"}
               </V2Button>
 
               <div className="flex justify-end gap-2">
                 <V2Button variant="secondary" onClick={closeTableEditor}>
                   Cancelar
                 </V2Button>
-                <V2Button variant="primary" onClick={saveTableEditor}>
-                  Guardar mesa
+                <V2Button
+                  variant="primary"
+                  onClick={saveTableEditor}
+                  disabled={
+                    isTableMutating
+                    || (
+                      isSupabasePersistence
+                      && !canManagePersistentTables
+                    )
+                  }
+                >
+                  {isTableMutating
+                    ? "Guardando..."
+                    : "Guardar mesa"}
                 </V2Button>
               </div>
             </div>

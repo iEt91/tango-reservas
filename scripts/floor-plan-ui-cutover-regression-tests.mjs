@@ -188,15 +188,15 @@ check(
 );
 
 check(
-  "las mutaciones físicas continúan bloqueadas al habilitar asignaciones",
+  "el corte persistente mantiene localStorage y DML fuera del flujo Supabase",
   sources.ui.includes(
     "Plano conectado a Supabase.",
   )
     && sources.ui.includes(
-      "La edición física de mesas y del fondo continúa bloqueada.",
+      "El movimiento, las uniones y el fondo continúan bloqueados.",
     )
     && sources.ui.includes(
-      "disabled={!selectedTable || isSupabasePersistence}",
+      "if (isSupabasePersistence) return;",
     )
     && sources.ui.includes(
       "disabled={isSupabasePersistence}",

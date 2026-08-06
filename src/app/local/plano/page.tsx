@@ -85,12 +85,16 @@ export default async function PlanoPage() {
     "admin",
     "staff",
   ].includes(activeBusiness.membership.role);
+  const canManageFloorPlan = ["owner", "admin"].includes(
+    activeBusiness.membership.role,
+  );
 
   return (
     <V2PlanoPage
       {...snapshot}
       floorPlanPersistence="supabase"
       canAssignFloorPlan={canAssignFloorPlan}
+      canManageFloorPlan={canManageFloorPlan}
     />
   );
 }
