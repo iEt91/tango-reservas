@@ -149,3 +149,29 @@ export function replaceAssignedTableLabel(
     ? labels.join(" + ")
     : currentValue;
 }
+
+const FLOOR_TABLE_GEOMETRY_KEYS = [
+  "x",
+  "y",
+  "width",
+  "height",
+  "rotation",
+] as const satisfies readonly (
+  keyof Pick<
+    V2PersistableFloorTable,
+    "x" | "y" | "width" | "height" | "rotation"
+  >
+)[];
+
+export function hasV2FloorTableGeometryChanged(
+  previousTable: V2PersistableFloorTable,
+  nextTable: V2PersistableFloorTable,
+) {
+  return FLOOR_TABLE_GEOMETRY_KEYS.some(
+    (key) =>
+      Math.abs(
+        Number(previousTable[key])
+        - Number(nextTable[key]),
+      ) > 0.0001,
+  );
+}

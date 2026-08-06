@@ -221,18 +221,18 @@ check(
 );
 
 check(
-  "movimiento, uniones y fondo continúan bloqueados",
+  "uniones restauración y fondo permanecen fuera de E22",
   sources.ui.includes(
-    "function startMoveTable",
+    "function startMergeMode",
   )
     && sources.ui.includes(
-      "function startMergeMode",
+      "function restoreInitialLayout",
     )
     && sources.ui.includes(
       "function triggerBackgroundImageUpload",
     )
     && sources.ui.includes(
-      "El movimiento, las uniones y el fondo continúan bloqueados.",
+      "Las uniones, la restauración y el fondo continúan bloqueados.",
     ),
 );
 

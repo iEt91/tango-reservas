@@ -39,6 +39,7 @@ import {
 import {
   createPersistentFloorTableDraft,
   getV2FloorTablePhysicalStatus,
+  hasV2FloorTableGeometryChanged,
   replaceAssignedTableLabel,
   toBusinessFloorTableActionInput,
   type V2PhysicalTableStatus,
@@ -744,6 +745,10 @@ export function V2PlanoPage({
     useState<V2TableInteraction | null>(null);
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const interactionOriginalTableRef =
+    useRef<V2FloorTable | null>(null);
+  const interactionLatestTableRef =
+    useRef<V2FloorTable | null>(null);
 
   const selectedDateBusinessSlots = useMemo(
     () => getBusinessHourSlots(getBusinessHourForDate(localConfig, selectedDate)),
@@ -1040,10 +1045,80 @@ export function V2PlanoPage({
     if (!activeTableInteraction) return;
     const interaction = activeTableInteraction;
 
+    function replaceInteractionTable(
+      nextTable: V2FloorTable,
+    ) {
+      setTables((currentTables) =>
+        currentTables.map((table) =>
+          table.id === nextTable.id
+            ? nextTable
+            : table
+        )
+      );
+    }
+
+    async function persistInteractionGeometry(
+      originalTable: V2FloorTable,
+      nextTable: V2FloorTable,
+    ) {
+      if (
+        !hasV2FloorTableGeometryChanged(
+          originalTable,
+          nextTable,
+        )
+      ) {
+        return;
+      }
+
+      if (!canManagePersistentTables) {
+        replaceInteractionTable(originalTable);
+        setFloorPlanOperationError(
+          "No tenés permisos para modificar la geometría del plano.",
+        );
+        return;
+      }
+
+      setIsTableMutating(true);
+      setFloorPlanOperationError("");
+      setFloorPlanOperationMessage("");
+
+      try {
+        const result = await saveBusinessFloorTableAction({
+          tableId: nextTable.id,
+          table: toBusinessFloorTableActionInput(nextTable),
+        });
+
+        if (!result.ok) {
+          replaceInteractionTable(originalTable);
+          setFloorPlanOperationError(result.error);
+          return;
+        }
+
+        const savedTable =
+          mapFloorTableToV2Snapshot(result.table);
+        replaceInteractionTable(savedTable);
+        setHasUnsavedChanges(false);
+        setFloorPlanOperationMessage(
+          interaction.type === "move"
+            ? `Posición de ${savedTable.name} guardada.`
+            : `Tamaño de ${savedTable.name} guardado.`,
+        );
+      } catch {
+        replaceInteractionTable(originalTable);
+        setFloorPlanOperationError(
+          "No se pudo guardar la geometría de la mesa.",
+        );
+      } finally {
+        setIsTableMutating(false);
+      }
+    }
+
     function handleMouseMove(event: globalThis.MouseEvent) {
       setTables((currentTables) =>
         currentTables.map((table) => {
           if (table.id !== interaction.tableId) return table;
+
+          let nextTable: V2FloorTable;
 
           if (interaction.type === "move") {
             const deltaX =
@@ -1055,34 +1130,71 @@ export function V2PlanoPage({
                 interaction.canvasHeight) *
               100;
 
-            return {
+            nextTable = {
               ...table,
               x: Math.min(Math.max(interaction.startX + deltaX, 1), 92),
               y: Math.min(Math.max(interaction.startY + deltaY, 1), 88),
             };
+          } else {
+            const deltaWidth =
+              event.clientX - interaction.startClientX;
+            const deltaHeight =
+              event.clientY - interaction.startClientY;
+
+            nextTable = {
+              ...table,
+              width: Math.min(
+                Math.max(
+                  interaction.startWidth
+                  + deltaWidth / 0.82,
+                  48,
+                ),
+                260,
+              ),
+              height: Math.min(
+                Math.max(
+                  interaction.startHeight
+                  + deltaHeight / 0.82,
+                  42,
+                ),
+                220,
+              ),
+            };
           }
 
-          const deltaWidth = event.clientX - interaction.startClientX;
-          const deltaHeight = event.clientY - interaction.startClientY;
+          interactionLatestTableRef.current = nextTable;
 
-          return {
-            ...table,
-            width: Math.min(
-              Math.max(interaction.startWidth + deltaWidth / 0.82, 48),
-              260
-            ),
-            height: Math.min(
-              Math.max(interaction.startHeight + deltaHeight / 0.82, 42),
-              220
-            ),
-          };
+          return nextTable;
         })
       );
-      setHasUnsavedChanges(true);
+
+      if (!isSupabasePersistence) {
+        setHasUnsavedChanges(true);
+      }
     }
 
     function handleMouseUp() {
+      const originalTable =
+        interactionOriginalTableRef.current;
+      const nextTable =
+        interactionLatestTableRef.current;
+
+      interactionOriginalTableRef.current = null;
+      interactionLatestTableRef.current = null;
       setActiveTableInteraction(null);
+
+      if (!isSupabasePersistence) {
+        return;
+      }
+
+      if (!originalTable || !nextTable) {
+        return;
+      }
+
+      void persistInteractionGeometry(
+        originalTable,
+        nextTable,
+      );
     }
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -1092,7 +1204,11 @@ export function V2PlanoPage({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [activeTableInteraction]);
+  }, [
+    activeTableInteraction,
+    canManagePersistentTables,
+    isSupabasePersistence,
+  ]);
 
   function canSelectTableForMerge(table: V2FloorTable) {
     return (
@@ -1144,45 +1260,76 @@ export function V2PlanoPage({
   }
 
   function startMoveTable(event: MouseEvent<HTMLButtonElement>, table: V2FloorTable) {
-    if (isSupabasePersistence) return;
     event.preventDefault();
 
     if (isMergeMode) return;
     if (!isLayoutUnlocked) return;
+    if (
+      isSupabasePersistence
+      && (
+        !canManagePersistentTables
+        || isTableMutating
+      )
+    ) {
+      return;
+    }
 
     const canvasRect = canvasRef.current?.getBoundingClientRect();
+    const sourceTable =
+      tables.find((item) => item.id === table.id)
+      ?? table;
 
     if (!canvasRect) return;
 
+    interactionOriginalTableRef.current = sourceTable;
+    interactionLatestTableRef.current = sourceTable;
+    setFloorPlanOperationError("");
+    setFloorPlanOperationMessage("");
     setSelectedTableId(table.id);
     setActiveTableInteraction({
       type: "move",
       tableId: table.id,
       startClientX: event.clientX,
       startClientY: event.clientY,
-      startX: table.x,
-      startY: table.y,
+      startX: sourceTable.x,
+      startY: sourceTable.y,
       canvasWidth: canvasRect.width,
       canvasHeight: canvasRect.height,
     });
   }
 
   function startResizeTable(event: MouseEvent<HTMLSpanElement>, table: V2FloorTable) {
-    if (isSupabasePersistence) return;
     event.preventDefault();
     event.stopPropagation();
 
     if (isMergeMode) return;
     if (!isLayoutUnlocked) return;
+    if (
+      isSupabasePersistence
+      && (
+        !canManagePersistentTables
+        || isTableMutating
+      )
+    ) {
+      return;
+    }
 
+    const sourceTable =
+      tables.find((item) => item.id === table.id)
+      ?? table;
+
+    interactionOriginalTableRef.current = sourceTable;
+    interactionLatestTableRef.current = sourceTable;
+    setFloorPlanOperationError("");
+    setFloorPlanOperationMessage("");
     setSelectedTableId(table.id);
     setActiveTableInteraction({
       type: "resize",
       tableId: table.id,
       startClientX: event.clientX,
       startClientY: event.clientY,
-      startWidth: table.width,
-      startHeight: table.height,
+      startWidth: sourceTable.width,
+      startHeight: sourceTable.height,
     });
   }
 
@@ -1583,7 +1730,18 @@ export function V2PlanoPage({
   }
 
   function toggleLayoutLock() {
-    if (isSupabasePersistence) return;
+    if (
+      isSupabasePersistence
+      && (
+        !canManagePersistentTables
+        || isTableMutating
+      )
+    ) {
+      return;
+    }
+
+    interactionOriginalTableRef.current = null;
+    interactionLatestTableRef.current = null;
     setIsLayoutUnlocked((current) => !current);
     setActiveTableInteraction(null);
   }
@@ -2149,20 +2307,31 @@ export function V2PlanoPage({
         {isSupabasePersistence ? (
           <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <strong>Plano conectado a Supabase.</strong>{" "}
-            La lectura, las asignaciones y la administración básica de mesas son persistentes.
-            El movimiento, las uniones y el fondo continúan bloqueados.
+            La lectura, las asignaciones, la administración y la geometría de mesas son persistentes.
+            Las uniones, la restauración y el fondo continúan bloqueados.
           </div>
         ) : null}
 
-        {floorPlanOperationError ? (
-          <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-            {floorPlanOperationError}
-          </div>
-        ) : null}
-
-        {floorPlanOperationMessage ? (
-          <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-            {floorPlanOperationMessage}
+        {floorPlanOperationError || floorPlanOperationMessage ? (
+          <div
+            className="pointer-events-none fixed right-6 top-24 z-50 w-[min(440px,calc(100vw-3rem))]"
+            aria-live="polite"
+          >
+            {floorPlanOperationError ? (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg shadow-slate-950/10"
+              >
+                {floorPlanOperationError}
+              </div>
+            ) : (
+              <div
+                role="status"
+                className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-lg shadow-slate-950/10"
+              >
+                {floorPlanOperationMessage}
+              </div>
+            )}
           </div>
         ) : null}
 
@@ -2557,8 +2726,14 @@ export function V2PlanoPage({
                   <button
                     type="button"
                     onClick={toggleLayoutLock}
-                    disabled={isSupabasePersistence}
-                    className={`absolute bottom-3 left-3 z-20 flex h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold shadow-sm backdrop-blur transition ${
+                    disabled={
+                      isSupabasePersistence
+                      && (
+                        !canManagePersistentTables
+                        || isTableMutating
+                      )
+                    }
+                    className={`absolute bottom-3 left-3 z-20 flex h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold shadow-sm backdrop-blur transition disabled:cursor-not-allowed disabled:opacity-50 ${
                       isLayoutUnlocked
                         ? "border-emerald-200 bg-emerald-600 text-white hover:bg-emerald-700"
                         : "border-slate-200 bg-white/95 text-slate-600 hover:bg-slate-100"

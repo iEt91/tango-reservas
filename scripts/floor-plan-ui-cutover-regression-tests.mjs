@@ -193,7 +193,7 @@ check(
     "Plano conectado a Supabase.",
   )
     && sources.ui.includes(
-      "El movimiento, las uniones y el fondo continúan bloqueados.",
+      "Las uniones, la restauración y el fondo continúan bloqueados.",
     )
     && sources.ui.includes(
       "if (isSupabasePersistence) return;",
