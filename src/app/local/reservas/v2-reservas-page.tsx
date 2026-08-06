@@ -33,6 +33,15 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  saveBusinessReservationAction,
+  setBusinessReservationStatusAction,
+} from "./actions";
+import {
+  mapBusinessReservationToV2Draft,
+  type V2PersistentReservationCustomer,
+  type V2PersistentReservationService,
+} from "@/lib/reservations/v2-reservations-cutover";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   applyReservationStockMovements,
@@ -166,6 +175,8 @@ function subtractReservationKitchenTicketQuantity(
 
 type V2ReservationDraft = {
   id: string;
+  serviceId?: string;
+  customerId?: string;
   date: string;
   time: string;
   client: string;
@@ -1361,10 +1372,13 @@ function withReservationStatusTimestamp(
 
 function createEmptyReservation(
   date: string,
-  config: V2LocalConfigState
+  config: V2LocalConfigState,
+  serviceId = "",
 ): V2ReservationDraft {
   return {
     id: `res-${Date.now()}`,
+    serviceId,
+    customerId: "",
     date,
     time: getBusinessHourSlotsForDate(config, date)[0]?.open ?? "20:00",
     client: "",
@@ -1540,15 +1554,45 @@ function getMaxSingleTableCapacity(tables: V2FloorPlanTable[]) {
     .reduce((maxCapacity, table) => Math.max(maxCapacity, Number(table.capacity) || 0), 0);
 }
 
-export function V2ReservasPage() {
+type V2ReservasPageProps = {
+  initialReservations?: V2ReservationDraft[];
+  initialFloorTables?: V2FloorPlanTable[];
+  initialLocalConfig?: V2LocalConfigState;
+  persistentServices?: V2PersistentReservationService[];
+  persistentCustomers?: V2PersistentReservationCustomer[];
+  reservationPersistence?: "local" | "supabase";
+  canManageReservations?: boolean;
+};
+
+export function V2ReservasPage({
+  initialReservations = v2Reservations,
+  initialFloorTables = DEFAULT_FLOOR_TABLES,
+  initialLocalConfig = DEFAULT_LOCAL_CONFIG,
+  persistentServices = [],
+  persistentCustomers = [],
+  reservationPersistence = "local",
+  canManageReservations = true,
+}: V2ReservasPageProps = {}) {
+  const isSupabasePersistence =
+    reservationPersistence === "supabase";
   const [reservations, setReservations] =
-    useState<V2ReservationDraft[]>(v2Reservations);
+    useState<V2ReservationDraft[]>(initialReservations);
   const [hasLoadedStoredReservations, setHasLoadedStoredReservations] =
-    useState(false);
+    useState(isSupabasePersistence);
   const [floorTables, setFloorTables] =
-    useState<V2FloorPlanTable[]>(DEFAULT_FLOOR_TABLES);
+    useState<V2FloorPlanTable[]>(initialFloorTables);
   const [localConfig, setLocalConfig] =
-    useState<V2LocalConfigState>(() => DEFAULT_LOCAL_CONFIG);
+    useState<V2LocalConfigState>(() => initialLocalConfig);
+  const [isReservationMutating, setIsReservationMutating] =
+    useState(false);
+  const [reservationOperationMessage, setReservationOperationMessage] =
+    useState("");
+  const [reservationOperationError, setReservationOperationError] =
+    useState("");
+  const reservationSaveKeyRef = useRef<string | null>(null);
+  const defaultPersistentServiceId =
+    persistentServices.find((service) => service.isActive)?.id
+    ?? "";
 
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -1619,6 +1663,33 @@ export function V2ReservasPage() {
   const [paymentCloseError, setPaymentCloseError] = useState("");
 
   useEffect(() => {
+    if (isSupabasePersistence) {
+      function syncMenuFromStorage() {
+        setMenuOrderItems(readStoredMenuItems());
+        setMenuOrderCategories(readStoredMenuCategories());
+      }
+
+      function handleStorage(event: StorageEvent) {
+        if (
+          event.key !== MENU_ITEMS_STORAGE_KEY
+          && event.key !== MENU_CATEGORIES_STORAGE_KEY
+        ) {
+          return;
+        }
+
+        syncMenuFromStorage();
+      }
+
+      syncMenuFromStorage();
+      window.addEventListener("focus", syncMenuFromStorage);
+      window.addEventListener("storage", handleStorage);
+
+      return () => {
+        window.removeEventListener("focus", syncMenuFromStorage);
+        window.removeEventListener("storage", handleStorage);
+      };
+    }
+
     function syncReservationsFromStorage() {
       setReservations(loadStoredReservations());
     }
@@ -1673,13 +1744,14 @@ export function V2ReservasPage() {
       window.removeEventListener(FLOOR_TABLES_EVENT, syncFloorTablesFromStorage);
       window.removeEventListener(LOCAL_CONFIG_EVENT, syncLocalConfigFromStorage);
     };
-  }, []);
+  }, [isSupabasePersistence]);
 
   useEffect(() => {
+    if (isSupabasePersistence) return;
     if (!hasLoadedStoredReservations) return;
 
     writeToStorage(RESERVATIONS_STORAGE_KEY, reservations);
-  }, [hasLoadedStoredReservations, reservations]);
+  }, [hasLoadedStoredReservations, isSupabasePersistence, reservations]);
 
   useEffect(() => {
     if (!isCalendarOpen) return;
@@ -2198,9 +2270,33 @@ export function V2ReservasPage() {
   }
 
   function openNewReservation() {
+    if (!canManageReservations || isReservationMutating) {
+      return;
+    }
+
+    if (
+      isSupabasePersistence
+      && !defaultPersistentServiceId
+    ) {
+      setReservationOperationError(
+        "No hay un servicio persistente activo. Crealo o activalo desde Configuración.",
+      );
+      return;
+    }
+
+    reservationSaveKeyRef.current =
+      createV2OperationalId("reservation-save");
     setReservationFormError("");
+    setReservationOperationError("");
+    setReservationOperationMessage("");
     setEditingMode("create");
-    setEditingReservation(createEmptyReservation(selectedDate, localConfig));
+    setEditingReservation(
+      createEmptyReservation(
+        selectedDate,
+        localConfig,
+        defaultPersistentServiceId,
+      ),
+    );
   }
 
   function moveEditorCalendarMonth(monthOffset: number) {
@@ -2283,7 +2379,12 @@ export function V2ReservasPage() {
   function openReservationEditor(reservation: V2ReservationDraft) {
     setReservationFormError("");
     setEditingMode("edit");
+    reservationSaveKeyRef.current = null;
     setEditingReservation({
+      serviceId:
+        reservation.serviceId
+        || defaultPersistentServiceId,
+      customerId: reservation.customerId ?? "",
       durationMinutes: localConfig.standardDurationMinutes,
       tableName: "",
       email: "",
@@ -2378,8 +2479,12 @@ export function V2ReservasPage() {
     return "Enviar confirmación";
   }
 
-  function saveReservation() {
-    if (!editingReservation) return;
+  async function saveReservation() {
+    if (
+      !editingReservation
+      || isReservationMutating
+      || !canManageReservations
+    ) return;
 
     const missingFields: string[] = [];
 
@@ -2431,6 +2536,214 @@ export function V2ReservasPage() {
       setReservationFormError(
         `La hora elegida está fuera del horario configurado: ${formatBusinessHourSlots(validSlots)}.`
       );
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      const serviceId =
+        editingReservation.serviceId
+        || defaultPersistentServiceId;
+
+      if (!serviceId) {
+        setReservationFormError(
+          "No hay un servicio persistente activo. Crealo o activalo desde Configuración.",
+        );
+        return;
+      }
+
+      const normalizedPhone =
+        editingReservation.phone.replace(/\D/g, "");
+      const normalizedEmail =
+        (editingReservation.email ?? "")
+          .trim()
+          .toLowerCase();
+      const matchedCustomer =
+        persistentCustomers.find((customer) =>
+          Boolean(customer.id)
+          && customer.isActive
+          && (
+            (
+              normalizedPhone.length > 0
+              && customer.phone.replace(/\D/g, "")
+                === normalizedPhone
+            )
+            || (
+              normalizedEmail.length > 0
+              && customer.email.trim().toLowerCase()
+                === normalizedEmail
+            )
+          )
+        );
+      const existingReservation =
+        editingMode === "edit"
+          ? reservations.find(
+              (reservation) =>
+                reservation.id
+                === editingReservation.id,
+            )
+          : null;
+
+      setIsReservationMutating(true);
+      setReservationFormError("");
+      setReservationOperationError("");
+      setReservationOperationMessage("");
+
+      try {
+        const result =
+          await saveBusinessReservationAction({
+            reservationId:
+              editingMode === "edit"
+                ? editingReservation.id
+                : null,
+            idempotencyKey:
+              editingMode === "create"
+                ? reservationSaveKeyRef.current
+                : null,
+            reservation: {
+              id:
+                editingMode === "edit"
+                  ? editingReservation.id
+                  : null,
+              serviceId,
+              customerId:
+                editingReservation.customerId
+                || matchedCustomer?.id
+                || "",
+              customerName:
+                editingReservation.client,
+              customerPhone:
+                editingReservation.phone,
+              customerEmail:
+                editingReservation.email ?? "",
+              reservationDate:
+                editingReservation.date,
+              reservationTime:
+                editingReservation.time,
+              partySize:
+                Number(editingReservation.people),
+              status:
+                editingReservation.status,
+              notes:
+                editingReservation.note,
+              source:
+                editingReservation.origin
+                ?? "manual",
+              durationMinutes:
+                Number(
+                  editingReservation
+                    .durationMinutes
+                  ?? localConfig
+                    .standardDurationMinutes,
+                ),
+              publicCode:
+                editingMode === "create"
+                  ? ""
+                  : editingReservation
+                      .reservationCode
+                    ?? "",
+              createdAt:
+                editingReservation.createdAt
+                ?? "",
+              updatedAt: "",
+              confirmedAt:
+                editingReservation.confirmedAt
+                ?? "",
+              completedAt:
+                editingReservation.completedAt
+                ?? "",
+              cancelledAt:
+                editingReservation.cancelledAt
+                ?? "",
+              noShowAt:
+                editingReservation.noShowAt
+                ?? "",
+            },
+          });
+
+        if (!result.ok) {
+          setReservationFormError(result.error);
+          return;
+        }
+
+        const canonicalCore =
+          mapBusinessReservationToV2Draft(
+            result.reservation,
+            existingReservation?.tableName
+              ?? editingReservation.tableName
+              ?? "",
+          );
+        const canonicalReservation:
+          V2ReservationDraft = {
+            ...editingReservation,
+            ...canonicalCore,
+            orderItems:
+              existingReservation?.orderItems
+              ?? editingReservation.orderItems
+              ?? "",
+            orderLineItems:
+              existingReservation?.orderLineItems
+              ?? editingReservation.orderLineItems
+              ?? [],
+            orderTotal:
+              existingReservation?.orderTotal
+              ?? editingReservation.orderTotal
+              ?? 0,
+            paymentMethod:
+              existingReservation?.paymentMethod,
+            paidAmount:
+              existingReservation?.paidAmount,
+            paymentBreakdown:
+              existingReservation
+                ?.paymentBreakdown,
+            paymentClosedAt:
+              existingReservation
+                ?.paymentClosedAt,
+          };
+        const nextReservations =
+          editingMode === "create"
+            ? [
+                canonicalReservation,
+                ...reservations,
+              ]
+            : reservations.map((reservation) =>
+                reservation.id
+                  === canonicalReservation.id
+                  ? canonicalReservation
+                  : reservation
+              );
+
+        setReservations(nextReservations);
+        setSelectedReservation(
+          canonicalReservation,
+        );
+        setReservationOperationMessage(
+          editingMode === "create"
+            ? "Reserva persistente creada."
+            : "Reserva persistente actualizada.",
+        );
+
+        if (editingMode === "create") {
+          setSearchValue("");
+          setStatusFilter("all");
+          setDateFilterMode("single");
+          setSelectedDate(
+            canonicalReservation.date,
+          );
+          setCalendarMonth(
+            canonicalReservation.date,
+          );
+        }
+
+        reservationSaveKeyRef.current = null;
+        closeReservationEditor();
+      } catch {
+        setReservationFormError(
+          "No se pudo completar el guardado persistente.",
+        );
+      } finally {
+        setIsReservationMutating(false);
+      }
+
       return;
     }
 
@@ -2598,27 +2911,94 @@ export function V2ReservasPage() {
     return Boolean(reservation.stockDiscounted) && (reservation.stockMovements?.length ?? 0) > 0;
   }
 
-  function updateReservationStatus(
+  async function updateReservationStatus(
     reservationId: string,
     status: V2ReservationStatus
   ) {
-    const reservation = reservations.find((item) => item.id === reservationId);
+    const reservation = reservations.find(
+      (item) => item.id === reservationId,
+    );
+
+    if (!reservation || isReservationMutating) {
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      if (!canManageReservations) {
+        setReservationOperationError(
+          "No tenés permisos para modificar reservas.",
+        );
+        return;
+      }
+
+      setIsReservationMutating(true);
+      setReservationOperationError("");
+      setReservationOperationMessage("");
+
+      try {
+        const result =
+          await setBusinessReservationStatusAction({
+            reservationId,
+            status,
+          });
+
+        if (!result.ok) {
+          setReservationOperationError(
+            result.error,
+          );
+          return;
+        }
+
+        const canonicalReservation:
+          V2ReservationDraft = {
+            ...reservation,
+            ...mapBusinessReservationToV2Draft(
+              result.reservation,
+              reservation.tableName ?? "",
+            ),
+          };
+
+        applyReservationStatusChange(
+          canonicalReservation,
+        );
+        setReservationOperationMessage(
+          "Estado persistente actualizado.",
+        );
+      } catch {
+        setReservationOperationError(
+          "No se pudo actualizar el estado persistente.",
+        );
+      } finally {
+        setIsReservationMutating(false);
+      }
+
+      return;
+    }
 
     if (
-      reservation &&
-      (status === "cancelled" || status === "no_show") &&
-      reservationHasDiscountedStock(reservation)
+      (status === "cancelled" || status === "no_show")
+      && reservationHasDiscountedStock(reservation)
     ) {
       setStockDecisionReservation({ reservationId, status });
       return;
     }
 
-    if (reservation) {
-      applyReservationStatusChange(withReservationStatusTimestamp(reservation, status));
-    }
+    applyReservationStatusChange(
+      withReservationStatusTimestamp(
+        reservation,
+        status,
+      ),
+    );
   }
 
   function openPaymentCloseModal(reservation: V2ReservationDraft) {
+    if (isSupabasePersistence) {
+      setReservationOperationError(
+        "El consumo, la caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
+      );
+      return;
+    }
+
     const normalizedReservation = normalizeReservation(reservation);
 
     setPaymentCloseReservation(normalizedReservation);
@@ -2696,6 +3076,13 @@ export function V2ReservasPage() {
   }
 
   function openOrderPopup(reservation: V2ReservationDraft) {
+    if (isSupabasePersistence) {
+      setReservationOperationError(
+        "El consumo, la caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
+      );
+      return;
+    }
+
     selectReservationWithTone(reservation);
     setSelectedMenuCategory("all");
     resetStockMovementOperation();
@@ -2952,6 +3339,24 @@ export function V2ReservasPage() {
           }
         `}
       </style>
+      {reservationOperationMessage ? (
+        <div
+          role="status"
+          className="pointer-events-none fixed right-5 top-24 z-[120] max-w-sm rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-xl"
+        >
+          {reservationOperationMessage}
+        </div>
+      ) : null}
+
+      {reservationOperationError ? (
+        <div
+          role="alert"
+          className="pointer-events-none fixed right-5 top-24 z-[121] max-w-sm rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 shadow-xl"
+        >
+          {reservationOperationError}
+        </div>
+      ) : null}
+
       <div className="flex h-full min-h-0 flex-col">
         <V2PageHeader
           title="Reservas"
@@ -2970,7 +3375,11 @@ export function V2ReservasPage() {
                 variant="primary"
                 icon={<Plus size={18} />}
                 onClick={openNewReservation}
-                disabled={!localConfig.reservationEnabled}
+                disabled={
+                  !localConfig.reservationEnabled
+                  || !canManageReservations
+                  || isReservationMutating
+                }
                 title={
                   localConfig.reservationEnabled
                     ? "Crear nueva reserva"
@@ -2982,6 +3391,14 @@ export function V2ReservasPage() {
             </>
           }
         />
+
+        {isSupabasePersistence ? (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <strong>Reservas conectadas a Supabase.</strong>{" "}
+            Alta, edición y estados son persistentes. Las mesas se administran desde Plano; consumo, caja y pagos quedan bloqueados hasta su corte canónico.
+          </div>
+        ) : null}
+
         <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
           <div className="flex min-h-0 flex-col gap-4">
             <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -4750,6 +5167,56 @@ export function V2ReservasPage() {
                   </V2Field>
                 </div>
 
+                {isSupabasePersistence ? (
+                  <V2Field label="Servicio">
+                    <V2Select
+                      value={
+                        editingReservation.serviceId
+                        ?? defaultPersistentServiceId
+                      }
+                      disabled={isReservationMutating}
+                      onChange={(event) => {
+                        const selectedService =
+                          persistentServices.find(
+                            (service) =>
+                              service.id
+                              === event.target.value,
+                          );
+
+                        setReservationFormError("");
+                        setEditingReservation({
+                          ...editingReservation,
+                          serviceId:
+                            event.target.value,
+                          durationMinutes:
+                            selectedService
+                              ?.durationMinutes
+                            ?? editingReservation
+                              .durationMinutes,
+                        });
+                      }}
+                    >
+                      {persistentServices.map((service) => (
+                        <option
+                          key={service.id}
+                          value={service.id}
+                          disabled={
+                            !service.isActive
+                            && service.id
+                              !== editingReservation
+                                .serviceId
+                          }
+                        >
+                          {service.name}
+                          {!service.isActive
+                            ? " · Inactivo"
+                            : ""}
+                        </option>
+                      ))}
+                    </V2Select>
+                  </V2Field>
+                ) : null}
+
                 <div className="grid gap-4 md:grid-cols-4">
                   <V2Field label="Día">
                     <div className="relative">
@@ -4928,6 +5395,7 @@ export function V2ReservasPage() {
                   <V2Field label="Mesa">
                     <V2Select
                       value={editingReservation.tableName ?? ""}
+                      disabled={isSupabasePersistence || isReservationMutating}
                       onChange={(event) => {
                         setReservationFormError("");
                         setEditingReservation({
@@ -4967,6 +5435,11 @@ export function V2ReservasPage() {
                     </V2Select>
 
                     <div className="mt-1 space-y-1 text-xs text-slate-500">
+                      {isSupabasePersistence ? (
+                        <p className="font-semibold text-emerald-700">
+                          Las mesas persistentes se administran desde /local/plano.
+                        </p>
+                      ) : null}
                       <p>
                         {tableAvailabilitySummary.available} disponibles ·{" "}
                         {tableAvailabilitySummary.unavailable} no disponibles para este día y horario.
@@ -4987,6 +5460,7 @@ export function V2ReservasPage() {
                   <V2Field label="Estado">
                     <V2Select
                       value={editingReservation.status}
+                      disabled={isSupabasePersistence || isReservationMutating}
                       onChange={(event) => {
                         setReservationFormError("");
                         setEditingReservation({
@@ -5100,8 +5574,14 @@ export function V2ReservasPage() {
               <V2Button variant="secondary" onClick={closeReservationEditor}>
                 Cancelar
               </V2Button>
-              <V2Button variant="primary" onClick={saveReservation}>
-                Guardar reserva
+              <V2Button
+                variant="primary"
+                onClick={saveReservation}
+                disabled={isReservationMutating || !canManageReservations}
+              >
+                {isReservationMutating
+                  ? "Guardando..."
+                  : "Guardar reserva"}
               </V2Button>
             </div>
           </div>

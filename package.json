@@ -13,7 +13,7 @@
     "test:storage": "node scripts/storage-contract-regression-tests.mjs",
     "test:backup": "node scripts/local-backup-regression-tests.mjs",
     "test:notifications": "node scripts/notification-settings-regression-tests.mjs",
-    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth && npm run test:security-foundation && npm run test:dependency-security && npm run test:staging-readiness && npm run test:remote-schema-history && npm run test:staging-isolation && npm run test:business-identity-rls && npm run test:reservation-config-rls && npm run test:active-business-auth && npm run test:business-schema-contract && npm run test:business-hours-write && npm run test:reservation-settings-write && npm run test:services-write && npm run test:services-ui-cutover && npm run test:customers-write && npm run test:customers-ui-cutover && npm run test:reservations-write && npm run test:floor-plan-write && npm run test:floor-plan-ui-cutover && npm run test:floor-plan-assignment-ui && npm run test:floor-plan-table-admin-ui && npm run test:floor-plan-geometry-ui && npm run test:floor-plan-table-combination-ui",
+    "test:regression": "npm run test:availability && npm run test:stock && npm run test:tracking && npm run test:storage && npm run test:backup && npm run test:notifications && npm run test:architecture && npm run test:database-security && npm run test:auth && npm run test:security-foundation && npm run test:dependency-security && npm run test:staging-readiness && npm run test:remote-schema-history && npm run test:staging-isolation && npm run test:business-identity-rls && npm run test:reservation-config-rls && npm run test:active-business-auth && npm run test:business-schema-contract && npm run test:business-hours-write && npm run test:reservation-settings-write && npm run test:services-write && npm run test:services-ui-cutover && npm run test:customers-write && npm run test:customers-ui-cutover && npm run test:reservations-write && npm run test:floor-plan-write && npm run test:floor-plan-ui-cutover && npm run test:floor-plan-assignment-ui && npm run test:floor-plan-table-admin-ui && npm run test:floor-plan-geometry-ui && npm run test:floor-plan-table-combination-ui && npm run test:reservations-ui-cutover",
     "qa:prepare": "node scripts/prepare-qa.mjs && next typegen",
     "qa": "npm run qa:prepare && npm run security:scan && npm run security:env && eslint . && tsc --noEmit && npm run test:regression && next build",
     "test:architecture": "node scripts/architecture-regression-tests.mjs",
@@ -55,7 +55,8 @@
     "test:floor-plan-assignment-ui": "node scripts/floor-plan-assignment-ui-regression-tests.mjs",
     "test:floor-plan-table-admin-ui": "node scripts/floor-plan-table-admin-ui-regression-tests.mjs",
     "test:floor-plan-geometry-ui": "node scripts/floor-plan-geometry-ui-regression-tests.mjs",
-    "test:floor-plan-table-combination-ui": "node scripts/floor-plan-table-combination-ui-regression-tests.mjs"
+    "test:floor-plan-table-combination-ui": "node scripts/floor-plan-table-combination-ui-regression-tests.mjs",
+    "test:reservations-ui-cutover": "node scripts/reservations-ui-cutover-regression-tests.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
