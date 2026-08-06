@@ -228,9 +228,9 @@ check(
 );
 
 check(
-  "uniones restauración y fondo permanecen bloqueados",
+  "unión visual restauración y fondo permanecen bloqueados",
   sources.ui.includes(
-    "Las uniones, la restauración y el fondo continúan bloqueados.",
+    "La unión visual, la restauración y el fondo continúan bloqueados.",
   )
     && sources.ui.includes(
       "function startMergeMode",

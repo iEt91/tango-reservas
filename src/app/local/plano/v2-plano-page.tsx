@@ -37,6 +37,12 @@ import {
   type V2FloorPlanSnapshot,
 } from "@/lib/floor-plan/v2-floor-plan-cutover";
 import {
+  getV2AssignmentCapacity,
+  getV2AssignmentLabel,
+  getV2AssignmentTables,
+  toggleV2AssignmentTableSelection,
+} from "@/lib/floor-plan/v2-floor-table-combination";
+import {
   createPersistentFloorTableDraft,
   getV2FloorTablePhysicalStatus,
   hasV2FloorTableGeometryChanged,
@@ -101,6 +107,7 @@ type V2LocalConfigState = {
   reservationEnabled: boolean;
   standardDurationMinutes: number;
   bookingWindowDays: number;
+  allowTableCombinations: boolean;
 };
 
 type V2BackgroundFit = "cover" | "contain" | "stretch" | "custom";
@@ -166,6 +173,7 @@ const DEFAULT_LOCAL_CONFIG: V2LocalConfigState = {
   reservationEnabled: true,
   standardDurationMinutes: 120,
   bookingWindowDays: 14,
+  allowTableCombinations: true,
 };
 
 function getTodayDateKey() {
@@ -588,6 +596,9 @@ function normalizeLocalConfig(value: Partial<V2LocalConfigState> | null | undefi
     reservationEnabled: Boolean(mergedConfig.reservationEnabled),
     standardDurationMinutes: Math.max(Number(mergedConfig.standardDurationMinutes) || 120, 15),
     bookingWindowDays: Math.max(Number(mergedConfig.bookingWindowDays) || 14, 1),
+    allowTableCombinations: Boolean(
+      mergedConfig.allowTableCombinations,
+    ),
   };
 }
 
@@ -730,6 +741,10 @@ export function V2PlanoPage({
   const [isBackgroundDialogOpen, setIsBackgroundDialogOpen] = useState(false);
   const [backgroundStorageError, setBackgroundStorageError] = useState("");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [
+    selectedAssignmentTableIds,
+    setSelectedAssignmentTableIds,
+  ] = useState<string[]>([]);
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [mergeSelectionIds, setMergeSelectionIds] = useState<string[]>([]);
@@ -835,6 +850,31 @@ export function V2PlanoPage({
     displayTables.find((table) => table.id === selectedTableId) ??
     displayTables[0] ??
     null;
+  const selectedAssignmentTables =
+    getV2AssignmentTables(
+      displayTables,
+      selectedAssignmentTableIds,
+    );
+  const selectedAssignmentCapacity =
+    getV2AssignmentCapacity(
+      selectedAssignmentTables,
+    );
+  const selectedAssignmentLabel =
+    getV2AssignmentLabel(
+      selectedAssignmentTables,
+    );
+  const selectedReservation =
+    selectedTable?.reservationId
+      ? planoReservations.find(
+          (reservation) =>
+            reservation.id ===
+            selectedTable.reservationId,
+        ) ?? null
+      : null;
+  const selectedReservationTableCount =
+    splitTableNames(
+      selectedReservation?.tableName,
+    ).length;
 
   const unassignedReservationsForSelectedDate = planoReservations
     .filter((reservation) => {
@@ -1896,10 +1936,16 @@ export function V2PlanoPage({
     if (
       !canAssignPersistentReservations
       || isAssignmentMutating
+      || !selectedTable
+      || selectedTable.status !== "available"
+      || selectedTable.locked
     ) {
       return;
     }
 
+    setSelectedAssignmentTableIds([
+      selectedTable.id,
+    ]);
     setAssignReservationError("");
     setFloorPlanOperationError("");
     setFloorPlanOperationMessage("");
@@ -1907,12 +1953,45 @@ export function V2PlanoPage({
   }
 
   function closeAssignDialog() {
+    setSelectedAssignmentTableIds([]);
     setAssignReservationError("");
     setIsAssignDialogOpen(false);
   }
 
-  async function assignReservationToSelectedTable(reservationId: string) {
-    if (!selectedTable || isAssignmentMutating) return;
+  function toggleAssignmentTable(
+    tableId: string,
+  ) {
+    const result =
+      toggleV2AssignmentTableSelection({
+        tables: displayTables,
+        selectedTableIds:
+          selectedAssignmentTableIds,
+        tableId,
+        allowTableCombinations:
+          localConfig.allowTableCombinations,
+      });
+
+    if (!result.ok) {
+      setAssignReservationError(result.error);
+      return;
+    }
+
+    setAssignReservationError("");
+    setSelectedAssignmentTableIds(
+      result.tableIds,
+    );
+  }
+
+  async function assignReservationToSelectedTables(
+    reservationId: string,
+  ) {
+    if (
+      isAssignmentMutating
+      || selectedAssignmentTables.length === 0
+      || !selectedAssignmentLabel
+    ) {
+      return;
+    }
 
     if (!canAssignPersistentReservations) {
       setAssignReservationError(
@@ -1921,35 +2000,83 @@ export function V2PlanoPage({
       return;
     }
 
-    if (selectedTable.status === "blocked" || selectedTable.locked) {
-      setAssignReservationError("No se puede asignar una reserva a una mesa bloqueada.");
-      return;
-    }
-
-    const reservationToAssign = planoReservations.find(
-      (reservation) => reservation.id === reservationId
-    );
-
-    if (!reservationToAssign) {
-      setAssignReservationError("No se encontró la reserva seleccionada.");
-      return;
-    }
-
-    if (reservationToAssign.people > selectedTable.capacity) {
+    if (
+      selectedAssignmentTables.some(
+        (table) =>
+          table.status !== "available"
+          || table.locked,
+      )
+    ) {
       setAssignReservationError(
-        `La reserva es para ${reservationToAssign.people} personas y ${selectedTable.name} tiene capacidad para ${selectedTable.capacity}.`
+        "Una de las mesas seleccionadas no está disponible.",
       );
       return;
     }
 
-    const conflictingReservation = findTableConflict(
-      reservationToAssign,
-      selectedTable.name
-    );
-
-    if (conflictingReservation) {
+    if (
+      selectedAssignmentTables.length > 1
+      && !localConfig.allowTableCombinations
+    ) {
       setAssignReservationError(
-        `${selectedTable.name} ya tiene una reserva activa de ${conflictingReservation.client} a las ${conflictingReservation.time}.`
+        "Las combinaciones de mesas están desactivadas en Configuración.",
+      );
+      return;
+    }
+
+    if (
+      selectedAssignmentTables.length > 1
+      && selectedAssignmentTables.some(
+        (table) => table.canJoin !== true,
+      )
+    ) {
+      setAssignReservationError(
+        "Una de las mesas seleccionadas no admite combinaciones.",
+      );
+      return;
+    }
+
+    const reservationToAssign =
+      planoReservations.find(
+        (reservation) =>
+          reservation.id === reservationId,
+      );
+
+    if (!reservationToAssign) {
+      setAssignReservationError(
+        "No se encontró la reserva seleccionada.",
+      );
+      return;
+    }
+
+    if (
+      reservationToAssign.people
+      > selectedAssignmentCapacity
+    ) {
+      setAssignReservationError(
+        `La reserva es para ${reservationToAssign.people} personas y las mesas seleccionadas tienen capacidad para ${selectedAssignmentCapacity}.`,
+      );
+      return;
+    }
+
+    const conflictingTable =
+      selectedAssignmentTables.find((table) =>
+        Boolean(
+          findTableConflict(
+            reservationToAssign,
+            table.name,
+          ),
+        )
+      );
+
+    if (conflictingTable) {
+      const conflictingReservation =
+        findTableConflict(
+          reservationToAssign,
+          conflictingTable.name,
+        );
+
+      setAssignReservationError(
+        `${conflictingTable.name} ya tiene una reserva activa de ${conflictingReservation?.client ?? "otro cliente"} a las ${conflictingReservation?.time ?? "ese horario"}.`,
       );
       return;
     }
@@ -1964,7 +2091,8 @@ export function V2PlanoPage({
         const result =
           await setBusinessReservationTablesAction({
             reservationId,
-            tableIds: [selectedTable.id],
+            tableIds:
+              selectedAssignmentTableIds,
           });
 
         if (!result.ok) {
@@ -1978,14 +2106,16 @@ export function V2PlanoPage({
             reservation.id === reservationId
               ? {
                   ...reservation,
-                  tableName: selectedTable.name,
+                  tableName:
+                    selectedAssignmentLabel,
                 }
               : reservation
           )
         );
         setFloorPlanOperationMessage(
-          `Reserva asignada a ${selectedTable.name}.`,
+          `Reserva asignada a ${selectedAssignmentLabel}.`,
         );
+        setSelectedAssignmentTableIds([]);
         setIsAssignDialogOpen(false);
       } catch {
         const message =
@@ -1999,16 +2129,19 @@ export function V2PlanoPage({
       return;
     }
 
-    const nextReservations = planoReservations.map((reservation) =>
-      reservation.id === reservationId
-        ? {
-            ...reservation,
-            tableName: selectedTable.name,
-          }
-        : reservation
-    );
+    const nextReservations =
+      planoReservations.map((reservation) =>
+        reservation.id === reservationId
+          ? {
+              ...reservation,
+              tableName:
+                selectedAssignmentLabel,
+            }
+          : reservation
+      );
 
     persistReservations(nextReservations);
+    setSelectedAssignmentTableIds([]);
     setAssignReservationError("");
     setIsAssignDialogOpen(false);
   }
@@ -2077,7 +2210,7 @@ export function V2PlanoPage({
           )
         );
         setFloorPlanOperationMessage(
-          "La reserva quedó sin mesa asignada.",
+          "La reserva quedó sin mesas asignadas.",
         );
         setIsReleaseDialogOpen(false);
       } catch {
@@ -2147,7 +2280,7 @@ export function V2PlanoPage({
     }
 
     if (isAssignDialogOpen) {
-      setIsAssignDialogOpen(false);
+      closeAssignDialog();
       return;
     }
 
@@ -2171,7 +2304,7 @@ export function V2PlanoPage({
         if (isReleaseDialogOpen) {
           setIsReleaseDialogOpen(false);
         } else if (isAssignDialogOpen) {
-          setIsAssignDialogOpen(false);
+          closeAssignDialog();
         } else if (isBackgroundDialogOpen) {
           setIsBackgroundDialogOpen(false);
         } else if (editingTable) {
@@ -2307,8 +2440,8 @@ export function V2PlanoPage({
         {isSupabasePersistence ? (
           <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <strong>Plano conectado a Supabase.</strong>{" "}
-            La lectura, las asignaciones, la administración y la geometría de mesas son persistentes.
-            Las uniones, la restauración y el fondo continúan bloqueados.
+            La lectura, la administración, la geometría y las combinaciones de reserva son persistentes.
+            La unión visual, la restauración y el fondo continúan bloqueados.
           </div>
         ) : null}
 
@@ -3002,7 +3135,11 @@ export function V2PlanoPage({
               <div>
                 <p className="text-sm text-slate-500">Liberar mesa</p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-950">
-                  {selectedTable ? `Quitar reserva de ${selectedTable.name}` : "Quitar reserva"}
+                  {selectedTable
+                    ? selectedReservationTableCount > 1
+                      ? `Quitar reserva de ${selectedReservationTableCount} mesas`
+                      : `Quitar reserva de ${selectedTable.name}`
+                    : "Quitar reserva"}
                 </h2>
               </div>
 
@@ -3019,9 +3156,10 @@ export function V2PlanoPage({
             <div className="space-y-4 p-6">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
                 <p>
-                  Vas a quitar la reserva activa de esta mesa. La reserva seguirá
-                  existiendo en <strong className="text-slate-950">/reservas</strong>,
-                  pero quedará sin mesa asignada.
+                  Vas a quitar la reserva activa de todas las mesas asignadas.
+                  La reserva seguirá existiendo en{" "}
+                  <strong className="text-slate-950">/reservas</strong>,
+                  pero quedará sin mesas asignadas.
                 </p>
 
                 {selectedTable?.reservationClient ? (
@@ -3040,7 +3178,7 @@ export function V2PlanoPage({
                   onClick={clearSelectedReservation}
                   disabled={isAssignmentMutating}
                 >
-                  {isAssignmentMutating ? "Liberando..." : "Liberar mesa"}
+                  {isAssignmentMutating ? "Liberando..." : "Liberar mesas"}
                 </V2Button>
               </div>
             </div>
@@ -3060,7 +3198,9 @@ export function V2PlanoPage({
               <div>
                 <p className="text-sm text-slate-500">Asignar reserva</p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-950">
-                  {selectedTable ? `Asignar a ${selectedTable.name}` : "Seleccioná una mesa"}
+                  {selectedAssignmentLabel
+                    ? `Asignar a ${selectedAssignmentLabel}`
+                    : "Seleccioná una mesa"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {formatDateLabel(selectedDate)} · {resolvedSelectedTime}
@@ -3084,11 +3224,86 @@ export function V2PlanoPage({
                 </div>
               ) : null}
 
-              {selectedTable?.status === "blocked" || selectedTable?.locked ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                  Esta mesa está bloqueada. Activala antes de asignarle una reserva.
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      Mesas seleccionadas
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {selectedAssignmentTables.length} mesas ·{" "}
+                      {selectedAssignmentCapacity} lugares
+                    </p>
+                  </div>
+                  {!localConfig.allowTableCombinations ? (
+                    <V2Badge tone="slate">
+                      Combinaciones desactivadas
+                    </V2Badge>
+                  ) : (
+                    <V2Badge tone="green">
+                      Combinaciones permitidas
+                    </V2Badge>
+                  )}
                 </div>
-              ) : null}
+
+                <div className="mt-3 grid max-h-40 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                  {displayTables.map((table) => {
+                    const isSelected =
+                      selectedAssignmentTableIds.includes(
+                        table.id,
+                      );
+                    const isUnavailable =
+                      table.status !== "available"
+                      || Boolean(table.locked);
+                    const combinationBlocked =
+                      !isSelected
+                      && selectedAssignmentTableIds.length > 0
+                      && (
+                        !localConfig.allowTableCombinations
+                        || table.canJoin !== true
+                        || selectedAssignmentTables.some(
+                          (selected) =>
+                            selected.canJoin !== true,
+                        )
+                      );
+
+                    return (
+                      <button
+                        key={`assignment-table-${table.id}`}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() =>
+                          toggleAssignmentTable(table.id)
+                        }
+                        disabled={
+                          isAssignmentMutating
+                          || isUnavailable
+                          || combinationBlocked
+                        }
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition",
+                          isSelected
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50",
+                          isUnavailable || combinationBlocked
+                            ? "cursor-not-allowed opacity-45"
+                            : "",
+                        )}
+                      >
+                        <span className="min-w-0 truncate">
+                          {table.name}
+                        </span>
+                        <span className="shrink-0 text-slate-500">
+                          {table.capacity}p
+                          {table.canJoin === false
+                            ? " · No combinable"
+                            : ""}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {unassignedReservationsForSelectedDate.length > 0 ? (
                 <div className="max-h-[380px] space-y-3 overflow-y-auto pr-1">
@@ -3097,7 +3312,8 @@ export function V2PlanoPage({
                       (item) => item.id === reservation.id
                     );
                     const capacityWarning =
-                      selectedTable && reservation.people > selectedTable.capacity;
+                      reservation.people
+                      > selectedAssignmentCapacity;
 
                     return (
                       <div
@@ -3118,7 +3334,7 @@ export function V2PlanoPage({
 
                           {capacityWarning ? (
                             <p className="mt-2 text-xs font-semibold text-red-600">
-                              Supera la capacidad de {selectedTable.name}.
+                              Supera la capacidad total de las mesas seleccionadas.
                             </p>
                           ) : null}
 
@@ -3135,10 +3351,23 @@ export function V2PlanoPage({
 
                         <V2Button
                           variant="primary"
-                          onClick={() => assignReservationToSelectedTable(reservation.id)}
-                          disabled={isAssignmentMutating || !canAssignPersistentReservations || !selectedTable || selectedTable.status === "blocked" || selectedTable.locked || capacityWarning}
+                          onClick={() =>
+                            assignReservationToSelectedTables(
+                              reservation.id,
+                            )
+                          }
+                          disabled={
+                            isAssignmentMutating
+                            || !canAssignPersistentReservations
+                            || selectedAssignmentTables.length === 0
+                            || capacityWarning
+                          }
                         >
-                          {isAssignmentMutating ? "Asignando..." : "Asignar"}
+                          {isAssignmentMutating
+                            ? "Asignando..."
+                            : selectedAssignmentTables.length > 1
+                              ? `Asignar a ${selectedAssignmentTables.length} mesas`
+                              : "Asignar"}
                         </V2Button>
                       </div>
                     );
@@ -3473,6 +3702,26 @@ export function V2PlanoPage({
                   </V2Select>
                 </V2Field>
               </div>
+
+              <V2Field label="Permitir unir con otras mesas">
+                <V2Select
+                  value={
+                    editingTable.canJoin === false
+                      ? "disabled"
+                      : "enabled"
+                  }
+                  onChange={(event) =>
+                    setEditingTable({
+                      ...editingTable,
+                      canJoin:
+                        event.target.value === "enabled",
+                    })
+                  }
+                >
+                  <option value="enabled">Permitido</option>
+                  <option value="disabled">No permitido</option>
+                </V2Select>
+              </V2Field>
 
               {!isSupabasePersistence ? (
                 <V2Field label="Notas">

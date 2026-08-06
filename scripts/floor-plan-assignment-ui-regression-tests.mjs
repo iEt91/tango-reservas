@@ -80,7 +80,7 @@ check(
 );
 
 check(
-  "asignar usa UUID de reserva y UUID de mesa",
+  "asignar usa UUID de reserva y arreglo de UUID de mesas",
   sources.ui.includes(
     "await setBusinessReservationTablesAction",
   )
@@ -88,7 +88,10 @@ check(
       "reservationId,",
     )
     && sources.ui.includes(
-      "tableIds: [selectedTable.id]",
+      "tableIds:",
+    )
+    && sources.ui.includes(
+      "selectedAssignmentTableIds",
     ),
 );
 

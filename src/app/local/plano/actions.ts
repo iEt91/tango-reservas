@@ -22,6 +22,12 @@ type FloorPlanActionError = {
   error: string;
 };
 
+type FloorPlanMutationContext =
+  | "settings"
+  | "table"
+  | "active"
+  | "assignment";
+
 type FloorTableActionSuccess = {
   ok: true;
   table: ReturnType<typeof mapBusinessFloorTableRow>;
@@ -59,6 +65,7 @@ function formatFloorPlanMutationError(
     message?: string | null;
   } | null,
   fallback: string,
+  context: FloorPlanMutationContext,
 ) {
   if (error?.code === "23505") {
     return "Ya existe una mesa activa con ese nombre.";
@@ -84,6 +91,10 @@ function formatFloorPlanMutationError(
     }
 
     if (message.includes("unavailable")) {
+      if (context === "table") {
+        return "La mesa tiene una reserva activa y no puede bloquearse ni marcarse fuera de servicio.";
+      }
+
       return "Una de las mesas seleccionadas no está disponible.";
     }
 
@@ -192,6 +203,7 @@ export async function saveBusinessFloorPlanSettingsAction(
         error: formatFloorPlanMutationError(
           error,
           "No se pudo guardar la configuración del plano.",
+          "settings",
         ),
       };
     }
@@ -270,6 +282,7 @@ export async function saveBusinessFloorTableAction(
         error: formatFloorPlanMutationError(
           error,
           "No se pudo guardar la mesa.",
+          "table",
         ),
       };
     }
@@ -346,6 +359,7 @@ export async function setBusinessFloorTableActiveAction(
         error: formatFloorPlanMutationError(
           error,
           "No se pudo actualizar la mesa.",
+          "active",
         ),
       };
     }
@@ -421,6 +435,7 @@ export async function setBusinessReservationTablesAction(
         error: formatFloorPlanMutationError(
           error,
           "No se pudieron asignar las mesas.",
+          "assignment",
         ),
       };
     }

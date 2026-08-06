@@ -66,6 +66,7 @@ export type V2FloorPlanLocalConfigSnapshot = {
   reservationEnabled: boolean;
   standardDurationMinutes: number;
   bookingWindowDays: number;
+  allowTableCombinations: boolean;
 };
 
 export type V2FloorPlanBackgroundSnapshot = {
@@ -279,6 +280,9 @@ export function buildV2FloorPlanSnapshot({
       bookingWindowDays:
         reservationSettings?.bookingWindowDays
         ?? 14,
+      allowTableCombinations:
+        reservationSettings?.allowTableCombinations
+        ?? false,
     },
     ...background,
   };

@@ -141,6 +141,9 @@ check(
     )
     && sources.cutover.includes(
       "bookingWindowDays",
+    )
+    && sources.cutover.includes(
+      "allowTableCombinations",
     ),
 );
 
@@ -193,7 +196,7 @@ check(
     "Plano conectado a Supabase.",
   )
     && sources.ui.includes(
-      "Las uniones, la restauración y el fondo continúan bloqueados.",
+      "La unión visual, la restauración y el fondo continúan bloqueados.",
     )
     && sources.ui.includes(
       "if (isSupabasePersistence) return;",

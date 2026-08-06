@@ -232,7 +232,7 @@ check(
       "function triggerBackgroundImageUpload",
     )
     && sources.ui.includes(
-      "Las uniones, la restauración y el fondo continúan bloqueados.",
+      "La unión visual, la restauración y el fondo continúan bloqueados.",
     ),
 );
 
