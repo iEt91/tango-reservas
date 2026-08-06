@@ -21,6 +21,8 @@ const reservationsWritePath =
   "supabase/migrations/20260804_009_reservations_write_rpc.sql";
 const floorPlanWritePath =
   "supabase/migrations/20260804_010_floor_plan_write_rpc.sql";
+const menuWritePath =
+  "supabase/migrations/20260806_011_menu_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -51,6 +53,10 @@ const reservationsWrite = await readFile(
 );
 const floorPlanWrite = await readFile(
   floorPlanWritePath,
+  "utf8",
+);
+const menuWrite = await readFile(
+  menuWritePath,
   "utf8",
 );
 
@@ -278,6 +284,36 @@ assert.match(
 );
 console.log("✓ plano y asignaciones agregan integridad transaccional");
 
+for (const table of [
+  "menu_categories",
+  "menu_items",
+]) {
+  assert.match(
+    menuWrite,
+    new RegExp(
+      `create table if not exists public\\.${table}`,
+      "u",
+    ),
+  );
+}
+assert.match(
+  menuWrite,
+  /save_business_menu_category/u,
+);
+assert.match(
+  menuWrite,
+  /save_business_menu_item/u,
+);
+assert.match(
+  menuWrite,
+  /menu_items_category_tenant_fk/u,
+);
+assert.match(
+  menuWrite,
+  /revoke insert, update, delete[\s\S]+public\.menu_items/u,
+);
+console.log("✓ menú agrega categorías y productos seguros");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -291,4 +327,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (11).");
+console.log("Todos los casos del historial remoto pasaron (12).");
