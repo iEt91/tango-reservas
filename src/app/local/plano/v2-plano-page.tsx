@@ -1523,13 +1523,13 @@ export function V2PlanoPage({
         return nextTables;
       });
       setFloorPlanOperationMessage(
-        `${tableToArchive.name} fue archivada.`,
+        `${tableToArchive.name} fue eliminada.`,
       );
 
       return true;
     } catch {
       setFloorPlanOperationError(
-        "No se pudo archivar la mesa.",
+        "No se pudo eliminar la mesa.",
       );
       return false;
     } finally {
@@ -2394,7 +2394,7 @@ export function V2PlanoPage({
                   }
                 >
                   {isSupabasePersistence
-                    ? "Archivar mesa"
+                    ? "Eliminar mesa"
                     : "Eliminar mesa"}
                 </V2Button>
 
@@ -3759,14 +3759,14 @@ export function V2PlanoPage({
                   editingTable.isDraft
                     ? "La mesa todavía no fue creada"
                     : editingTable.reservationClient
-                      ? "No se puede archivar una mesa con reserva activa en este horario"
+                      ? "No se puede eliminar una mesa con reserva activa en este horario"
                       : isSupabasePersistence
-                        ? "Archivar mesa"
+                        ? "Eliminar mesa"
                         : "Eliminar mesa"
                 }
               >
                 {isSupabasePersistence
-                  ? "Archivar mesa"
+                  ? "Eliminar mesa"
                   : "Eliminar mesa"}
               </V2Button>
 

@@ -5,11 +5,20 @@ export type BusinessMenuItemStatus =
   | "available"
   | "paused";
 
+export type BusinessMenuCategoryProductInput = {
+  productId: string;
+  quantity: number;
+};
+
 export type BusinessMenuCategoryInput = {
   name: string;
   description: string;
   isVisible: boolean;
   isActive: boolean;
+  isPromotion: boolean;
+  fixedPrice: number | null;
+  discountPercent: number | null;
+  products: BusinessMenuCategoryProductInput[];
 };
 
 export type BusinessMenuCategoryEditor =
@@ -48,6 +57,14 @@ export type BusinessMenuQuickChange = {
   isVisible: boolean;
 };
 
+export type BusinessMenuCategoryProductDatabaseRow = {
+  business_id?: string;
+  category_id?: string;
+  menu_item_id?: string;
+  product_id?: string;
+  quantity: number;
+};
+
 export type BusinessMenuCategoryDatabaseRow = {
   id: string;
   business_id: string;
@@ -56,6 +73,10 @@ export type BusinessMenuCategoryDatabaseRow = {
   sort_order: number;
   is_visible: boolean;
   is_active: boolean;
+  is_promotion: boolean;
+  fixed_price: string | number | null;
+  discount_percent: string | number | null;
+  products?: BusinessMenuCategoryProductDatabaseRow[];
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -160,6 +181,71 @@ function normalizeMoney(
   return Math.round(numeric * 100) / 100;
 }
 
+function normalizeOptionalMoney(
+  value: unknown,
+  label: string,
+) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  return normalizeMoney(value, label);
+}
+
+function normalizeDiscountPercent(
+  value: unknown,
+) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric) || numeric < 0 || numeric > 100) {
+    throw new Error("El descuento de la categoría no es válido.");
+  }
+
+  return Math.round(numeric * 100) / 100;
+}
+
+function normalizeBusinessMenuCategoryProducts(
+  value: unknown,
+): BusinessMenuCategoryProductInput[] {
+  if (value === null || value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value) || value.length > 500) {
+    throw new Error("Los productos de la promoción no son válidos.");
+  }
+
+  const ids = new Set<string>();
+
+  return value.map((entry) => {
+    const record = asRecord(
+      entry,
+      "Un producto de la promoción no es válido.",
+    );
+    const productId = normalizeBusinessMenuEntityId(
+      record.productId,
+      "El producto de la promoción",
+    );
+    const quantity = Number(record.quantity);
+
+    if (!productId || ids.has(productId)) {
+      throw new Error("La promoción contiene productos duplicados o inválidos.");
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 9999) {
+      throw new Error("La cantidad de la promoción debe estar entre 1 y 9999.");
+    }
+
+    ids.add(productId);
+
+    return { productId, quantity };
+  });
+}
+
 export function normalizeBusinessMenuEntityId(
   value: unknown,
   label = "El identificador",
@@ -186,6 +272,20 @@ export function normalizeBusinessMenuCategory(
     "La categoría recibida es inválida.",
   );
 
+  const isPromotion = record.isPromotion === undefined
+    ? false
+    : normalizeBoolean(
+        record.isPromotion,
+        "La promoción de la categoría",
+      );
+  const products = normalizeBusinessMenuCategoryProducts(
+    record.products,
+  );
+
+  if (!isPromotion && products.length > 0) {
+    throw new Error("Solo una promoción puede guardar cantidades de productos.");
+  }
+
   return {
     name: normalizeRequiredText(
       record.name,
@@ -205,6 +305,15 @@ export function normalizeBusinessMenuCategory(
       record.isActive,
       "El estado de la categoría",
     ),
+    isPromotion,
+    fixedPrice: normalizeOptionalMoney(
+      record.fixedPrice,
+      "El precio fijo de la categoría",
+    ),
+    discountPercent: normalizeDiscountPercent(
+      record.discountPercent,
+    ),
+    products,
   };
 }
 
@@ -315,6 +424,22 @@ function normalizeDateString(
 export function mapBusinessMenuCategoryRow(
   row: BusinessMenuCategoryDatabaseRow,
 ): BusinessMenuCategoryEditor {
+  const products = Array.isArray(row.products)
+    ? row.products.flatMap((product) => {
+        const productId =
+          product.menu_item_id ?? product.product_id;
+
+        if (!productId) {
+          return [];
+        }
+
+        return [{
+          productId,
+          quantity: Number(product.quantity),
+        }];
+      })
+    : [];
+
   return {
     id: row.id,
     name: row.name,
@@ -322,6 +447,14 @@ export function mapBusinessMenuCategoryRow(
     sortOrder: Number(row.sort_order),
     isVisible: Boolean(row.is_visible),
     isActive: Boolean(row.is_active),
+    isPromotion: Boolean(row.is_promotion),
+    fixedPrice:
+      row.fixed_price === null ? null : Number(row.fixed_price),
+    discountPercent:
+      row.discount_percent === null
+        ? null
+        : Number(row.discount_percent),
+    products,
     archivedAt: row.archived_at,
     createdAt: normalizeDateString(row.created_at),
     updatedAt: normalizeDateString(row.updated_at),
@@ -356,7 +489,19 @@ export function toBusinessMenuCategoryRpcPayload(
     description: category.description,
     is_visible: category.isVisible,
     is_active: category.isActive,
+    is_promotion: category.isPromotion,
+    fixed_price: category.fixedPrice,
+    discount_percent: category.discountPercent,
   };
+}
+
+export function toBusinessMenuCategoryProductsRpcPayload(
+  products: BusinessMenuCategoryProductInput[],
+) {
+  return products.map((product) => ({
+    product_id: product.productId,
+    quantity: product.quantity,
+  }));
 }
 
 export function toBusinessMenuItemRpcPayload(

@@ -88,7 +88,7 @@ E23 no habilita:
 - restaurar el layout persistente;
 - unir o separar mesas;
 - modificar la imagen de fondo;
-- restaurar mesas archivadas.
+- restaurar mesas eliminadas.
 
 ## Base de datos
 
@@ -112,7 +112,7 @@ Conservar los fixtures A/B:
 9. Confirmar que `Isolation Table A` y su asignación siguen intactas.
 10. Ingresar como B y confirmar que `Isolation Table B`, capacidad 6 e
     `Isolation Customer B` no cambiaron.
-11. Volver a A y archivar `QA E23 A`.
+11. Volver a A y eliminar `QA E23 A`.
 12. Confirmar que uniones, restauración e imagen de fondo siguen
     bloqueadas.
 

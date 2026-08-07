@@ -76,6 +76,7 @@ async function snapshotMenu(businessId) {
   const [
     categoriesResult,
     itemsResult,
+    categoryProductsResult,
   ] = await Promise.all([
     admin
       .from("menu_categories")
@@ -89,21 +90,31 @@ async function snapshotMenu(businessId) {
       .eq("business_id", businessId)
       .order("sort_order", { ascending: true })
       .order("id", { ascending: true }),
+    admin
+      .from("menu_category_products")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("category_id", { ascending: true })
+      .order("menu_item_id", { ascending: true }),
   ]);
 
   if (
     categoriesResult.error
     || itemsResult.error
+    || categoryProductsResult.error
   ) {
     throw (
       categoriesResult.error
       ?? itemsResult.error
+      ?? categoryProductsResult.error
     );
   }
 
   return {
     categories: categoriesResult.data ?? [],
     items: itemsResult.data ?? [],
+    categoryProducts:
+      categoryProductsResult.data ?? [],
   };
 }
 
@@ -111,6 +122,16 @@ async function restoreMenu(
   businessId,
   snapshot,
 ) {
+  const { error: relationDeleteError } =
+    await admin
+      .from("menu_category_products")
+      .delete()
+      .eq("business_id", businessId);
+
+  if (relationDeleteError) {
+    throw relationDeleteError;
+  }
+
   const { error: itemDeleteError } =
     await admin
       .from("menu_items")
@@ -145,6 +166,19 @@ async function restoreMenu(
     const { error } = await admin
       .from("menu_items")
       .insert(snapshot.items);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  if (
+    Array.isArray(snapshot.categoryProducts)
+    && snapshot.categoryProducts.length > 0
+  ) {
+    const { error } = await admin
+      .from("menu_category_products")
+      .insert(snapshot.categoryProducts);
 
     if (error) {
       throw error;
@@ -311,6 +345,10 @@ try {
     "✓ cambios rápidos se guardaron atómicamente",
   );
 
+  const existingCategoryIds = menuA.categories
+    .filter((candidate) => candidate.archived_at === null)
+    .map((candidate) => candidate.id);
+
   const {
     data: categoryTwo,
     error: categoryTwoError,
@@ -340,6 +378,7 @@ try {
       p_category_ids: [
         categoryTwo.id,
         category.id,
+        ...existingCategoryIds,
       ],
     },
   );
@@ -427,7 +466,7 @@ try {
 
   assert.ok(archivedCategory.archived_at);
   console.log(
-    "✓ la categoría usa archivo lógico",
+    "✓ la categoría usa eliminación lógica",
   );
 
   const {
@@ -448,7 +487,7 @@ try {
   assert.ok(archivedItem.archived_at);
   assert.equal(archivedItem.status, "paused");
   console.log(
-    "✓ el producto usa archivo lógico",
+    "✓ el producto usa eliminación lógica",
   );
 
   assert.deepEqual(

@@ -9,6 +9,7 @@ import {
   normalizeBusinessMenuEntityId,
   normalizeBusinessMenuItem,
   normalizeBusinessMenuQuickChanges,
+  toBusinessMenuCategoryProductsRpcPayload,
   toBusinessMenuCategoryRpcPayload,
   toBusinessMenuItemRpcPayload,
   toBusinessMenuQuickChangesRpcPayload,
@@ -71,6 +72,10 @@ function formatBusinessMenuMutationError(
 
   if (error?.code === "23503") {
     return "La categoría relacionada ya no está disponible.";
+  }
+
+  if (error?.code === "23514") {
+    return "Los valores de la promoción no son válidos.";
   }
 
   if (error?.code === "42501") {
@@ -160,13 +165,17 @@ export async function saveBusinessMenuCategoryAction(
 
     const { data: saved, error } =
       await context.supabase.rpc(
-        "save_business_menu_category",
+        "save_business_menu_category_details",
         {
           p_business_id: context.businessId,
           p_category_id: categoryId,
           p_category:
             toBusinessMenuCategoryRpcPayload(
               category,
+            ),
+          p_products:
+            toBusinessMenuCategoryProductsRpcPayload(
+              category.products,
             ),
         },
       );
@@ -258,7 +267,7 @@ export async function archiveBusinessMenuCategoryAction(
         ok: false,
         error: formatBusinessMenuMutationError(
           error,
-          "No se pudo archivar la categoría.",
+          "No se pudo eliminar la categoría.",
         ),
       };
     }
@@ -494,7 +503,7 @@ export async function archiveBusinessMenuItemAction(
         ok: false,
         error: formatBusinessMenuMutationError(
           error,
-          "No se pudo archivar el producto.",
+          "No se pudo eliminar el producto.",
         ),
       };
     }

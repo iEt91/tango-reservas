@@ -135,7 +135,7 @@ Conservar fixtures A/B:
 11. Desactivar temporalmente combinaciones en Configuración y confirmar
     que la UI no permite sumar una segunda mesa; restaurar luego el valor.
 12. Confirmar que una mesa con `canJoin` desactivado no puede sumarse.
-13. Archivar las mesas temporales.
+13. Eliminar las mesas temporales.
 14. Ingresar como B y confirmar que sus fixtures siguen intactos.
 
 No ejecutar `staging:cleanup-isolation`.
@@ -206,9 +206,9 @@ Usar la reserva persistente del fixture A:
 16. Cambiar temporalmente `QA E24 A2` a **No permitido** y comprobar que
     no puede sumarse a una combinación.
 17. Restaurar **Permitido**.
-18. Archivar `QA E24 A1` y `QA E24 A2`.
+18. Eliminar `QA E24 A1` y `QA E24 A2`.
 19. Verificar B sin modificar sus fixtures.
 
-No bloquear, archivar ni modificar permanentemente `Isolation Table A`.
+No bloquear, eliminar ni modificar permanentemente `Isolation Table A`.
 
 No ejecutar `staging:cleanup-isolation`.

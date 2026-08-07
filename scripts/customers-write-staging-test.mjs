@@ -266,7 +266,7 @@ try {
   }
 
   assert.equal(archived.is_active, false);
-  console.log("✓ owner A archivó el cliente sin eliminarlo");
+  console.log("✓ owner A eliminó el cliente sin eliminarlo");
 
   assert.deepEqual(
     await snapshotCustomers(fixture.businessBId),

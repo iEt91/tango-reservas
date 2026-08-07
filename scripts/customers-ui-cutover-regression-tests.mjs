@@ -107,7 +107,7 @@ assert.doesNotMatch(
   ui,
   /usesSupabaseCustomers[\s\S]{0,900}reservationIdsToRemove/u,
 );
-console.log("✓ archivar no elimina historial ni actividad");
+console.log("✓ eliminar no elimina historial ni actividad");
 
 assert.match(
   ui,
@@ -142,7 +142,7 @@ assert.match(
 );
 assert.match(
   ui,
-  /No tenés permisos para archivar clientes/u,
+  /No tenés permisos para eliminar clientes/u,
 );
 console.log("✓ la interfaz respeta permisos de escritura y archivo");
 

@@ -55,7 +55,7 @@ public.save_business_customer(uuid, uuid, jsonb)
 public.set_business_customer_active(uuid, uuid, boolean)
 ```
 
-Solo `owner` y `admin` pueden archivar o restaurar. No existe eliminación física
+Solo `owner` y `admin` pueden eliminar o restaurar. No existe eliminación física
 desde el cliente ni desde una RPC pública.
 
 ## Seguridad
@@ -94,7 +94,7 @@ npm run staging:test-customers-write
 npm run staging:test-isolation
 ```
 
-La prueba de escritura crea, edita y archiva un cliente temporal, verifica
+La prueba de escritura crea, edita y elimina un cliente temporal, verifica
 duplicados, BOLA y DML directo, y restaura los clientes A/B en `finally`.
 
 No ejecutar `staging:cleanup-isolation`.

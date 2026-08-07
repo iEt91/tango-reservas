@@ -24,6 +24,18 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  archiveBusinessMenuCategoryAction,
+  archiveBusinessMenuItemAction,
+  reorderBusinessMenuCategoriesAction,
+  saveBusinessMenuCategoryAction,
+  saveBusinessMenuItemAction,
+  saveBusinessMenuQuickChangesAction,
+} from "./actions";
+import type {
+  BusinessMenuCategoryEditor,
+  BusinessMenuItemEditor,
+} from "@/lib/menu/business-menu-contract";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2MenuCategories,
@@ -304,20 +316,89 @@ function createMenuImageProductDraft(file: V2MenuImageFile): V2MenuItemDraft {
 }
 
 
-export function V2MenuPage() {
-  const [menuItems, setMenuItems] = useState<V2MenuItemDraft[]>(v2MenuItems);
 
-  const [categories, setCategories] = useState<V2MenuCategoryDraft[]>(
-    v2MenuCategories.map((category) => ({
-      ...category,
-      isPromotion: false,
-      fixedPrice: undefined,
-      discountPercent: undefined,
-      products: undefined,
-    }))
+type V2MenuPageProps = {
+  initialCategories?: BusinessMenuCategoryEditor[];
+  initialItems?: BusinessMenuItemEditor[];
+  menuPersistence?: "local" | "supabase";
+  canManageMenu?: boolean;
+};
+
+function mapPersistentCategoryToDraft(
+  category: BusinessMenuCategoryEditor,
+): V2MenuCategoryDraft {
+  return {
+    id: category.id,
+    name: category.name,
+    description: category.description,
+    order: category.sortOrder,
+    visible: category.isVisible,
+    active: category.isActive,
+    isPromotion: category.isPromotion,
+    fixedPrice: category.fixedPrice ?? undefined,
+    discountPercent: category.discountPercent ?? undefined,
+    products: category.products.map((product) => ({
+      productId: product.productId,
+      quantity: product.quantity,
+    })),
+  };
+}
+
+function mapPersistentItemToDraft(
+  item: BusinessMenuItemEditor,
+): V2MenuItemDraft {
+  return {
+    id: item.id,
+    imageUrl: item.imageUrl,
+    name: item.name,
+    categoryId: item.categoryId ?? "",
+    description: item.description,
+    price: item.price,
+    status: item.status,
+    visible: item.isVisible,
+    featured: item.isFeatured,
+  };
+}
+
+function sortPersistentCategories(
+  categories: BusinessMenuCategoryEditor[],
+) {
+  return [...categories]
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "es"))
+    .map(mapPersistentCategoryToDraft);
+}
+
+function sortPersistentItems(items: BusinessMenuItemEditor[]) {
+  return [...items]
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "es"))
+    .map(mapPersistentItemToDraft);
+}
+
+export function V2MenuPage({
+  initialCategories = [],
+  initialItems = [],
+  menuPersistence = "local",
+  canManageMenu = true,
+}: V2MenuPageProps = {}) {
+  const usesSupabaseMenu = menuPersistence === "supabase";
+  const [menuItems, setMenuItems] = useState<V2MenuItemDraft[]>(() =>
+    usesSupabaseMenu ? sortPersistentItems(initialItems) : v2MenuItems
   );
 
-  const [hasLoadedStoredMenu, setHasLoadedStoredMenu] = useState(false);
+  const [categories, setCategories] = useState<V2MenuCategoryDraft[]>(() =>
+    usesSupabaseMenu
+      ? sortPersistentCategories(initialCategories)
+      : v2MenuCategories.map((category) => ({
+          ...category,
+          isPromotion: false,
+          fixedPrice: undefined,
+          discountPercent: undefined,
+          products: undefined,
+        }))
+  );
+
+  const [hasLoadedStoredMenu, setHasLoadedStoredMenu] = useState(usesSupabaseMenu);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
   const [dragOverCategoryId, setDragOverCategoryId] = useState<string | null>(null);
 
@@ -341,7 +422,22 @@ export function V2MenuPage() {
   const [removeFromCategoryTarget, setRemoveFromCategoryTarget] =
     useState<V2RemoveFromCategoryTarget>(null);
 
+  const isBusy = pendingAction !== null;
+
+  function requireManagePermission() {
+    if (!usesSupabaseMenu || canManageMenu) return true;
+
+    window.alert("Tu rol permite consultar el menú, pero no modificarlo.");
+    return false;
+  }
+
+  function showMutationError(message: string) {
+    window.alert(message);
+  }
+
   useEffect(() => {
+    if (usesSupabaseMenu) return;
+
     setMenuItems(
       applyAutomaticMenuImages(
         readFromStorage<V2MenuItemDraft[]>(MENU_ITEMS_STORAGE_KEY, v2MenuItems)
@@ -362,19 +458,17 @@ export function V2MenuPage() {
     );
 
     setHasLoadedStoredMenu(true);
-  }, []);
+  }, [usesSupabaseMenu]);
 
   useEffect(() => {
-    if (!hasLoadedStoredMenu) return;
-
+    if (usesSupabaseMenu || !hasLoadedStoredMenu) return;
     writeToStorage(MENU_ITEMS_STORAGE_KEY, menuItems);
-  }, [hasLoadedStoredMenu, menuItems]);
+  }, [hasLoadedStoredMenu, menuItems, usesSupabaseMenu]);
 
   useEffect(() => {
-    if (!hasLoadedStoredMenu) return;
-
+    if (usesSupabaseMenu || !hasLoadedStoredMenu) return;
     writeToStorage(MENU_CATEGORIES_STORAGE_KEY, categories);
-  }, [categories, hasLoadedStoredMenu]);
+  }, [categories, hasLoadedStoredMenu, usesSupabaseMenu]);
 
   useEffect(() => {
     const hasOpenModal = Boolean(
@@ -388,29 +482,31 @@ export function V2MenuPage() {
     if (!hasOpenModal) return;
 
     function handleModalEscape(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || isBusy) return;
 
       if (deleteTarget) {
-        closeDeleteDialog();
+        setDeleteTarget(null);
+        setDeleteConfirmation("");
         return;
       }
 
       if (removeFromCategoryTarget) {
-        closeRemoveFromCategoryDialog();
+        setRemoveFromCategoryTarget(null);
         return;
       }
 
       if (assignCategory) {
-        closeAssignProduct();
+        setAssignCategory(null);
+        setProductToAssignId("");
         return;
       }
 
       if (editingCategory) {
-        closeCategoryEditor();
+        setEditingCategory(null);
         return;
       }
 
-      closeEditor();
+      setEditingItem(null);
     }
 
     window.addEventListener("keydown", handleModalEscape);
@@ -420,6 +516,7 @@ export function V2MenuPage() {
     deleteTarget,
     editingCategory,
     editingItem,
+    isBusy,
     removeFromCategoryTarget,
   ]);
 
@@ -461,8 +558,7 @@ export function V2MenuPage() {
         item.categoryId === categoryFilter ||
         (categoryFilter === "uncategorized" && !item.categoryId);
 
-      const matchesStatus =
-        statusFilter === "all" || item.status === statusFilter;
+      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
 
       const matchesVisibility =
         visibilityFilter === "all" ||
@@ -511,9 +607,7 @@ export function V2MenuPage() {
   }
 
   function getCategoryProductEntries(category: V2MenuCategoryDraft): V2CategoryProduct[] {
-    if (category.isPromotion) {
-      return category.products ?? [];
-    }
+    if (category.isPromotion) return category.products ?? [];
 
     return menuItems
       .filter((item) => item.categoryId === category.id)
@@ -526,13 +620,8 @@ export function V2MenuPage() {
     return entries
       .map((entry) => {
         const product = menuItems.find((item) => item.id === entry.productId);
-
         if (!product) return null;
-
-        return {
-          ...product,
-          quantity: entry.quantity,
-        };
+        return { ...product, quantity: entry.quantity };
       })
       .filter(Boolean) as Array<V2MenuItemDraft & { quantity: number }>;
   }
@@ -545,20 +634,21 @@ export function V2MenuPage() {
   }
 
   function getCategoryFinalPrice(category: V2MenuCategoryDraft) {
-    if (category.fixedPrice) return category.fixedPrice;
-
+    if (category.fixedPrice !== undefined) return category.fixedPrice;
     if (category.discountPercent) {
       const total = getCategoryProductsTotal(category);
       return Math.max(total - total * (category.discountPercent / 100), 0);
     }
-
     return null;
   }
 
   function updateEditingCategoryQuantity(productId: string, quantity: number) {
-    if (!editingCategory) return;
+    if (!editingCategory || !requireManagePermission() || isBusy) return;
 
-    const normalizedQuantity = Math.max(Number(quantity) || 0, 0);
+    const normalizedQuantity = Math.min(
+      Math.max(Math.trunc(Number(quantity) || 0), 0),
+      9999,
+    );
     const currentProducts = getCategoryProductEntries(editingCategory);
     const productExists = currentProducts.some((entry) => entry.productId === productId);
 
@@ -567,9 +657,7 @@ export function V2MenuPage() {
         ? currentProducts.filter((entry) => entry.productId !== productId)
         : productExists
           ? currentProducts.map((entry) =>
-              entry.productId === productId
-                ? { ...entry, quantity: normalizedQuantity }
-                : entry
+              entry.productId === productId ? { ...entry, quantity: normalizedQuantity } : entry
             )
           : [...currentProducts, { productId, quantity: normalizedQuantity }];
 
@@ -582,50 +670,65 @@ export function V2MenuPage() {
       setMenuItems((currentItems) =>
         currentItems.map((item) => {
           if (item.id !== productId) return item;
-
           return {
             ...item,
             categoryId: normalizedQuantity > 0 ? editingCategory.id : "",
           };
         })
       );
+      if (usesSupabaseMenu) setHasQuickChanges(true);
     }
   }
 
-  function reorderCategories(sourceId: string, targetId: string) {
-    if (sourceId === targetId) return;
+  async function reorderCategories(sourceId: string, targetId: string) {
+    if (sourceId === targetId || !requireManagePermission() || isBusy) return;
 
-    setCategories((current) => {
-      const sortedCategories = [...current].sort((a, b) => a.order - b.order);
-      const sourceIndex = sortedCategories.findIndex((category) => category.id === sourceId);
-      const targetIndex = sortedCategories.findIndex((category) => category.id === targetId);
+    const previous = [...categories];
+    const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
+    const sourceIndex = sortedCategories.findIndex((category) => category.id === sourceId);
+    const targetIndex = sortedCategories.findIndex((category) => category.id === targetId);
 
-      if (sourceIndex === -1 || targetIndex === -1) return current;
+    if (sourceIndex === -1 || targetIndex === -1) return;
 
-      const [movedCategory] = sortedCategories.splice(sourceIndex, 1);
-      sortedCategories.splice(targetIndex, 0, movedCategory);
+    const [movedCategory] = sortedCategories.splice(sourceIndex, 1);
+    sortedCategories.splice(targetIndex, 0, movedCategory);
+    const reordered = sortedCategories.map((category, index) => ({
+      ...category,
+      order: index + 1,
+    }));
 
-      return sortedCategories.map((category, index) => ({
-        ...category,
-        order: index + 1,
-      }));
-    });
+    setCategories(reordered);
+
+    if (!usesSupabaseMenu) return;
+
+    setPendingAction("order");
+    const result = await reorderBusinessMenuCategoriesAction(
+      reordered.map((category) => category.id)
+    );
+    setPendingAction(null);
+
+    if (!result.ok) {
+      setCategories(previous);
+      showMutationError(result.error);
+      return;
+    }
+
+    setCategories(sortPersistentCategories(result.categories));
   }
 
   function handleCategoryDragStart(categoryId: string) {
+    if (!requireManagePermission() || isBusy) return;
     setDraggedCategoryId(categoryId);
   }
 
   function handleCategoryDragOver(categoryId: string) {
     if (!draggedCategoryId || draggedCategoryId === categoryId) return;
-
     setDragOverCategoryId(categoryId);
   }
 
   function handleCategoryDrop(categoryId: string) {
     if (!draggedCategoryId) return;
-
-    reorderCategories(draggedCategoryId, categoryId);
+    void reorderCategories(draggedCategoryId, categoryId);
     setDraggedCategoryId(null);
     setDragOverCategoryId(null);
   }
@@ -636,6 +739,7 @@ export function V2MenuPage() {
   }
 
   function openNewItem(categoryId?: string) {
+    if (!requireManagePermission() || isBusy) return;
     setEditingItemMode("create");
     setEditingItem(createEmptyMenuItem(categoryId ?? orderedCategories[0]?.id ?? ""));
   }
@@ -646,11 +750,12 @@ export function V2MenuPage() {
   }
 
   function closeEditor() {
+    if (isBusy) return;
     setEditingItem(null);
   }
 
-  function saveItem() {
-    if (!editingItem) return;
+  async function saveItem() {
+    if (!editingItem || !requireManagePermission() || isBusy) return;
 
     const sanitizedName = editingItem.name.trim() || "Producto sin nombre";
     const sanitizedItem: V2MenuItemDraft = {
@@ -663,92 +768,160 @@ export function V2MenuPage() {
       price: Number(editingItem.price) || 0,
     };
 
-    if (editingItemMode === "create") {
-      setMenuItems((current) => [sanitizedItem, ...current]);
-    } else {
-      setMenuItems((current) =>
-        current.map((item) => (item.id === sanitizedItem.id ? sanitizedItem : item))
-      );
+    if (!usesSupabaseMenu) {
+      if (editingItemMode === "create") {
+        setMenuItems((current) => [sanitizedItem, ...current]);
+      } else {
+        setMenuItems((current) =>
+          current.map((item) => (item.id === sanitizedItem.id ? sanitizedItem : item))
+        );
+      }
+      closeEditor();
+      return;
     }
 
-    closeEditor();
+    setPendingAction("item");
+    const result = await saveBusinessMenuItemAction({
+      menuItemId: editingItemMode === "create" ? null : sanitizedItem.id,
+      item: {
+        categoryId: sanitizedItem.categoryId || null,
+        name: sanitizedItem.name,
+        description: sanitizedItem.description,
+        price: sanitizedItem.price,
+        status: sanitizedItem.status,
+        isVisible: sanitizedItem.visible,
+        isFeatured: sanitizedItem.featured,
+        imageUrl: sanitizedItem.imageUrl,
+      },
+    });
+    setPendingAction(null);
+
+    if (!result.ok) {
+      showMutationError(result.error);
+      return;
+    }
+
+    const saved = mapPersistentItemToDraft(result.item);
+    setMenuItems((current) => {
+      const exists = current.some((item) => item.id === saved.id);
+      return exists
+        ? current.map((item) => (item.id === saved.id ? saved : item))
+        : [saved, ...current.filter((item) => item.id !== sanitizedItem.id)];
+    });
+    setHasQuickChanges(false);
+    setEditingItem(null);
   }
 
-  function toggleItemStatus(itemId: string) {
-    setHasQuickChanges(true);
+  async function toggleItemStatus(itemId: string) {
+    if (!requireManagePermission() || isBusy) return;
+    const currentItem = menuItems.find((item) => item.id === itemId);
+    if (!currentItem) return;
+    const nextStatus = currentItem.status === "available" ? "paused" : "available";
 
-    setMenuItems((current) =>
-      current.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              status: item.status === "available" ? "paused" : "available",
-            }
-          : item
-      )
-    );
+    if (!usesSupabaseMenu) {
+      setHasQuickChanges(true);
+      setMenuItems((current) =>
+        current.map((item) => item.id === itemId ? { ...item, status: nextStatus } : item)
+      );
+      return;
+    }
+
+    setPendingAction(`status:${itemId}`);
+    const result = await saveBusinessMenuItemAction({
+      menuItemId: currentItem.id,
+      item: {
+        categoryId: currentItem.categoryId || null,
+        name: currentItem.name,
+        description: currentItem.description,
+        price: currentItem.price,
+        status: nextStatus,
+        isVisible: currentItem.visible,
+        isFeatured: currentItem.featured,
+        imageUrl: currentItem.imageUrl,
+      },
+    });
+    setPendingAction(null);
+
+    if (!result.ok) {
+      showMutationError(result.error);
+      return;
+    }
+
+    const saved = mapPersistentItemToDraft(result.item);
+    setMenuItems((current) => current.map((item) => item.id === saved.id ? saved : item));
   }
 
   function updateQuickItemCategory(itemId: string, categoryId: string) {
+    if (!requireManagePermission() || isBusy) return;
     setHasQuickChanges(true);
-
     setMenuItems((current) =>
-      current.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              categoryId,
-            }
-          : item
-      )
+      current.map((item) => item.id === itemId ? { ...item, categoryId } : item)
     );
   }
 
   function updateQuickItemPrice(itemId: string, price: string) {
+    if (!requireManagePermission() || isBusy) return;
     setHasQuickChanges(true);
-
     setMenuItems((current) =>
-      current.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              price: Number(price) || 0,
-            }
-          : item
-      )
+      current.map((item) => item.id === itemId ? { ...item, price: Number(price) || 0 } : item)
     );
   }
 
   function toggleQuickItemVisibility(itemId: string) {
+    if (!requireManagePermission() || isBusy) return;
     setHasQuickChanges(true);
-
     setMenuItems((current) =>
-      current.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              visible: !item.visible,
-            }
-          : item
-      )
+      current.map((item) => item.id === itemId ? { ...item, visible: !item.visible } : item)
     );
   }
 
-  function confirmQuickChanges() {
-    writeToStorage(MENU_ITEMS_STORAGE_KEY, menuItems);
+  async function confirmQuickChanges() {
+    if (!hasQuickChanges || !requireManagePermission() || isBusy) return;
+
+    if (!usesSupabaseMenu) {
+      writeToStorage(MENU_ITEMS_STORAGE_KEY, menuItems);
+      setHasQuickChanges(false);
+      return;
+    }
+
+    setPendingAction("quick");
+    const result = await saveBusinessMenuQuickChangesAction(
+      menuItems.map((item) => ({
+        id: item.id,
+        categoryId: item.categoryId || null,
+        price: item.price,
+        isVisible: item.visible,
+      }))
+    );
+    setPendingAction(null);
+
+    if (!result.ok) {
+      showMutationError(result.error);
+      return;
+    }
+
+    const savedById = new Map(
+      result.items.map((item) => [item.id, mapPersistentItemToDraft(item)])
+    );
+    setMenuItems((current) => current.map((item) => savedById.get(item.id) ?? item));
     setHasQuickChanges(false);
   }
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-
     if (!file || !editingItem) return;
+
+    if (usesSupabaseMenu) {
+      event.target.value = "";
+      window.alert(
+        "La subida binaria de imágenes permanece bloqueada hasta contar con Storage persistente."
+      );
+      return;
+    }
 
     try {
       const compressedImage = await compressMenuImage(file);
-      setEditingItem((current) =>
-        current ? { ...current, imageUrl: compressedImage } : current
-      );
+      setEditingItem((current) => current ? { ...current, imageUrl: compressedImage } : current);
     } catch (error) {
       console.error("[menu] No se pudo procesar la imagen seleccionada.", error);
       window.alert("No se pudo procesar la imagen. Probá con otro archivo JPG, PNG o WEBP.");
@@ -758,40 +931,39 @@ export function V2MenuPage() {
   }
 
   function linkGeneratedMenuImages() {
+    if (usesSupabaseMenu) {
+      window.alert("La vinculación automática de imágenes queda fuera del corte persistente actual.");
+      return;
+    }
     setMenuItems((current) => applyAutomaticMenuImages(current));
   }
 
   function renderSelectableCell(item: V2MenuItemDraft, content: ReactNode) {
     return (
-      <button
-        type="button"
-        onClick={() => openEditor(item)}
-        className="w-full text-left"
-      >
+      <button type="button" onClick={() => openEditor(item)} className="w-full text-left">
         {content}
       </button>
     );
   }
 
   function openNewCategory() {
+    if (!requireManagePermission() || isBusy) return;
     setEditingCategoryMode("create");
     setEditingCategory(createEmptyCategory(orderedCategories.length + 1));
   }
 
   function openCategoryEditor(category: V2MenuCategoryDraft) {
     setEditingCategoryMode("edit");
-    setEditingCategory({
-      ...category,
-      products: getCategoryProductEntries(category),
-    });
+    setEditingCategory({ ...category, products: getCategoryProductEntries(category) });
   }
 
   function closeCategoryEditor() {
+    if (isBusy) return;
     setEditingCategory(null);
   }
 
-  function saveCategory() {
-    if (!editingCategory) return;
+  async function saveCategory() {
+    if (!editingCategory || !requireManagePermission() || isBusy) return;
 
     const categoryEntries = getCategoryProductEntries(editingCategory).filter(
       (entry) => entry.quantity > 0
@@ -803,96 +975,233 @@ export function V2MenuPage() {
       description: editingCategory.description.trim(),
       order: editingCategory.order || orderedCategories.length + 1,
       isPromotion: Boolean(editingCategory.isPromotion),
-      fixedPrice: Number(editingCategory.fixedPrice) || undefined,
-      discountPercent: Number(editingCategory.discountPercent) || undefined,
+      fixedPrice:
+        editingCategory.fixedPrice === undefined
+          ? undefined
+          : Math.max(Number(editingCategory.fixedPrice) || 0, 0),
+      discountPercent:
+        editingCategory.discountPercent === undefined
+          ? undefined
+          : Math.min(
+              Math.max(Number(editingCategory.discountPercent) || 0, 0),
+              100,
+            ),
       products: editingCategory.isPromotion ? categoryEntries : undefined,
     };
 
-    if (!sanitizedCategory.isPromotion) {
-      const assignedProductIds = new Set(categoryEntries.map((entry) => entry.productId));
+    if (!usesSupabaseMenu) {
+      if (!sanitizedCategory.isPromotion) {
+        const assignedProductIds = new Set(categoryEntries.map((entry) => entry.productId));
+        setMenuItems((currentItems) =>
+          currentItems.map((item) => {
+            if (assignedProductIds.has(item.id)) return { ...item, categoryId: sanitizedCategory.id };
+            if (item.categoryId === sanitizedCategory.id) return { ...item, categoryId: "" };
+            return item;
+          })
+        );
+      }
 
-      setMenuItems((currentItems) =>
-        currentItems.map((item) => {
-          if (assignedProductIds.has(item.id)) {
-            return { ...item, categoryId: sanitizedCategory.id };
-          }
-
-          if (item.categoryId === sanitizedCategory.id) {
-            return { ...item, categoryId: "" };
-          }
-
-          return item;
-        })
-      );
+      if (editingCategoryMode === "create") {
+        setCategories((current) => [...current, sanitizedCategory]);
+      } else {
+        setCategories((current) =>
+          current.map((category) => category.id === sanitizedCategory.id ? sanitizedCategory : category)
+        );
+      }
+      closeCategoryEditor();
+      return;
     }
 
-    if (editingCategoryMode === "create") {
-      setCategories((current) => [...current, sanitizedCategory]);
-    } else {
-      setCategories((current) =>
-        current.map((category) =>
-          category.id === sanitizedCategory.id ? sanitizedCategory : category
-        )
-      );
+    const temporaryCategoryId = sanitizedCategory.id;
+    setPendingAction("category");
+    const result = await saveBusinessMenuCategoryAction({
+      categoryId: editingCategoryMode === "create" ? null : sanitizedCategory.id,
+      category: {
+        name: sanitizedCategory.name,
+        description: sanitizedCategory.description,
+        isVisible: sanitizedCategory.visible,
+        isActive: sanitizedCategory.active,
+        isPromotion: Boolean(sanitizedCategory.isPromotion),
+        fixedPrice: sanitizedCategory.fixedPrice ?? null,
+        discountPercent: sanitizedCategory.discountPercent ?? null,
+        products: sanitizedCategory.isPromotion
+          ? categoryEntries.map((entry) => ({
+              productId: entry.productId,
+              quantity: entry.quantity,
+            }))
+          : [],
+      },
+    });
+
+    if (!result.ok) {
+      setPendingAction(null);
+      showMutationError(result.error);
+      return;
     }
 
-    closeCategoryEditor();
+    const savedCategory = mapPersistentCategoryToDraft(result.category);
+    setCategories((current) => {
+      const withoutTemporary = current.filter((category) => category.id !== temporaryCategoryId);
+      const exists = withoutTemporary.some((category) => category.id === savedCategory.id);
+      return exists
+        ? withoutTemporary.map((category) => category.id === savedCategory.id ? savedCategory : category)
+        : [...withoutTemporary, savedCategory].sort((a, b) => a.order - b.order);
+    });
+
+    if (savedCategory.isPromotion) {
+      setPendingAction(null);
+      setHasQuickChanges(false);
+      setEditingCategory(null);
+      return;
+    }
+
+    const remappedItems = menuItems.map((item) =>
+      item.categoryId === temporaryCategoryId ? { ...item, categoryId: savedCategory.id } : item
+    );
+    setMenuItems(remappedItems);
+
+    const assignmentResult = await saveBusinessMenuQuickChangesAction(
+      remappedItems.map((item) => ({
+        id: item.id,
+        categoryId: item.categoryId || null,
+        price: item.price,
+        isVisible: item.visible,
+      }))
+    );
+    setPendingAction(null);
+
+    if (!assignmentResult.ok) {
+      setHasQuickChanges(true);
+      showMutationError(
+        `${assignmentResult.error} La categoría se guardó; revisá las asignaciones de productos.`
+      );
+      setEditingCategory(null);
+      return;
+    }
+
+    const savedItemsById = new Map(
+      assignmentResult.items.map((item) => [item.id, mapPersistentItemToDraft(item)])
+    );
+    setMenuItems((current) => current.map((item) => savedItemsById.get(item.id) ?? item));
+    setHasQuickChanges(false);
+    setEditingCategory(null);
   }
 
   function openAssignProduct(category: V2MenuCategoryDraft) {
+    if (!requireManagePermission() || isBusy) return;
     const categoryProductIds = new Set(getCategoryProductEntries(category).map((entry) => entry.productId));
     const firstProduct = menuItems.find((item) => !categoryProductIds.has(item.id));
-
     setAssignCategory(category);
     setProductToAssignId(firstProduct?.id ?? "");
   }
 
   function closeAssignProduct() {
+    if (isBusy) return;
     setAssignCategory(null);
     setProductToAssignId("");
   }
 
-  function assignProductToCategory() {
-    if (!assignCategory || !productToAssignId) return;
+  async function assignProductToCategory() {
+    if (!assignCategory || !productToAssignId || !requireManagePermission() || isBusy) return;
 
-    if (!assignCategory.isPromotion) {
-      setMenuItems((currentItems) =>
-        currentItems.map((item) =>
-          item.id === productToAssignId
-            ? { ...item, categoryId: assignCategory.id }
-            : item
-        )
+    if (assignCategory.isPromotion && usesSupabaseMenu) {
+      const currentProducts = getCategoryProductEntries(assignCategory);
+      const nextProducts = currentProducts.some(
+        (entry) => entry.productId === productToAssignId,
+      )
+        ? currentProducts
+        : [
+            ...currentProducts,
+            { productId: productToAssignId, quantity: 1 },
+          ];
+
+      setPendingAction("assign");
+      const result = await saveBusinessMenuCategoryAction({
+        categoryId: assignCategory.id,
+        category: {
+          name: assignCategory.name,
+          description: assignCategory.description,
+          isVisible: assignCategory.visible,
+          isActive: assignCategory.active,
+          isPromotion: true,
+          fixedPrice: assignCategory.fixedPrice ?? null,
+          discountPercent: assignCategory.discountPercent ?? null,
+          products: nextProducts,
+        },
+      });
+      setPendingAction(null);
+
+      if (!result.ok) {
+        showMutationError(result.error);
+        return;
+      }
+
+      const savedCategory = mapPersistentCategoryToDraft(result.category);
+      setCategories((current) =>
+        current.map((category) =>
+          category.id === savedCategory.id ? savedCategory : category,
+        ),
       );
+      setAssignCategory(null);
+      setProductToAssignId("");
+      return;
+    }
 
+    if (!usesSupabaseMenu) {
+      if (!assignCategory.isPromotion) {
+        setMenuItems((currentItems) =>
+          currentItems.map((item) =>
+            item.id === productToAssignId ? { ...item, categoryId: assignCategory.id } : item
+          )
+        );
+        closeAssignProduct();
+        return;
+      }
+
+      setCategories((current) =>
+        current.map((category) => {
+          if (category.id !== assignCategory.id) return category;
+          const currentEntries = getCategoryProductEntries(category);
+          const productExists = currentEntries.some((entry) => entry.productId === productToAssignId);
+          if (productExists) return category;
+          return { ...category, products: [...currentEntries, { productId: productToAssignId, quantity: 1 }] };
+        })
+      );
       closeAssignProduct();
       return;
     }
 
-    setCategories((current) =>
-      current.map((category) => {
-        if (category.id !== assignCategory.id) return category;
+    const item = menuItems.find((entry) => entry.id === productToAssignId);
+    if (!item) return;
+    setPendingAction("assign");
+    const result = await saveBusinessMenuItemAction({
+      menuItemId: item.id,
+      item: {
+        categoryId: assignCategory.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        status: item.status,
+        isVisible: item.visible,
+        isFeatured: item.featured,
+        imageUrl: item.imageUrl,
+      },
+    });
+    setPendingAction(null);
 
-        const currentEntries = getCategoryProductEntries(category);
-        const productExists = currentEntries.some(
-          (entry) => entry.productId === productToAssignId
-        );
+    if (!result.ok) {
+      showMutationError(result.error);
+      return;
+    }
 
-        if (productExists) return category;
-
-        return {
-          ...category,
-          products: [...currentEntries, { productId: productToAssignId, quantity: 1 }],
-        };
-      })
-    );
-
-    closeAssignProduct();
+    const saved = mapPersistentItemToDraft(result.item);
+    setMenuItems((current) => current.map((entry) => entry.id === saved.id ? saved : entry));
+    setAssignCategory(null);
+    setProductToAssignId("");
   }
 
-  function openRemoveFromCategory(
-    product: V2MenuItemDraft,
-    category: V2MenuCategoryDraft
-  ) {
+  function openRemoveFromCategory(product: V2MenuItemDraft, category: V2MenuCategoryDraft) {
+    if (!requireManagePermission() || isBusy) return;
     setRemoveFromCategoryTarget({
       productId: product.id,
       productName: product.name,
@@ -902,111 +1211,204 @@ export function V2MenuPage() {
   }
 
   function closeRemoveFromCategoryDialog() {
+    if (isBusy) return;
     setRemoveFromCategoryTarget(null);
   }
 
-  function confirmRemoveFromCategory() {
-    if (!removeFromCategoryTarget) return;
+  async function confirmRemoveFromCategory() {
+    if (!removeFromCategoryTarget || !requireManagePermission() || isBusy) return;
 
     const targetCategory = categories.find(
       (category) => category.id === removeFromCategoryTarget.categoryId
     );
 
-    if (!targetCategory?.isPromotion) {
-      setMenuItems((currentItems) =>
-        currentItems.map((item) =>
-          item.id === removeFromCategoryTarget.productId &&
-          item.categoryId === removeFromCategoryTarget.categoryId
-            ? { ...item, categoryId: "" }
-            : item
-        )
-      );
+    if (!usesSupabaseMenu) {
+      if (!targetCategory?.isPromotion) {
+        setMenuItems((currentItems) =>
+          currentItems.map((item) =>
+            item.id === removeFromCategoryTarget.productId &&
+            item.categoryId === removeFromCategoryTarget.categoryId
+              ? { ...item, categoryId: "" }
+              : item
+          )
+        );
+        closeRemoveFromCategoryDialog();
+        return;
+      }
 
+      setCategories((current) =>
+        current.map((category) => {
+          if (category.id !== removeFromCategoryTarget.categoryId) return category;
+          return {
+            ...category,
+            products: getCategoryProductEntries(category).filter(
+              (entry) => entry.productId !== removeFromCategoryTarget.productId
+            ),
+          };
+        })
+      );
       closeRemoveFromCategoryDialog();
       return;
     }
 
-    setCategories((current) =>
-      current.map((category) => {
-        if (category.id !== removeFromCategoryTarget.categoryId) return category;
-
-        const nextProducts = getCategoryProductEntries(category).filter(
-          (entry) => entry.productId !== removeFromCategoryTarget.productId
-        );
-
-        return {
-          ...category,
+    if (targetCategory?.isPromotion) {
+      const nextProducts = getCategoryProductEntries(targetCategory).filter(
+        (entry) => entry.productId !== removeFromCategoryTarget.productId,
+      );
+      setPendingAction("unassign");
+      const categoryResult = await saveBusinessMenuCategoryAction({
+        categoryId: targetCategory.id,
+        category: {
+          name: targetCategory.name,
+          description: targetCategory.description,
+          isVisible: targetCategory.visible,
+          isActive: targetCategory.active,
+          isPromotion: true,
+          fixedPrice: targetCategory.fixedPrice ?? null,
+          discountPercent: targetCategory.discountPercent ?? null,
           products: nextProducts,
-        };
-      })
-    );
+        },
+      });
+      setPendingAction(null);
 
-    closeRemoveFromCategoryDialog();
+      if (!categoryResult.ok) {
+        showMutationError(categoryResult.error);
+        return;
+      }
+
+      const savedCategory = mapPersistentCategoryToDraft(categoryResult.category);
+      setCategories((current) =>
+        current.map((category) =>
+          category.id === savedCategory.id ? savedCategory : category,
+        ),
+      );
+      setRemoveFromCategoryTarget(null);
+      return;
+    }
+
+    const item = menuItems.find((entry) => entry.id === removeFromCategoryTarget.productId);
+    if (!item) return;
+    setPendingAction("unassign");
+    const result = await saveBusinessMenuItemAction({
+      menuItemId: item.id,
+      item: {
+        categoryId: null,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        status: item.status,
+        isVisible: item.visible,
+        isFeatured: item.featured,
+        imageUrl: item.imageUrl,
+      },
+    });
+    setPendingAction(null);
+
+    if (!result.ok) {
+      showMutationError(result.error);
+      return;
+    }
+
+    const saved = mapPersistentItemToDraft(result.item);
+    setMenuItems((current) => current.map((entry) => entry.id === saved.id ? saved : entry));
+    setRemoveFromCategoryTarget(null);
   }
 
   function openDeleteProduct(product: V2MenuItemDraft) {
+    if (!requireManagePermission() || isBusy) return;
     setDeleteTarget({ type: "product", id: product.id, name: product.name });
     setDeleteConfirmation("");
   }
 
   function openDeleteCategory(category: V2MenuCategoryDraft) {
+    if (!requireManagePermission() || isBusy) return;
+
+    if (usesSupabaseMenu && menuItems.some((item) => item.categoryId === category.id)) {
+      window.alert(
+        "Antes de eliminar la categoría, mové sus productos a otra categoría o dejalos sin categoría."
+      );
+      return;
+    }
+
     setDeleteTarget({ type: "category", id: category.id, name: category.name });
     setDeleteConfirmation("");
   }
 
   function closeDeleteDialog() {
+    if (isBusy) return;
     setDeleteTarget(null);
     setDeleteConfirmation("");
   }
 
-  function confirmDelete() {
-    if (!deleteTarget || deleteConfirmation !== deleteTarget.name) return;
+  async function confirmDelete() {
+    if (
+      !deleteTarget ||
+      deleteConfirmation !== deleteTarget.name ||
+      !requireManagePermission() ||
+      isBusy
+    ) return;
+
+    if (!usesSupabaseMenu) {
+      if (deleteTarget.type === "product") {
+        setMenuItems((current) => current.filter((item) => item.id !== deleteTarget.id));
+        setCategories((current) =>
+          current.map((category) => ({
+            ...category,
+            products: getCategoryProductEntries(category).filter(
+              (entry) => entry.productId !== deleteTarget.id
+            ),
+          }))
+        );
+        if (editingItem?.id === deleteTarget.id) setEditingItem(null);
+      }
+
+      if (deleteTarget.type === "category") {
+        setCategories((current) => current.filter((category) => category.id !== deleteTarget.id));
+        setMenuItems((currentItems) =>
+          currentItems.map((item) =>
+            item.categoryId === deleteTarget.id ? { ...item, categoryId: "" } : item
+          )
+        );
+        if (categoryFilter === deleteTarget.id) setCategoryFilter("all");
+        if (editingCategory?.id === deleteTarget.id) setEditingCategory(null);
+      }
+
+      setDeleteTarget(null);
+      setDeleteConfirmation("");
+      return;
+    }
+
+    setPendingAction("delete");
+    const result = deleteTarget.type === "product"
+      ? await archiveBusinessMenuItemAction({ menuItemId: deleteTarget.id })
+      : await archiveBusinessMenuCategoryAction({ categoryId: deleteTarget.id });
+    setPendingAction(null);
+
+    if (!result.ok) {
+      showMutationError(result.error);
+      return;
+    }
 
     if (deleteTarget.type === "product") {
-      setMenuItems((current) =>
-        current.filter((item) => item.id !== deleteTarget.id)
-      );
-
-      setCategories((current) =>
-        current.map((category) => ({
-          ...category,
-          products: getCategoryProductEntries(category).filter(
-            (entry) => entry.productId !== deleteTarget.id
-          ),
-        }))
-      );
-
-      if (editingItem?.id === deleteTarget.id) {
-        closeEditor();
-      }
+      setMenuItems((current) => current.filter((item) => item.id !== deleteTarget.id));
+      if (editingItem?.id === deleteTarget.id) setEditingItem(null);
+    } else {
+      setCategories((current) => current.filter((category) => category.id !== deleteTarget.id));
+      if (categoryFilter === deleteTarget.id) setCategoryFilter("all");
+      if (editingCategory?.id === deleteTarget.id) setEditingCategory(null);
     }
 
-    if (deleteTarget.type === "category") {
-      setCategories((current) =>
-        current.filter((category) => category.id !== deleteTarget.id)
-      );
-
-      setMenuItems((currentItems) =>
-        currentItems.map((item) =>
-          item.categoryId === deleteTarget.id ? { ...item, categoryId: "" } : item
-        )
-      );
-
-      if (categoryFilter === deleteTarget.id) {
-        setCategoryFilter("all");
-      }
-
-      if (editingCategory?.id === deleteTarget.id) {
-        closeCategoryEditor();
-      }
-    }
-
-    closeDeleteDialog();
+    setDeleteTarget(null);
+    setDeleteConfirmation("");
   }
 
   async function importProductsFromImageFolder() {
-    const files = await fetchAvailableMenuImages();
+    if (usesSupabaseMenu) {
+      window.alert("La importación binaria desde la carpeta de imágenes queda fuera del corte persistente actual.");
+      return;
+    }
 
+    const files = await fetchAvailableMenuImages();
     if (!files.length) {
       window.alert("No se encontraron imágenes en src/app/local/menu/img.");
       return;
@@ -1027,13 +1429,11 @@ export function V2MenuPage() {
       const uniqueProducts = productsToCreate.filter(
         (product) => !currentNames.has(normalizeMenuProductName(product.name))
       );
-
       return [...currentItems, ...uniqueProducts];
     });
 
     window.alert(`Se importaron ${productsToCreate.length} productos desde la carpeta de imágenes.`);
   }
-
 
   return (
     <V2AppShell>
@@ -1867,6 +2267,7 @@ export function V2MenuPage() {
                               <input
                                 type="number"
                                 min={0}
+                                max={9999}
                                 value={currentQuantity}
                                 onChange={(event) =>
                                   updateEditingCategoryQuantity(
@@ -2049,8 +2450,9 @@ export function V2MenuPage() {
 
             <div className="p-6">
               <p className="text-sm leading-6 text-slate-600">
-                Esta acción no se puede deshacer en esta sesión mock. Para confirmar,
-                escribí exactamente:
+                {usesSupabaseMenu
+                  ? "La eliminación es lógica y conserva el historial. Para confirmar, escribí exactamente:"
+                  : "Esta acción no se puede deshacer en esta sesión mock. Para confirmar, escribí exactamente:"}
               </p>
 
               <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm font-semibold text-slate-950">
@@ -2078,7 +2480,7 @@ export function V2MenuPage() {
                 onClick={confirmDelete}
                 disabled={deleteConfirmation !== deleteTarget.name}
               >
-                Eliminar definitivamente
+                {usesSupabaseMenu ? "Eliminar" : "Eliminar definitivamente"}
               </V2Button>
             </div>
           </div>

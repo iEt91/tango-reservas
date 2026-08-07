@@ -23,6 +23,8 @@ const floorPlanWritePath =
   "supabase/migrations/20260804_010_floor_plan_write_rpc.sql";
 const menuWritePath =
   "supabase/migrations/20260806_011_menu_write_rpc.sql";
+const menuPromotionsPath =
+  "supabase/migrations/20260807_012_menu_promotions_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -57,6 +59,10 @@ const floorPlanWrite = await readFile(
 );
 const menuWrite = await readFile(
   menuWritePath,
+  "utf8",
+);
+const menuPromotions = await readFile(
+  menuPromotionsPath,
   "utf8",
 );
 
@@ -314,6 +320,28 @@ assert.match(
 );
 console.log("✓ menú agrega categorías y productos seguros");
 
+assert.match(
+  menuPromotions,
+  /menu_category_products/u,
+);
+assert.match(
+  menuPromotions,
+  /save_business_menu_category_details/u,
+);
+assert.match(
+  menuPromotions,
+  /menu_category_products_select_active_member/u,
+);
+assert.match(
+  menuPromotions,
+  /quantity between 1 and 9999/u,
+);
+assert.match(
+  menuPromotions,
+  /revoke insert, update, delete[\s\S]+menu_category_products/u,
+);
+console.log("✓ promociones agregan composición segura y cantidades persistentes");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -327,4 +355,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (12).");
+console.log("Todos los casos del historial remoto pasaron (13).");

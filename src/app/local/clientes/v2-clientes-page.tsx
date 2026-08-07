@@ -1154,7 +1154,7 @@ export function V2ClientesPage({
       && !canArchiveBusinessCustomers
     ) {
       setCustomerMutationError(
-        "No tenés permisos para archivar clientes.",
+        "No tenés permisos para eliminar clientes.",
       );
       return;
     }
@@ -1172,7 +1172,7 @@ export function V2ClientesPage({
         || !client.backendId
       ) {
         setCustomerMutationError(
-          "No se pudo identificar o archivar el cliente.",
+          "No se pudo identificar o eliminar el cliente.",
         );
         return;
       }
@@ -1963,12 +1963,12 @@ export function V2ClientesPage({
                         className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 transition hover:bg-red-50 hover:text-red-700"
                         aria-label={
                           usesSupabaseCustomers
-                            ? "Archivar cliente"
+                            ? "Eliminar cliente"
                             : "Eliminar cliente"
                         }
                         title={
                           usesSupabaseCustomers
-                            ? "Archivar cliente"
+                            ? "Eliminar cliente"
                             : "Eliminar cliente"
                         }
                       >
@@ -2505,7 +2505,7 @@ export function V2ClientesPage({
               <div>
                 <p className="text-sm text-slate-500">
                   {usesSupabaseCustomers
-                    ? "Archivar cliente"
+                    ? "Eliminar cliente"
                     : "Eliminar cliente"}
                 </p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-950">
@@ -2529,7 +2529,7 @@ export function V2ClientesPage({
             <div className="space-y-4 p-6">
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
                 {usesSupabaseCustomers
-                  ? "Esta acción archivará el cliente sin eliminar su historial, reservas ni envíos. Para confirmar, escribí exactamente el nombre del cliente."
+                  ? "Esta acción eliminará el cliente sin eliminar su historial, reservas ni envíos. Para confirmar, escribí exactamente el nombre del cliente."
                   : "Esta acción eliminará el cliente del prototipo y quitará sus reservas locales asociadas. Para confirmar, escribí exactamente el nombre del cliente."}
               </div>
 
@@ -2545,7 +2545,7 @@ export function V2ClientesPage({
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 Escribí el nombre para {
                   usesSupabaseCustomers
-                    ? "archivar"
+                    ? "eliminar"
                     : "eliminar"
                 }
                 <V2Input
@@ -2582,7 +2582,7 @@ export function V2ClientesPage({
                 {customerMutationPending
                   ? "Procesando..."
                   : usesSupabaseCustomers
-                    ? "Archivar cliente"
+                    ? "Eliminar cliente"
                     : "Eliminar cliente"}
               </V2Button>
             </div>

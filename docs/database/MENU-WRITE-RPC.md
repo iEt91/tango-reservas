@@ -10,7 +10,7 @@ Incluye:
 - `menu_items`;
 - lectura aislada por `business_id`;
 - RLS forzada;
-- RPC autenticadas para altas, ediciones, archivo lógico, orden y cambios rápidos;
+- RPC autenticadas para altas, ediciones, eliminación lógica, orden y cambios rápidos;
 - Server Actions que revalidan sesión, negocio y rol;
 - contratos TypeScript;
 - prueba remota con aislamiento A/B y restauración.
@@ -30,7 +30,7 @@ Los productos conservan:
 - URL de imagen;
 - orden.
 
-La eliminación es archivo lógico. No se eliminan físicamente desde la aplicación.
+La eliminación es eliminación lógica. No se eliminan físicamente desde la aplicación.
 
 ## Integridad
 
@@ -79,7 +79,7 @@ La prueba remota:
 - crea categorías y un producto temporal;
 - valida cambios rápidos y orden;
 - valida BOLA y DML directo bloqueado;
-- archiva lógicamente;
+- elimina lógicamente;
 - restaura exactamente las instantáneas iniciales.
 
 No ejecuta `staging:cleanup-isolation` y conserva los fixtures A/B.

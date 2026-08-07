@@ -8,7 +8,7 @@ E22 habilita la administración básica de las mesas físicas desde
 - preparar y guardar una mesa nueva;
 - editar nombre, capacidad, forma y estado físico;
 - bloquear, reactivar o marcar una mesa fuera de servicio;
-- archivar lógicamente una mesa;
+- eliminar lógicamente una mesa;
 - actualizar la pantalla solamente después de una respuesta exitosa;
 - conservar todos los cambios después de recargar.
 
@@ -28,7 +28,7 @@ La administración física queda limitada a:
 - `admin`.
 
 `staff` mantiene el permiso de asignar y liberar reservas incorporado en
-E21, pero no puede crear, editar, bloquear ni archivar mesas.
+E21, pero no puede crear, editar, bloquear ni eliminar mesas.
 
 La UI deriva los permisos desde la membresía resuelta en servidor. Esa
 restricción visual no sustituye las validaciones de la Server Action y
@@ -76,13 +76,13 @@ Los botones laterales guardan el estado mediante
 `saveBusinessFloorTableAction`. Una mesa con una asignación incompatible
 puede ser rechazada por las reglas transaccionales del backend.
 
-## Archivo lógico
+## Eliminación lógica
 
-En modo Supabase, **Eliminar mesa** pasa a mostrarse como **Archivar mesa**.
+En modo Supabase, **Eliminar mesa** pasa a mostrarse como **Eliminar mesa**.
 La operación usa `setBusinessFloorTableActiveAction` con `isActive: false`.
 
 No se ejecuta `DELETE`. Una mesa con asignación activa no puede archivarse.
-La restauración desde una lista de archivadas queda fuera de E22.
+La restauración desde una lista de eliminadas queda fuera de E22.
 
 ## Prevención de dobles envíos
 
@@ -110,7 +110,7 @@ E22 no habilita:
 - restaurar el layout;
 - unir o separar mesas;
 - modificar la imagen de fondo;
-- listar o restaurar mesas archivadas.
+- listar o restaurar mesas eliminadas.
 
 ## Base de datos
 
@@ -129,7 +129,7 @@ Con los fixtures A/B conservados:
 4. Editar nombre, capacidad y forma.
 5. Recargar y confirmar la edición.
 6. Bloquearla y reactivarla, recargando entre ambos estados.
-7. Archivarla y confirmar que desaparece después de recargar.
+7. Eliminarla y confirmar que desaparece después de recargar.
 8. Confirmar que `Isolation Table A` y su asignación siguen intactas.
 9. Ingresar como B y confirmar que sus datos no cambiaron.
 10. Confirmar que movimiento, redimensionado, uniones y fondo siguen

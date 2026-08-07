@@ -207,7 +207,7 @@ assert.doesNotMatch(
   /delete from public\.floor_tables/u,
 );
 console.log(
-  "✓ las mesas se archivan sin eliminación física",
+  "✓ las mesas se eliminan sin eliminación física",
 );
 
 assert.match(

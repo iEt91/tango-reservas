@@ -327,7 +327,19 @@ assert.match(
 );
 assert.match(
   remoteTest,
+  /existingCategoryIds/u,
+);
+assert.match(
+  remoteTest,
+  /\.\.\.existingCategoryIds/u,
+);
+assert.match(
+  remoteTest,
   /menú A restaurado/u,
+);
+assert.match(
+  remoteTest,
+  /menu_category_products/u,
 );
 assert.match(
   remoteTest,

@@ -28,12 +28,12 @@ En modo Supabase:
 - archivo llama `setBusinessCustomerActiveAction`;
 - no se escribe `manualClients` ni `clientsMeta` en `localStorage`;
 - no existe borrado físico;
-- archivar no elimina reservas, envíos ni historial comercial;
+- eliminar no elimina reservas, envíos ni historial comercial;
 - los errores de validación, duplicado o permisos se muestran sin una mutación
   parcial.
 
 `owner`, `admin` y `staff` pueden crear y editar. Solo `owner` y `admin` pueden
-archivar.
+eliminar.
 
 ## Métricas transitorias
 
@@ -60,10 +60,10 @@ considera fuente canónica para staging ni producción.
 
 ## Archivo
 
-El control visual que antes eliminaba ahora archiva en Supabase. El cliente deja
+El control visual que antes eliminaba ahora elimina en Supabase. El cliente deja
 de aparecer en la lista activa, pero su fila y sus referencias históricas se
 conservan. La restauración ya está soportada por la RPC y se expondrá en una
-vista específica de archivados.
+vista específica de eliminados.
 
 ## QA manual
 
@@ -75,7 +75,7 @@ Con tenant A:
 4. recargar y confirmar persistencia;
 5. editar sus datos y volver a recargar;
 6. comprobar el error por teléfono o correo duplicado;
-7. archivar el cliente y confirmar que desaparece sin borrar actividad.
+7. eliminar el cliente y confirmar que desaparece sin borrar actividad.
 
 Con tenant B:
 

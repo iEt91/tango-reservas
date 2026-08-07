@@ -68,7 +68,7 @@ check(
 );
 
 check(
-  "la UI importa las Server Actions de guardar y archivar",
+  "la UI importa las Server Actions de guardar y eliminar",
   sources.ui.includes(
     "saveBusinessFloorTableAction",
   )
@@ -114,7 +114,7 @@ check(
 );
 
 check(
-  "el archivo lógico usa isActive false y no DELETE",
+  "el eliminación lógica usa isActive false y no DELETE",
   sources.ui.includes(
     "await setBusinessFloorTableActiveAction",
   )
@@ -265,7 +265,7 @@ check(
     "owner",
   )
     && sources.docs.includes(
-      "Archivo lógico",
+      "Eliminación lógica",
     )
     && sources.docs.includes(
       "No volver a aplicar la migración `010`",

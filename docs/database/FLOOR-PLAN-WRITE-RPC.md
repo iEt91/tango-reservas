@@ -39,14 +39,14 @@ Guarda las mesas físicas del negocio:
 - radio de esquinas;
 - estado operativo;
 - posibilidad de unión;
-- archivo lógico.
+- eliminación lógica.
 
 Los estados persistidos son `available`, `blocked` y
 `out_of_service`. Los estados visuales `reserved` y `occupied` deben
 derivarse de reservas, asignaciones y futura información de servicio;
 no se escriben manualmente como estado físico de la mesa.
 
-No existe eliminación física desde la aplicación. Archivar una mesa
+No existe eliminación física desde la aplicación. Eliminar una mesa
 con una reserva activa asignada es rechazado.
 
 ### `public.reservation_table_assignments`
@@ -182,6 +182,6 @@ El seed base se extiende de forma idempotente con ajustes, una mesa y
 una asignación para cada tenant.
 
 La prueba remota verifica lectura propia, BOLA, permisos, capacidad,
-bloqueo, solapamiento, archivo lógico, restauración y DML directo.
+bloqueo, solapamiento, eliminación lógica, restauración y DML directo.
 
 No ejecutar `staging:cleanup-isolation`.

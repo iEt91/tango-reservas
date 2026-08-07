@@ -7,7 +7,7 @@
 3. PostgreSQL es la única fuente de verdad operativa.
 4. `localStorage` queda limitado a preferencias de interfaz y caché descartable.
 5. Pagos, stock, caja y reservas usan transacciones e idempotencia.
-6. Las eliminaciones críticas se auditan; se prioriza archivado o soft delete.
+6. Las eliminaciones críticas se auditan; se prioriza eliminado o soft delete.
 7. Fechas se guardan en UTC cuando representan instantes y como `date`/`time` cuando representan horarios comerciales.
 
 ## Identidad y tenancy

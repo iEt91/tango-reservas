@@ -66,7 +66,7 @@ continúa usando el flujo local existente. E21 no elimina el fallback local.
 
 E21 no habilita todavía:
 
-- crear, editar o archivar mesas;
+- crear, editar o eliminar mesas;
 - mover o redimensionar mesas;
 - bloquear o reactivar mesas;
 - guardar el layout;
