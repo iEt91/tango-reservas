@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Banknote,
+  Boxes,
   CalendarDays,
   ChefHat,
   CreditCard,
@@ -24,7 +25,10 @@ import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2Input, V2Select } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { getDataSource } from "@/lib/data/dataSource";
+import type { StockHistoryEntry } from "@/lib/stock/stock-history-contract";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+import { loadBusinessStockHistoryAction } from "./stock-history-actions";
 import {
   v2Deliveries,
   v2Reservations,
@@ -37,8 +41,11 @@ const DELIVERIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.deliveries;
 const RESERVATIONS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
 const DELIVERIES_EVENT = V2_OPERATIONAL_EVENTS.deliveries;
 const RESERVATIONS_EVENT = V2_OPERATIONAL_EVENTS.reservations;
+const STOCK_MOVEMENTS_STORAGE_KEY =
+  V2_OPERATIONAL_STORAGE_KEYS.stockMovements;
 
-type HistoryTab = "envios" | "reservas" | "cocina";
+type HistoryTab =
+  "envios" | "reservas" | "cocina" | "stock";
 type HistoryRange = "all" | "today" | "7d" | "30d" | "day" | "custom";
 
 type V2DeliveryOrderItem = {
@@ -155,6 +162,21 @@ type KitchenHistoryEntry = {
   completedAt?: string;
 };
 
+type LocalStockMovement = {
+  id: string;
+  createdAt: string;
+  type: "discount" | "return" | "entry" | "manual";
+  origin: "envios" | "reservas" | "manual";
+  productId: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  label: string;
+  detail?: string;
+  referenceId?: string;
+  operationId?: string;
+};
+
 type TimelineItem = {
   label: string;
   time: string;
@@ -178,6 +200,155 @@ function readFromStorage<T>(key: string, fallback: T): T {
 
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
+}
+
+function getStockMovementTypeLabel(
+  type: StockHistoryEntry["movementType"],
+) {
+  if (type === "opening") return "Stock inicial";
+  if (type === "replenishment") return "Reposición";
+  if (type === "consumption") return "Consumo";
+  if (type === "return") return "Devolución";
+
+  return "Ajuste";
+}
+
+function getStockMovementOriginLabel(
+  origin: StockHistoryEntry["origin"],
+) {
+  if (origin === "reservation") return "Reserva";
+  if (origin === "shipping") return "Envío";
+  if (origin === "recipe") return "Receta";
+  if (origin === "import") return "Importación";
+
+  return "Manual";
+}
+
+function getStockMovementTone(
+  entry: StockHistoryEntry,
+): "green" | "orange" | "blue" | "slate" {
+  if (
+    entry.movementType === "opening"
+    || entry.movementType === "replenishment"
+    || entry.movementType === "return"
+  ) {
+    return "green";
+  }
+
+  if (entry.movementType === "consumption") {
+    return "orange";
+  }
+
+  if (entry.origin === "manual") {
+    return "blue";
+  }
+
+  return "slate";
+}
+
+function formatStockHistoryQuantity(
+  entry: StockHistoryEntry,
+) {
+  const value = Number(entry.quantityDelta) || 0;
+  const quantity =
+    Number.isInteger(value)
+      ? String(value)
+      : value
+          .toFixed(3)
+          .replace(/0+$/u, "")
+          .replace(/\.$/u, "");
+
+  return (
+    (value > 0 ? "+" : "")
+    + quantity
+    + " "
+    + entry.unit
+  );
+}
+
+function getStockHistoryDateKey(
+  value: string,
+) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone:
+        "America/Argentina/Buenos_Aires",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(date)
+      .map((part) => [
+        part.type,
+        part.value,
+      ]),
+  );
+
+  return (
+    parts.year
+    + "-"
+    + parts.month
+    + "-"
+    + parts.day
+  );
+}
+
+function mapLocalStockHistory(
+  movement: LocalStockMovement,
+): StockHistoryEntry {
+  const movementType:
+    StockHistoryEntry["movementType"] =
+      movement.type === "discount"
+        ? "consumption"
+        : movement.type === "return"
+          ? "return"
+          : movement.type === "entry"
+            ? "replenishment"
+            : "adjustment";
+  const origin:
+    StockHistoryEntry["origin"] =
+      movement.origin === "envios"
+        ? "shipping"
+        : movement.origin === "reservas"
+          ? "reservation"
+          : "manual";
+  const quantity =
+    Number(movement.quantity) || 0;
+  const quantityDelta =
+    movementType === "consumption"
+      ? -Math.abs(quantity)
+      : movementType === "adjustment"
+        ? quantity
+        : Math.abs(quantity);
+
+  return {
+    id: movement.id,
+    productId: movement.productId,
+    productName: movement.productName,
+    movementType,
+    origin,
+    quantityDelta,
+    unit:
+      movement.unit as StockHistoryEntry["unit"],
+    unitCost: 0,
+    operationKey:
+      movement.operationId ?? "",
+    referenceId:
+      movement.referenceId ?? "",
+    label: movement.label,
+    detail: movement.detail ?? "",
+    createdBy: "",
+    actorName: "Sesión local",
+    actorEmail: "",
+    actorRole: "",
+    createdAt: movement.createdAt,
+  };
 }
 
 function getKitchenEntryDate(timestamp: string | undefined, fallbackDate: string) {
@@ -736,6 +907,16 @@ export default function HistorialPage() {
   const [activeTab, setActiveTab] = useState<HistoryTab>("envios");
   const [deliveries, setDeliveries] = useState<V2Delivery[]>([]);
   const [reservations, setReservations] = useState<V2Reservation[]>([]);
+  const [stockHistory, setStockHistory] =
+    useState<StockHistoryEntry[]>([]);
+  const [
+    stockHistoryLoading,
+    setStockHistoryLoading,
+  ] = useState(false);
+  const [
+    stockHistoryError,
+    setStockHistoryError,
+  ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -756,6 +937,15 @@ export default function HistorialPage() {
 
     syncHistory();
 
+    const requestedTab =
+      new URLSearchParams(
+        window.location.search,
+      ).get("tab");
+
+    if (requestedTab === "stock") {
+      setActiveTab("stock");
+    }
+
     window.addEventListener("focus", syncHistory);
     window.addEventListener("storage", syncHistory);
     window.addEventListener(DELIVERIES_EVENT, syncHistory);
@@ -768,6 +958,78 @@ export default function HistorialPage() {
       window.removeEventListener(RESERVATIONS_EVENT, syncHistory);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "stock") return;
+
+    let cancelled = false;
+
+    async function syncStockHistory() {
+      setStockHistoryError("");
+
+      if (getDataSource() !== "supabase") {
+        const localHistory =
+          readFromStorage<LocalStockMovement[]>(
+            STOCK_MOVEMENTS_STORAGE_KEY,
+            [],
+          ).map(mapLocalStockHistory);
+
+        if (!cancelled) {
+          setStockHistory(localHistory);
+          setStockHistoryLoading(false);
+        }
+
+        return;
+      }
+
+      setStockHistoryLoading(true);
+
+      const result =
+        await loadBusinessStockHistoryAction();
+
+      if (cancelled) return;
+
+      setStockHistoryLoading(false);
+
+      if (!result.ok) {
+        setStockHistory([]);
+        setStockHistoryError(result.error);
+        return;
+      }
+
+      setStockHistory(result.entries);
+    }
+
+    function handleLocalStockSync() {
+      void syncStockHistory();
+    }
+
+    void syncStockHistory();
+
+    if (getDataSource() !== "supabase") {
+      window.addEventListener(
+        "focus",
+        handleLocalStockSync,
+      );
+      window.addEventListener(
+        "storage",
+        handleLocalStockSync,
+      );
+    }
+
+    return () => {
+      cancelled = true;
+
+      window.removeEventListener(
+        "focus",
+        handleLocalStockSync,
+      );
+      window.removeEventListener(
+        "storage",
+        handleLocalStockSync,
+      );
+    };
+  }, [activeTab]);
 
   function selectHistoryTab(nextTab: HistoryTab) {
     setActiveTab(nextTab);
@@ -963,6 +1225,88 @@ export default function HistorialPage() {
       );
   }, [customEndDate, customStartDate, query, rangeFilter, reservations, selectedDate, statusFilter]);
 
+  const filteredStockHistory = useMemo(() => {
+    const normalizedQuery =
+      normalizeSearch(query);
+
+    return stockHistory.filter((entry) => {
+      const date =
+        getStockHistoryDateKey(
+          entry.createdAt,
+        );
+      const matchesType =
+        statusFilter === "all"
+        || entry.movementType === statusFilter;
+      const matchesRange =
+        isInsideRange(
+          date,
+          rangeFilter,
+          selectedDate,
+          customStartDate,
+          customEndDate,
+        );
+      const matchesSearch =
+        !normalizedQuery
+        || [
+          entry.productName,
+          entry.label,
+          entry.detail,
+          entry.actorName,
+          entry.actorEmail,
+          getStockMovementOriginLabel(
+            entry.origin,
+          ),
+          entry.referenceId,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+
+      return (
+        matchesType
+        && matchesRange
+        && matchesSearch
+      );
+    });
+  }, [
+    customEndDate,
+    customStartDate,
+    query,
+    rangeFilter,
+    selectedDate,
+    statusFilter,
+    stockHistory,
+  ]);
+
+  const stockManualCount =
+    filteredStockHistory.filter(
+      (entry) => entry.origin === "manual",
+    ).length;
+  const stockConsumptionCount =
+    filteredStockHistory.filter(
+      (entry) =>
+        entry.movementType === "consumption",
+    ).length;
+  const stockEntryCount =
+    filteredStockHistory.filter(
+      (entry) =>
+        entry.movementType === "opening"
+        || entry.movementType === "replenishment"
+        || entry.movementType === "return",
+    ).length;
+  const stockActorCount =
+    new Set(
+      filteredStockHistory.map(
+        (entry) => entry.actorName,
+      ),
+    ).size;
+  const stockProductCount =
+    new Set(
+      filteredStockHistory.map(
+        (entry) => entry.productId,
+      ),
+    ).size;
+
   const kitchenHistory = useMemo<KitchenHistoryEntry[]>(() => {
     const reservationEntries = reservations.flatMap<KitchenHistoryEntry>((reservation) => {
       const tickets = reservation.kitchenTickets ?? [];
@@ -1116,7 +1460,7 @@ export default function HistorialPage() {
       <div className="flex h-full min-h-0 flex-col">
         <V2PageHeader
           title="Historial"
-          description="Registro operativo de pedidos y reservas: qué entró, qué se confirmó, qué se completó y qué se canceló."
+          description="Registro operativo de pedidos, reservas, cocina y movimientos de stock."
           actions={
             <div className="flex items-center gap-2">
               <button
@@ -1163,12 +1507,72 @@ export default function HistorialPage() {
                 >
                   Cocina
                 </button>
+                <button
+                  type="button"
+                  onClick={() => selectHistoryTab("stock")}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                    activeTab === "stock"
+                      ? "bg-emerald-600 text-white"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  Stock
+                </button>
               </div>
             </div>
           }
         />
 
-        <div className="historial-top-metrics mt-4 grid shrink-0 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {activeTab === "stock" ? (
+          <div className="historial-top-metrics mt-4 grid shrink-0 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <V2MetricCard
+              label="Movimientos"
+              value={filteredStockHistory.length}
+              helper="Según filtros"
+              tone="blue"
+              icon={<History size={20} />}
+            />
+            <V2MetricCard
+              label="Manuales"
+              value={stockManualCount}
+              helper="Intervenciones directas"
+              tone="blue"
+              icon={<Boxes size={20} />}
+            />
+            <V2MetricCard
+              label="Consumos"
+              value={stockConsumptionCount}
+              helper="Salidas de stock"
+              tone="orange"
+              icon={<PackageCheck size={20} />}
+            />
+            <V2MetricCard
+              label="Entradas"
+              value={stockEntryCount}
+              helper="Altas, reposiciones y devoluciones"
+              tone="green"
+              icon={<CheckCircle2 size={20} />}
+            />
+            <V2MetricCard
+              label="Responsables"
+              value={stockActorCount}
+              helper="Usuarios detectados"
+              tone="slate"
+              icon={<History size={20} />}
+            />
+            <V2MetricCard
+              label="Insumos"
+              value={stockProductCount}
+              helper="Productos afectados"
+              tone="green"
+              icon={<Boxes size={20} />}
+            />
+          </div>
+        ) : null}
+
+        <div className={`historial-top-metrics mt-4 grid shrink-0 gap-3 md:grid-cols-3 xl:grid-cols-6 ${
+          activeTab === "stock" ? "hidden" : ""
+        }`}>
           <V2MetricCard
             label={activeTab === "envios" ? "Pedidos" : activeTab === "reservas" ? "Reservas" : "Comandas"}
             value={activeCount}
@@ -1385,7 +1789,9 @@ export default function HistorialPage() {
                     ? "Buscar pedido, cliente, teléfono o dirección"
                     : activeTab === "reservas"
                       ? "Buscar reserva, cliente, mesa o teléfono"
-                      : "Buscar comanda, mesa, cliente o plato"
+                      : activeTab === "stock"
+                        ? "Buscar insumo, responsable, origen o referencia"
+                        : "Buscar comanda, mesa, cliente o plato"
                 }
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -1407,6 +1813,14 @@ export default function HistorialPage() {
                   <option value="completed">Completadas</option>
                   <option value="cancelled">Canceladas</option>
                   <option value="no_show">No-show</option>
+                </>
+              ) : activeTab === "stock" ? (
+                <>
+                  <option value="opening">Stock inicial</option>
+                  <option value="replenishment">Reposiciones</option>
+                  <option value="consumption">Consumos</option>
+                  <option value="return">Devoluciones</option>
+                  <option value="adjustment">Ajustes</option>
                 </>
               ) : (
                 <>
@@ -1471,7 +1885,228 @@ export default function HistorialPage() {
         </V2Card>
 
         <div className="v2-history-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
-          {activeTab === "envios" ? (
+          {activeTab === "stock" ? (
+            <div className="space-y-2">
+              {stockHistoryLoading ? (
+                <V2Card>
+                  <div className="flex h-[220px] items-center justify-center text-center">
+                    <div>
+                      <History className="mx-auto text-slate-300" size={42} />
+                      <p className="mt-3 font-semibold text-slate-950">
+                        Cargando auditoría de Stock
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Consultando movimientos del local activo.
+                      </p>
+                    </div>
+                  </div>
+                </V2Card>
+              ) : stockHistoryError ? (
+                <V2Card>
+                  <div className="flex h-[220px] items-center justify-center text-center">
+                    <div>
+                      <XCircle className="mx-auto text-red-300" size={42} />
+                      <p className="mt-3 font-semibold text-slate-950">
+                        No se pudo cargar Stock
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {stockHistoryError}
+                      </p>
+                    </div>
+                  </div>
+                </V2Card>
+              ) : (
+                filteredStockHistory.map((entry) => {
+                  const isOpen =
+                    openId === entry.id;
+
+                  return (
+                    <V2Card
+                      key={entry.id}
+                      className="overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenId(
+                            isOpen ? null : entry.id,
+                          )
+                        }
+                        className="grid w-full items-center gap-3 bg-gradient-to-br from-white to-slate-50 px-5 py-3 text-left transition hover:bg-emerald-50/40 lg:grid-cols-[150px_1.25fr_130px_1fr_150px_38px]"
+                      >
+                        <div className="pl-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            Movimiento
+                          </p>
+                          <div className="mt-1">
+                            <V2Badge
+                              tone={getStockMovementTone(entry)}
+                            >
+                              {getStockMovementTypeLabel(
+                                entry.movementType,
+                              )}
+                            </V2Badge>
+                          </div>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            Insumo
+                          </p>
+                          <p className="mt-1 truncate font-semibold text-slate-950">
+                            {entry.productName}
+                          </p>
+                          <p className="mt-1 truncate text-xs text-slate-500">
+                            {entry.label}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            Cantidad
+                          </p>
+                          <p
+                            className={
+                              "mt-1 font-bold "
+                              + (
+                                entry.quantityDelta < 0
+                                  ? "text-amber-700"
+                                  : "text-emerald-700"
+                              )
+                            }
+                          >
+                            {formatStockHistoryQuantity(entry)}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            Responsable
+                          </p>
+                          <p className="mt-1 truncate font-semibold text-slate-950">
+                            {entry.actorName}
+                          </p>
+                          {entry.actorEmail ? (
+                            <p className="mt-1 truncate text-xs text-slate-500">
+                              {entry.actorEmail}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            Fecha / origen
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-slate-700">
+                            {formatTimestamp(entry.createdAt)}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {getStockMovementOriginLabel(
+                              entry.origin,
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="flex justify-end">
+                          {isOpen
+                            ? <ChevronUp size={18} />
+                            : <ChevronDown size={18} />}
+                        </div>
+                      </button>
+
+                      {isOpen ? (
+                        <div className="border-t border-slate-100 bg-slate-50/60 px-7 py-5">
+                          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                Responsable
+                              </p>
+                              <p className="mt-2 font-semibold text-slate-950">
+                                {entry.actorName}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                {entry.actorEmail || "Identidad no visible"}
+                              </p>
+                              <p className="mt-1 text-xs uppercase text-slate-400">
+                                {entry.actorRole || "Sin rol visible"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                Operación
+                              </p>
+                              <p className="mt-2 font-semibold text-slate-950">
+                                {getStockMovementTypeLabel(
+                                  entry.movementType,
+                                )}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Origen: {getStockMovementOriginLabel(entry.origin)}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                Referencia
+                              </p>
+                              <p className="mt-2 break-all font-semibold text-slate-950">
+                                {entry.referenceId || "Sin referencia operativa"}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Costo/u: {formatMoney(entry.unitCost)}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                Fecha / hora
+                              </p>
+                              <p className="mt-2 font-semibold text-slate-950">
+                                {formatTimestamp(entry.createdAt)}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                {formatStockHistoryQuantity(entry)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {entry.detail ? (
+                            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                Detalle
+                              </p>
+                              <p className="mt-2 text-sm text-slate-600">
+                                {entry.detail}
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </V2Card>
+                  );
+                })
+              )}
+
+              {!stockHistoryLoading
+              && !stockHistoryError
+              && filteredStockHistory.length === 0 ? (
+                <V2Card>
+                  <div className="flex h-[260px] items-center justify-center text-center">
+                    <div>
+                      <Boxes className="mx-auto text-slate-300" size={42} />
+                      <p className="mt-3 font-semibold text-slate-950">
+                        No hay movimientos de Stock
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        No hay movimientos que coincidan con los filtros.
+                      </p>
+                    </div>
+                  </div>
+                </V2Card>
+              ) : null}
+            </div>
+          ) : activeTab === "envios" ? (
             <div className="space-y-2">
               {filteredDeliveries.map((delivery) => {
                 const publicId = getDeliveryTrackingId(delivery);

@@ -975,7 +975,7 @@ export function V2ProductosPage({
           actions={
             <div className="flex flex-wrap justify-end gap-2">
               <Link
-                href="/local/historial"
+                href="/local/historial?tab=stock"
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
               >
                 <History size={18} />
