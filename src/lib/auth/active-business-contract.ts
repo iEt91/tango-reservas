@@ -1,3 +1,5 @@
+import type { StaffPermissionMap } from "@/lib/staff/staff-contract";
+
 export const ACTIVE_BUSINESS_COOKIE = "tango_active_business";
 export const ACTIVE_BUSINESS_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
@@ -15,6 +17,9 @@ export type ActiveBusinessMembership = {
   role: ActiveBusinessRole;
   status: "active";
   business: ActiveBusinessSummary;
+  staffRoleId: string | null;
+  staffRoleName: string | null;
+  permissions: StaffPermissionMap;
 };
 
 export type ActiveBusinessChoice =

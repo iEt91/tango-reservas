@@ -66,13 +66,17 @@ assert.match(
 );
 assert.match(
   page,
-  /membership\.role === "owner"[\s\S]+membership\.role === "admin"/u,
+  /if \(activeBusiness\.membership\.role !== "owner"\)[\s\S]+redirect\("\/auth\/access-denied\?reason=permission"\)/u,
+);
+assert.doesNotMatch(
+  page,
+  /membership\.role === "admin"/u,
 );
 assert.match(
   page,
-  /canManageBusinessServices=\{canManageBusinessServices\}/u,
+  /<V2ConfiguracionPage[\s\S]+canManageBusinessServices/u,
 );
-console.log("✓ el servidor deriva persistencia y permisos");
+console.log("✓ Configuración y servicios quedan limitados al dueño");
 
 assert.match(
   clientPage,

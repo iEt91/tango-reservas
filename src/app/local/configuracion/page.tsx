@@ -5,13 +5,10 @@ import { buildLoginPath } from "@/lib/auth/redirects";
 import { getDataSource } from "@/lib/data/dataSource";
 import { getBusinessHoursForBusiness } from "@/lib/data/server/business-hours";
 import { getBusinessServicesForBusiness } from "@/lib/data/server/business-services";
+import { getBusinessStaffForBusiness } from "@/lib/data/server/business-staff";
 import { getReservationSettingsForBusiness } from "@/lib/data/server/reservation-settings";
 
 export default async function Page() {
-  if (getDataSource() !== "supabase") {
-    return <V2ConfiguracionPage />;
-  }
-
   const activeBusiness = await resolveActiveBusiness();
 
   if (activeBusiness.status === "unauthenticated") {
@@ -34,30 +31,39 @@ export default async function Page() {
     );
   }
 
+  if (activeBusiness.membership.role !== "owner") {
+    redirect("/auth/access-denied?reason=permission");
+  }
+
+  if (getDataSource() !== "supabase") {
+    return <V2ConfiguracionPage />;
+  }
+
   const businessId = activeBusiness.membership.businessId;
   const [
     initialBusinessHours,
     initialReservationSettings,
     initialBusinessServices,
+    initialStaffSnapshot,
   ] = await Promise.all([
     getBusinessHoursForBusiness(businessId),
     getReservationSettingsForBusiness(businessId),
     getBusinessServicesForBusiness(businessId),
+    getBusinessStaffForBusiness(businessId),
   ]);
-
-  const canManageBusinessServices =
-    activeBusiness.membership.role === "owner"
-    || activeBusiness.membership.role === "admin";
 
   return (
     <V2ConfiguracionPage
       initialBusinessHours={initialBusinessHours}
       initialReservationSettings={initialReservationSettings}
       initialBusinessServices={initialBusinessServices}
+      initialStaffSnapshot={initialStaffSnapshot}
       businessHoursPersistence="supabase"
       reservationSettingsPersistence="supabase"
       businessServicesPersistence="supabase"
-      canManageBusinessServices={canManageBusinessServices}
+      staffPersistence="supabase"
+      canManageBusinessServices
+      canManageStaff
     />
   );
 }

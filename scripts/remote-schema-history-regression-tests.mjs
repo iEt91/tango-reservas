@@ -25,6 +25,8 @@ const menuWritePath =
   "supabase/migrations/20260806_011_menu_write_rpc.sql";
 const menuPromotionsPath =
   "supabase/migrations/20260807_012_menu_promotions_rpc.sql";
+const staffRolesPath =
+  "supabase/migrations/20260808_013_staff_roles_permissions.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -63,6 +65,10 @@ const menuWrite = await readFile(
 );
 const menuPromotions = await readFile(
   menuPromotionsPath,
+  "utf8",
+);
+const staffRoles = await readFile(
+  staffRolesPath,
   "utf8",
 );
 
@@ -342,6 +348,17 @@ assert.match(
 );
 console.log("✓ promociones agregan composición segura y cantidades persistentes");
 
+assert.match(staffRoles, /create table if not exists public\.staff_roles/u);
+assert.match(staffRoles, /staff_role_permissions/u);
+assert.match(staffRoles, /staff_member_notes/u);
+assert.match(staffRoles, /user_access_controls/u);
+assert.match(staffRoles, /save_business_staff_role/u);
+assert.match(staffRoles, /save_business_staff_member/u);
+assert.match(staffRoles, /business_members_select_own_or_owner/u);
+assert.match(staffRoles, /force row level security/u);
+assert.match(staffRoles, /revoke all on table public\.staff_roles/u);
+console.log("✓ Staff agrega roles, permisos, notas privadas y reautenticación segura");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -355,4 +372,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (13).");
+console.log("Todos los casos del historial remoto pasaron (14).");

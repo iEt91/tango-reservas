@@ -34,7 +34,10 @@ export default async function LocalLayout({
   }
 
   return (
-    <ActiveBusinessProvider value={resolution.membership}>
+    <ActiveBusinessProvider
+      value={resolution.membership}
+      memberships={resolution.memberships}
+    >
       {children}
     </ActiveBusinessProvider>
   );

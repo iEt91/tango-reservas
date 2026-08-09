@@ -19,14 +19,16 @@ export default async function LoginPage({
   const initialMessage =
     params.reset === "success"
       ? "La contraseña fue actualizada. Iniciá sesión nuevamente."
-      : params.error === "config"
-        ? "Falta configurar la URL o la clave pública de Supabase."
-        : null;
+      : params.error === "access_changed"
+        ? "Tu acceso o tus permisos cambiaron. Iniciá sesión nuevamente para continuar."
+        : params.error === "config"
+          ? "Falta configurar la URL o la clave pública de Supabase."
+          : null;
 
   return (
     <AuthCard
       title="Ingresar al panel"
-      description="Usá la cuenta asociada al restaurante. Esta autenticación protege por ahora la sección piloto de Seguridad."
+      description="Usá la cuenta asociada a los locales donde tenés acceso."
       footer={
         <>
           ¿Olvidaste la contraseña?{" "}

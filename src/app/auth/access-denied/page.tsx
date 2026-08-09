@@ -12,8 +12,12 @@ export default async function AccessDeniedPage({
   const { reason } = await searchParams;
   const message =
     reason === "membership"
-      ? "Tu usuario no tiene una membresía activa en ningún negocio."
-      : "El negocio solicitado no pertenece a tu sesión activa.";
+      ? "Tu usuario no tiene acceso activo a ningún local."
+      : reason === "permission"
+        ? "Tu rol no tiene acceso a esta parte del local."
+        : reason === "security"
+          ? "No fue posible verificar de forma segura tu acceso."
+          : "El local solicitado no pertenece a tu sesión activa.";
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
@@ -26,7 +30,7 @@ export default async function AccessDeniedPage({
           {message}
         </p>
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Un owner debe revisar la membresía antes de volver a intentar.
+          Si necesitás otro acceso, el dueño del local puede revisar tu rol desde Staff.
         </p>
         <form action="/auth/logout" method="post" className="mt-7">
           <button

@@ -19,7 +19,6 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Upload,
-  UsersRound,
 } from "lucide-react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Badge } from "@/components/v2/v2-badge";
@@ -49,6 +48,8 @@ import {
   saveBusinessServiceAction,
   setBusinessServiceActiveAction,
 } from "./service-actions";
+import { V2StaffSection } from "./v2-staff-section";
+import type { BusinessStaffSnapshot } from "@/lib/staff/staff-contract";
 import { mergeBusinessHoursEditor } from "@/lib/configuration/business-hours-contract";
 import {
   mergeReservationSettingsEditor,
@@ -63,7 +64,6 @@ import {
   v2BusinessHours,
   v2DeliverySettings,
   v2LocalSettings,
-  v2LocalUsers,
   v2ReservationSettings,
 } from "@/lib/v2/v2-mock-data";
 
@@ -317,17 +317,6 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function roleLabel(role: (typeof v2LocalUsers)[number]["role"]) {
-  const labels = {
-    owner: "Dueño",
-    manager: "Encargado",
-    staff: "Empleado",
-    support: "Soporte",
-  };
-
-  return labels[role];
-}
-
 function createEmptyBusinessService(): BusinessServiceEditor {
   return {
     id: null,
@@ -364,18 +353,24 @@ export function V2ConfiguracionPage({
   initialBusinessHours = null,
   initialReservationSettings = null,
   initialBusinessServices = null,
+  initialStaffSnapshot = null,
   businessHoursPersistence = "local",
   reservationSettingsPersistence = "local",
   businessServicesPersistence = "local",
+  staffPersistence = "local",
   canManageBusinessServices = false,
+  canManageStaff = false,
 }: {
   initialBusinessHours?: V2BusinessHourConfig[] | null;
   initialReservationSettings?: ReservationSettingsEditor | null;
   initialBusinessServices?: BusinessServiceEditor[] | null;
+  initialStaffSnapshot?: BusinessStaffSnapshot | null;
   businessHoursPersistence?: "local" | "supabase";
   reservationSettingsPersistence?: "local" | "supabase";
   businessServicesPersistence?: "local" | "supabase";
+  staffPersistence?: "local" | "supabase";
   canManageBusinessServices?: boolean;
+  canManageStaff?: boolean;
 }) {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
   const [saveStatus, setSaveStatus] = useState<
@@ -858,7 +853,7 @@ export function V2ConfiguracionPage({
                   <a href="#config-servicios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Servicios</a>
                   <a href="#config-envios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Envíos</a>
                   <a href="#config-notificaciones" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Notificaciones</a>
-                  <a href="#config-usuarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Usuarios</a>
+                  <a href="#config-staff" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Staff</a>
                   <a href="#config-sistema" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Sistema</a>
                 </div>
               </div>
@@ -1339,28 +1334,12 @@ export function V2ConfiguracionPage({
                 </V2Card>
               </div>
 
-              <div id="config-usuarios" className="scroll-mt-20">
-                <V2Card>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700"><UsersRound size={20} /></div>
-                    <div>
-                      <h2 className="text-base font-semibold text-slate-950">Usuarios y permisos</h2>
-                      <p className="mt-1 text-sm text-slate-500">Base visual para roles. La invitación real de usuarios queda para una etapa con login y permisos.</p>
-                    </div>
-                  </div>
-                  <V2Badge tone="slate">Próximamente</V2Badge>
-                </div>
-                <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-                  {v2LocalUsers.map((user) => (
-                    <div key={user.id} className="grid grid-cols-[1fr_180px_120px] items-center gap-4 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0">
-                      <div><p className="font-semibold text-slate-950">{user.name}</p><p className="mt-1 text-xs text-slate-500">{user.email}</p></div>
-                      <p className="text-slate-600">{roleLabel(user.role)}</p>
-                      <div className="flex justify-end"><V2Badge tone={user.role === "support" ? "purple" : "green"}>{user.status}</V2Badge></div>
-                    </div>
-                  ))}
-                </div>
-                </V2Card>
+              <div id="config-staff" className="scroll-mt-20">
+                <V2StaffSection
+                  initialSnapshot={initialStaffSnapshot}
+                  persistence={staffPersistence}
+                  canManage={canManageStaff}
+                />
               </div>
 
               <div id="config-sistema" className="scroll-mt-20">
