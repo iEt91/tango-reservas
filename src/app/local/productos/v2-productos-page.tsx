@@ -20,13 +20,42 @@ import { V2DataTable } from "@/components/v2/v2-data-table";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import type {
+  BusinessStockMovement,
+  BusinessStockMovementType,
+  BusinessStockProductSnapshot,
+  BusinessStockSnapshot,
+} from "@/lib/stock/business-stock-contract";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+import {
+  recordBusinessStockMovementAction,
+  saveBusinessStockProductAction,
+} from "../stock/actions";
 import {
   v2StockProducts,
   type V2StockUnit,
 } from "@/lib/v2/v2-mock-data";
 
-type V2StockProduct = (typeof v2StockProducts)[number];
+type V2StockProduct = {
+  id: string;
+  supplier: string;
+  unitCost: number;
+  name: string;
+  category: string;
+  unit: V2StockUnit;
+  totalStock: number;
+  consumedBySales: number;
+  alertBelow: number;
+  lastUpdated: string;
+  note: string;
+};
+
+type V2ProductosPageProps = {
+  initialBusinessStock?: BusinessStockSnapshot;
+  stockPersistence?: "local" | "supabase";
+  canManageStock?: boolean;
+};
+
 type V2StockStatus = "available" | "low_stock" | "out_of_stock";
 
 const stockUnits: V2StockUnit[] = [
@@ -46,7 +75,11 @@ const STOCK_PRODUCTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockProducts;
 const STOCK_PRODUCTS_EVENT = V2_OPERATIONAL_EVENTS.stockProducts;
 const STOCK_MOVEMENTS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.stockMovements;
 
-type V2StockMovementType = "discount" | "return" | "manual";
+type V2StockMovementType =
+  | "discount"
+  | "return"
+  | "entry"
+  | "manual";
 
 type V2StockMovementOrigin = "envios" | "reservas" | "manual";
 
@@ -128,22 +161,55 @@ function readStockMovementHistory() {
   return nextHistory;
 }
 
-function formatMovementDate(value: string) {
-  const date = new Date(value);
+const STOCK_DATE_TIME_ZONE =
+  "America/Argentina/Buenos_Aires";
 
-  if (Number.isNaN(date.getTime())) return "Sin fecha";
-
-  return new Intl.DateTimeFormat("es-AR", {
+const stockDateTimeFormatter =
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: STOCK_DATE_TIME_ZONE,
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date);
+    hourCycle: "h23",
+  });
+
+function formatStockDateTime(
+  value: string,
+  fallback: string,
+) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return fallback;
+  }
+
+  const parts = Object.fromEntries(
+    stockDateTimeFormatter
+      .formatToParts(date)
+      .map((part) => [
+        part.type,
+        part.value,
+      ]),
+  );
+
+  return [
+    parts.day + "/" + parts.month,
+    parts.hour + ":" + parts.minute,
+  ].join(", ");
+}
+
+function formatMovementDate(value: string) {
+  return formatStockDateTime(
+    value,
+    "Sin fecha",
+  );
 }
 
 function getMovementTypeLabel(type: V2StockMovementType) {
   if (type === "return") return "Devolución";
-  if (type === "manual") return "Manual";
+  if (type === "entry") return "Ingreso";
+  if (type === "manual") return "Ajuste";
 
   return "Descuento";
 }
@@ -156,28 +222,153 @@ function getMovementOriginLabel(origin: V2StockMovementOrigin) {
 }
 
 function getMovementTone(type: V2StockMovementType): "green" | "orange" | "blue" {
-  if (type === "return") return "green";
+  if (type === "return" || type === "entry") return "green";
   if (type === "manual") return "blue";
 
   return "orange";
 }
 
 function getMovementQuantityPrefix(type: V2StockMovementType) {
-  if (type === "return") return "+";
+  if (type === "return" || type === "entry") return "+";
   if (type === "discount") return "-";
 
   return "";
 }
 
 function getMovementCardToneClass(type: V2StockMovementType) {
-  if (type === "return") return "border-emerald-200 bg-emerald-50/70";
-  if (type === "manual") return "border-blue-200 bg-blue-50/70";
+  if (type === "return" || type === "entry") {
+    return "border-emerald-200 bg-emerald-50/70";
+  }
+
+  if (type === "manual") {
+    return "border-blue-200 bg-blue-50/70";
+  }
 
   return "border-amber-200 bg-amber-50/70";
 }
 
 function getRemainingStock(product: V2StockProduct) {
   return Math.max(product.totalStock - product.consumedBySales, 0);
+}
+
+function formatStockUpdatedAt(value: string) {
+  return formatStockDateTime(
+    value,
+    value || "Sin fecha",
+  );
+}
+
+function mapPersistentStockProduct(
+  product: BusinessStockProductSnapshot,
+): V2StockProduct {
+  return {
+    id: product.id,
+    supplier: product.supplier,
+    unitCost: product.unitCost,
+    name: product.name,
+    category: product.category,
+    unit: product.unit as V2StockUnit,
+    totalStock: product.totalStock,
+    consumedBySales: product.consumedBySales,
+    alertBelow: product.alertBelow,
+    lastUpdated: product.lastUpdated,
+    note: product.note,
+  };
+}
+
+function mapPersistentStockProducts(
+  snapshot?: BusinessStockSnapshot,
+) {
+  return (snapshot?.products ?? []).map(
+    mapPersistentStockProduct,
+  );
+}
+
+function mapPersistentStockMovement(
+  movement: BusinessStockMovement,
+): V2StockMovementLog {
+  const type: V2StockMovementType =
+    movement.movementType === "consumption"
+      ? "discount"
+      : movement.movementType === "return"
+        ? "return"
+        : movement.movementType === "opening"
+          || movement.movementType === "replenishment"
+          ? "entry"
+          : "manual";
+
+  const origin: V2StockMovementOrigin =
+    movement.origin === "shipping"
+      ? "envios"
+      : movement.origin === "reservation"
+        ? "reservas"
+        : "manual";
+
+  return {
+    id: movement.id,
+    createdAt: movement.createdAt,
+    type,
+    origin,
+    productId: movement.productId,
+    productName: movement.productName,
+    quantity:
+      type === "manual"
+        ? movement.quantityDelta
+        : Math.abs(movement.quantityDelta),
+    unit: movement.unit,
+    label: movement.label,
+    detail: movement.detail,
+    referenceId: movement.referenceId || undefined,
+    operationId: movement.operationKey || undefined,
+  };
+}
+
+function mapPersistentStockMovements(
+  snapshot?: BusinessStockSnapshot,
+) {
+  return (snapshot?.movements ?? []).map(
+    mapPersistentStockMovement,
+  );
+}
+
+function applyPersistentMovement(
+  product: V2StockProduct,
+  movement: BusinessStockMovement,
+): V2StockProduct {
+  const currentStock =
+    getRemainingStock(product)
+    + movement.quantityDelta;
+
+  let consumedBySales =
+    product.consumedBySales;
+
+  if (movement.movementType === "consumption") {
+    consumedBySales += Math.abs(
+      movement.quantityDelta,
+    );
+  } else if (movement.movementType === "return") {
+    consumedBySales = Math.max(
+      consumedBySales - movement.quantityDelta,
+      0,
+    );
+  }
+
+  const normalizedCurrent =
+    Number(currentStock.toFixed(3));
+  const normalizedConsumed =
+    Number(consumedBySales.toFixed(3));
+
+  return {
+    ...product,
+    totalStock: Number(
+      (
+        normalizedCurrent
+        + normalizedConsumed
+      ).toFixed(3),
+    ),
+    consumedBySales: normalizedConsumed,
+    lastUpdated: movement.createdAt,
+  };
 }
 
 function getStockStatus(product: V2StockProduct): V2StockStatus {
@@ -264,14 +455,84 @@ function getStockMiniCardToneClass(product: V2StockProduct) {
   return "bg-emerald-100/60";
 }
 
-export function V2ProductosPage() {
-  const [stockProducts, setStockProducts] = useState<V2StockProduct[]>(v2StockProducts);
-  const [stockMovements, setStockMovements] = useState<V2StockMovementLog[]>([]);
-  const [editingProduct, setEditingProduct] = useState<V2StockProduct | null>(
-    null
+export function V2ProductosPage({
+  initialBusinessStock,
+  stockPersistence = "local",
+  canManageStock = true,
+}: V2ProductosPageProps = {}) {
+  const isSupabasePersistence =
+    stockPersistence === "supabase";
+
+  const [stockProducts, setStockProducts] =
+    useState<V2StockProduct[]>(() =>
+      isSupabasePersistence
+        ? mapPersistentStockProducts(
+            initialBusinessStock,
+          )
+        : v2StockProducts
+    );
+  const [stockMovements, setStockMovements] =
+    useState<V2StockMovementLog[]>(() =>
+      isSupabasePersistence
+        ? mapPersistentStockMovements(
+            initialBusinessStock,
+          )
+        : []
+    );
+  const [editingProduct, setEditingProduct] =
+    useState<V2StockProduct | null>(null);
+  const [
+    editingProductIsNew,
+    setEditingProductIsNew,
+  ] = useState(false);
+  const [
+    stockMutationPending,
+    setStockMutationPending,
+  ] = useState(false);
+  const [
+    stockMutationError,
+    setStockMutationError,
+  ] = useState("");
+  const [
+    movementType,
+    setMovementType,
+  ] = useState<BusinessStockMovementType>(
+    "replenishment",
   );
+  const [
+    movementQuantity,
+    setMovementQuantity,
+  ] = useState("");
+  const [
+    movementLabel,
+    setMovementLabel,
+  ] = useState("Movimiento manual de stock");
 
   useEffect(() => {
+    if (isSupabasePersistence) {
+      const nextProducts =
+        mapPersistentStockProducts(
+          initialBusinessStock,
+        );
+
+      setStockProducts(nextProducts);
+      setStockMovements(
+        mapPersistentStockMovements(
+          initialBusinessStock,
+        ),
+      );
+      setEditingProduct((current) =>
+        current
+          ? nextProducts.find(
+              (product) =>
+                product.id === current.id,
+            ) ?? current
+          : null
+      );
+
+      return;
+    }
+
     function syncStockProducts() {
       const nextProducts = readStockProductsFromStorage();
 
@@ -293,10 +554,20 @@ export function V2ProductosPage() {
       window.removeEventListener("storage", syncStockProducts);
       window.removeEventListener(STOCK_PRODUCTS_EVENT, syncStockProducts);
     };
-  }, []);
+  }, [
+    initialBusinessStock,
+    isSupabasePersistence,
+  ]);
 
   const categories = useMemo(() => {
-    return Array.from(new Set(stockProducts.map((item) => item.category))).sort((a, b) =>
+    return Array.from(
+      new Set([
+        "Almacén",
+        ...stockProducts.map(
+          (item) => item.category,
+        ),
+      ]),
+    ).sort((a, b) =>
       String(a).localeCompare(String(b), "es")
     );
   }, [stockProducts]);
@@ -331,11 +602,34 @@ export function V2ProductosPage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 12);
 
+  function resetMovementEditor() {
+    setMovementType("replenishment");
+    setMovementQuantity("");
+    setMovementLabel(
+      "Movimiento manual de stock",
+    );
+    setStockMutationError("");
+  }
+
   function openEditor(product: V2StockProduct) {
     setEditingProduct(product);
+    setEditingProductIsNew(false);
+    resetMovementEditor();
   }
 
   function openNewProduct() {
+    if (
+      isSupabasePersistence
+      && !canManageStock
+    ) {
+      setStockMutationError(
+        "No tenés permisos para modificar el stock de este local.",
+      );
+      return;
+    }
+
+    setEditingProductIsNew(true);
+    resetMovementEditor();
     setEditingProduct({
       id: `stock-${Date.now()}`,
       supplier: "Sin proveedor",
@@ -352,7 +646,11 @@ export function V2ProductosPage() {
   }
 
   function closeEditor() {
+    if (stockMutationPending) return;
+
     setEditingProduct(null);
+    setEditingProductIsNew(false);
+    setStockMutationError("");
   }
 
   function updateEditingProduct<K extends keyof V2StockProduct>(
@@ -402,6 +700,227 @@ export function V2ProductosPage() {
     writeStockProductsToStorage(nextProducts);
   }
 
+  async function handleSaveEditingProduct() {
+    if (!editingProduct) return;
+
+    if (!isSupabasePersistence) {
+      const nextEditingProduct = {
+        ...editingProduct,
+        lastUpdated: "Hoy",
+      };
+      const exists = stockProducts.some(
+        (product) =>
+          product.id === nextEditingProduct.id,
+      );
+      const nextProducts = exists
+        ? stockProducts.map((product) =>
+            product.id === nextEditingProduct.id
+              ? nextEditingProduct
+              : product
+          )
+        : [
+            ...stockProducts,
+            nextEditingProduct,
+          ];
+
+      persistStockProducts(nextProducts);
+      closeEditor();
+      return;
+    }
+
+    if (!canManageStock) {
+      setStockMutationError(
+        "No tenés permisos para modificar el stock de este local.",
+      );
+      return;
+    }
+
+    if (
+      !editingProductIsNew
+      && movementQuantity.trim() !== ""
+    ) {
+      setStockMutationError(
+        'Tenés un movimiento pendiente. Aplicalo con "Registrar movimiento" o vaciá la cantidad antes de guardar los datos del insumo.',
+      );
+      return;
+    }
+
+    setStockMutationPending(true);
+    setStockMutationError("");
+
+    try {
+      const result =
+        await saveBusinessStockProductAction({
+          productId:
+            editingProductIsNew
+              ? null
+              : editingProduct.id,
+          product: {
+            name: editingProduct.name,
+            category: editingProduct.category,
+            supplier: editingProduct.supplier,
+            unit: editingProduct.unit,
+            unitCost: editingProduct.unitCost,
+            alertBelow: editingProduct.alertBelow,
+            note: editingProduct.note,
+            isActive: true,
+          },
+        });
+
+      if (!result.ok) {
+        setStockMutationError(result.error);
+        return;
+      }
+
+      const previous = stockProducts.find(
+        (product) =>
+          product.id === result.product.id,
+      );
+
+      const savedProduct: V2StockProduct = {
+        id: result.product.id,
+        supplier: result.product.supplier,
+        unitCost: result.product.unitCost,
+        name: result.product.name,
+        category: result.product.category,
+        unit: result.product.unit as V2StockUnit,
+        totalStock:
+          previous?.totalStock ?? 0,
+        consumedBySales:
+          previous?.consumedBySales ?? 0,
+        alertBelow: result.product.alertBelow,
+        lastUpdated: result.product.updatedAt,
+        note: result.product.note,
+      };
+
+      setStockProducts((current) => {
+        const exists = current.some(
+          (product) =>
+            product.id === savedProduct.id,
+        );
+
+        return exists
+          ? current.map((product) =>
+              product.id === savedProduct.id
+                ? savedProduct
+                : product
+            )
+          : [...current, savedProduct];
+      });
+
+      setEditingProduct(null);
+      setEditingProductIsNew(false);
+      setStockMutationError("");
+    } finally {
+      setStockMutationPending(false);
+    }
+  }
+
+  async function handleRecordStockMovement() {
+    if (
+      !editingProduct
+      || editingProductIsNew
+    ) {
+      return;
+    }
+
+    if (!canManageStock) {
+      setStockMutationError(
+        "No tenés permisos para modificar el stock de este local.",
+      );
+      return;
+    }
+
+    const rawQuantity =
+      Number(movementQuantity);
+
+    if (
+      !Number.isFinite(rawQuantity)
+      || rawQuantity === 0
+    ) {
+      setStockMutationError(
+        "Ingresá una cantidad de movimiento distinta de cero.",
+      );
+      return;
+    }
+
+    let quantityDelta = rawQuantity;
+
+    if (movementType === "consumption") {
+      quantityDelta = -Math.abs(rawQuantity);
+    } else if (
+      movementType !== "adjustment"
+    ) {
+      quantityDelta = Math.abs(rawQuantity);
+    }
+
+    const defaultLabels:
+      Record<BusinessStockMovementType, string> = {
+        opening: "Stock inicial",
+        replenishment: "Reposición manual",
+        consumption: "Consumo manual",
+        return: "Devolución manual",
+        adjustment: "Ajuste manual",
+      };
+
+    setStockMutationPending(true);
+    setStockMutationError("");
+
+    try {
+      const result =
+        await recordBusinessStockMovementAction({
+          productId: editingProduct.id,
+          movement: {
+            movementType,
+            origin: "manual",
+            quantityDelta,
+            operationKey: null,
+            referenceId: null,
+            label:
+              movementLabel.trim()
+              || defaultLabels[movementType],
+            detail: "",
+            unitCost: editingProduct.unitCost,
+          },
+        });
+
+      if (!result.ok) {
+        setStockMutationError(result.error);
+        return;
+      }
+
+      const nextProduct =
+        applyPersistentMovement(
+          editingProduct,
+          result.movement,
+        );
+
+      setEditingProduct(nextProduct);
+      setStockProducts((current) =>
+        current.map((product) =>
+          product.id === nextProduct.id
+            ? nextProduct
+            : product
+        ),
+      );
+      setStockMovements((current) => [
+        mapPersistentStockMovement(
+          result.movement,
+        ),
+        ...current.filter(
+          (movement) =>
+            movement.id !== result.movement.id,
+        ),
+      ]);
+      setMovementQuantity("");
+      setMovementLabel(
+        defaultLabels[movementType],
+      );
+    } finally {
+      setStockMutationPending(false);
+    }
+  }
+
   function renderSelectableCell(product: V2StockProduct, content: ReactNode) {
     return (
       <button
@@ -422,15 +941,30 @@ export function V2ProductosPage() {
     if (!editingProduct) return;
 
     function handleEscapeKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeEditor();
+      if (
+        event.key === "Escape"
+        && !stockMutationPending
+      ) {
+        setEditingProduct(null);
+        setEditingProductIsNew(false);
+        setStockMutationError("");
       }
     }
 
-    window.addEventListener("keydown", handleEscapeKey);
+    window.addEventListener(
+      "keydown",
+      handleEscapeKey,
+    );
 
-    return () => window.removeEventListener("keydown", handleEscapeKey);
-  }, [editingProduct]);
+    return () =>
+      window.removeEventListener(
+        "keydown",
+        handleEscapeKey,
+      );
+  }, [
+    editingProduct,
+    stockMutationPending,
+  ]);
 
   return (
     <V2AppShell>
@@ -448,7 +982,15 @@ export function V2ProductosPage() {
                 Ver historial
               </Link>
 
-              <V2Button variant="primary" icon={<PackagePlus size={18} />} onClick={openNewProduct}>
+              <V2Button
+                variant="primary"
+                icon={<PackagePlus size={18} />}
+                onClick={openNewProduct}
+                disabled={
+                  isSupabasePersistence
+                  && !canManageStock
+                }
+              >
                 Nuevo insumo
               </V2Button>
             </div>
@@ -629,7 +1171,13 @@ export function V2ProductosPage() {
                   },
                   {
                     header: "Actualizado",
-                    cell: (row) => renderSelectableCell(row, row.lastUpdated),
+                    cell: (row) =>
+                      renderSelectableCell(
+                        row,
+                        formatStockUpdatedAt(
+                          row.lastUpdated,
+                        ),
+                      ),
                   },
                   {
                     header: "Stock",
@@ -641,7 +1189,11 @@ export function V2ProductosPage() {
                           variant="success"
                           onClick={() => openEditor(row)}
                         >
-                          Editar
+                          {isSupabasePersistence
+                            ? canManageStock
+                              ? "Editar"
+                              : "Ver"
+                            : "Editar"}
                         </V2Button>
                       </div>
                     ),
@@ -748,7 +1300,7 @@ export function V2ProductosPage() {
                     Movimientos recientes
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Descuentos y devoluciones de stock.
+                    Ingresos, consumos, devoluciones y ajustes.
                   </p>
                 </div>
                 <V2Badge tone="blue">{recentStockMovements.length}</V2Badge>
@@ -855,6 +1407,10 @@ export function V2ProductosPage() {
                 <V2Field label="Nombre">
                   <V2Input
                     value={editingProduct.name}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) => updateEditingProduct("name", event.target.value)}
                   />
                 </V2Field>
@@ -862,6 +1418,10 @@ export function V2ProductosPage() {
                 <V2Field label="Categoría">
                   <V2Select
                     value={editingProduct.category}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) =>
                       updateEditingProduct(
                         "category",
@@ -880,6 +1440,10 @@ export function V2ProductosPage() {
                 <V2Field label="Proveedor">
                   <V2Input
                     value={editingProduct.supplier}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) => updateEditingProduct("supplier", event.target.value)}
                   />
                 </V2Field>
@@ -888,6 +1452,10 @@ export function V2ProductosPage() {
                   <V2Input
                     type="number"
                     value={editingProduct.unitCost}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) =>
                       updateEditingProduct("unitCost", Number(event.target.value) || 0)
                     }
@@ -898,6 +1466,7 @@ export function V2ProductosPage() {
                   <V2Input
                     type="number"
                     value={editingProduct.totalStock}
+                    disabled={isSupabasePersistence}
                     onChange={(event) =>
                       updateEditingProduct("totalStock", Number(event.target.value) || 0)
                     }
@@ -907,6 +1476,10 @@ export function V2ProductosPage() {
                 <V2Field label="Unidad">
                   <V2Select
                     value={editingProduct.unit}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) =>
                       updateEditingProduct("unit", event.target.value as V2StockProduct["unit"])
                     }
@@ -923,6 +1496,7 @@ export function V2ProductosPage() {
                   <V2Input
                     type="number"
                     value={editingProduct.consumedBySales}
+                    disabled={isSupabasePersistence}
                     onChange={(event) =>
                       updateEditingProduct("consumedBySales", Number(event.target.value) || 0)
                     }
@@ -933,6 +1507,10 @@ export function V2ProductosPage() {
                   <V2Input
                     type="number"
                     value={editingProduct.alertBelow}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) =>
                       updateEditingProduct("alertBelow", Number(event.target.value) || 0)
                     }
@@ -973,7 +1551,9 @@ export function V2ProductosPage() {
                     Última actualización
                   </p>
                   <p className="mt-1 text-lg font-bold text-slate-950">
-                    {editingProduct.lastUpdated}
+                    {formatStockUpdatedAt(
+                      editingProduct.lastUpdated,
+                    )}
                   </p>
                 </div>
               </div>
@@ -982,10 +1562,133 @@ export function V2ProductosPage() {
                 <V2Field label="Nota">
                   <V2Textarea
                     value={editingProduct.note}
+                    disabled={
+                      isSupabasePersistence
+                      && !canManageStock
+                    }
                     onChange={(event) => updateEditingProduct("note", event.target.value)}
                   />
                 </V2Field>
               </div>
+
+              {isSupabasePersistence ? (
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-950">
+                        Registrar movimiento
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        En Supabase, el stock se modifica con movimientos auditables.
+                      </p>
+                    </div>
+                    <V2Badge tone="blue">
+                      Ledger
+                    </V2Badge>
+                  </div>
+
+                  {editingProductIsNew ? (
+                    <p className="mt-4 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
+                      Guardá primero el insumo. Después podrás registrar su stock inicial o una reposición.
+                    </p>
+                  ) : canManageStock ? (
+                    <>
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <V2Field label="Tipo">
+                          <V2Select
+                            value={movementType}
+                            disabled={stockMutationPending}
+                            onChange={(event) =>
+                              setMovementType(
+                                event.target.value as BusinessStockMovementType,
+                              )
+                            }
+                          >
+                            <option value="opening">
+                              Stock inicial
+                            </option>
+                            <option value="replenishment">
+                              Reposición
+                            </option>
+                            <option value="consumption">
+                              Consumo manual
+                            </option>
+                            <option value="return">
+                              Devolución
+                            </option>
+                            <option value="adjustment">
+                              Ajuste
+                            </option>
+                          </V2Select>
+                        </V2Field>
+
+                        <V2Field label="Cantidad">
+                          <V2Input
+                            type="number"
+                            value={movementQuantity}
+                            disabled={stockMutationPending}
+                            placeholder={
+                              movementType === "adjustment"
+                                ? "Ej. 5 o -2"
+                                : "Ej. 5"
+                            }
+                            onChange={(event) =>
+                              setMovementQuantity(
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </V2Field>
+
+                        <V2Field label="Descripción">
+                          <V2Input
+                            value={movementLabel}
+                            disabled={stockMutationPending}
+                            onChange={(event) =>
+                              setMovementLabel(
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </V2Field>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="max-w-xl text-xs text-slate-500">
+                          El movimiento se aplica únicamente con
+                          {" "}
+                          <span className="font-semibold text-slate-700">
+                            Registrar movimiento
+                          </span>
+                          . Guardar los datos del insumo no modifica existencias.
+                        </p>
+
+                        <V2Button
+                          variant="secondary"
+                          disabled={stockMutationPending}
+                          onClick={() => {
+                            void handleRecordStockMovement();
+                          }}
+                        >
+                          {stockMutationPending
+                            ? "Registrando..."
+                            : "Registrar movimiento"}
+                        </V2Button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="mt-4 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
+                      Tu rol tiene acceso de solo lectura al stock.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {stockMutationError ? (
+                <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {stockMutationError}
+                </p>
+              ) : null}
             </div>
 
             <div className="flex justify-end gap-2 border-t border-slate-200 p-6">
@@ -994,25 +1697,27 @@ export function V2ProductosPage() {
               </V2Button>
               <V2Button
                 variant="primary"
+                disabled={
+                  stockMutationPending
+                  || (
+                    isSupabasePersistence
+                    && !canManageStock
+                  )
+                  || (
+                    isSupabasePersistence
+                    && !editingProductIsNew
+                    && movementQuantity.trim() !== ""
+                  )
+                }
                 onClick={() => {
-                  if (!editingProduct) return;
-
-                  const nextEditingProduct = {
-                    ...editingProduct,
-                    lastUpdated: "Hoy",
-                  };
-                  const exists = stockProducts.some((product) => product.id === nextEditingProduct.id);
-                  const nextProducts = exists
-                    ? stockProducts.map((product) =>
-                        product.id === nextEditingProduct.id ? nextEditingProduct : product
-                      )
-                    : [...stockProducts, nextEditingProduct];
-
-                  persistStockProducts(nextProducts);
-                  closeEditor();
+                  void handleSaveEditingProduct();
                 }}
               >
-                Guardar cambios
+                {stockMutationPending
+                  ? "Guardando..."
+                  : isSupabasePersistence
+                    ? "Guardar datos del insumo"
+                    : "Guardar cambios"}
               </V2Button>
             </div>
           </div>
