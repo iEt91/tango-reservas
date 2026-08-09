@@ -27,6 +27,8 @@ const menuPromotionsPath =
   "supabase/migrations/20260807_012_menu_promotions_rpc.sql";
 const staffRolesPath =
   "supabase/migrations/20260808_013_staff_roles_permissions.sql";
+const stockWritePath =
+  "supabase/migrations/20260809_014_stock_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -69,6 +71,10 @@ const menuPromotions = await readFile(
 );
 const staffRoles = await readFile(
   staffRolesPath,
+  "utf8",
+);
+const stockWrite = await readFile(
+  stockWritePath,
   "utf8",
 );
 
@@ -359,6 +365,19 @@ assert.match(staffRoles, /force row level security/u);
 assert.match(staffRoles, /revoke all on table public\.staff_roles/u);
 console.log("✓ Staff agrega roles, permisos, notas privadas y reautenticación segura");
 
+assert.match(stockWrite, /create table if not exists public\.stock_products/u);
+assert.match(stockWrite, /create table if not exists public\.stock_movements/u);
+assert.match(stockWrite, /current_user_has_module_access/u);
+assert.match(stockWrite, /record_business_stock_movement/u);
+assert.match(stockWrite, /stock_movements_operation_key_key/u);
+assert.match(stockWrite, /stock_movements_product_tenant_fk/u);
+assert.match(stockWrite, /force row level security/u);
+assert.match(
+  stockWrite,
+  /revoke all on table public\.stock_products[\s\S]+public, anon, authenticated/u,
+);
+console.log("✓ Stock agrega catálogo, ledger idempotente y permisos por módulo");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -372,4 +391,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (14).");
+console.log("Todos los casos del historial remoto pasaron (15).");
