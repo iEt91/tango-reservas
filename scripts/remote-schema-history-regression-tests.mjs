@@ -29,6 +29,8 @@ const staffRolesPath =
   "supabase/migrations/20260808_013_staff_roles_permissions.sql";
 const stockWritePath =
   "supabase/migrations/20260809_014_stock_write_rpc.sql";
+const recipesWritePath =
+  "supabase/migrations/20260809_015_recipes_write_rpc.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -75,6 +77,10 @@ const staffRoles = await readFile(
 );
 const stockWrite = await readFile(
   stockWritePath,
+  "utf8",
+);
+const recipesWrite = await readFile(
+  recipesWritePath,
   "utf8",
 );
 
@@ -378,6 +384,40 @@ assert.match(
 );
 console.log("✓ Stock agrega catálogo, ledger idempotente y permisos por módulo");
 
+assert.match(
+  recipesWrite,
+  /create table if not exists public\.menu_recipes/u,
+);
+assert.match(
+  recipesWrite,
+  /create table if not exists public\.menu_recipe_ingredients/u,
+);
+assert.match(
+  recipesWrite,
+  /save_business_menu_recipe/u,
+);
+assert.match(
+  recipesWrite,
+  /menu_recipes_menu_item_tenant_fk/u,
+);
+assert.match(
+  recipesWrite,
+  /menu_recipe_ingredients_stock_product_tenant_fk/u,
+);
+assert.match(
+  recipesWrite,
+  /current_user_has_module_access/u,
+);
+assert.match(
+  recipesWrite,
+  /force row level security/u,
+);
+assert.match(
+  recipesWrite,
+  /revoke all on table public\.menu_recipes[\s\S]+public, anon, authenticated/u,
+);
+console.log("✓ Recetas agrega composición tenant-safe y escritura RPC");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -391,4 +431,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (15).");
+console.log("Todos los casos del historial remoto pasaron (16).");
