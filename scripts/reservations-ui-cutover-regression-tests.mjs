@@ -157,15 +157,12 @@ check(
 );
 
 check(
-  "reservas Supabase no se sincronizan con localStorage",
+  "reservas y menú Supabase no se sincronizan con localStorage",
   sources.ui.includes(
-    "if (isSupabasePersistence) {",
+    "if (isSupabasePersistence) {\n      return;\n    }\n\n    function syncReservationsFromStorage",
   )
     && sources.ui.includes(
-      "syncMenuFromStorage();",
-    )
-    && sources.ui.includes(
-      "if (isSupabasePersistence) return;",
+      "persistentMenuItems",
     ),
 );
 
@@ -256,12 +253,15 @@ check(
 );
 
 check(
-  "consumo y pago local quedan bloqueados en Supabase",
+  "el consumo usa el cutover posterior y Caja/Pagos siguen bloqueados",
   sources.ui.includes(
-    "El consumo, la caja y los pagos persistentes todavía no están habilitados",
+    "saveBusinessReservationConsumptionAction",
   )
     && sources.ui.includes(
       "function openOrderPopup",
+    )
+    && sources.ui.includes(
+      "La caja y los pagos persistentes todavía no están habilitados",
     )
     && sources.ui.includes(
       "function openPaymentCloseModal",

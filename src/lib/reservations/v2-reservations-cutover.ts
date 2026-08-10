@@ -46,6 +46,7 @@ export type V2PersistentReservationSnapshot = {
   reservationCode: string;
   createdAt: string;
   confirmedAt?: string;
+  consumptionStartedAt?: string;
   completedAt?: string;
   cancelledAt?: string;
   noShowAt?: string;
@@ -148,6 +149,9 @@ export function mapBusinessReservationToV2Draft(
     createdAt: reservation.createdAt,
     confirmedAt:
       reservation.confirmedAt || undefined,
+    consumptionStartedAt:
+      reservation.consumptionStartedAt
+      || undefined,
     completedAt:
       reservation.completedAt || undefined,
     cancelledAt:

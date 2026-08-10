@@ -38,6 +38,7 @@ export type BusinessReservationEditor = {
   createdAt: string;
   updatedAt: string;
   confirmedAt: string;
+  consumptionStartedAt?: string;
   completedAt: string;
   cancelledAt: string;
   noShowAt: string;
@@ -62,6 +63,7 @@ export type BusinessReservationDatabaseRow = {
   created_at: string;
   updated_at: string;
   confirmed_at: string | null;
+  consumption_started_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
   no_show_at: string | null;
@@ -307,6 +309,9 @@ export function normalizeBusinessReservation(
     createdAt: normalizeOptionalTimestamp(data.createdAt),
     updatedAt: normalizeOptionalTimestamp(data.updatedAt),
     confirmedAt: normalizeOptionalTimestamp(data.confirmedAt),
+    consumptionStartedAt: normalizeOptionalTimestamp(
+      data.consumptionStartedAt,
+    ),
     completedAt: normalizeOptionalTimestamp(data.completedAt),
     cancelledAt: normalizeOptionalTimestamp(data.cancelledAt),
     noShowAt: normalizeOptionalTimestamp(data.noShowAt),
@@ -334,6 +339,8 @@ export function mapBusinessReservationRow(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     confirmedAt: row.confirmed_at ?? "",
+    consumptionStartedAt:
+      row.consumption_started_at ?? "",
     completedAt: row.completed_at ?? "",
     cancelledAt: row.cancelled_at ?? "",
     noShowAt: row.no_show_at ?? "",

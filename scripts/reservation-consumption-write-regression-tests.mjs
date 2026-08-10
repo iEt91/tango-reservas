@@ -15,8 +15,6 @@ const actionPath =
   "src/app/local/reservas/consumption-actions.ts";
 const docsPath =
   "docs/database/RESERVATION-CONSUMPTION-WRITE-RPC.md";
-const reservationUiPath =
-  "src/app/local/reservas/v2-reservas-page.tsx";
 
 const [
   migration,
@@ -26,7 +24,6 @@ const [
   reader,
   action,
   docs,
-  reservationUi,
   packageText,
   remoteHistory,
   manifest,
@@ -38,7 +35,6 @@ const [
   readFile(readerPath, "utf8"),
   readFile(actionPath, "utf8"),
   readFile(docsPath, "utf8"),
-  readFile(reservationUiPath, "utf8"),
   readFile("package.json", "utf8"),
   readFile(
     "scripts/remote-schema-history-regression-tests.mjs",
@@ -389,23 +385,19 @@ console.log(
 );
 
 assert.match(
-  reservationUi,
-  /El consumo, la caja y los pagos persistentes todavía no están habilitados/u,
-);
-assert.doesNotMatch(
-  reservationUi,
-  /saveBusinessReservationConsumptionAction/u,
-);
-assert.match(
   docs,
   /No hace todavía el corte visual/u,
 );
 assert.match(
   docs,
-  /no requiere QA visual/u,
+  /E31B/u,
+);
+assert.doesNotMatch(
+  migration,
+  /localStorage/u,
 );
 console.log(
-  "✓ E31A no conecta prematuramente la UI ni mezcla localStorage con Stock",
+  "✓ E31A mantiene backend canónico y admite un cutover UI posterior",
 );
 
 const packageJson =
@@ -444,7 +436,7 @@ assert.match(
 );
 assert.match(
   remoteHistory,
-  /historial remoto pasaron \(18\)/u,
+  /const reservationConsumptionWrite = await readFile\([\s\S]+reservationConsumptionWritePath/u,
 );
 console.log(
   "✓ manifiesto e historial remoto incorporan migración 017",

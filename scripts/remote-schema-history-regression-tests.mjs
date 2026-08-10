@@ -35,6 +35,8 @@ const recipeStockConsumptionPath =
   "supabase/migrations/20260809_016_recipe_stock_consumption.sql";
 const reservationConsumptionWritePath =
   "supabase/migrations/20260810_017_reservation_consumption_write.sql";
+const stockRealtimeSyncPath =
+  "supabase/migrations/20260810_018_stock_realtime_sync.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -93,6 +95,10 @@ const recipeStockConsumption = await readFile(
 );
 const reservationConsumptionWrite = await readFile(
   reservationConsumptionWritePath,
+  "utf8",
+);
+const stockRealtimeSync = await readFile(
+  stockRealtimeSyncPath,
   "utf8",
 );
 
@@ -486,6 +492,20 @@ assert.match(
 );
 console.log("✓ Consumo de Reserva agrega pedido transaccional y devolución histórica");
 
+assert.match(
+  stockRealtimeSync,
+  /alter publication supabase_realtime/u,
+);
+assert.match(
+  stockRealtimeSync,
+  /add table public\.stock_movements/u,
+);
+assert.match(
+  stockRealtimeSync,
+  /pg_publication_tables/u,
+);
+console.log("✓ Stock Realtime publica el ledger sin relajar RLS");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -499,4 +519,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (18).");
+console.log("Todos los casos del historial remoto pasaron (19).");

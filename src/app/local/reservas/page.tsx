@@ -4,6 +4,8 @@ import { resolveActiveBusiness } from "@/lib/auth/active-business";
 import { buildLoginPath } from "@/lib/auth/redirects";
 import { getDataSource } from "@/lib/data/dataSource";
 import { getBusinessHoursForBusiness } from "@/lib/data/server/business-hours";
+import { getBusinessMenuForBusiness } from "@/lib/data/server/business-menu";
+import { getBusinessDineInOrdersForReservations } from "@/lib/data/server/business-orders";
 import { getBusinessCustomersForBusiness } from "@/lib/data/server/business-customers";
 import { getBusinessFloorPlanForBusiness } from "@/lib/data/server/business-floor-plan";
 import { getBusinessReservationsForBusiness } from "@/lib/data/server/business-reservations";
@@ -52,11 +54,13 @@ export default async function ReservasPage() {
     reservationSettings,
     services,
     customers,
+    menu,
   ] = await Promise.all([
     getBusinessHoursForBusiness(businessId),
     getReservationSettingsForBusiness(businessId),
     getBusinessServicesForBusiness(businessId),
     getBusinessCustomersForBusiness(businessId),
+    getBusinessMenuForBusiness(businessId),
   ]);
   const today = new Date().toISOString().slice(0, 10);
   const bookingWindowDays =
@@ -72,15 +76,22 @@ export default async function ReservasPage() {
         ),
       },
     );
-  const floorPlan =
-    await getBusinessFloorPlanForBusiness(
-      businessId,
-      {
-        reservationIds: reservations
-          .map((reservation) => reservation.id ?? "")
-          .filter(Boolean),
-      },
-    );
+  const reservationIds = reservations
+    .map((reservation) => reservation.id ?? "")
+    .filter(Boolean);
+  const [floorPlan, dineInOrders] =
+    await Promise.all([
+      getBusinessFloorPlanForBusiness(
+        businessId,
+        {
+          reservationIds,
+        },
+      ),
+      getBusinessDineInOrdersForReservations(
+        businessId,
+        reservationIds,
+      ),
+    ]);
   const snapshot = buildV2ReservationsSnapshot({
     reservations,
     services,
@@ -94,12 +105,75 @@ export default async function ReservasPage() {
     "admin",
     "staff",
   ].includes(activeBusiness.membership.role);
+  const persistentMenuItems = menu.items
+    .filter(
+      (item) =>
+        item.status === "available"
+        && item.isVisible,
+    )
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      category:
+        item.categoryId
+        || "sin-categoria",
+    }))
+    .sort((first, second) =>
+      first.name.localeCompare(
+        second.name,
+        "es",
+      ),
+    );
+  const categoryIdsWithItems = new Set(
+    persistentMenuItems.map(
+      (item) => item.category,
+    ),
+  );
+  const persistentMenuCategories = [
+    {
+      id: "all",
+      label: "Todos",
+    },
+    ...(categoryIdsWithItems.has(
+      "sin-categoria",
+    )
+      ? [
+          {
+            id: "sin-categoria",
+            label: "Sin categoría",
+          },
+        ]
+      : []),
+    ...menu.categories
+      .filter(
+        (category) =>
+          category.isVisible
+          && category.isActive
+          && categoryIdsWithItems.has(
+            category.id,
+          ),
+      )
+      .sort((first, second) =>
+        first.name.localeCompare(
+          second.name,
+          "es",
+        ),
+      )
+      .map((category) => ({
+        id: category.id,
+        label: category.name,
+      })),
+  ];
 
   return (
     <V2ReservasPage
       {...snapshot}
       reservationPersistence="supabase"
       canManageReservations={canManageReservations}
+      persistentMenuItems={persistentMenuItems}
+      persistentMenuCategories={persistentMenuCategories}
+      initialPersistentOrders={dineInOrders}
     />
   );
 }

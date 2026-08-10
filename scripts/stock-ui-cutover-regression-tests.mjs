@@ -292,9 +292,13 @@ assert.match(
   ui,
   /persistStockProducts/u,
 );
-assert.doesNotMatch(
+assert.match(
   ui,
-  /createClient\(/u,
+  /createSupabaseBrowserClient/u,
+);
+assert.match(
+  ui,
+  /postgres_changes/u,
 );
 assert.doesNotMatch(
   ui,
@@ -305,7 +309,7 @@ assert.doesNotMatch(
   /\.from\("stock_movements"\)/u,
 );
 console.log(
-  "✓ el componente cliente no crea Supabase ni hace DML directo",
+  "✓ el cliente Supabase se limita a suscripción Realtime y conserva DML bloqueado",
 );
 
 assert.match(

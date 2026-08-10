@@ -6,7 +6,7 @@ import {
 import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
 
 const BUSINESS_RESERVATION_SELECT =
-  "id, business_id, service_id, customer_id, customer_name, customer_phone, customer_email, reservation_date, reservation_time, party_size, status, notes, source, duration_minutes, public_code, created_at, updated_at, confirmed_at, completed_at, cancelled_at, no_show_at" as const;
+  "id, business_id, service_id, customer_id, customer_name, customer_phone, customer_email, reservation_date, reservation_time, party_size, status, notes, source, duration_minutes, public_code, created_at, updated_at, confirmed_at, consumption_started_at, completed_at, cancelled_at, no_show_at" as const;
 
 export async function getBusinessReservationsForBusiness(
   businessId: string,

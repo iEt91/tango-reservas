@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   Boxes,
@@ -22,11 +23,15 @@ import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import type {
   BusinessStockMovement,
+  BusinessStockMovementDatabaseRow,
   BusinessStockMovementType,
   BusinessStockProductSnapshot,
   BusinessStockSnapshot,
 } from "@/lib/stock/business-stock-contract";
+import { mapBusinessStockMovementRow } from "@/lib/stock/business-stock-contract";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+import { subscribeV2ServerSync } from "@/lib/v2-server-sync";
+import { createSupabaseBrowserClient } from "@/lib/supabase/auth-browser";
 import {
   recordBusinessStockMovementAction,
   saveBusinessStockProductAction,
@@ -53,6 +58,7 @@ type V2StockProduct = {
 type V2ProductosPageProps = {
   initialBusinessStock?: BusinessStockSnapshot;
   stockPersistence?: "local" | "supabase";
+  businessId?: string;
   canManageStock?: boolean;
 };
 
@@ -458,10 +464,27 @@ function getStockMiniCardToneClass(product: V2StockProduct) {
 export function V2ProductosPage({
   initialBusinessStock,
   stockPersistence = "local",
+  businessId,
   canManageStock = true,
 }: V2ProductosPageProps = {}) {
   const isSupabasePersistence =
     stockPersistence === "supabase";
+  const router = useRouter();
+  const stockRealtimeReadyRef = useRef(false);
+  const appliedPersistentMovementIdsRef = useRef(
+    new Set(
+      (initialBusinessStock?.movements ?? []).map(
+        (movement) => movement.id,
+      ),
+    ),
+  );
+  const knownStockProductIdsRef = useRef(
+    new Set(
+      (initialBusinessStock?.products ?? []).map(
+        (product) => product.id,
+      ),
+    ),
+  );
 
   const [stockProducts, setStockProducts] =
     useState<V2StockProduct[]>(() =>
@@ -509,6 +532,256 @@ export function V2ProductosPage({
   ] = useState("Movimiento manual de stock");
 
   useEffect(() => {
+    knownStockProductIdsRef.current =
+      new Set(
+        stockProducts.map(
+          (product) => product.id,
+        ),
+      );
+  }, [stockProducts]);
+
+  useEffect(() => {
+    if (
+      !isSupabasePersistence
+      || !businessId
+    ) {
+      return;
+    }
+
+    let refreshTimer: number | null = null;
+    let disposed = false;
+
+    function refreshPersistentStock() {
+      if (
+        disposed
+        || refreshTimer !== null
+      ) {
+        return;
+      }
+
+      refreshTimer = window.setTimeout(
+        () => {
+          refreshTimer = null;
+          router.refresh();
+        },
+        25,
+      );
+    }
+
+    function applyRealtimeStockMovement(
+      movement: BusinessStockMovement,
+    ) {
+      if (
+        appliedPersistentMovementIdsRef.current.has(
+          movement.id,
+        )
+      ) {
+        return;
+      }
+
+      if (
+        !knownStockProductIdsRef.current.has(
+          movement.productId,
+        )
+      ) {
+        refreshPersistentStock();
+        return;
+      }
+
+      appliedPersistentMovementIdsRef.current.add(
+        movement.id,
+      );
+
+      setStockProducts((current) =>
+        current.map((product) =>
+          product.id === movement.productId
+            ? applyPersistentMovement(
+                product,
+                movement,
+              )
+            : product
+        )
+      );
+      setEditingProduct((current) =>
+        current?.id === movement.productId
+          ? applyPersistentMovement(
+              current,
+              movement,
+            )
+          : current
+      );
+      setStockMovements((current) => [
+        mapPersistentStockMovement(
+          movement,
+        ),
+        ...current.filter(
+          (item) =>
+            item.id !== movement.id,
+        ),
+      ].slice(0, 500));
+    }
+
+    const unsubscribeStockSync =
+      subscribeV2ServerSync(
+        "stock",
+        () => {
+          if (!stockRealtimeReadyRef.current) {
+            refreshPersistentStock();
+          }
+        },
+      );
+
+    function handlePersistentStockFocus() {
+      if (!stockRealtimeReadyRef.current) {
+        refreshPersistentStock();
+      }
+    }
+
+    function handlePersistentStockVisibility() {
+      if (
+        document.visibilityState === "visible"
+        && !stockRealtimeReadyRef.current
+      ) {
+        refreshPersistentStock();
+      }
+    }
+
+    window.addEventListener(
+      "focus",
+      handlePersistentStockFocus,
+    );
+    document.addEventListener(
+      "visibilitychange",
+      handlePersistentStockVisibility,
+    );
+
+    const supabase =
+      createSupabaseBrowserClient();
+    let channel:
+      | ReturnType<
+          NonNullable<
+            typeof supabase
+          >["channel"]
+        >
+      | null = null;
+
+    async function subscribePersistentStockRealtime() {
+      if (
+        !supabase
+        || disposed
+      ) {
+        return;
+      }
+
+      const {
+        data: sessionData,
+        error: sessionError,
+      } =
+        await supabase.auth.getSession();
+
+      if (disposed) {
+        return;
+      }
+
+      const accessToken =
+        sessionData.session?.access_token;
+
+      if (
+        sessionError
+        || !accessToken
+      ) {
+        refreshPersistentStock();
+        return;
+      }
+
+      await supabase.realtime.setAuth(
+        accessToken,
+      );
+
+      if (disposed) {
+        return;
+      }
+
+      channel = supabase
+        .channel(
+          createV2OperationalId(
+            "stock-realtime-" + businessId,
+          ),
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "stock_movements",
+            filter: "business_id=eq." + businessId,
+          },
+          (payload) => {
+            try {
+              const movement =
+                mapBusinessStockMovementRow(
+                  payload.new as unknown as BusinessStockMovementDatabaseRow,
+                );
+
+              applyRealtimeStockMovement(
+                movement,
+              );
+            } catch {
+              refreshPersistentStock();
+            }
+          },
+        )
+        .subscribe((status) => {
+          stockRealtimeReadyRef.current =
+            status === "SUBSCRIBED";
+
+          if (
+            status === "CHANNEL_ERROR"
+            || status === "TIMED_OUT"
+          ) {
+            refreshPersistentStock();
+          }
+        });
+    }
+
+    void subscribePersistentStockRealtime();
+
+    return () => {
+      disposed = true;
+      stockRealtimeReadyRef.current = false;
+
+      if (refreshTimer !== null) {
+        window.clearTimeout(
+          refreshTimer,
+        );
+      }
+
+      unsubscribeStockSync();
+      window.removeEventListener(
+        "focus",
+        handlePersistentStockFocus,
+      );
+      document.removeEventListener(
+        "visibilitychange",
+        handlePersistentStockVisibility,
+      );
+
+      if (
+        supabase
+        && channel
+      ) {
+        void supabase.removeChannel(
+          channel,
+        );
+      }
+    };
+  }, [
+    businessId,
+    isSupabasePersistence,
+    router,
+  ]);
+
+  useEffect(() => {
     if (isSupabasePersistence) {
       const nextProducts =
         mapPersistentStockProducts(
@@ -521,6 +794,12 @@ export function V2ProductosPage({
           initialBusinessStock,
         ),
       );
+      appliedPersistentMovementIdsRef.current =
+        new Set(
+          (initialBusinessStock?.movements ?? []).map(
+            (movement) => movement.id,
+          ),
+        );
       setEditingProduct((current) =>
         current
           ? nextProducts.find(
@@ -889,29 +1168,39 @@ export function V2ProductosPage({
         return;
       }
 
-      const nextProduct =
-        applyPersistentMovement(
-          editingProduct,
-          result.movement,
+      if (
+        !appliedPersistentMovementIdsRef.current.has(
+          result.movement.id,
+        )
+      ) {
+        appliedPersistentMovementIdsRef.current.add(
+          result.movement.id,
         );
 
-      setEditingProduct(nextProduct);
-      setStockProducts((current) =>
-        current.map((product) =>
-          product.id === nextProduct.id
-            ? nextProduct
-            : product
-        ),
-      );
-      setStockMovements((current) => [
-        mapPersistentStockMovement(
-          result.movement,
-        ),
-        ...current.filter(
-          (movement) =>
-            movement.id !== result.movement.id,
-        ),
-      ]);
+        const nextProduct =
+          applyPersistentMovement(
+            editingProduct,
+            result.movement,
+          );
+
+        setEditingProduct(nextProduct);
+        setStockProducts((current) =>
+          current.map((product) =>
+            product.id === nextProduct.id
+              ? nextProduct
+              : product
+          ),
+        );
+        setStockMovements((current) => [
+          mapPersistentStockMovement(
+            result.movement,
+          ),
+          ...current.filter(
+            (movement) =>
+              movement.id !== result.movement.id,
+          ),
+        ]);
+      }
       setMovementQuantity("");
       setMovementLabel(
         defaultLabels[movementType],

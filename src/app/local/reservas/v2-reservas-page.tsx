@@ -37,6 +37,9 @@ import {
   saveBusinessReservationAction,
   setBusinessReservationStatusAction,
 } from "./actions";
+import { saveBusinessReservationConsumptionAction } from "./consumption-actions";
+import type { BusinessDineInOrder } from "@/lib/orders/business-order-contract";
+import { publishV2ServerSync } from "@/lib/v2-server-sync";
 import {
   mapBusinessReservationToV2Draft,
   type V2PersistentReservationCustomer,
@@ -1104,6 +1107,49 @@ function calculateOrderLineItemsTotal(lineItems?: V2ReservationOrderLineItem[]) 
   );
 }
 
+function hydrateReservationWithPersistentOrder(
+  reservation: V2ReservationDraft,
+  order: BusinessDineInOrder | null
+): V2ReservationDraft {
+  const lineItems = (order?.items ?? []).map((item) => ({
+    menuItemId: item.menuItemId,
+    name: item.name,
+    price: item.unitPrice,
+    quantity: item.quantity,
+  }));
+
+  return {
+    ...reservation,
+    orderItems: buildOrderItemsTextFromLineItems(lineItems),
+    orderLineItems: lineItems,
+    orderTotal: order?.subtotal ?? 0,
+    stockDiscounted: lineItems.length > 0,
+    stockReturned:
+      lineItems.length === 0
+      && Boolean(reservation.consumptionStartedAt),
+  };
+}
+
+function hydratePersistentReservationOrders(
+  reservations: V2ReservationDraft[],
+  orders: BusinessDineInOrder[]
+) {
+  const ordersByReservationId = new Map(
+    orders.map((order) => [
+      order.reservationId,
+      order,
+    ]),
+  );
+
+  return reservations.map((reservation) =>
+    hydrateReservationWithPersistentOrder(
+      reservation,
+      ordersByReservationId.get(reservation.id)
+      ?? null,
+    ),
+  );
+}
+
 function timeToMinutes(time: string) {
   const [hours = "0", minutes = "0"] = time.split(":");
   const parsedHours = Number(hours);
@@ -1560,6 +1606,9 @@ type V2ReservasPageProps = {
   initialLocalConfig?: V2LocalConfigState;
   persistentServices?: V2PersistentReservationService[];
   persistentCustomers?: V2PersistentReservationCustomer[];
+  persistentMenuItems?: V2MenuOrderItem[];
+  persistentMenuCategories?: { id: V2MenuCategory; label: string }[];
+  initialPersistentOrders?: BusinessDineInOrder[];
   reservationPersistence?: "local" | "supabase";
   canManageReservations?: boolean;
 };
@@ -1570,13 +1619,23 @@ export function V2ReservasPage({
   initialLocalConfig = DEFAULT_LOCAL_CONFIG,
   persistentServices = [],
   persistentCustomers = [],
+  persistentMenuItems = [],
+  persistentMenuCategories = [],
+  initialPersistentOrders = [],
   reservationPersistence = "local",
   canManageReservations = true,
 }: V2ReservasPageProps = {}) {
   const isSupabasePersistence =
     reservationPersistence === "supabase";
   const [reservations, setReservations] =
-    useState<V2ReservationDraft[]>(initialReservations);
+    useState<V2ReservationDraft[]>(() =>
+      isSupabasePersistence
+        ? hydratePersistentReservationOrders(
+            initialReservations,
+            initialPersistentOrders,
+          )
+        : initialReservations
+    );
   const [hasLoadedStoredReservations, setHasLoadedStoredReservations] =
     useState(isSupabasePersistence);
   const [floorTables, setFloorTables] =
@@ -1590,6 +1649,7 @@ export function V2ReservasPage({
   const [reservationOperationError, setReservationOperationError] =
     useState("");
   const reservationSaveKeyRef = useRef<string | null>(null);
+  const reservationConsumptionMutationRef = useRef(false);
   const defaultPersistentServiceId =
     persistentServices.find((service) => service.isActive)?.id
     ?? "";
@@ -1644,10 +1704,24 @@ export function V2ReservasPage({
     : null;
   const [selectedMenuCategory, setSelectedMenuCategory] =
     useState<V2MenuCategory>("all");
+  const [persistentQuantityDrafts, setPersistentQuantityDrafts] =
+    useState<Record<string, string>>({});
   const [menuOrderItems, setMenuOrderItems] =
-    useState<V2MenuOrderItem[]>(FALLBACK_MENU_ORDER_ITEMS);
+    useState<V2MenuOrderItem[]>(() =>
+      isSupabasePersistence
+        ? persistentMenuItems
+        : FALLBACK_MENU_ORDER_ITEMS
+    );
   const [menuOrderCategories, setMenuOrderCategories] =
-    useState<{ id: V2MenuCategory; label: string }[]>(FALLBACK_MENU_CATEGORIES);
+    useState<{ id: V2MenuCategory; label: string }[]>(() =>
+      isSupabasePersistence
+        ? (
+            persistentMenuCategories.length > 0
+              ? persistentMenuCategories
+              : [{ id: "all", label: "Todos" }]
+          )
+        : FALLBACK_MENU_CATEGORIES
+    );
   const [stockDecisionReservation, setStockDecisionReservation] =
     useState<{ reservationId: string; status: V2ReservationStatus } | null>(null);
   const [paymentCloseReservation, setPaymentCloseReservation] =
@@ -1664,30 +1738,7 @@ export function V2ReservasPage({
 
   useEffect(() => {
     if (isSupabasePersistence) {
-      function syncMenuFromStorage() {
-        setMenuOrderItems(readStoredMenuItems());
-        setMenuOrderCategories(readStoredMenuCategories());
-      }
-
-      function handleStorage(event: StorageEvent) {
-        if (
-          event.key !== MENU_ITEMS_STORAGE_KEY
-          && event.key !== MENU_CATEGORIES_STORAGE_KEY
-        ) {
-          return;
-        }
-
-        syncMenuFromStorage();
-      }
-
-      syncMenuFromStorage();
-      window.addEventListener("focus", syncMenuFromStorage);
-      window.addEventListener("storage", handleStorage);
-
-      return () => {
-        window.removeEventListener("focus", syncMenuFromStorage);
-        window.removeEventListener("storage", handleStorage);
-      };
+      return;
     }
 
     function syncReservationsFromStorage() {
@@ -2994,7 +3045,7 @@ export function V2ReservasPage({
   function openPaymentCloseModal(reservation: V2ReservationDraft) {
     if (isSupabasePersistence) {
       setReservationOperationError(
-        "El consumo, la caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
+        "La caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
       );
       return;
     }
@@ -3077,20 +3128,56 @@ export function V2ReservasPage({
 
   function openOrderPopup(reservation: V2ReservationDraft) {
     if (isSupabasePersistence) {
-      setReservationOperationError(
-        "El consumo, la caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
-      );
-      return;
+      if (!canManageReservations) {
+        setReservationOperationError(
+          "No tenés permisos para modificar el consumo de esta reserva.",
+        );
+        return;
+      }
+
+      if (
+        isReservationMutating
+        || reservationConsumptionMutationRef.current
+      ) {
+        return;
+      }
+
+      if (reservation.status !== "confirmed") {
+        setReservationOperationError(
+          "La reserva debe estar confirmada antes de cargar consumo.",
+        );
+        return;
+      }
+
+      if (reservationNeedsTable(reservation)) {
+        setReservationOperationError(
+          "Asigná una mesa desde Plano antes de cargar consumo.",
+        );
+        return;
+      }
     }
 
+    setReservationOperationError("");
     selectReservationWithTone(reservation);
     setSelectedMenuCategory("all");
+    setPersistentQuantityDrafts({});
     resetStockMovementOperation();
     setOrderReservation(reservation);
   }
 
   function closeOrderPopup() {
+    if (
+      isSupabasePersistence
+      && (
+        isReservationMutating
+        || reservationConsumptionMutationRef.current
+      )
+    ) {
+      return;
+    }
+
     resetStockMovementOperation();
+    setPersistentQuantityDrafts({});
     setOrderReservation(null);
   }
 
@@ -3126,7 +3213,75 @@ export function V2ReservasPage({
     setOrderReservation(nextReservation);
   }
 
-  function setMenuItemQuantity(
+  async function persistReservationOrderLineItems(
+    nextOrderLineItems: V2ReservationOrderLineItem[]
+  ) {
+    if (
+      !orderReservation
+      || isReservationMutating
+      || reservationConsumptionMutationRef.current
+    ) {
+      return;
+    }
+
+    if (!canManageReservations) {
+      setReservationOperationError(
+        "No tenés permisos para modificar el consumo de esta reserva.",
+      );
+      return;
+    }
+
+    reservationConsumptionMutationRef.current = true;
+    setIsReservationMutating(true);
+    setReservationOperationError("");
+    setReservationOperationMessage("");
+
+    try {
+      const result =
+        await saveBusinessReservationConsumptionAction({
+          reservationId: orderReservation.id,
+          operationKey:
+            createV2OperationalId(
+              "reservation-consumption-save",
+            ),
+          items: nextOrderLineItems.map((lineItem) => ({
+            menuItemId: lineItem.menuItemId,
+            quantity: lineItem.quantity,
+          })),
+        });
+
+      if (!result.ok) {
+        setReservationOperationError(result.error);
+        return;
+      }
+
+      const canonicalReservation =
+        hydrateReservationWithPersistentOrder(
+          orderReservation,
+          result.order,
+        );
+
+      updateOrderReservation(
+        canonicalReservation,
+      );
+      publishV2ServerSync("stock");
+      setPersistentQuantityDrafts({});
+      setReservationOperationMessage(
+        result.order.items.length > 0
+          ? "Consumo persistente actualizado. Stock ajustado."
+          : "Consumo persistente vaciado. Stock devuelto.",
+      );
+    } catch {
+      setReservationOperationError(
+        "No se pudo actualizar el consumo persistente.",
+      );
+    } finally {
+      reservationConsumptionMutationRef.current = false;
+      setIsReservationMutating(false);
+    }
+  }
+
+  async function setMenuItemQuantity(
     item: V2MenuOrderItem,
     requestedQuantity: number
   ) {
@@ -3156,6 +3311,13 @@ export function V2ReservasPage({
             },
           ].sort((a, b) => a.name.localeCompare(b.name, "es"))
         : otherLineItems.sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+    if (isSupabasePersistence) {
+      await persistReservationOrderLineItems(
+        nextOrderLineItems,
+      );
+      return;
+    }
 
     const nextOrderItems = buildOrderItemsTextFromLineItems(nextOrderLineItems);
     let nextStockMovements = orderReservation.stockMovements ?? [];
@@ -3228,18 +3390,23 @@ export function V2ReservasPage({
     if (!orderReservation) return;
 
     const currentQuantity = getMenuItemQuantity(orderReservation.orderLineItems, item);
-    setMenuItemQuantity(item, currentQuantity + 1);
+    void setMenuItemQuantity(item, currentQuantity + 1);
   }
 
   function removeMenuItemFromReservation(item: V2MenuOrderItem) {
     if (!orderReservation) return;
 
     const currentQuantity = getMenuItemQuantity(orderReservation.orderLineItems, item);
-    setMenuItemQuantity(item, currentQuantity - 1);
+    void setMenuItemQuantity(item, currentQuantity - 1);
   }
 
-  function clearReservationOrder() {
+  async function clearReservationOrder() {
     if (!orderReservation) return;
+
+    if (isSupabasePersistence) {
+      await persistReservationOrderLineItems([]);
+      return;
+    }
 
     const stockMovements = orderReservation.stockMovements ?? [];
 
@@ -3395,7 +3562,7 @@ export function V2ReservasPage({
         {isSupabasePersistence ? (
           <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <strong>Reservas conectadas a Supabase.</strong>{" "}
-            Alta, edición y estados son persistentes. Las mesas se administran desde Plano; consumo, caja y pagos quedan bloqueados hasta su corte canónico.
+            Alta, edición, estados y consumo de mesa son persistentes. Las mesas se administran desde Plano; Caja, pagos y Cocina siguen bloqueados hasta su corte canónico.
           </div>
         ) : null}
 
@@ -4977,11 +5144,67 @@ export function V2ReservasPage({
                           <input
                             type="number"
                             min={0}
-                            value={quantity}
-                            onChange={(event) =>
-                              setMenuItemQuantity(item, Number(event.target.value))
+                            max={9999}
+                            value={
+                              isSupabasePersistence
+                                ? persistentQuantityDrafts[item.id] ?? String(quantity)
+                                : quantity
                             }
-                            className="h-7 w-9 rounded-lg border border-slate-200 bg-white text-center text-xs font-semibold text-slate-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+                            disabled={isSupabasePersistence && isReservationMutating}
+                            onChange={(event) => {
+                              if (isSupabasePersistence) {
+                                setPersistentQuantityDrafts((current) => ({
+                                  ...current,
+                                  [item.id]: event.target.value,
+                                }));
+                                return;
+                              }
+
+                              void setMenuItemQuantity(
+                                item,
+                                Number(event.target.value),
+                              );
+                            }}
+                            onBlur={(event) => {
+                              if (!isSupabasePersistence) return;
+
+                              const requestedQuantity =
+                                Number(event.currentTarget.value);
+
+                              if (
+                                !Number.isInteger(requestedQuantity)
+                                || requestedQuantity < 0
+                                || requestedQuantity > 9999
+                              ) {
+                                setPersistentQuantityDrafts((current) => ({
+                                  ...current,
+                                  [item.id]: String(quantity),
+                                }));
+                                return;
+                              }
+
+                              if (requestedQuantity !== quantity) {
+                                void setMenuItemQuantity(
+                                  item,
+                                  requestedQuantity,
+                                );
+                                return;
+                              }
+
+                              setPersistentQuantityDrafts((current) => ({
+                                ...current,
+                                [item.id]: String(quantity),
+                              }));
+                            }}
+                            onKeyDown={(event) => {
+                              if (
+                                isSupabasePersistence
+                                && event.key === "Enter"
+                              ) {
+                                event.currentTarget.blur();
+                              }
+                            }}
+                            className="h-7 w-9 rounded-lg border border-slate-200 bg-white text-center text-xs font-semibold text-slate-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
                             aria-label={`Cantidad de ${item.name}`}
                           />
 
@@ -5047,11 +5270,21 @@ export function V2ReservasPage({
                 </div>
 
                 <div className="mt-3 flex flex-col gap-2">
-                  <V2Button variant="secondary" onClick={clearReservationOrder}>
+                  <V2Button
+                    variant="secondary"
+                    onClick={() => void clearReservationOrder()}
+                    disabled={isSupabasePersistence && isReservationMutating}
+                  >
                     Vaciar pedido
                   </V2Button>
-                  <V2Button variant="primary" onClick={closeOrderPopup}>
-                    Listo
+                  <V2Button
+                    variant="primary"
+                    onClick={closeOrderPopup}
+                    disabled={isSupabasePersistence && isReservationMutating}
+                  >
+                    {isSupabasePersistence && isReservationMutating
+                      ? "Guardando..."
+                      : "Listo"}
                   </V2Button>
                 </div>
               </div>

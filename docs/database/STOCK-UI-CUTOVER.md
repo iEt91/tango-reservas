@@ -19,7 +19,9 @@ En modo Supabase, `src/app/local/stock/page.tsx`:
 4. deriva el permiso efectivo del módulo `stock`;
 5. entrega un snapshot explícito a la V2.
 
-La UI no crea clientes Supabase ni consulta tablas directamente.
+La UI no consulta tablas con queries cliente ni realiza DML directo. Desde E31B V6,
+usa el cliente Auth existente exclusivamente para una suscripción Realtime de solo lectura
+sobre nuevos movimientos del ledger, siempre bajo RLS y business_id.
 
 ## Escritura
 
@@ -45,7 +47,7 @@ es `supabase`.
 Cuando la persistencia es Supabase:
 
 - el snapshot inicial viene del servidor;
-- no se instalan listeners de `storage` para Stock;
+- no se instalan listeners de `storage` como fuente de datos de Stock;
 - guardar un insumo no escribe `stockProducts` en el navegador;
 - registrar movimientos no escribe `stockMovements` en el navegador.
 

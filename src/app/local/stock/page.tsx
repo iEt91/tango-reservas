@@ -54,6 +54,7 @@ export default async function StockPage() {
     <V2ProductosPage
       initialBusinessStock={initialBusinessStock}
       stockPersistence="supabase"
+      businessId={activeBusiness.membership.businessId}
       canManageStock={canManageStock}
     />
   );
