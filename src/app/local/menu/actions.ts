@@ -132,6 +132,7 @@ async function resolveAuthorizedMenuContext() {
 
 function revalidateMenuConsumers() {
   revalidatePath("/local/menu");
+  revalidatePath("/local/menu/recetas");
   revalidatePath("/local/reservas");
   revalidatePath("/local/cocina");
 }
