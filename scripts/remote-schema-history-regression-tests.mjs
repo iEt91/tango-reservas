@@ -37,6 +37,8 @@ const reservationConsumptionWritePath =
   "supabase/migrations/20260810_017_reservation_consumption_write.sql";
 const stockRealtimeSyncPath =
   "supabase/migrations/20260810_018_stock_realtime_sync.sql";
+const cashPaymentsWritePath =
+  "supabase/migrations/20260810_019_cash_payments_write.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -99,6 +101,10 @@ const reservationConsumptionWrite = await readFile(
 );
 const stockRealtimeSync = await readFile(
   stockRealtimeSyncPath,
+  "utf8",
+);
+const cashPaymentsWrite = await readFile(
+  cashPaymentsWritePath,
   "utf8",
 );
 
@@ -506,6 +512,36 @@ assert.match(
 );
 console.log("✓ Stock Realtime publica el ledger sin relajar RLS");
 
+assert.match(
+  cashPaymentsWrite,
+  /create table if not exists public\.cash_sessions/u,
+);
+assert.match(
+  cashPaymentsWrite,
+  /create table if not exists public\.business_payments/u,
+);
+assert.match(
+  cashPaymentsWrite,
+  /open_business_cash_session/u,
+);
+assert.match(
+  cashPaymentsWrite,
+  /complete_business_reservation_payment/u,
+);
+assert.match(
+  cashPaymentsWrite,
+  /current_user_has_module_access/u,
+);
+assert.match(
+  cashPaymentsWrite,
+  /force row level security/u,
+);
+assert.match(
+  cashPaymentsWrite,
+  /revoke all on table public\.business_payment_operations/u,
+);
+console.log("✓ Caja/Pagos agrega sesión y cobro transaccional");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -519,4 +555,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (19).");
+console.log("Todos los casos del historial remoto pasaron (20).");

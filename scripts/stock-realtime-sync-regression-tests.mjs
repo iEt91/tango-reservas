@@ -340,7 +340,7 @@ check(
       "Stock Realtime publica el ledger sin relajar RLS",
     )
     && sources.remoteHistory.includes(
-      "historial remoto pasaron (19)",
+      "const stockRealtimeSync = await readFile(",
     ),
 );
 
