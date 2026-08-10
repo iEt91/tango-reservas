@@ -33,6 +33,8 @@ const recipesWritePath =
   "supabase/migrations/20260809_015_recipes_write_rpc.sql";
 const recipeStockConsumptionPath =
   "supabase/migrations/20260809_016_recipe_stock_consumption.sql";
+const reservationConsumptionWritePath =
+  "supabase/migrations/20260810_017_reservation_consumption_write.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -87,6 +89,10 @@ const recipesWrite = await readFile(
 );
 const recipeStockConsumption = await readFile(
   recipeStockConsumptionPath,
+  "utf8",
+);
+const reservationConsumptionWrite = await readFile(
+  reservationConsumptionWritePath,
   "utf8",
 );
 
@@ -454,6 +460,32 @@ assert.match(
 );
 console.log("✓ Receta → Stock agrega consumo transaccional e idempotente");
 
+assert.match(
+  reservationConsumptionWrite,
+  /business_orders/u,
+);
+assert.match(
+  reservationConsumptionWrite,
+  /save_business_reservation_consumption/u,
+);
+assert.match(
+  reservationConsumptionWrite,
+  /private\.apply_recipe_stock_return/u,
+);
+assert.match(
+  reservationConsumptionWrite,
+  /business_order_mutations_business_key/u,
+);
+assert.match(
+  reservationConsumptionWrite,
+  /reservations_guard_terminal_with_consumption/u,
+);
+assert.match(
+  reservationConsumptionWrite,
+  /force row level security/u,
+);
+console.log("✓ Consumo de Reserva agrega pedido transaccional y devolución histórica");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -467,4 +499,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (17).");
+console.log("Todos los casos del historial remoto pasaron (18).");
