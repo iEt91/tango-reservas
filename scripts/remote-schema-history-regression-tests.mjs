@@ -31,6 +31,8 @@ const stockWritePath =
   "supabase/migrations/20260809_014_stock_write_rpc.sql";
 const recipesWritePath =
   "supabase/migrations/20260809_015_recipes_write_rpc.sql";
+const recipeStockConsumptionPath =
+  "supabase/migrations/20260809_016_recipe_stock_consumption.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -81,6 +83,10 @@ const stockWrite = await readFile(
 );
 const recipesWrite = await readFile(
   recipesWritePath,
+  "utf8",
+);
+const recipeStockConsumption = await readFile(
+  recipeStockConsumptionPath,
   "utf8",
 );
 
@@ -418,6 +424,36 @@ assert.match(
 );
 console.log("✓ Recetas agrega composición tenant-safe y escritura RPC");
 
+assert.match(
+  recipeStockConsumption,
+  /stock_recipe_operations/u,
+);
+assert.match(
+  recipeStockConsumption,
+  /stock_recipe_operation_movements/u,
+);
+assert.match(
+  recipeStockConsumption,
+  /private\.apply_recipe_stock_consumption/u,
+);
+assert.match(
+  recipeStockConsumption,
+  /consume_business_menu_recipe_stock/u,
+);
+assert.match(
+  recipeStockConsumption,
+  /Insufficient stock for recipe consumption/u,
+);
+assert.match(
+  recipeStockConsumption,
+  /stock_recipe_operations_business_key/u,
+);
+assert.match(
+  recipeStockConsumption,
+  /force row level security/u,
+);
+console.log("✓ Receta → Stock agrega consumo transaccional e idempotente");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -431,4 +467,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (16).");
+console.log("Todos los casos del historial remoto pasaron (17).");

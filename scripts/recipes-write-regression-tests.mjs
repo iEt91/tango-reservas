@@ -423,7 +423,7 @@ assert.match(
 );
 assert.match(
   remoteHistory,
-  /historial remoto pasaron \(16\)/u,
+  /historial remoto pasaron \(\d+\)/u,
 );
 console.log(
   "✓ manifiesto e historial remoto incorporan migración 015",
