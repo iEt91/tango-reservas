@@ -4,6 +4,7 @@ export type V2ServerSyncDomain =
   | "stock"
   | "cash"
   | "kitchen"
+  | "shipping"
   | "expenses";
 
 type V2ServerSyncMessage = {
@@ -39,6 +40,7 @@ function isServerSyncMessage(
       source.domain === "stock"
       || source.domain === "cash"
       || source.domain === "kitchen"
+      || source.domain === "shipping"
       || source.domain === "expenses"
     )
     && typeof source.createdAt === "number"

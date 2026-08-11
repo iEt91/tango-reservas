@@ -20,7 +20,9 @@ import {
 } from "react";
 import {
   getBusinessKitchenSnapshotAction,
+  getBusinessShippingKitchenSnapshotAction,
   setBusinessKitchenCommandStatusAction,
+  setBusinessShippingKitchenCommandStatusAction,
 } from "./actions";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Badge } from "@/components/v2/v2-badge";
@@ -36,6 +38,10 @@ import type {
   BusinessKitchenStatus,
   BusinessKitchenStatusMutation,
 } from "@/lib/kitchen/business-kitchen-contract";
+import type {
+  BusinessShippingKitchenCommand,
+  BusinessShippingKitchenSnapshot,
+} from "@/lib/kitchen/business-shipping-kitchen-contract";
 import {
   createV2OperationalId,
   V2_OPERATIONAL_EVENTS,
@@ -540,6 +546,88 @@ function mapPersistentCommand(
   };
 }
 
+function mapPersistentShippingCommand(
+  command: BusinessShippingKitchenCommand,
+): KitchenCommand {
+  return {
+    id:
+      command.id,
+    sourceId:
+      command.shippingId,
+    source:
+      "delivery",
+    sourceLabel:
+      command.sourceLabel,
+    client:
+      command.client,
+    time:
+      command.time,
+    note:
+      command.note,
+    items:
+      command.items,
+    status:
+      command.status,
+    targetSeconds:
+      command.targetSeconds,
+    enteredAt:
+      command.enteredAt,
+    startedAt:
+      command.startedAt
+      ?? undefined,
+    readyAt:
+      command.readyAt
+      ?? undefined,
+    completedAt:
+      command.completedAt
+      ?? undefined,
+    orderId:
+      command.orderId,
+    ticketId:
+      command.ticketId,
+    isAddition:
+      command.isAddition,
+  };
+}
+
+function applyPersistentShippingMutation(
+  snapshot:
+    BusinessShippingKitchenSnapshot
+    | null,
+  mutation:
+    BusinessKitchenStatusMutation,
+) {
+  if (!snapshot) {
+    return snapshot;
+  }
+
+  return {
+    ...snapshot,
+    commands:
+      snapshot.commands.map(
+        (command) =>
+          command.orderId
+            === mutation.orderId
+          && command.ticketId
+            === mutation.ticketId
+            ? {
+                ...command,
+                status:
+                  mutation.status,
+                targetSeconds:
+                  mutation.targetSeconds,
+                startedAt:
+                  mutation.startedAt,
+                readyAt:
+                  mutation.readyAt,
+                completedAt:
+                  mutation.completedAt,
+              }
+            : command,
+      ),
+  };
+}
+
 function applyPersistentMutation(
   snapshot:
     BusinessKitchenSnapshot
@@ -616,6 +704,14 @@ export function V2CocinaPage({
       | null
     >(null);
   const [
+    persistentShippingSnapshot,
+    setPersistentShippingSnapshot,
+  ] =
+    useState<
+      BusinessShippingKitchenSnapshot
+      | null
+    >(null);
+  const [
     now,
     setNow,
   ] =
@@ -670,20 +766,38 @@ export function V2CocinaPage({
           true;
 
         try {
-          const result =
-            await getBusinessKitchenSnapshotAction(
-              getTodayDateKey(),
-            );
+          const [
+            reservationResult,
+            shippingResult,
+          ] =
+            await Promise.all([
+              getBusinessKitchenSnapshotAction(
+                getTodayDateKey(),
+              ),
+              getBusinessShippingKitchenSnapshotAction(
+                getTodayDateKey(),
+              ),
+            ]);
 
-          if (!result.ok) {
+          if (!reservationResult.ok) {
             setOperationError(
-              result.error,
+              reservationResult.error,
+            );
+            return;
+          }
+
+          if (!shippingResult.ok) {
+            setOperationError(
+              shippingResult.error,
             );
             return;
           }
 
           setPersistentSnapshot(
-            result.snapshot,
+            reservationResult.snapshot,
+          );
+          setPersistentShippingSnapshot(
+            shippingResult.snapshot,
           );
           setOperationError("");
         } finally {
@@ -833,6 +947,11 @@ export function V2CocinaPage({
         "stock",
         refresh,
       );
+    const unsubscribeShipping =
+      subscribeV2ServerSync(
+        "shipping",
+        refresh,
+      );
 
     window.addEventListener(
       "focus",
@@ -846,6 +965,7 @@ export function V2CocinaPage({
     return () => {
       unsubscribeKitchen();
       unsubscribeStock();
+      unsubscribeShipping();
       window.removeEventListener(
         "focus",
         refresh,
@@ -867,12 +987,34 @@ export function V2CocinaPage({
       if (
         isSupabasePersistence
       ) {
-        return (
-          persistentSnapshot
-            ?.commands
-          ?? []
-        ).map(
-          mapPersistentCommand,
+        return [
+          ...(
+            persistentSnapshot
+              ?.commands
+            ?? []
+          ).map(
+            mapPersistentCommand,
+          ),
+          ...(
+            persistentShippingSnapshot
+              ?.commands
+            ?? []
+          ).map(
+            mapPersistentShippingCommand,
+          ),
+        ].sort(
+          (
+            first,
+            second,
+          ) =>
+            new Date(
+              first.enteredAt
+              ?? 0,
+            ).getTime()
+            - new Date(
+              second.enteredAt
+              ?? 0,
+            ).getTime(),
         );
       }
 
@@ -1186,6 +1328,7 @@ export function V2CocinaPage({
       deliveries,
       isSupabasePersistence,
       persistentSnapshot,
+      persistentShippingSnapshot,
       recipes,
       reservations,
     ]);
@@ -1246,18 +1389,25 @@ export function V2CocinaPage({
       setOperationError("");
       setOperationMessage("");
 
+      const mutationInput = {
+        orderId:
+          command.orderId,
+        ticketId:
+          command.ticketId
+          ?? null,
+        status,
+        operationKey,
+      };
+
       const result =
-        await setBusinessKitchenCommandStatusAction(
-          {
-            orderId:
-              command.orderId,
-            ticketId:
-              command.ticketId
-              ?? null,
-            status,
-            operationKey,
-          },
-        );
+        command.source
+          === "delivery"
+          ? await setBusinessShippingKitchenCommandStatusAction(
+              mutationInput,
+            )
+          : await setBusinessKitchenCommandStatusAction(
+              mutationInput,
+            );
 
       if (!result.ok) {
         setMutatingCommandId(
@@ -1269,13 +1419,26 @@ export function V2CocinaPage({
         return;
       }
 
-      setPersistentSnapshot(
-        (current) =>
-          applyPersistentMutation(
-            current,
-            result.mutation,
-          ),
-      );
+      if (
+        command.source
+        === "delivery"
+      ) {
+        setPersistentShippingSnapshot(
+          (current) =>
+            applyPersistentShippingMutation(
+              current,
+              result.mutation,
+            ),
+        );
+      } else {
+        setPersistentSnapshot(
+          (current) =>
+            applyPersistentMutation(
+              current,
+              result.mutation,
+            ),
+        );
+      }
       statusOperationKeysRef
         .current
         .delete(
@@ -1647,7 +1810,7 @@ export function V2CocinaPage({
           title="Cocina"
           description={
             isSupabasePersistence
-              ? "Comandas persistentes de mesas. Delivery y retiro se conectarán cuando Envíos tenga backend persistente."
+              ? "Comandas de mesas, delivery y retiro en una sola pantalla."
               : "Comandas de mesas, delivery y retiro en una sola pantalla."
           }
           actions={

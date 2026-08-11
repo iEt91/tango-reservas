@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -15,6 +15,14 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import {
+  acceptBusinessShippingOrderAction,
+  cancelBusinessShippingOrderAction,
+  completeBusinessShippingPaymentAction,
+  getBusinessShippingSnapshotAction,
+  saveBusinessShippingOrderAction,
+  setBusinessShippingMilestoneAction,
+} from "./actions";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
@@ -24,6 +32,18 @@ import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
+import type {
+  BusinessMenuCategoryEditor,
+  BusinessMenuItemEditor,
+} from "@/lib/menu/business-menu-contract";
+import type {
+  BusinessShippingOrder,
+  BusinessShippingPaymentMethod,
+} from "@/lib/shipping/business-shipping-contract";
+import {
+  publishV2ServerSync,
+  subscribeV2ServerSync,
+} from "@/lib/v2-server-sync";
 import {
   v2Deliveries,
   v2MenuCategories,
@@ -1079,7 +1099,175 @@ function V2DeliveryTypeBadge({ type }: { type: V2DeliveryType }) {
   return <V2Badge tone={config[type].tone}>{config[type].label}</V2Badge>;
 }
 
-export function V2EnviosPage() {
+type V2EnviosPageProps = {
+  shippingPersistence?:
+    | "local"
+    | "supabase";
+  canManageShipping?: boolean;
+  canManageCash?: boolean;
+  initialMenuCategories?: BusinessMenuCategoryEditor[];
+  initialMenuItems?: BusinessMenuItemEditor[];
+};
+
+function shippingPaymentLabel(
+  method: BusinessShippingPaymentMethod,
+) {
+  if (method === "transfer") return "Transferencia";
+  if (method === "card") return "Tarjeta";
+  if (method === "mercado_pago") return "Mercado Pago";
+  return "Efectivo";
+}
+
+function shippingPaymentMethod(
+  value: string,
+): BusinessShippingPaymentMethod {
+  if (value === "Transferencia") return "transfer";
+  if (value === "Tarjeta") return "card";
+  if (value === "Mercado Pago") return "mercado_pago";
+  return "cash";
+}
+
+function mapPersistentDelivery(
+  shipping: BusinessShippingOrder,
+): V2Delivery {
+  const orderItems =
+    shipping.order.items.map(
+      (item) => ({
+        id: item.menuItemId,
+        name: item.name,
+        price: item.unitPrice,
+        quantity: item.quantity,
+      }),
+    );
+  const payment =
+    shipping.payments.length > 1
+      ? "Mixto"
+      : shipping.payments.length === 1
+        ? shippingPaymentLabel(
+            shipping.payments[0].method,
+          )
+        : shippingPaymentLabel(
+            shipping.preferredPaymentMethod,
+          );
+
+  return {
+    id: shipping.id,
+    date: shipping.businessDate,
+    time: shipping.time,
+    client: shipping.client,
+    phone: shipping.phone,
+    address:
+      shipping.deliveryType === "pickup"
+        ? "Retira en local"
+        : shipping.address,
+    deliveryType: shipping.deliveryType,
+    order: summarizeOrderItems(orderItems),
+    orderItems,
+    total: shipping.order.subtotal,
+    payment,
+    note: shipping.note || "—",
+    status: shipping.status,
+    source: shipping.source,
+    needsAcceptance: shipping.needsAcceptance,
+    trackingId: shipping.trackingId,
+    stockDiscounted:
+      !shipping.needsAcceptance
+      && shipping.status !== "cancelled",
+    stockReturned:
+      shipping.status === "cancelled",
+    stockMovements: [],
+    createdAt: shipping.createdAt,
+    acceptedAt: shipping.acceptedAt ?? undefined,
+    preparingAt: shipping.preparingAt ?? undefined,
+    readyAt: shipping.readyAt ?? undefined,
+    onTheWayAt: shipping.onTheWayAt ?? undefined,
+    deliveredAt: shipping.completedAt ?? undefined,
+    cancelledAt: shipping.cancelledAt ?? undefined,
+    kitchenStatus: shipping.order.kitchenStatus,
+    kitchenStartedAt:
+      shipping.order.kitchenStartedAt ?? undefined,
+    kitchenReadyAt:
+      shipping.order.kitchenReadyAt ?? undefined,
+    kitchenCompletedAt:
+      shipping.order.kitchenCompletedAt ?? undefined,
+    kitchenTickets: [],
+  };
+}
+
+function mapPersistentMenu(
+  categories: BusinessMenuCategoryEditor[],
+  items: BusinessMenuItemEditor[],
+) {
+  const categoryNameById =
+    new Map(
+      categories
+        .filter(
+          (category) =>
+            category.isActive
+            && category.isVisible,
+        )
+        .map(
+          (category) => [
+            category.id,
+            category.name,
+          ],
+        ),
+    );
+
+  const menuItems =
+    items
+      .filter(
+        (item) =>
+          item.status === "available"
+          && item.isVisible,
+      )
+      .map<V2MenuItem>(
+        (item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          category:
+            item.categoryId
+              ? (
+                  categoryNameById.get(
+                    item.categoryId,
+                  )
+                  ?? "Sin categoría"
+                )
+              : "Sin categoría",
+        }),
+      )
+      .sort(
+        (first, second) =>
+          first.name.localeCompare(
+            second.name,
+            "es",
+          ),
+      );
+
+  return {
+    items: menuItems,
+    categories:
+      readDeliveryMenuCategories(
+        menuItems,
+      ),
+  };
+}
+
+export function V2EnviosPage({
+  shippingPersistence = "local",
+  canManageShipping = true,
+  canManageCash = true,
+  initialMenuCategories = [],
+  initialMenuItems = [],
+}: V2EnviosPageProps = {}) {
+  const isSupabasePersistence =
+    shippingPersistence === "supabase";
+  const persistentMenu =
+    mapPersistentMenu(
+      initialMenuCategories,
+      initialMenuItems,
+    );
   const [deliveries, setDeliveries] = useState<V2Delivery[]>([]);
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<string>("");
   const [isNewDeliveryOpen, setIsNewDeliveryOpen] = useState(false);
@@ -1090,9 +1278,17 @@ export function V2EnviosPage() {
   const [selectedMenuCategory, setSelectedMenuCategory] =
     useState<V2MenuCategory>("Todos");
   const [deliveryMenuItems, setDeliveryMenuItems] =
-    useState<V2MenuItem[]>(FALLBACK_MENU_ITEMS);
+    useState<V2MenuItem[]>(
+      isSupabasePersistence
+        ? persistentMenu.items
+        : FALLBACK_MENU_ITEMS,
+    );
   const [deliveryMenuCategories, setDeliveryMenuCategories] =
-    useState<string[]>(FALLBACK_MENU_CATEGORIES);
+    useState<string[]>(
+      isSupabasePersistence
+        ? persistentMenu.categories
+        : FALLBACK_MENU_CATEGORIES,
+    );
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>(
     {}
   );
@@ -1118,13 +1314,147 @@ export function V2EnviosPage() {
   const [stockReturnDeliveryId, setStockReturnDeliveryId] = useState<string | null>(null);
   const [openActionsDeliveryId, setOpenActionsDeliveryId] = useState<string | null>(null);
   const [cashRegisterError, setCashRegisterError] = useState("");
+  const [operationError, setOperationError] = useState("");
+  const [operationMessage, setOperationMessage] = useState("");
+  const refreshShippingInFlightRef = useRef(false);
+  const operationKeysRef =
+    useRef(
+      new Map<string, string>(),
+    );
   const [whatsAppDraft, setWhatsAppDraft] = useState<{
     delivery: V2Delivery;
     action: V2DeliveryWhatsAppAction;
     note: string;
   } | null>(null);
 
+
+  const refreshPersistentDeliveries =
+    useCallback(
+      async () => {
+        if (
+          !isSupabasePersistence
+          || refreshShippingInFlightRef.current
+        ) {
+          return;
+        }
+
+        const bounds =
+          dateFilterMode === "all"
+            ? {
+                start:
+                  addDays(
+                    TODAY_DELIVERIES_DATE,
+                    -1820,
+                  ),
+                end:
+                  addDays(
+                    TODAY_DELIVERIES_DATE,
+                    1820,
+                  ),
+              }
+            : dateFilterMode === "range"
+              ? getRangeBounds(
+                  rangeStartDate,
+                  rangeEndDate,
+                )
+              : {
+                  start: selectedDate,
+                  end: selectedDate,
+                };
+
+        refreshShippingInFlightRef.current = true;
+
+        try {
+          const result =
+            await getBusinessShippingSnapshotAction(
+              bounds.start,
+              bounds.end,
+            );
+
+          if (!result.ok) {
+            setOperationError(result.error);
+            return;
+          }
+
+          const mapped =
+            result.snapshot.deliveries.map(
+              mapPersistentDelivery,
+            );
+
+          setDeliveries(mapped);
+          setSelectedDeliveryId(
+            (current) =>
+              mapped.some(
+                (delivery) =>
+                  delivery.id === current,
+              )
+                ? current
+                : (mapped[0]?.id ?? ""),
+          );
+          setOperationError("");
+        } finally {
+          refreshShippingInFlightRef.current = false;
+        }
+      },
+      [
+        dateFilterMode,
+        isSupabasePersistence,
+        rangeEndDate,
+        rangeStartDate,
+        selectedDate,
+      ],
+    );
+
+  function getStableShippingOperation(
+    scope: string,
+    payload: unknown,
+  ) {
+    const signature =
+      `${scope}:${JSON.stringify(payload)}`;
+    let operationKey =
+      operationKeysRef.current.get(signature);
+
+    if (!operationKey) {
+      operationKey =
+        createV2OperationalId(
+          `shipping-${scope}`,
+        );
+      operationKeysRef.current.set(
+        signature,
+        operationKey,
+      );
+    }
+
+    return {
+      signature,
+      operationKey,
+    };
+  }
+
+  function releaseShippingOperation(
+    signature: string,
+  ) {
+    operationKeysRef.current.delete(
+      signature,
+    );
+  }
+
+  function publishShippingRefresh(
+    domains: Array<
+      "stock" | "kitchen" | "cash"
+    > = [],
+  ) {
+    publishV2ServerSync("shipping");
+    for (const domain of domains) {
+      publishV2ServerSync(domain);
+    }
+  }
+
   useEffect(() => {
+    if (isSupabasePersistence) {
+      return;
+    }
+
     function syncDeliveriesFromStorage() {
       const fallbackDeliveries = v2Deliveries.map((delivery) =>
         normalizeDelivery(delivery as V2Delivery)
@@ -1165,7 +1495,72 @@ export function V2EnviosPage() {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener(DELIVERIES_EVENT, syncDeliveriesFromStorage);
     };
-  }, []);
+  }, [
+    isSupabasePersistence,
+  ]);
+
+  useEffect(() => {
+    if (!isSupabasePersistence) {
+      return;
+    }
+
+    const refresh = () => {
+      void refreshPersistentDeliveries();
+    };
+
+    function handleVisibility() {
+      if (
+        document.visibilityState
+        === "visible"
+      ) {
+        refresh();
+      }
+    }
+
+    refresh();
+
+    const unsubscribeShipping =
+      subscribeV2ServerSync(
+        "shipping",
+        refresh,
+      );
+    const unsubscribeKitchen =
+      subscribeV2ServerSync(
+        "kitchen",
+        refresh,
+      );
+    const unsubscribeCash =
+      subscribeV2ServerSync(
+        "cash",
+        refresh,
+      );
+
+    window.addEventListener(
+      "focus",
+      refresh,
+    );
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibility,
+    );
+
+    return () => {
+      unsubscribeShipping();
+      unsubscribeKitchen();
+      unsubscribeCash();
+      window.removeEventListener(
+        "focus",
+        refresh,
+      );
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibility,
+      );
+    };
+  }, [
+    isSupabasePersistence,
+    refreshPersistentDeliveries,
+  ]);
 
   const editingDelivery =
     editingDeliveryId ? deliveries.find((delivery) => delivery.id === editingDeliveryId) ?? null : null;
@@ -1522,6 +1917,9 @@ export function V2EnviosPage() {
   }
 
   function persistDeliveries(nextDeliveries: V2Delivery[]) {
+    if (isSupabasePersistence) {
+      return;
+    }
     setDeliveries(nextDeliveries);
     writeToStorage(DELIVERIES_STORAGE_KEY, nextDeliveries);
   }
@@ -1551,7 +1949,7 @@ export function V2EnviosPage() {
     };
   }
 
-  function createDelivery(formData: FormData) {
+  async function createDelivery(formData: FormData) {
     const deliveryType = String(
       formData.get("deliveryType") ?? "delivery"
     ) as V2DeliveryType;
@@ -1602,6 +2000,138 @@ export function V2EnviosPage() {
       return;
     }
 
+
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setDeliveryFormError(
+          "No tenés permisos para modificar Envíos.",
+        );
+        return;
+      }
+
+      if (
+        existingDelivery
+        && existingDelivery.status !== "confirmed"
+      ) {
+        setDeliveryFormError(
+          "Solo se pueden editar pedidos confirmados.",
+        );
+        return;
+      }
+
+      if (
+        existingDelivery
+        && deliveryType !== existingDelivery.deliveryType
+      ) {
+        setDeliveryFormError(
+          "No se puede cambiar Delivery por Retiro en un pedido persistente.",
+        );
+        return;
+      }
+
+      const persistentItems =
+        (
+          hasMenuOrder
+            ? nextOrderItems
+            : (existingDelivery?.orderItems ?? [])
+        ).map(
+          (item) => ({
+            menuItemId: item.id,
+            quantity: item.quantity,
+          }),
+        );
+      const businessDate =
+        existingDelivery?.date
+        ?? (
+          dateFilterMode === "range"
+            ? getRangeBounds(
+                rangeStartDate,
+                rangeEndDate,
+              ).start
+            : selectedDate
+        );
+      const payload = {
+        shippingId:
+          existingDelivery?.id ?? null,
+        businessDate,
+        time,
+        deliveryType,
+        client,
+        phone,
+        address:
+          deliveryType === "pickup"
+            ? ""
+            : address,
+        note:
+          note === "—" ? "" : note,
+        source:
+          existingDelivery?.source ?? "manual",
+        needsAcceptance:
+          existingDelivery?.needsAcceptance ?? false,
+        preferredPaymentMethod:
+          shippingPaymentMethod(payment),
+        items: persistentItems,
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "save",
+          payload,
+        );
+
+      setOperationError("");
+      setOperationMessage("");
+
+      const result =
+        await saveBusinessShippingOrderAction({
+          ...payload,
+          operationKey,
+        });
+
+      if (!result.ok) {
+        setDeliveryFormError(result.error);
+        setOperationError(result.error);
+        return;
+      }
+
+      releaseShippingOperation(signature);
+      const canonical =
+        mapPersistentDelivery(result.shipping);
+
+      setDeliveries(
+        (current) =>
+          current.some(
+            (delivery) =>
+              delivery.id === canonical.id,
+          )
+            ? current.map(
+                (delivery) =>
+                  delivery.id === canonical.id
+                    ? canonical
+                    : delivery,
+              )
+            : [canonical, ...current],
+      );
+      setSelectedDeliveryId(canonical.id);
+      setOperationMessage(
+        existingDelivery
+          ? "Envío actualizado."
+          : "Envío creado.",
+      );
+      publishShippingRefresh([
+        "stock",
+        "kitchen",
+      ]);
+      await refreshPersistentDeliveries();
+      closeDeliveryModal();
+      return;
+    }
+
+    const localDeliveryId =
+      existingDelivery?.id
+      ?? createV2OperationalId(
+        "env",
+      );
+
     const addedOrderItems = getAddedOrderItems(
       existingDelivery?.orderItems ?? [],
       hasMenuOrder ? nextOrderItems : existingDelivery?.orderItems ?? [],
@@ -1618,7 +2148,7 @@ export function V2EnviosPage() {
         existingDelivery?.kitchenStatus === "completed");
 
     let nextDelivery: V2Delivery = {
-      id: existingDelivery?.id ?? `env-${Date.now()}`,
+      id: localDeliveryId,
       date:
         existingDelivery?.date ??
         (dateFilterMode === "range"
@@ -1641,7 +2171,7 @@ export function V2EnviosPage() {
       needsAcceptance: existingDelivery?.needsAcceptance ?? false,
       trackingId:
         existingDelivery?.trackingId ??
-        createPublicCode("PED", existingDelivery?.id ?? `env-${Date.now()}`),
+        createPublicCode("PED", localDeliveryId),
       stockDiscounted: existingDelivery?.stockDiscounted ?? false,
       stockReturned: existingDelivery?.stockReturned ?? false,
       stockMovements: existingDelivery?.stockMovements ?? [],
@@ -1661,7 +2191,7 @@ export function V2EnviosPage() {
           ? appendDeliveryKitchenTicket(
               existingDelivery?.kitchenTickets ?? [],
               addedOrderItems,
-              existingDelivery?.id ?? `env-${Date.now()}`,
+              localDeliveryId,
             )
           : existingDelivery?.kitchenTickets ?? [],
         removedOrderItems,
@@ -1718,13 +2248,82 @@ export function V2EnviosPage() {
     setAcceptanceEtaMinutes(45);
   }
 
-  function confirmAcceptWebDelivery() {
+  async function confirmAcceptWebDelivery() {
     if (!acceptanceDeliveryId) return;
 
     const acceptedDelivery = deliveries.find((delivery) => delivery.id === acceptanceDeliveryId);
 
     if (!acceptedDelivery) {
       setAcceptanceDeliveryId(null);
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setOperationError(
+          "No tenés permisos para aceptar pedidos.",
+        );
+        return;
+      }
+
+      const payload = {
+        shippingId: acceptedDelivery.id,
+        etaMinutes: acceptanceEtaMinutes,
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "accept",
+          payload,
+        );
+      const result =
+        await acceptBusinessShippingOrderAction({
+          ...payload,
+          operationKey,
+        });
+
+      if (!result.ok) {
+        setOperationError(result.error);
+        return;
+      }
+
+      releaseShippingOperation(signature);
+      const canonical =
+        mapPersistentDelivery(result.shipping);
+      setAcceptanceDeliveryId(null);
+      setOperationMessage(
+        "Pedido web aceptado.",
+      );
+      publishShippingRefresh([
+        "stock",
+        "kitchen",
+      ]);
+      await refreshPersistentDeliveries();
+
+      const clientPhone =
+        canonical.phone.replace(/\D/g, "");
+      if (clientPhone) {
+        const message = [
+          `Hola ${canonical.client}, tu pedido ${canonical.trackingId} en Demuru fue aceptado.`,
+          "",
+          "Ya está en preparación.",
+          `Tiempo estimado: ${acceptanceEtaMinutes} minutos.`,
+          canonical.deliveryType === "delivery"
+            ? `Entrega en: ${canonical.address}`
+            : "Retiro en el local.",
+          "",
+          `Código de pedido: ${canonical.trackingId}`,
+          `Pedido: ${canonical.order}`,
+          `Total: ${formatCurrency(canonical.total)}`,
+          "",
+          "El seguimiento público persistente se habilitará con la web de pedidos.",
+        ].join("\n");
+
+        window.open(
+          `https://wa.me/${clientPhone}?text=${encodeURIComponent(message)}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+      }
       return;
     }
 
@@ -1786,7 +2385,41 @@ export function V2EnviosPage() {
     }
   }
 
-  function rejectWebDelivery(id: string) {
+  async function rejectWebDelivery(id: string) {
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setOperationError(
+          "No tenés permisos para rechazar pedidos.",
+        );
+        return;
+      }
+      const payload = {
+        shippingId: id,
+        returnStock: false,
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "reject",
+          payload,
+        );
+      const result =
+        await cancelBusinessShippingOrderAction({
+          ...payload,
+          operationKey,
+        });
+      if (!result.ok) {
+        setOperationError(result.error);
+        return;
+      }
+      releaseShippingOperation(signature);
+      setOperationMessage(
+        "Pedido web rechazado.",
+      );
+      publishShippingRefresh(["kitchen"]);
+      await refreshPersistentDeliveries();
+      return;
+    }
+
     const nextDeliveries = deliveries.map((delivery) =>
       delivery.id === id
         ? {
@@ -1807,6 +2440,14 @@ export function V2EnviosPage() {
   function requestCancelDelivery(id: string) {
     const delivery = deliveries.find((item) => item.id === id);
 
+    if (
+      isSupabasePersistence
+      && delivery
+    ) {
+      setStockReturnDeliveryId(id);
+      return;
+    }
+
     if (delivery && shouldAskToReturnStock(delivery)) {
       setStockReturnDeliveryId(id);
       return;
@@ -1815,13 +2456,56 @@ export function V2EnviosPage() {
     updateDeliveryStatus(id, "cancelled");
   }
 
-  function confirmCancelDelivery(shouldReturnStock: boolean) {
+  async function confirmCancelDelivery(shouldReturnStock: boolean) {
     if (!stockReturnDeliveryId) return;
 
     const targetDelivery = deliveries.find((delivery) => delivery.id === stockReturnDeliveryId);
 
     if (!targetDelivery) {
       setStockReturnDeliveryId(null);
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setOperationError(
+          "No tenés permisos para cancelar pedidos.",
+        );
+        return;
+      }
+
+      const payload = {
+        shippingId: targetDelivery.id,
+        returnStock: shouldReturnStock,
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "cancel",
+          payload,
+        );
+      const result =
+        await cancelBusinessShippingOrderAction({
+          ...payload,
+          operationKey,
+        });
+
+      if (!result.ok) {
+        setOperationError(result.error);
+        return;
+      }
+
+      releaseShippingOperation(signature);
+      setStockReturnDeliveryId(null);
+      setOperationMessage(
+        shouldReturnStock
+          ? "Pedido cancelado y Stock devuelto."
+          : "Pedido cancelado conservando el Stock descontado.",
+      );
+      publishShippingRefresh([
+        "stock",
+        "kitchen",
+      ]);
+      await refreshPersistentDeliveries();
       return;
     }
 
@@ -1859,6 +2543,9 @@ export function V2EnviosPage() {
   }
 
   function updateDeliveryStatus(id: string, status: V2DeliveryStatus) {
+    if (isSupabasePersistence) {
+      return;
+    }
     const nextDeliveries = deliveries.map((delivery) => {
       if (delivery.id !== id) return delivery;
 
@@ -1872,9 +2559,62 @@ export function V2EnviosPage() {
     persistDeliveries(nextDeliveries);
   }
 
-  function completeDelivery(id: string) {
+  async function completeDelivery(id: string) {
     const delivery = deliveries.find((item) => item.id === id);
     if (!delivery) return;
+
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setOperationError(
+          "No tenés permisos para completar Envíos.",
+        );
+        return;
+      }
+      if (!canManageCash) {
+        setOperationError(
+          "Necesitás permiso de gestión de Caja para registrar el cobro.",
+        );
+        return;
+      }
+
+      const payload = {
+        shippingId: delivery.id,
+        payments: [
+          {
+            method:
+              shippingPaymentMethod(
+                delivery.payment,
+              ),
+            amount: delivery.total,
+          },
+        ],
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "payment",
+          payload,
+        );
+      const result =
+        await completeBusinessShippingPaymentAction({
+          ...payload,
+          operationKey,
+        });
+      if (!result.ok) {
+        setOpenActionsDeliveryId(null);
+        setOperationError(result.error);
+        return;
+      }
+      releaseShippingOperation(signature);
+      setOperationMessage(
+        "Pedido entregado y cobro registrado en Caja.",
+      );
+      publishShippingRefresh([
+        "cash",
+        "kitchen",
+      ]);
+      await refreshPersistentDeliveries();
+      return;
+    }
 
     const error = getCashRegisterError(delivery.date ?? TODAY_DELIVERIES_DATE);
     if (error) {
@@ -1886,7 +2626,41 @@ export function V2EnviosPage() {
     updateDeliveryStatus(id, "completed");
   }
 
-  function markDeliveryOnTheWay(id: string) {
+  async function markDeliveryOnTheWay(id: string) {
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setOperationError(
+          "No tenés permisos para modificar Envíos.",
+        );
+        return;
+      }
+      const payload = {
+        shippingId: id,
+        milestone: "on_the_way" as const,
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "milestone",
+          payload,
+        );
+      const result =
+        await setBusinessShippingMilestoneAction({
+          ...payload,
+          operationKey,
+        });
+      if (!result.ok) {
+        setOperationError(result.error);
+        return;
+      }
+      releaseShippingOperation(signature);
+      setOperationMessage(
+        "Pedido marcado en camino.",
+      );
+      publishShippingRefresh();
+      await refreshPersistentDeliveries();
+      return;
+    }
+
     const timestamp = new Date().toISOString();
     const nextDeliveries = deliveries.map((delivery) =>
       delivery.id === id
@@ -1898,6 +2672,57 @@ export function V2EnviosPage() {
     );
 
     persistDeliveries(nextDeliveries);
+  }
+
+  async function markPickupReady(id: string) {
+    if (isSupabasePersistence) {
+      if (!canManageShipping) {
+        setOperationError(
+          "No tenés permisos para modificar Envíos.",
+        );
+        return;
+      }
+      const payload = {
+        shippingId: id,
+        milestone: "ready" as const,
+      };
+      const { signature, operationKey } =
+        getStableShippingOperation(
+          "milestone",
+          payload,
+        );
+      const result =
+        await setBusinessShippingMilestoneAction({
+          ...payload,
+          operationKey,
+        });
+      if (!result.ok) {
+        setOperationError(result.error);
+        return;
+      }
+      releaseShippingOperation(signature);
+      setOperationMessage(
+        "Pedido listo para retirar.",
+      );
+      publishShippingRefresh();
+      await refreshPersistentDeliveries();
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    persistDeliveries(
+      deliveries.map(
+        (delivery) =>
+          delivery.id === id
+            ? {
+                ...delivery,
+                readyAt:
+                  delivery.readyAt
+                  ?? timestamp,
+              }
+            : delivery,
+      ),
+    );
   }
 
   function getDeliveryWhatsAppActionLabel(action: V2DeliveryWhatsAppAction) {
@@ -1918,13 +2743,29 @@ export function V2EnviosPage() {
     const deliveryTypeLabel =
       delivery.deliveryType === "delivery" ? "Delivery" : "Retiro en el local";
     const destinationLabel =
-      delivery.deliveryType === "delivery" ? `Dirección: ${delivery.address}` : "Retira en el local.";
+      delivery.deliveryType === "delivery"
+        ? `Dirección: ${delivery.address}`
+        : "Retira en el local.";
 
     const introByAction: Record<V2DeliveryWhatsAppAction, string> = {
       confirmation: `Hola ${delivery.client}, tu pedido en Demuru está confirmado.`,
       modification: `Hola ${delivery.client}, actualizamos tu pedido en Demuru.`,
       cancellation: `Hola ${delivery.client}, tu pedido en Demuru fue cancelado.`,
     };
+
+    const finalLines =
+      action === "cancellation"
+        ? [
+            "Si necesitás ayuda, comunicate con el restaurante por WhatsApp.",
+          ]
+        : isSupabasePersistence
+          ? [
+              "El seguimiento público persistente se habilitará con la web de pedidos.",
+            ]
+          : [
+              "Podés seguir tu pedido acá:",
+              trackingUrl,
+            ];
 
     return [
       introByAction[action],
@@ -1938,10 +2779,7 @@ export function V2EnviosPage() {
       `Pedido: ${delivery.order}`,
       `Total: ${formatCurrency(delivery.total)}`,
       "",
-      action === "cancellation"
-        ? "Si necesitás ayuda, comunicate con el restaurante por WhatsApp."
-        : "Podés seguir tu pedido acá:",
-      ...(action === "cancellation" ? [] : [trackingUrl]),
+      ...finalLines,
     ].join("\n");
   }
 
@@ -2111,12 +2949,28 @@ export function V2EnviosPage() {
                 variant="primary"
                 icon={<Plus size={18} />}
                 onClick={openNewDeliveryModal}
+                disabled={
+                  isSupabasePersistence
+                  && !canManageShipping
+                }
               >
                 Nuevo envío
               </V2Button>
             </>
           }
         />
+
+        {operationError || operationMessage ? (
+          <div
+            className={`mt-3 shrink-0 rounded-xl border px-3 py-2 text-sm ${
+              operationError
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+            }`}
+          >
+            {operationError || operationMessage}
+          </div>
+        ) : null}
 
         <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
           <div className="flex min-h-0 flex-col gap-4">
@@ -2532,6 +3386,10 @@ export function V2EnviosPage() {
                           size="sm"
                           variant="secondary"
                           onClick={() => openDeliveryEditor(row)}
+                          disabled={
+                            isSupabasePersistence
+                            && !canManageShipping
+                          }
                         >
                           Editar
                         </V2Button>
@@ -2602,7 +3460,7 @@ export function V2EnviosPage() {
                             variant="danger"
                             onClick={(event) => {
                               event.stopPropagation();
-                              rejectWebDelivery(item.id);
+                              void rejectWebDelivery(item.id);
                             }}
                           >
                             Rechazar
@@ -2692,6 +3550,7 @@ export function V2EnviosPage() {
                     <V2Button
                       size="sm"
                       variant="secondary"
+                      disabled={isSupabasePersistence}
                       onClick={() =>
                         window.open(
                           getDeliveryTrackingPath(selectedDelivery),
@@ -2706,6 +3565,7 @@ export function V2EnviosPage() {
                     <V2Button
                       size="sm"
                       variant="secondary"
+                      disabled={isSupabasePersistence}
                       onClick={async () => {
                         const url = getDeliveryTrackingUrl(selectedDelivery);
 
@@ -2938,7 +3798,9 @@ export function V2EnviosPage() {
         const isConfirmedDelivery =
           !isPendingWebDelivery && actionsDelivery.status === "confirmed";
         const canReturnStock =
-          actionsDelivery.status === "cancelled" && shouldAskToReturnStock(actionsDelivery);
+          !isSupabasePersistence
+          && actionsDelivery.status === "cancelled"
+          && shouldAskToReturnStock(actionsDelivery);
         const canSendConfirmationWhatsApp = actionsDelivery.status !== "cancelled";
         const canSendModificationWhatsApp = actionsDelivery.status !== "cancelled";
         const canSendCancellationWhatsApp = actionsDelivery.status !== "completed";
@@ -3054,7 +3916,7 @@ export function V2EnviosPage() {
                       type="button"
                       onClick={() => {
                         setOpenActionsDeliveryId(null);
-                        rejectWebDelivery(actionsDelivery.id);
+                        void rejectWebDelivery(actionsDelivery.id);
                       }}
                       className="flex w-full items-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-left text-sm font-medium text-red-700 transition hover:bg-red-50"
                     >
@@ -3065,12 +3927,24 @@ export function V2EnviosPage() {
 
                 {isConfirmedDelivery ? (
                   <>
+                    {actionsDelivery.deliveryType === "pickup" && !actionsDelivery.readyAt ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenActionsDeliveryId(null);
+                          void markPickupReady(actionsDelivery.id);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-sm font-medium text-emerald-700 transition hover:bg-emerald-100"
+                      >
+                        Listo para retirar
+                      </button>
+                    ) : null}
                     {actionsDelivery.deliveryType === "delivery" && !actionsDelivery.onTheWayAt ? (
                       <button
                         type="button"
                         onClick={() => {
                           setOpenActionsDeliveryId(null);
-                          markDeliveryOnTheWay(actionsDelivery.id);
+                          void markDeliveryOnTheWay(actionsDelivery.id);
                         }}
                         className="flex w-full items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-100"
                       >
@@ -3082,7 +3956,7 @@ export function V2EnviosPage() {
                       type="button"
                       onClick={() => {
                         setOpenActionsDeliveryId(null);
-                        completeDelivery(actionsDelivery.id);
+                        void completeDelivery(actionsDelivery.id);
                       }}
                       className="flex w-full items-center gap-2 rounded-2xl border border-emerald-200 px-4 py-3 text-left text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
                     >
@@ -3189,7 +4063,7 @@ export function V2EnviosPage() {
               <V2Button
                 type="button"
                 variant="primary"
-                onClick={confirmAcceptWebDelivery}
+                onClick={() => void confirmAcceptWebDelivery()}
               >
                 Confirmar y enviar WhatsApp
               </V2Button>
@@ -3236,14 +4110,14 @@ export function V2EnviosPage() {
               <V2Button
                 type="button"
                 variant="danger"
-                onClick={() => confirmCancelDelivery(false)}
+                onClick={() => void confirmCancelDelivery(false)}
               >
                 Mantener descontado
               </V2Button>
               <V2Button
                 type="button"
                 variant="primary"
-                onClick={() => confirmCancelDelivery(true)}
+                onClick={() => void confirmCancelDelivery(true)}
               >
                 Devolver stock
               </V2Button>
@@ -3261,7 +4135,7 @@ export function V2EnviosPage() {
             onClick={(event) => event.stopPropagation()}
             onSubmit={(event) => {
               event.preventDefault();
-              createDelivery(new FormData(event.currentTarget));
+              void createDelivery(new FormData(event.currentTarget));
             }}
             className={`flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ${
               newDeliveryTab === "pedido"
@@ -3372,6 +4246,10 @@ export function V2EnviosPage() {
                   <V2Select
                     name="deliveryType"
                     value={deliveryForm.deliveryType}
+                    disabled={
+                      isSupabasePersistence
+                      && Boolean(editingDelivery)
+                    }
                     onChange={(event) =>
                       updateDeliveryFormField(
                         "deliveryType",
@@ -3411,6 +4289,7 @@ export function V2EnviosPage() {
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia">Transferencia</option>
                     <option value="Tarjeta">Tarjeta</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
                   </V2Select>
                 </label>
 
@@ -3419,6 +4298,7 @@ export function V2EnviosPage() {
                   <V2Select
                     name="status"
                     value={deliveryForm.status}
+                    disabled={isSupabasePersistence}
                     onChange={(event) =>
                       updateDeliveryFormField(
                         "status",

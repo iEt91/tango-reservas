@@ -151,11 +151,17 @@ check(
 );
 
 check(
-  "modo Supabase no reconstruye Delivery desde localStorage",
-  /if\s*\(\s*isSupabasePersistence\s*\)\s*\{[\s\S]*?persistentSnapshot[\s\S]*?\.map\(\s*mapPersistentCommand/u.test(
+  "frontera E33B admite comandos Shipping E34B",
+  /getBusinessKitchenSnapshotAction/u.test(
     sources.ui,
   )
-    && /Delivery y retiro se conectarán cuando Envíos tenga backend persistente/u.test(
+    && /getBusinessShippingKitchenSnapshotAction/u.test(
+      sources.ui,
+    )
+    && /persistentShippingSnapshot/u.test(
+      sources.ui,
+    )
+    && /mapPersistentShippingCommand/u.test(
       sources.ui,
     ),
 );
@@ -187,17 +193,17 @@ check(
 );
 
 check(
-  "mutación persistente usa solamente Server Action E33A",
+  "mutación persistente conserva E33A y agrega Shipping E34B",
   /setBusinessKitchenCommandStatusAction/u.test(
     sources.ui,
   )
+    && /setBusinessShippingKitchenCommandStatusAction/u.test(
+      sources.ui,
+    )
     && /orderId:\s*command\.orderId/u.test(
       sources.ui,
     )
     && /ticketId:[\s\S]*?command\.ticketId/u.test(
-      sources.ui,
-    )
-    && /status,/u.test(
       sources.ui,
     )
     && /operationKey,/u.test(

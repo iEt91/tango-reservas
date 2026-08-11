@@ -287,9 +287,11 @@ check(
 );
 
 check(
-  "UI Envíos permanece fuera de E34A",
+  "frontera E34A admite el cutover UI E34B posterior",
   /window\.localStorage/u.test(sources.shippingUi)
-    && !/getBusinessShippingSnapshotAction/u.test(sources.shippingUi)
+    && /shippingPersistence/u.test(sources.shippingUi)
+    && /getBusinessShippingSnapshotAction/u.test(sources.shippingUi)
+    && /saveBusinessShippingOrderAction/u.test(sources.shippingUi)
     && /E34A es backend-only/u.test(sources.docs),
 );
 

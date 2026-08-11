@@ -11,6 +11,10 @@ import {
   type BusinessKitchenSnapshot,
   type BusinessKitchenStatusMutation,
 } from "@/lib/kitchen/business-kitchen-contract";
+import {
+  mapBusinessShippingKitchenSnapshot,
+  type BusinessShippingKitchenSnapshot,
+} from "@/lib/kitchen/business-shipping-kitchen-contract";
 import { hasStaffAccess } from "@/lib/staff/staff-contract";
 import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
 
@@ -18,6 +22,16 @@ export type KitchenSnapshotActionResult =
   | {
       ok: true;
       snapshot: BusinessKitchenSnapshot;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export type ShippingKitchenSnapshotActionResult =
+  | {
+      ok: true;
+      snapshot: BusinessShippingKitchenSnapshot;
     }
   | {
       ok: false;
@@ -119,6 +133,62 @@ function revalidateKitchenPaths() {
   revalidatePath("/local/reservas");
   revalidatePath("/local/historial");
   revalidatePath("/local/reportes");
+}
+
+export async function getBusinessShippingKitchenSnapshotAction(
+  businessDate: unknown,
+): Promise<ShippingKitchenSnapshotActionResult> {
+  try {
+    const date =
+      normalizeBusinessKitchenDate(
+        businessDate,
+      );
+    const context =
+      await resolveKitchenContext(
+        "view",
+      );
+
+    if (!context.ok) {
+      return context;
+    }
+
+    const { data, error } =
+      await context.supabase.rpc(
+        "get_business_shipping_kitchen_snapshot",
+        {
+          p_business_id:
+            context.businessId,
+          p_business_date:
+            date,
+        },
+      );
+
+    if (error || !data) {
+      return {
+        ok: false,
+        error:
+          formatKitchenError(
+            error,
+          ),
+      };
+    }
+
+    return {
+      ok: true,
+      snapshot:
+        mapBusinessShippingKitchenSnapshot(
+          data,
+        ),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudieron leer las comandas Shipping.",
+    };
+  }
 }
 
 export async function getBusinessKitchenSnapshotAction(
@@ -229,6 +299,76 @@ export async function setBusinessKitchenCommandStatusAction(
         error instanceof Error
           ? error.message
           : "No se pudo validar la operación de Cocina.",
+    };
+  }
+}
+
+
+export async function setBusinessShippingKitchenCommandStatusAction(
+  input: unknown,
+): Promise<KitchenStatusActionResult> {
+  try {
+    const normalized =
+      normalizeBusinessKitchenStatusMutationInput(
+        input,
+      );
+    const context =
+      await resolveKitchenContext(
+        "manage",
+      );
+
+    if (!context.ok) {
+      return context;
+    }
+
+    const { data, error } =
+      await context.supabase.rpc(
+        "set_business_shipping_kitchen_command_status",
+        {
+          p_business_id:
+            context.businessId,
+          ...toBusinessKitchenStatusRpcPayload(
+            normalized,
+          ),
+        },
+      );
+
+    if (error || !data) {
+      console.error(
+        "[kitchen-shipping] status RPC failed",
+        {
+          code:
+            error?.code ?? null,
+        },
+      );
+
+      return {
+        ok: false,
+        error:
+          formatKitchenError(
+            error,
+          ),
+      };
+    }
+
+    const mutation =
+      mapBusinessKitchenStatusMutation(
+        data,
+      );
+
+    revalidateKitchenPaths();
+
+    return {
+      ok: true,
+      mutation,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo validar la operación Shipping de Cocina.",
     };
   }
 }
