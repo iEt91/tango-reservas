@@ -43,6 +43,8 @@ const expensesCashClosePath =
   "supabase/migrations/20260811_020_expenses_cash_close.sql";
 const kitchenOperationalWritePath =
   "supabase/migrations/20260811_021_kitchen_operational_write.sql";
+const shippingOrdersWritePath =
+  "supabase/migrations/20260811_022_shipping_orders_write.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -117,6 +119,10 @@ const expensesCashClose = await readFile(
 );
 const kitchenOperationalWrite = await readFile(
   kitchenOperationalWritePath,
+  "utf8",
+);
+const shippingOrdersWrite = await readFile(
+  shippingOrdersWritePath,
   "utf8",
 );
 
@@ -614,6 +620,36 @@ assert.match(
 );
 console.log("✓ Cocina agrega estado operativo y comandas incrementales");
 
+assert.match(
+  shippingOrdersWrite,
+  /create table if not exists public\.business_shipping_orders/u,
+);
+assert.match(
+  shippingOrdersWrite,
+  /save_business_shipping_order/u,
+);
+assert.match(
+  shippingOrdersWrite,
+  /private\.apply_recipe_stock_consumption/u,
+);
+assert.match(
+  shippingOrdersWrite,
+  /complete_business_shipping_payment/u,
+);
+assert.match(
+  shippingOrdersWrite,
+  /get_business_shipping_kitchen_snapshot/u,
+);
+assert.match(
+  shippingOrdersWrite,
+  /business_payment_operations_source_check/u,
+);
+assert.match(
+  shippingOrdersWrite,
+  /force row level security/u,
+);
+console.log("✓ Envíos agrega pedido Stock Cocina y pago canónicos");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -627,4 +663,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (22).");
+console.log("Todos los casos del historial remoto pasaron (23).");
