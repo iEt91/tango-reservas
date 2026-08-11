@@ -39,6 +39,8 @@ const stockRealtimeSyncPath =
   "supabase/migrations/20260810_018_stock_realtime_sync.sql";
 const cashPaymentsWritePath =
   "supabase/migrations/20260810_019_cash_payments_write.sql";
+const expensesCashClosePath =
+  "supabase/migrations/20260811_020_expenses_cash_close.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -105,6 +107,10 @@ const stockRealtimeSync = await readFile(
 );
 const cashPaymentsWrite = await readFile(
   cashPaymentsWritePath,
+  "utf8",
+);
+const expensesCashClose = await readFile(
+  expensesCashClosePath,
   "utf8",
 );
 
@@ -542,6 +548,36 @@ assert.match(
 );
 console.log("✓ Caja/Pagos agrega sesión y cobro transaccional");
 
+assert.match(
+  expensesCashClose,
+  /create table if not exists public\.business_expenses/u,
+);
+assert.match(
+  expensesCashClose,
+  /create table if not exists public\.cash_session_movements/u,
+);
+assert.match(
+  expensesCashClose,
+  /save_business_expense/u,
+);
+assert.match(
+  expensesCashClose,
+  /close_business_cash_session/u,
+);
+assert.match(
+  expensesCashClose,
+  /reopen_business_cash_session/u,
+);
+assert.match(
+  expensesCashClose,
+  /get_business_cash_reconciliation/u,
+);
+assert.match(
+  expensesCashClose,
+  /force row level security/u,
+);
+console.log("✓ Gastos y cierre de Caja agregan conciliación transaccional");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -555,4 +591,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (20).");
+console.log("Todos los casos del historial remoto pasaron (21).");
