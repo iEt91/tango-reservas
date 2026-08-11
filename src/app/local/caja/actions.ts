@@ -3,10 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { resolveActiveBusiness } from "@/lib/auth/active-business";
 import {
+  getBusinessCashSessionForDate,
+  getBusinessPaymentsForCashSession,
+} from "@/lib/data/server/business-cash";
+import {
   mapBusinessCashSessionResult,
   normalizeBusinessCashSessionOpenInput,
   toBusinessCashSessionOpenRpcPayload,
   type BusinessCashSession,
+  type BusinessPayment,
 } from "@/lib/payments/business-payment-contract";
 import { hasStaffAccess } from "@/lib/staff/staff-contract";
 import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
@@ -15,6 +20,17 @@ export type BusinessCashSessionOpenActionResult =
   | {
       ok: true;
       session: BusinessCashSession;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export type BusinessCashSnapshotActionResult =
+  | {
+      ok: true;
+      session: BusinessCashSession | null;
+      payments: BusinessPayment[];
     }
   | {
       ok: false;
@@ -53,7 +69,9 @@ function formatCashSessionError(
   return "No se pudo abrir la caja persistente.";
 }
 
-async function resolveCashContext() {
+async function resolveCashContext(
+  requiredAccess: "view" | "manage",
+) {
   const activeBusiness =
     await resolveActiveBusiness();
 
@@ -70,7 +88,7 @@ async function resolveCashContext() {
     && !hasStaffAccess(
       activeBusiness.membership.permissions,
       "cash",
-      "manage",
+      requiredAccess,
     )
   ) {
     return {
@@ -99,6 +117,94 @@ async function resolveCashContext() {
   };
 }
 
+export async function getBusinessCashSnapshotAction(
+  input: unknown,
+): Promise<BusinessCashSnapshotActionResult> {
+  try {
+    if (
+      !input
+      || typeof input !== "object"
+    ) {
+      return {
+        ok: false,
+        error:
+          "La fecha de caja no es válida.",
+      };
+    }
+
+    const businessDate =
+      (
+        input as Record<string, unknown>
+      ).businessDate;
+
+    if (
+      typeof businessDate !== "string"
+      || !/^\d{4}-\d{2}-\d{2}$/u.test(
+        businessDate,
+      )
+    ) {
+      return {
+        ok: false,
+        error:
+          "La fecha de caja no es válida.",
+      };
+    }
+
+    const parsedDate =
+      new Date(
+        `${businessDate}T00:00:00Z`,
+      );
+
+    if (
+      Number.isNaN(parsedDate.getTime())
+      || parsedDate
+        .toISOString()
+        .slice(0, 10)
+        !== businessDate
+    ) {
+      return {
+        ok: false,
+        error:
+          "La fecha de caja no es válida.",
+      };
+    }
+
+    const context =
+      await resolveCashContext(
+        "view",
+      );
+
+    if (!context.ok) {
+      return context;
+    }
+
+    const session =
+      await getBusinessCashSessionForDate(
+        context.businessId,
+        businessDate,
+      );
+    const payments =
+      session
+        ? await getBusinessPaymentsForCashSession(
+            context.businessId,
+            session.id,
+          )
+        : [];
+
+    return {
+      ok: true,
+      session,
+      payments,
+    };
+  } catch {
+    return {
+      ok: false,
+      error:
+        "No se pudo leer la caja persistente.",
+    };
+  }
+}
+
 export async function openBusinessCashSessionAction(
   input: unknown,
 ): Promise<BusinessCashSessionOpenActionResult> {
@@ -108,7 +214,9 @@ export async function openBusinessCashSessionAction(
         input,
       );
     const context =
-      await resolveCashContext();
+      await resolveCashContext(
+        "manage",
+      );
 
     if (!context.ok) {
       return context;

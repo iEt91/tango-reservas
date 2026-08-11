@@ -162,3 +162,67 @@ export async function getBusinessPaymentsForReservations(
     };
   });
 }
+
+
+export async function getBusinessPaymentsForCashSession(
+  businessId: string,
+  cashSessionId: string,
+): Promise<BusinessPayment[]> {
+  assertServerOnly(
+    "getBusinessPaymentsForCashSession",
+  );
+
+  const supabase =
+    await createSupabaseAuthServerClient();
+
+  if (!supabase) {
+    throw new Error(
+      "No se pudo crear el cliente autenticado.",
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("business_payments")
+    .select(
+      "id, payment_method, amount, created_at",
+    )
+    .eq(
+      "business_id",
+      businessId,
+    )
+    .eq(
+      "cash_session_id",
+      cashSessionId,
+    )
+    .order(
+      "created_at",
+      {
+        ascending: true,
+      },
+    );
+
+  if (error) {
+    console.error(
+      "[business-cash] session payments read failed",
+      {
+        code:
+          error.code ?? null,
+      },
+    );
+
+    throw new Error(
+      "No se pudieron leer los cobros de la caja persistente.",
+    );
+  }
+
+  return (
+    data ?? []
+  ).map((row) =>
+    mapBusinessPaymentRow(
+      row,
+    ),
+  );
+}

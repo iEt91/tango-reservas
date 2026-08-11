@@ -253,7 +253,7 @@ check(
 );
 
 check(
-  "el consumo usa el cutover posterior y Caja/Pagos siguen bloqueados",
+  "consumo y pagos pueden usar cutovers posteriores sin romper E25",
   sources.ui.includes(
     "saveBusinessReservationConsumptionAction",
   )
@@ -261,10 +261,10 @@ check(
       "function openOrderPopup",
     )
     && sources.ui.includes(
-      "La caja y los pagos persistentes todavía no están habilitados",
+      "function openPaymentCloseModal",
     )
     && sources.ui.includes(
-      "function openPaymentCloseModal",
+      "completeBusinessReservationPaymentAction",
     ),
 );
 

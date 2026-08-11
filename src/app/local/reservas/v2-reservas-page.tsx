@@ -38,7 +38,9 @@ import {
   setBusinessReservationStatusAction,
 } from "./actions";
 import { saveBusinessReservationConsumptionAction } from "./consumption-actions";
+import { completeBusinessReservationPaymentAction } from "./payment-actions";
 import type { BusinessDineInOrder } from "@/lib/orders/business-order-contract";
+import type { BusinessPayment } from "@/lib/payments/business-payment-contract";
 import { publishV2ServerSync } from "@/lib/v2-server-sync";
 import {
   mapBusinessReservationToV2Draft,
@@ -1150,6 +1152,96 @@ function hydratePersistentReservationOrders(
   );
 }
 
+function hydratePersistentReservationPayments(
+  reservations: V2ReservationDraft[],
+  payments: Array<{
+    reservationId: string;
+    payment: BusinessPayment;
+  }>,
+) {
+  const paymentsByReservationId =
+    new Map<string, BusinessPayment[]>();
+
+  payments.forEach((entry) => {
+    const current =
+      paymentsByReservationId.get(
+        entry.reservationId,
+      ) ?? [];
+
+    current.push(entry.payment);
+    paymentsByReservationId.set(
+      entry.reservationId,
+      current,
+    );
+  });
+
+  return reservations.map((reservation) => {
+    const reservationPayments =
+      paymentsByReservationId.get(
+        reservation.id,
+      ) ?? [];
+
+    if (reservationPayments.length === 0) {
+      return reservation;
+    }
+
+    const paymentBreakdown:
+      V2ReservationPaymentBreakdown = {
+        cash: 0,
+        card: 0,
+        mercadoPago: 0,
+        transfer: 0,
+      };
+
+    reservationPayments.forEach((payment) => {
+      if (payment.method === "cash") {
+        paymentBreakdown.cash += payment.amount;
+      } else if (payment.method === "card") {
+        paymentBreakdown.card += payment.amount;
+      } else if (
+        payment.method === "mercado_pago"
+      ) {
+        paymentBreakdown.mercadoPago +=
+          payment.amount;
+      } else {
+        paymentBreakdown.transfer +=
+          payment.amount;
+      }
+    });
+
+    const usedMethods =
+      reservationPayments
+        .filter((payment) => payment.amount > 0)
+        .map((payment) => payment.method);
+
+    return {
+      ...reservation,
+      paymentMethod:
+        usedMethods.length > 1
+          ? "Mixto"
+          : formatPaymentMethod(
+              usedMethods[0],
+            ),
+      paidAmount:
+        Number(
+          reservationPayments
+            .reduce(
+              (total, payment) =>
+                total + payment.amount,
+              0,
+            )
+            .toFixed(2),
+        ),
+      paymentBreakdown,
+      paymentClosedAt:
+        reservationPayments[
+          reservationPayments.length - 1
+        ]?.createdAt
+        ?? reservation.completedAt,
+    };
+  });
+}
+
 function timeToMinutes(time: string) {
   const [hours = "0", minutes = "0"] = time.split(":");
   const parsedHours = Number(hours);
@@ -1609,8 +1701,13 @@ type V2ReservasPageProps = {
   persistentMenuItems?: V2MenuOrderItem[];
   persistentMenuCategories?: { id: V2MenuCategory; label: string }[];
   initialPersistentOrders?: BusinessDineInOrder[];
+  initialPersistentPayments?: Array<{
+    reservationId: string;
+    payment: BusinessPayment;
+  }>;
   reservationPersistence?: "local" | "supabase";
   canManageReservations?: boolean;
+  canManageCash?: boolean;
 };
 
 export function V2ReservasPage({
@@ -1622,17 +1719,22 @@ export function V2ReservasPage({
   persistentMenuItems = [],
   persistentMenuCategories = [],
   initialPersistentOrders = [],
+  initialPersistentPayments = [],
   reservationPersistence = "local",
   canManageReservations = true,
+  canManageCash = true,
 }: V2ReservasPageProps = {}) {
   const isSupabasePersistence =
     reservationPersistence === "supabase";
   const [reservations, setReservations] =
     useState<V2ReservationDraft[]>(() =>
       isSupabasePersistence
-        ? hydratePersistentReservationOrders(
-            initialReservations,
-            initialPersistentOrders,
+        ? hydratePersistentReservationPayments(
+            hydratePersistentReservationOrders(
+              initialReservations,
+              initialPersistentOrders,
+            ),
+            initialPersistentPayments,
           )
         : initialReservations
     );
@@ -1650,6 +1752,9 @@ export function V2ReservasPage({
     useState("");
   const reservationSaveKeyRef = useRef<string | null>(null);
   const reservationConsumptionMutationRef = useRef(false);
+  const paymentMutationRef = useRef(false);
+  const paymentOperationKeyRef =
+    useRef<string | null>(null);
   const defaultPersistentServiceId =
     persistentServices.find((service) => service.isActive)?.id
     ?? "";
@@ -3043,60 +3148,282 @@ export function V2ReservasPage({
   }
 
   function openPaymentCloseModal(reservation: V2ReservationDraft) {
-    if (isSupabasePersistence) {
-      setReservationOperationError(
-        "La caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
-      );
+    if (
+      isReservationMutating
+      || paymentMutationRef.current
+    ) {
       return;
     }
 
-    const normalizedReservation = normalizeReservation(reservation);
+    if (isSupabasePersistence) {
+      if (!canManageCash) {
+        setReservationOperationError(
+          "No tenés permisos de Caja para registrar el cobro.",
+        );
+        return;
+      }
 
-    setPaymentCloseReservation(normalizedReservation);
-    setPaymentCloseForm(createPaymentForm(normalizedReservation));
+      if (reservation.status !== "confirmed") {
+        setReservationOperationError(
+          "La reserva debe estar confirmada antes de cobrar.",
+        );
+        return;
+      }
+
+      paymentOperationKeyRef.current =
+        createV2OperationalId(
+          "reservation-payment",
+        );
+    }
+
+    const normalizedReservation =
+      normalizeReservation(reservation);
+
+    setPaymentCloseReservation(
+      normalizedReservation,
+    );
+    setPaymentCloseForm(
+      createPaymentForm(
+        normalizedReservation,
+      ),
+    );
     setPaymentCloseError("");
   }
 
   function closePaymentCloseModal() {
+    if (
+      isSupabasePersistence
+      && paymentMutationRef.current
+    ) {
+      return;
+    }
+
+    paymentOperationKeyRef.current = null;
     setPaymentCloseReservation(null);
     setPaymentCloseError("");
   }
 
-  function completeReservationWithPayment() {
-    if (!paymentCloseReservation) return;
-
-    const cashRegisterError = getCashRegisterError(paymentCloseReservation.date);
-    if (cashRegisterError) {
-      setPaymentCloseError(cashRegisterError);
+  async function completeReservationWithPayment() {
+    if (
+      !paymentCloseReservation
+      || paymentMutationRef.current
+    ) {
       return;
     }
 
-    const expectedTotal = Math.max(Number(paymentCloseReservation.orderTotal) || 0, 0);
-    const paymentBreakdown = getPaymentBreakdownFromForm(paymentCloseForm);
-    const paidAmount = Number(getPaymentBreakdownTotal(paymentBreakdown).toFixed(2));
-    const totalDifference = Math.abs(paidAmount - expectedTotal);
+    if (!isSupabasePersistence) {
+      const cashRegisterError =
+        getCashRegisterError(
+          paymentCloseReservation.date,
+        );
 
-    if (expectedTotal > 0 && totalDifference > 0.01) {
+      if (cashRegisterError) {
+        setPaymentCloseError(cashRegisterError);
+        return;
+      }
+    }
+
+    const expectedTotal =
+      Math.max(
+        Number(
+          paymentCloseReservation.orderTotal,
+        ) || 0,
+        0,
+      );
+    const paymentBreakdown =
+      getPaymentBreakdownFromForm(
+        paymentCloseForm,
+      );
+    const paidAmount =
+      Number(
+        getPaymentBreakdownTotal(
+          paymentBreakdown,
+        ).toFixed(2),
+      );
+    const totalDifference =
+      Math.abs(
+        paidAmount - expectedTotal,
+      );
+
+    if (
+      expectedTotal > 0
+      && totalDifference > 0.01
+    ) {
       setPaymentCloseError(
-        `El pago cargado (${formatMoney(paidAmount)}) debe coincidir con el total del consumo (${formatMoney(expectedTotal)}).`
+        `El pago cargado (${formatMoney(paidAmount)}) debe coincidir con el total del consumo (${formatMoney(expectedTotal)}).`,
       );
       return;
     }
 
-    const paymentMethod =
-      paymentCloseForm.method === "mixed"
-        ? "Mixto"
-        : formatPaymentMethod(paymentCloseForm.method);
+    if (!isSupabasePersistence) {
+      const paymentMethod =
+        paymentCloseForm.method === "mixed"
+          ? "Mixto"
+          : formatPaymentMethod(
+              paymentCloseForm.method,
+            );
 
-    applyReservationStatusChange({
-      ...withReservationStatusTimestamp(paymentCloseReservation, "completed"),
-      paymentMethod,
-      paidAmount,
-      paymentBreakdown,
-      paymentClosedAt: getNowTimestamp(),
-    });
+      applyReservationStatusChange({
+        ...withReservationStatusTimestamp(
+          paymentCloseReservation,
+          "completed",
+        ),
+        paymentMethod,
+        paidAmount,
+        paymentBreakdown,
+        paymentClosedAt:
+          getNowTimestamp(),
+      });
 
-    closePaymentCloseModal();
+      closePaymentCloseModal();
+      return;
+    }
+
+    if (!canManageCash) {
+      setPaymentCloseError(
+        "No tenés permisos de Caja para registrar el cobro.",
+      );
+      return;
+    }
+
+    const payments = [
+      {
+        method: "cash" as const,
+        amount: paymentBreakdown.cash,
+      },
+      {
+        method: "card" as const,
+        amount: paymentBreakdown.card,
+      },
+      {
+        method: "mercado_pago" as const,
+        amount:
+          paymentBreakdown.mercadoPago,
+      },
+      {
+        method: "transfer" as const,
+        amount: paymentBreakdown.transfer,
+      },
+    ].filter(
+      (payment) => payment.amount > 0,
+    );
+
+    const operationKey =
+      paymentOperationKeyRef.current
+      ?? createV2OperationalId(
+        "reservation-payment",
+      );
+
+    paymentOperationKeyRef.current =
+      operationKey;
+    paymentMutationRef.current = true;
+    setIsReservationMutating(true);
+    setPaymentCloseError("");
+    setReservationOperationError("");
+    setReservationOperationMessage("");
+
+    try {
+      const result =
+        await completeBusinessReservationPaymentAction({
+          reservationId:
+            paymentCloseReservation.id,
+          operationKey,
+          payments,
+        });
+
+      if (!result.ok) {
+        setPaymentCloseError(
+          result.error,
+        );
+        return;
+      }
+
+      const canonicalBreakdown:
+        V2ReservationPaymentBreakdown = {
+          cash: 0,
+          card: 0,
+          mercadoPago: 0,
+          transfer: 0,
+        };
+
+      result.payment.payments.forEach(
+        (payment) => {
+          if (payment.method === "cash") {
+            canonicalBreakdown.cash +=
+              payment.amount;
+          } else if (
+            payment.method === "card"
+          ) {
+            canonicalBreakdown.card +=
+              payment.amount;
+          } else if (
+            payment.method
+            === "mercado_pago"
+          ) {
+            canonicalBreakdown.mercadoPago +=
+              payment.amount;
+          } else {
+            canonicalBreakdown.transfer +=
+              payment.amount;
+          }
+        },
+      );
+
+      const usedMethods =
+        result.payment.payments
+          .filter(
+            (payment) =>
+              payment.amount > 0,
+          )
+          .map(
+            (payment) =>
+              payment.method,
+          );
+
+      applyReservationStatusChange({
+        ...paymentCloseReservation,
+        status: "completed",
+        completedAt:
+          result.payment.reservation
+            .completedAt,
+        orderTotal:
+          result.payment.order.subtotal,
+        paymentMethod:
+          usedMethods.length > 1
+            ? "Mixto"
+            : formatPaymentMethod(
+                usedMethods[0],
+              ),
+        paidAmount:
+          result.payment.totalAmount,
+        paymentBreakdown:
+          canonicalBreakdown,
+        paymentClosedAt:
+          result.payment.payments[
+            result.payment.payments.length
+            - 1
+          ]?.createdAt
+          ?? result.payment.reservation
+            .completedAt,
+      });
+
+      publishV2ServerSync("cash");
+      setReservationOperationMessage(
+        "Cobro persistente registrado. Reserva y pedido completados.",
+      );
+      paymentOperationKeyRef.current =
+        null;
+      setPaymentCloseReservation(null);
+      setPaymentCloseError("");
+    } catch {
+      setPaymentCloseError(
+        "No se pudo registrar el cobro persistente.",
+      );
+    } finally {
+      paymentMutationRef.current =
+        false;
+      setIsReservationMutating(false);
+    }
   }
 
   function resolveStockDecision(shouldReturnStock: boolean) {
@@ -3562,7 +3889,7 @@ export function V2ReservasPage({
         {isSupabasePersistence ? (
           <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <strong>Reservas conectadas a Supabase.</strong>{" "}
-            Alta, edición, estados y consumo de mesa son persistentes. Las mesas se administran desde Plano; Caja, pagos y Cocina siguen bloqueados hasta su corte canónico.
+            Alta, edición, estados, consumo de mesa y cobros son persistentes. Las mesas se administran desde Plano; Cocina sigue bloqueada hasta su corte canónico.
           </div>
         ) : null}
 

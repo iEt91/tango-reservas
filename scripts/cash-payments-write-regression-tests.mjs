@@ -366,7 +366,15 @@ assert.match(
 );
 assert.match(
   cashActions,
-  /"cash",\s*"manage"/u,
+  /requiredAccess:\s*"view"\s*\|\s*"manage"/u,
+);
+assert.match(
+  cashActions,
+  /"cash",\s*requiredAccess/u,
+);
+assert.match(
+  cashActions,
+  /resolveCashContext\(\s*"manage"/u,
 );
 assert.match(
   cashActions,

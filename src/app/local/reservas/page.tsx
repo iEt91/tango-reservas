@@ -4,6 +4,7 @@ import { resolveActiveBusiness } from "@/lib/auth/active-business";
 import { buildLoginPath } from "@/lib/auth/redirects";
 import { getDataSource } from "@/lib/data/dataSource";
 import { getBusinessHoursForBusiness } from "@/lib/data/server/business-hours";
+import { getBusinessPaymentsForReservations } from "@/lib/data/server/business-cash";
 import { getBusinessMenuForBusiness } from "@/lib/data/server/business-menu";
 import { getBusinessDineInOrdersForReservations } from "@/lib/data/server/business-orders";
 import { getBusinessCustomersForBusiness } from "@/lib/data/server/business-customers";
@@ -12,6 +13,7 @@ import { getBusinessReservationsForBusiness } from "@/lib/data/server/business-r
 import { getBusinessServicesForBusiness } from "@/lib/data/server/business-services";
 import { getReservationSettingsForBusiness } from "@/lib/data/server/reservation-settings";
 import { buildV2ReservationsSnapshot } from "@/lib/reservations/v2-reservations-cutover";
+import { hasStaffAccess } from "@/lib/staff/staff-contract";
 
 function addDays(date: string, days: number) {
   const parsed = new Date(`${date}T12:00:00Z`);
@@ -79,19 +81,26 @@ export default async function ReservasPage() {
   const reservationIds = reservations
     .map((reservation) => reservation.id ?? "")
     .filter(Boolean);
-  const [floorPlan, dineInOrders] =
-    await Promise.all([
-      getBusinessFloorPlanForBusiness(
-        businessId,
-        {
-          reservationIds,
-        },
-      ),
-      getBusinessDineInOrdersForReservations(
-        businessId,
+  const [
+    floorPlan,
+    dineInOrders,
+    persistentPayments,
+  ] = await Promise.all([
+    getBusinessFloorPlanForBusiness(
+      businessId,
+      {
         reservationIds,
-      ),
-    ]);
+      },
+    ),
+    getBusinessDineInOrdersForReservations(
+      businessId,
+      reservationIds,
+    ),
+    getBusinessPaymentsForReservations(
+      businessId,
+      reservationIds,
+    ),
+  ]);
   const snapshot = buildV2ReservationsSnapshot({
     reservations,
     services,
@@ -105,6 +114,13 @@ export default async function ReservasPage() {
     "admin",
     "staff",
   ].includes(activeBusiness.membership.role);
+  const canManageCash =
+    activeBusiness.membership.role !== "staff"
+    || hasStaffAccess(
+      activeBusiness.membership.permissions,
+      "cash",
+      "manage",
+    );
   const persistentMenuItems = menu.items
     .filter(
       (item) =>
@@ -174,6 +190,8 @@ export default async function ReservasPage() {
       persistentMenuItems={persistentMenuItems}
       persistentMenuCategories={persistentMenuCategories}
       initialPersistentOrders={dineInOrders}
+      initialPersistentPayments={persistentPayments}
+      canManageCash={canManageCash}
     />
   );
 }

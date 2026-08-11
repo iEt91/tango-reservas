@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownToLine,
   Banknote,
@@ -24,6 +24,19 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import {
+  getBusinessCashSnapshotAction,
+  openBusinessCashSessionAction,
+} from "./actions";
+import { getDataSource } from "@/lib/data/dataSource";
+import type {
+  BusinessCashSession,
+  BusinessPayment,
+} from "@/lib/payments/business-payment-contract";
+import {
+  publishV2ServerSync,
+  subscribeV2ServerSync,
+} from "@/lib/v2-server-sync";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 
 const RESERVATIONS_KEY = V2_OPERATIONAL_STORAGE_KEYS.reservations;
@@ -155,10 +168,24 @@ function reservationPayment(reservation: Reservation): PaymentTotals {
 }
 
 export default function CajaPage() {
+  const isSupabasePersistence =
+    getDataSource() === "supabase";
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [closes, setCloses] = useState<CashClose[]>([]);
+  const [persistentSession, setPersistentSession] =
+    useState<BusinessCashSession | null>(null);
+  const [persistentPayments, setPersistentPayments] =
+    useState<BusinessPayment[]>([]);
+  const [isCashSnapshotLoading, setIsCashSnapshotLoading] =
+    useState(isSupabasePersistence);
+  const [isCashMutating, setIsCashMutating] =
+    useState(false);
+  const [cashOperationError, setCashOperationError] =
+    useState("");
+  const cashOpenOperationKeyRef =
+    useRef<string | null>(null);
   const [openingValue, setOpeningValue] = useState("0");
   const [actualValue, setActualValue] = useState("");
   const [notes, setNotes] = useState("");
@@ -175,6 +202,10 @@ export default function CajaPage() {
   const isToday = selectedDate === today;
 
   useEffect(() => {
+    if (isSupabasePersistence) {
+      return;
+    }
+
     const sync = () => {
       setReservations(readArray<Reservation>(RESERVATIONS_KEY));
       setDeliveries(readArray<Delivery>(DELIVERIES_KEY));
@@ -190,11 +221,153 @@ export default function CajaPage() {
       window.removeEventListener("storage", sync);
       SYNC_EVENTS.forEach((event) => window.removeEventListener(event, sync));
     };
-  }, []);
+  }, [isSupabasePersistence]);
 
-  const selectedClose = closes.find((item) => item.date === selectedDate) ?? null;
+  useEffect(() => {
+    if (!isSupabasePersistence) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function syncPersistentCash() {
+      setIsCashSnapshotLoading(true);
+
+      try {
+        const result =
+          await getBusinessCashSnapshotAction({
+            businessDate:
+              selectedDate,
+          });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!result.ok) {
+          setPersistentSession(null);
+          setPersistentPayments([]);
+          setCashOperationError(
+            result.error,
+          );
+          return;
+        }
+
+        setPersistentSession(
+          result.session,
+        );
+        setPersistentPayments(
+          result.payments,
+        );
+        setCashOperationError("");
+      } catch {
+        if (!cancelled) {
+          setCashOperationError(
+            "No se pudo actualizar la caja persistente.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCashSnapshotLoading(false);
+        }
+      }
+    }
+
+    void syncPersistentCash();
+
+    const unsubscribe =
+      subscribeV2ServerSync(
+        "cash",
+        () => {
+          void syncPersistentCash();
+        },
+      );
+
+    const handleFocus = () => {
+      void syncPersistentCash();
+    };
+
+    window.addEventListener(
+      "focus",
+      handleFocus,
+    );
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+      window.removeEventListener(
+        "focus",
+        handleFocus,
+      );
+    };
+  }, [
+    isSupabasePersistence,
+    selectedDate,
+  ]);
+
+  const persistentSelectedClose:
+    CashClose | null =
+      persistentSession
+      && persistentSession.businessDate
+        === selectedDate
+        ? {
+            id:
+              persistentSession.id,
+            date:
+              persistentSession.businessDate,
+            status:
+              persistentSession.status,
+            openingAmount:
+              persistentSession.openingAmount,
+            adjustment: 0,
+            movements: [],
+            actualCash: null,
+            expectedCash: null,
+            difference: null,
+            salesSnapshot: null,
+            cashExpensesSnapshot: null,
+            notes: "",
+            openedAt:
+              persistentSession.openedAt,
+            closedAt: null,
+          }
+        : null;
+
+  const selectedClose =
+    isSupabasePersistence
+      ? persistentSelectedClose
+      : closes.find(
+          (item) =>
+            item.date === selectedDate,
+        ) ?? null;
   const sales = useMemo(() => {
     const totals: PaymentTotals = { cash: 0, card: 0, mercadoPago: 0, transfer: 0 };
+
+    if (isSupabasePersistence) {
+      persistentPayments.forEach(
+        (payment) => {
+          if (payment.method === "cash") {
+            totals.cash += payment.amount;
+          } else if (
+            payment.method === "card"
+          ) {
+            totals.card += payment.amount;
+          } else if (
+            payment.method
+            === "mercado_pago"
+          ) {
+            totals.mercadoPago +=
+              payment.amount;
+          } else {
+            totals.transfer +=
+              payment.amount;
+          }
+        },
+      );
+
+      return totals;
+    }
+
     reservations
       .filter((item) => item.date === selectedDate && item.status === "completed")
       .forEach((item) => {
@@ -210,19 +383,37 @@ export default function CajaPage() {
         totals[paymentKey(item.payment)] += Number(item.total) || 0;
       });
     return totals;
-  }, [deliveries, reservations, selectedDate]);
+  }, [
+    deliveries,
+    isSupabasePersistence,
+    persistentPayments,
+    reservations,
+    selectedDate,
+  ]);
 
   const cashExpenses = useMemo(
-    () => expenses
+    () => isSupabasePersistence
+      ? 0
+      : expenses
       .filter((item) => item.date === selectedDate && item.status === "paid" && paymentKey(item.paymentMethod) === "cash")
       .reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
-    [expenses, selectedDate],
+    [
+      expenses,
+      isSupabasePersistence,
+      selectedDate,
+    ],
   );
   const cardExpenses = useMemo(
-    () => expenses
+    () => isSupabasePersistence
+      ? 0
+      : expenses
       .filter((item) => item.date === selectedDate && item.status === "paid" && paymentKey(item.paymentMethod) !== "cash")
       .reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
-    [expenses, selectedDate],
+    [
+      expenses,
+      isSupabasePersistence,
+      selectedDate,
+    ],
   );
   const openingAmount = Number(selectedClose?.openingAmount) || 0;
   const movements = selectedClose?.movements ?? [];
@@ -234,15 +425,80 @@ export default function CajaPage() {
   const adjustment = movementNet + legacyAdjustment;
   const expectedCash = openingAmount + sales.cash - cashExpenses + adjustment;
   function persist(next: CashClose[]) {
+    if (isSupabasePersistence) {
+      return;
+    }
+
     setCloses(next);
     window.localStorage.setItem(CASH_REGISTER_KEY, JSON.stringify(next));
     window.dispatchEvent(new Event(V2_OPERATIONAL_EVENTS.cashRegister));
   }
 
-  function openCash() {
-    if (!isToday) return;
-    const opening = Number(openingValue);
-    if (!Number.isFinite(opening) || opening < 0) return;
+  async function openCash() {
+    if (
+      !isToday
+      || isCashMutating
+    ) {
+      return;
+    }
+
+    const opening =
+      Number(openingValue);
+
+    if (
+      !Number.isFinite(opening)
+      || opening < 0
+    ) {
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      const operationKey =
+        cashOpenOperationKeyRef.current
+        ?? createV2OperationalId(
+          "cash-open",
+        );
+
+      cashOpenOperationKeyRef.current =
+        operationKey;
+      setIsCashMutating(true);
+      setCashOperationError("");
+
+      try {
+        const result =
+          await openBusinessCashSessionAction({
+            businessDate:
+              selectedDate,
+            openingAmount:
+              opening,
+            operationKey,
+          });
+
+        if (!result.ok) {
+          setCashOperationError(
+            result.error,
+          );
+          return;
+        }
+
+        setPersistentSession(
+          result.session,
+        );
+        setPersistentPayments([]);
+        cashOpenOperationKeyRef.current =
+          null;
+        publishV2ServerSync("cash");
+      } catch {
+        setCashOperationError(
+          "No se pudo abrir la caja persistente.",
+        );
+      } finally {
+        setIsCashMutating(false);
+      }
+
+      return;
+    }
+
     const record: CashClose = {
       id: `cash-${selectedDate}`,
       date: selectedDate,
@@ -259,10 +515,23 @@ export default function CajaPage() {
       openedAt: new Date().toISOString(),
       closedAt: null,
     };
-    persist([record, ...closes.filter((item) => item.date !== selectedDate)]);
+    persist([
+      record,
+      ...closes.filter(
+        (item) =>
+          item.date !== selectedDate,
+      ),
+    ]);
   }
 
   function closeCash() {
+    if (isSupabasePersistence) {
+      setCashOperationError(
+        "El cierre persistente de Caja se habilitará junto con Gastos persistentes.",
+      );
+      return;
+    }
+
     if (!isToday || !selectedClose || selectedClose.status !== "open") return;
     const actual = Number(actualValue);
     const nextExpected = openingAmount + sales.cash - cashExpenses + adjustment;
@@ -283,6 +552,13 @@ export default function CajaPage() {
   }
 
   function reopenCash() {
+    if (isSupabasePersistence) {
+      setCashOperationError(
+        "La reapertura persistente se habilitará junto con el cierre canónico.",
+      );
+      return;
+    }
+
     if (!isToday || !selectedClose) return;
     setNotes(selectedClose.notes);
     persist(closes.map((item) => item.date === selectedDate ? {
@@ -298,6 +574,13 @@ export default function CajaPage() {
   }
 
   function openMovementModal() {
+    if (isSupabasePersistence) {
+      setCashOperationError(
+        "Los movimientos manuales persistentes todavía no están habilitados.",
+      );
+      return;
+    }
+
     setMovementType("withdrawal");
     setMovementAmount("");
     setMovementReason("");
@@ -305,6 +588,13 @@ export default function CajaPage() {
   }
 
   function addMovement() {
+    if (isSupabasePersistence) {
+      setCashOperationError(
+        "Los movimientos manuales persistentes todavía no están habilitados.",
+      );
+      return;
+    }
+
     if (!isToday || !selectedClose || selectedClose.status !== "open") return;
     const amount = Number(movementAmount);
     if (!Number.isFinite(amount) || amount <= 0 || !movementReason.trim()) return;
@@ -330,6 +620,13 @@ export default function CajaPage() {
   }
 
   function removeMovement(id: string) {
+    if (isSupabasePersistence) {
+      setCashOperationError(
+        "Los movimientos manuales persistentes todavía no están habilitados.",
+      );
+      return;
+    }
+
     if (!isToday || !selectedClose || selectedClose.status !== "open") return;
     persist(closes.map((item) => item.date === selectedDate ? {
       ...item,
@@ -353,7 +650,18 @@ export default function CajaPage() {
     setCalendarMonth(`${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-01`);
   }
 
-  const history = closes.filter((item) => item.status === "closed").sort((a, b) => b.date.localeCompare(a.date));
+  const history =
+    isSupabasePersistence
+      ? []
+      : closes
+          .filter(
+            (item) =>
+              item.status === "closed",
+          )
+          .sort(
+            (a, b) =>
+              b.date.localeCompare(a.date),
+          );
   const displaySales = selectedClose?.status === "closed" && selectedClose.salesSnapshot ? selectedClose.salesSnapshot : sales;
   const displayTotalSales = displaySales.cash + displaySales.card + displaySales.mercadoPago + displaySales.transfer;
   const liveTotalSales = sales.cash + sales.card + sales.mercadoPago + sales.transfer;
@@ -368,7 +676,7 @@ export default function CajaPage() {
         <V2PageHeader
           title="Caja"
           description="Controlá la apertura, los cobros del día, el efectivo esperado y las diferencias del cierre."
-          actions={isToday && selectedClose?.status === "open" ? (
+          actions={isToday && selectedClose?.status === "open" && !isSupabasePersistence ? (
             <>
               <V2Button variant="secondary" icon={<Plus size={17} />} onClick={openMovementModal}>Movimiento</V2Button>
               <V2Button variant="primary" icon={<LockKeyhole size={17} />} onClick={() => {
@@ -376,7 +684,7 @@ export default function CajaPage() {
                 setShowClose(true);
               }}>Cerrar caja</V2Button>
             </>
-          ) : isToday && selectedClose?.status === "closed" ? (
+          ) : isToday && selectedClose?.status === "closed" && !isSupabasePersistence ? (
             <V2Button variant="secondary" icon={<RotateCcw size={17} />} onClick={reopenCash}>Reabrir caja</V2Button>
           ) : null}
         />
@@ -433,7 +741,18 @@ export default function CajaPage() {
                   const day = index + 1;
                   const date = `${selectedMonthData.year}-${String(selectedMonthData.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                   const selected = date === selectedDate;
-                  const hasClose = closes.some((item) => item.date === date);
+                  const hasClose =
+                    isSupabasePersistence
+                      ? (
+                          date === selectedDate
+                          && Boolean(
+                            persistentSession,
+                          )
+                        )
+                      : closes.some(
+                          (item) =>
+                            item.date === date,
+                        );
                   return <button key={date} type="button" onClick={() => selectDate(date)} className={`relative flex h-9 items-center justify-center rounded-xl border text-xs font-semibold transition ${selected ? "border-emerald-700 bg-emerald-600 text-white" : date === today ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50"}`}>{day}{hasClose && !selected ? <span className="absolute bottom-1 h-1 w-1 rounded-full bg-emerald-500" /> : null}</button>;
                 })}
               </div>
@@ -442,28 +761,69 @@ export default function CajaPage() {
           ) : null}
         </div>
 
-        {!selectedClose && isToday ? (
+        {!selectedClose && isToday && !isCashSnapshotLoading ? (
           <V2Card className={`mt-3 flex items-center justify-between gap-8 ${liveTotalSales > 0 ? "border-red-200 bg-red-50/70" : "border-emerald-200 bg-emerald-50/70"}`}>
             <div className="flex items-center gap-4">
               <div className={`flex h-12 w-12 items-center justify-center rounded-full ${liveTotalSales > 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}><CircleDollarSign size={24} /></div>
               <div><h2 className="font-semibold text-slate-950">{liveTotalSales > 0 ? `Hay ${money(liveTotalSales)} cobrados sin caja abierta` : "La caja de hoy todavía no está abierta"}</h2><p className="mt-1 text-sm text-slate-600">{liveTotalSales > 0 ? "Abrí la caja para registrar correctamente la jornada." : "Indicá cuánto efectivo queda como fondo inicial."}</p></div>
             </div>
-            <div className="flex items-end gap-3"><V2Field label="Fondo inicial"><V2Input className="w-48" type="number" min="0" value={openingValue} onChange={(event) => setOpeningValue(event.target.value)} /></V2Field><V2Button variant="primary" onClick={openCash}>Abrir caja</V2Button></div>
+            <div className="flex items-end gap-3"><V2Field label="Fondo inicial"><V2Input className="w-48" type="number" min="0" value={openingValue} onChange={(event) => setOpeningValue(event.target.value)} /></V2Field><V2Button variant="primary" onClick={openCash} disabled={isCashMutating}>Abrir caja</V2Button></div>
           </V2Card>
         ) : null}
 
+        {isSupabasePersistence ? (
+          <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <strong>Caja conectada a Supabase.</strong>{" "}
+            Apertura y cobros de Reservas son persistentes. Cierre, movimientos manuales, Gastos y Envíos siguen bloqueados hasta su corte canónico.
+          </div>
+        ) : null}
+
+        {cashOperationError ? (
+          <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+            {cashOperationError}
+          </div>
+        ) : null}
+
         <div className="mt-3 grid shrink-0 grid-cols-5 gap-3">
-          <V2MetricCard label="Ventas cobradas" value={money(displayTotalSales)} helper="Operaciones completadas" tone="green" icon={<CircleDollarSign size={21} />} />
-          <V2MetricCard label="Efectivo esperado" value={money(displayExpected)} helper="Fondo + efectivo - gastos" tone="green" icon={<Banknote size={21} />} />
-          <V2MetricCard label="Gastos en efectivo" value={money(selectedClose?.status === "closed" ? Number(selectedClose.cashExpensesSnapshot) || 0 : cashExpenses)} helper="Gastos pagados del día" tone="orange" icon={<ArrowDownToLine size={21} />} />
-          <V2MetricCard label="Gastos de tarjeta" value={money(cardExpenses)} helper="Tarjeta, MP y transferencia" tone="blue" icon={<CreditCard size={21} />} />
+          <V2MetricCard
+            label="Ventas cobradas"
+            value={money(displayTotalSales)}
+            helper={isSupabasePersistence ? "Reservas cobradas persistentes" : "Operaciones completadas"}
+            tone="green"
+            icon={<CircleDollarSign size={21} />}
+          />
+          <V2MetricCard
+            label={isSupabasePersistence ? "Efectivo registrado" : "Efectivo esperado"}
+            value={money(displayExpected)}
+            helper={isSupabasePersistence ? "Fondo + cobros; sin Gastos" : "Fondo + efectivo - gastos"}
+            tone="green"
+            icon={<Banknote size={21} />}
+          />
+          <V2MetricCard
+            label="Gastos en efectivo"
+            value={isSupabasePersistence ? "—" : money(selectedClose?.status === "closed" ? Number(selectedClose.cashExpensesSnapshot) || 0 : cashExpenses)}
+            helper={isSupabasePersistence ? "Pendiente de persistencia" : "Gastos pagados del día"}
+            tone="orange"
+            icon={<ArrowDownToLine size={21} />}
+          />
+          <V2MetricCard
+            label="Gastos de tarjeta"
+            value={isSupabasePersistence ? "—" : money(cardExpenses)}
+            helper={isSupabasePersistence ? "Pendiente de persistencia" : "Tarjeta, MP y transferencia"}
+            tone="blue"
+            icon={<CreditCard size={21} />}
+          />
           <V2MetricCard label="Diferencia" value={selectedClose?.status === "closed" ? money(Number(selectedClose.difference) || 0) : "—"} helper={selectedClose?.status === "closed" ? "Contado - esperado" : "Disponible al cerrar"} tone={selectedClose?.status === "closed" && Number(selectedClose.difference) !== 0 ? "red" : "slate"} icon={<LockKeyhole size={21} />} />
         </div>
 
         <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr_1.2fr] gap-3">
           <V2Card className="min-h-0 overflow-hidden">
             <h2 className="font-semibold text-slate-950">Cobros por método</h2>
-            <p className="mt-1 text-sm text-slate-500">Solo reservas y envíos completados en la fecha seleccionada.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {isSupabasePersistence
+                ? "Cobros persistentes de Reservas vinculados a la caja seleccionada."
+                : "Solo reservas y envíos completados en la fecha seleccionada."}
+            </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
                 { label: "Efectivo", value: displaySales.cash, icon: Banknote, tone: "bg-emerald-50 text-emerald-800" },
@@ -476,9 +836,9 @@ export default function CajaPage() {
               })}
             </div>
             <div className="mt-4 border-t border-slate-200 pt-4">
-              <div className="flex items-center justify-between"><div><h3 className="text-sm font-semibold text-slate-900">Movimientos manuales</h3><p className="mt-0.5 text-xs text-slate-500">Ingresos y retiros de efectivo con trazabilidad.</p></div><span className={`text-sm font-bold ${adjustment >= 0 ? "text-emerald-700" : "text-red-600"}`}>{money(adjustment)}</span></div>
+              <div className="flex items-center justify-between"><div><h3 className="text-sm font-semibold text-slate-900">Movimientos manuales</h3><p className="mt-0.5 text-xs text-slate-500">{isSupabasePersistence ? "Pendientes del próximo corte canónico." : "Ingresos y retiros de efectivo con trazabilidad."}</p></div><span className={`text-sm font-bold ${adjustment >= 0 ? "text-emerald-700" : "text-red-600"}`}>{money(adjustment)}</span></div>
               <div className="mt-3 max-h-36 space-y-2 overflow-y-auto pr-1">
-                {movements.map((movement) => <div key={movement.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2"><div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-800">{movement.reason}</p><p className="text-[11px] text-slate-500">{dateTimeLabel(movement.createdAt)}</p></div><div className="flex items-center gap-2"><span className={`text-xs font-bold ${movement.type === "income" ? "text-emerald-700" : "text-red-600"}`}>{movement.type === "income" ? "+" : "−"}{money(movement.amount)}</span>{isToday && selectedClose?.status === "open" ? <button type="button" onClick={() => removeMovement(movement.id)} className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Eliminar movimiento"><Trash2 size={14} /></button> : null}</div></div>)}
+                {movements.map((movement) => <div key={movement.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2"><div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-800">{movement.reason}</p><p className="text-[11px] text-slate-500">{dateTimeLabel(movement.createdAt)}</p></div><div className="flex items-center gap-2"><span className={`text-xs font-bold ${movement.type === "income" ? "text-emerald-700" : "text-red-600"}`}>{movement.type === "income" ? "+" : "−"}{money(movement.amount)}</span>{isToday && selectedClose?.status === "open" && !isSupabasePersistence ? <button type="button" onClick={() => removeMovement(movement.id)} className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Eliminar movimiento"><Trash2 size={14} /></button> : null}</div></div>)}
                 {!movements.length && legacyAdjustment === 0 ? <p className="rounded-lg border border-dashed border-slate-200 py-5 text-center text-xs text-slate-500">Sin movimientos manuales.</p> : null}
                 {!movements.length && legacyAdjustment !== 0 ? <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Ajuste anterior: {money(legacyAdjustment)}</div> : null}
               </div>

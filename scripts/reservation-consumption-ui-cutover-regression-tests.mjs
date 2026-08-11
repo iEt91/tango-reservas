@@ -314,9 +314,9 @@ check(
 );
 
 check(
-  "Caja y Pagos siguen fuera del cutover",
+  "Caja y Pagos pueden entrar por un cutover posterior sin alterar E31B",
   sources.ui.includes(
-    "La caja y los pagos persistentes todavía no están habilitados en Reservas V2.",
+    "completeBusinessReservationPaymentAction",
   )
     && sources.docs.includes(
       "Caja persistente",
@@ -327,12 +327,12 @@ check(
 );
 
 check(
-  "la cabecera comunica consumo persistente sin prometer Cocina",
+  "la cabecera comunica consumo y cobro persistentes sin prometer Cocina",
   sources.ui.includes(
-    "Alta, edición, estados y consumo de mesa son persistentes.",
+    "Alta, edición, estados, consumo de mesa y cobros son persistentes.",
   )
     && sources.ui.includes(
-      "Caja, pagos y Cocina siguen bloqueados",
+      "Cocina sigue bloqueada",
     ),
 );
 
