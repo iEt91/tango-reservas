@@ -41,6 +41,8 @@ const cashPaymentsWritePath =
   "supabase/migrations/20260810_019_cash_payments_write.sql";
 const expensesCashClosePath =
   "supabase/migrations/20260811_020_expenses_cash_close.sql";
+const kitchenOperationalWritePath =
+  "supabase/migrations/20260811_021_kitchen_operational_write.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -111,6 +113,10 @@ const cashPaymentsWrite = await readFile(
 );
 const expensesCashClose = await readFile(
   expensesCashClosePath,
+  "utf8",
+);
+const kitchenOperationalWrite = await readFile(
+  kitchenOperationalWritePath,
   "utf8",
 );
 
@@ -578,6 +584,36 @@ assert.match(
 );
 console.log("✓ Gastos y cierre de Caja agregan conciliación transaccional");
 
+assert.match(
+  kitchenOperationalWrite,
+  /create table if not exists public\.business_kitchen_tickets/u,
+);
+assert.match(
+  kitchenOperationalWrite,
+  /business_kitchen_ticket_items/u,
+);
+assert.match(
+  kitchenOperationalWrite,
+  /sync_business_order_item_kitchen_delta/u,
+);
+assert.match(
+  kitchenOperationalWrite,
+  /get_business_kitchen_snapshot/u,
+);
+assert.match(
+  kitchenOperationalWrite,
+  /set_business_kitchen_command_status/u,
+);
+assert.match(
+  kitchenOperationalWrite,
+  /current_user_has_module_access/u,
+);
+assert.match(
+  kitchenOperationalWrite,
+  /force row level security/u,
+);
+console.log("✓ Cocina agrega estado operativo y comandas incrementales");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -591,4 +627,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (21).");
+console.log("Todos los casos del historial remoto pasaron (22).");
