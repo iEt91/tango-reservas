@@ -2,7 +2,8 @@ import { createV2OperationalId } from "@/lib/v2-operational-storage";
 
 export type V2ServerSyncDomain =
   | "stock"
-  | "cash";
+  | "cash"
+  | "expenses";
 
 type V2ServerSyncMessage = {
   id: string;
@@ -36,6 +37,7 @@ function isServerSyncMessage(
     && (
       source.domain === "stock"
       || source.domain === "cash"
+      || source.domain === "expenses"
     )
     && typeof source.createdAt === "number"
     && Number.isFinite(source.createdAt)

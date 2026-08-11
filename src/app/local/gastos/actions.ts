@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { resolveActiveBusiness } from "@/lib/auth/active-business";
+import { getBusinessExpenses } from "@/lib/data/server/business-expenses";
 import {
   mapBusinessExpenseRow,
   normalizeBusinessExpenseArchiveInput,
@@ -16,6 +17,16 @@ type ExpenseActionResult =
   | {
       ok: true;
       expense: BusinessExpense;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export type ExpenseListActionResult =
+  | {
+      ok: true;
+      expenses: BusinessExpense[];
     }
   | {
       ok: false;
@@ -68,6 +79,7 @@ function formatExpenseError(
 
 async function resolveExpenseContext(
   requiredAccess:
+    | "view"
     | "manage"
     | "full",
 ) {
@@ -126,6 +138,35 @@ function revalidateExpensePaths() {
   revalidatePath("/local/caja");
   revalidatePath("/local/historial");
   revalidatePath("/local/reportes");
+}
+
+export async function getBusinessExpensesAction(): Promise<ExpenseListActionResult> {
+  try {
+    const context =
+      await resolveExpenseContext(
+        "view",
+      );
+
+    if (!context.ok) {
+      return context;
+    }
+
+    const expenses =
+      await getBusinessExpenses(
+        context.businessId,
+      );
+
+    return {
+      ok: true,
+      expenses,
+    };
+  } catch {
+    return {
+      ok: false,
+      error:
+        "No se pudieron leer los gastos persistentes.",
+    };
+  }
 }
 
 export async function saveBusinessExpenseAction(

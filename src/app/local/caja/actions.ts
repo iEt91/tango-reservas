@@ -15,6 +15,7 @@ import {
 import { resolveActiveBusiness } from "@/lib/auth/active-business";
 import {
   getBusinessCashSessionForDate,
+  getBusinessClosedCashSessions,
   getBusinessPaymentsForCashSession,
 } from "@/lib/data/server/business-cash";
 import {
@@ -42,6 +43,16 @@ export type BusinessCashSnapshotActionResult =
       ok: true;
       session: BusinessCashSession | null;
       payments: BusinessPayment[];
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export type BusinessCashHistoryActionResult =
+  | {
+      ok: true;
+      sessions: BusinessCashSession[];
     }
   | {
       ok: false;
@@ -212,6 +223,35 @@ export async function getBusinessCashSnapshotAction(
       ok: false,
       error:
         "No se pudo leer la caja persistente.",
+    };
+  }
+}
+
+export async function getBusinessCashHistoryAction(): Promise<BusinessCashHistoryActionResult> {
+  try {
+    const context =
+      await resolveCashContext(
+        "view",
+      );
+
+    if (!context.ok) {
+      return context;
+    }
+
+    const sessions =
+      await getBusinessClosedCashSessions(
+        context.businessId,
+      );
+
+    return {
+      ok: true,
+      sessions,
+    };
+  } catch {
+    return {
+      ok: false,
+      error:
+        "No se pudo leer el historial persistente de Caja.",
     };
   }
 }

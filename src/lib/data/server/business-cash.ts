@@ -30,7 +30,7 @@ export async function getBusinessCashSessionForDate(
   } = await supabase
     .from("cash_sessions")
     .select(
-      "id, business_date, status, opening_amount, opened_at",
+      "id, business_date, status, opening_amount, opened_at, closed_at, actual_cash, expected_cash, difference, notes, cash_sales_snapshot, cash_expenses_snapshot, cash_movements_snapshot",
     )
     .eq(
       "business_id",
@@ -61,6 +61,78 @@ export async function getBusinessCashSessionForDate(
         data,
       )
     : null;
+}
+
+
+export async function getBusinessClosedCashSessions(
+  businessId: string,
+  limit = 90,
+): Promise<BusinessCashSession[]> {
+  assertServerOnly(
+    "getBusinessClosedCashSessions",
+  );
+
+  const safeLimit =
+    Math.min(
+      180,
+      Math.max(
+        1,
+        Math.trunc(limit),
+      ),
+    );
+
+  const supabase =
+    await createSupabaseAuthServerClient();
+
+  if (!supabase) {
+    throw new Error(
+      "No se pudo crear el cliente autenticado.",
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("cash_sessions")
+    .select(
+      "id, business_date, status, opening_amount, opened_at, closed_at, actual_cash, expected_cash, difference, notes, cash_sales_snapshot, cash_expenses_snapshot, cash_movements_snapshot",
+    )
+    .eq(
+      "business_id",
+      businessId,
+    )
+    .eq(
+      "status",
+      "closed",
+    )
+    .order(
+      "business_date",
+      {
+        ascending: false,
+      },
+    )
+    .limit(safeLimit);
+
+  if (error) {
+    console.error(
+      "[business-cash] closed history read failed",
+      {
+        code:
+          error.code ?? null,
+      },
+    );
+
+    throw new Error(
+      "No se pudo leer el historial persistente de Caja.",
+    );
+  }
+
+  return (
+    data ?? []
+  ).map(
+    mapBusinessCashSessionResult,
+  );
 }
 
 export async function getBusinessPaymentsForReservations(

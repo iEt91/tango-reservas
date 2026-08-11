@@ -10,6 +10,8 @@ const paths = {
     "src/app/local/reservas/payment-actions.ts",
   cashPage:
     "src/app/local/caja/page.tsx",
+  cashUi:
+    "src/app/local/caja/v2-caja-page.tsx",
   cashActions:
     "src/app/local/caja/actions.ts",
   cashReader:
@@ -47,7 +49,7 @@ function check(label, condition) {
 }
 
 console.log(
-  "Ejecutando regresión del cutover UI de Caja/Pagos E32B...",
+  "Ejecutando regresión del cutover UI de Caja/Pagos E32B (compatible con E32C-B)...",
 );
 
 check(
@@ -138,34 +140,34 @@ check(
 
 check(
   "Caja detecta datasource y corta la sincronización local en Supabase",
-  /getDataSource\s*\(\s*\)\s*===\s*"supabase"/u.test(
-    sources.cashPage,
+  /cashPersistence\s*===\s*"supabase"/u.test(
+    sources.cashUi,
   )
     && /useEffect\s*\(\s*\(\)\s*=>\s*\{\s*if\s*\(\s*isSupabasePersistence\s*\)\s*\{\s*return;\s*\}[\s\S]*?const sync\s*=/u.test(
-      sources.cashPage,
+      sources.cashUi,
     ),
 );
 
 check(
   "Caja abre la sesión mediante Server Action",
   /openBusinessCashSessionAction/u.test(
-    sources.cashPage,
+    sources.cashUi,
   )
     && /createV2OperationalId\s*\(\s*"cash-open"/u.test(
-      sources.cashPage,
+      sources.cashUi,
     ),
 );
 
 check(
   "Caja rehidrata sesión y pagos al cambiar fecha",
-  /getBusinessCashSnapshotAction/u.test(
-    sources.cashPage,
+  /getBusinessCashReconciliationAction/u.test(
+    sources.cashUi,
   )
-    && /persistentPayments/u.test(
-      sources.cashPage,
+    && /persistentReconciliation/u.test(
+      sources.cashUi,
     )
     && /selectedDate/u.test(
-      sources.cashPage,
+      sources.cashUi,
     ),
 );
 
@@ -193,38 +195,44 @@ check(
 );
 
 check(
-  "cierre movimientos y gastos siguen bloqueados en Supabase",
-  /Cierre, movimientos manuales, Gastos y Envíos siguen bloqueados/u.test(
-    sources.cashPage,
+  "frontera E32B solo se levanta mediante E32C-B",
+  /E32B NO habilita todavía/u.test(
+    sources.docs,
   )
-    && /El cierre persistente de Caja se habilitará junto con Gastos persistentes\./u.test(
-      sources.cashPage,
+    && /closeBusinessCashSessionAction/u.test(
+      sources.cashUi,
     )
-    && /Pendiente de persistencia/u.test(
-      sources.cashPage,
+    && /addBusinessCashMovementAction/u.test(
+      sources.cashUi,
     ),
 );
 
 check(
-  "Caja no muestra acciones de cierre persistente incompletas",
-  /selectedClose\?\.status\s*===\s*"open"\s*&&\s*!isSupabasePersistence/u.test(
-    sources.cashPage,
+  "Caja E32C-B condiciona acciones persistentes por permisos",
+  /canManageCash/u.test(
+    sources.cashUi,
   )
-    && /selectedClose\?\.status\s*===\s*"closed"\s*&&\s*!isSupabasePersistence/u.test(
-      sources.cashPage,
+    && /canFullCash/u.test(
+      sources.cashUi,
+    )
+    && /reopenBusinessCashSessionAction/u.test(
+      sources.cashUi,
     ),
 );
 
 check(
-  "sincronización cash solo dispara reconciliación",
-  /\|\s*"cash";/u.test(
+  "sincronización cash mantiene reconciliación con dominios posteriores",
+  /\|\s*"cash"/u.test(
     sources.serverSync,
   )
+    && /\|\s*"expenses";/u.test(
+      sources.serverSync,
+    )
     && /publishV2ServerSync\s*\(\s*"cash"\s*\)/u.test(
       sources.reservationsUi,
     )
     && /subscribeV2ServerSync\s*\(\s*"cash"/u.test(
-      sources.cashPage,
+      sources.cashUi,
     ),
 );
 
@@ -233,20 +241,23 @@ check(
   !/\.from\s*\(\s*"business_payments"\s*\)/u.test(
     sources.reservationsUi,
   )
-    && !/\.from\s*\(\s*"cash_sessions"\s*\)/u.test(
-      sources.cashPage,
+    && !/@supabase\/supabase-js/u.test(
+      sources.cashUi,
     )
-    && !/\.from\s*\(\s*"business_payments"\s*\)/u.test(
-      sources.cashPage,
+    && !/@\/lib\/supabase\//u.test(
+      sources.cashUi,
     )
-    && !/\.insert\s*\(/u.test(
-      sources.cashPage,
+    && !/createSupabase/u.test(
+      sources.cashUi,
     )
-    && !/\.update\s*\(/u.test(
-      sources.cashPage,
+    && !/\.rpc\s*\(/u.test(
+      sources.cashUi,
     )
-    && !/\.delete\s*\(/u.test(
-      sources.cashPage,
+    && !/\.from\s*\(\s*["'](?:cash_sessions|business_payments|business_expenses|business_expense_operations|cash_session_movements|cash_session_operations)["']/u.test(
+      sources.cashUi,
+    )
+    && !/p_business_id/u.test(
+      sources.cashUi,
     ),
 );
 

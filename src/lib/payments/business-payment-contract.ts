@@ -33,6 +33,14 @@ export type BusinessCashSession = {
   status: "open" | "closed";
   openingAmount: number;
   openedAt: string;
+  closedAt: string | null;
+  actualCash: number | null;
+  expectedCash: number | null;
+  difference: number | null;
+  notes: string;
+  cashSalesSnapshot: number | null;
+  cashExpensesSnapshot: number | null;
+  cashMovementsSnapshot: number | null;
 };
 
 export type BusinessPayment = {
@@ -118,6 +126,58 @@ function normalizeMoney(
     || amount < 0
     || amount > 9999999999.99
     || (!allowZero && amount <= 0)
+    || Math.abs(
+      amount
+      - Number(amount.toFixed(2)),
+    ) > 0.0000001
+  ) {
+    throw new Error(
+      `${label} no es válido.`,
+    );
+  }
+
+  return Number(
+    amount.toFixed(2),
+  );
+}
+
+function normalizeNullableMoney(
+  value: unknown,
+  label: string,
+) {
+  if (
+    value === null
+    || value === undefined
+  ) {
+    return null;
+  }
+
+  return normalizeMoney(
+    value,
+    label,
+    {
+      allowZero: true,
+    },
+  );
+}
+
+function normalizeNullableSignedMoney(
+  value: unknown,
+  label: string,
+) {
+  if (
+    value === null
+    || value === undefined
+  ) {
+    return null;
+  }
+
+  const amount =
+    Number(value);
+
+  if (
+    !Number.isFinite(amount)
+    || Math.abs(amount) > 9999999999.99
     || Math.abs(
       amount
       - Number(amount.toFixed(2)),
@@ -405,6 +465,55 @@ function mapCashSession(
         },
       ),
     openedAt,
+    closedAt:
+      typeof (
+        row.closed_at
+        ?? row.closedAt
+      ) === "string"
+        ? (
+            row.closed_at
+            ?? row.closedAt
+          ) as string
+        : null,
+    actualCash:
+      normalizeNullableMoney(
+        row.actual_cash
+          ?? row.actualCash,
+        "El efectivo contado",
+      ),
+    expectedCash:
+      normalizeNullableMoney(
+        row.expected_cash
+          ?? row.expectedCash,
+        "El efectivo esperado",
+      ),
+    difference:
+      normalizeNullableSignedMoney(
+        row.difference,
+        "La diferencia de caja",
+      ),
+    notes:
+      typeof row.notes === "string"
+        ? row.notes
+        : "",
+    cashSalesSnapshot:
+      normalizeNullableMoney(
+        row.cash_sales_snapshot
+          ?? row.cashSalesSnapshot,
+        "El snapshot de cobros en efectivo",
+      ),
+    cashExpensesSnapshot:
+      normalizeNullableMoney(
+        row.cash_expenses_snapshot
+          ?? row.cashExpensesSnapshot,
+        "El snapshot de gastos en efectivo",
+      ),
+    cashMovementsSnapshot:
+      normalizeNullableSignedMoney(
+        row.cash_movements_snapshot
+          ?? row.cashMovementsSnapshot,
+        "El snapshot de movimientos",
+      ),
   };
 }
 
