@@ -29,6 +29,8 @@ const paths = {
     "src/lib/staff/staff-contract.ts",
   kitchenUi:
     "src/app/local/cocina/page.tsx",
+  kitchenUiClient:
+    "src/app/local/cocina/v2-cocina-page.tsx",
   docs:
     "docs/database/KITCHEN-OPERATIONAL-WRITE-RPC.md",
 };
@@ -479,12 +481,21 @@ check(
 );
 
 check(
-  "UI de Cocina sigue fuera de E33A",
-  /window\.localStorage/u.test(
+  "frontera E33A admite el cutover UI E33B posterior",
+  /resolveActiveBusiness/u.test(
     sources.kitchenUi,
   )
-    && !/getBusinessKitchenSnapshotAction/u.test(
+    && /V2CocinaPage/u.test(
       sources.kitchenUi,
+    )
+    && /window\.localStorage/u.test(
+      sources.kitchenUiClient,
+    )
+    && /getBusinessKitchenSnapshotAction/u.test(
+      sources.kitchenUiClient,
+    )
+    && /setBusinessKitchenCommandStatusAction/u.test(
+      sources.kitchenUiClient,
     )
     && /E33B conectará la UI actual/u.test(
       sources.docs,
