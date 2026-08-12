@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { ensureDemuruDemoMasterData } from "@/lib/demo-demuru-bootstrap";
 import { V2Sidebar } from "./v2-sidebar";
 
 export function V2AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
+    ensureDemuruDemoMasterData();
     document.body.classList.add("tango-local-app-shell");
 
     return () => {

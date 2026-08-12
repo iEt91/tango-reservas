@@ -35,6 +35,7 @@ import {
   mergeV2WebTemplateContent,
   v2WebTemplates,
 } from "@/lib/v2/v2-web-templates";
+import { ensureDemuruDemoMasterData } from "@/lib/demo-demuru-bootstrap";
 import { v2MenuCategories, v2MenuItems, v2StockProducts, v2WebConfig } from "@/lib/v2/v2-mock-data";
 
 function formatCurrency(value: number) {
@@ -1198,6 +1199,8 @@ export default function PublicTemplatePage() {
 
   useEffect(() => {
     if (!isSupabasePersistence) {
+      ensureDemuruDemoMasterData();
+
       function loadPublicMenuData() {
         setStoredMenuItems(readPublicMenuItems());
         setStoredMenuCategories(readPublicMenuCategories());
@@ -1369,31 +1372,21 @@ export default function PublicTemplatePage() {
     };
   }, []);
 
-  const fallbackCategoryItems = menuCategories.map((category, categoryIndex) => {
-    const baseItems = fallbackFeaturedItems.map((item, itemIndex) => ({
-      ...item,
-      id: `${category.title}-${itemIndex}`,
-      name:
-        category.title === "Entradas"
-          ? ["Burrata de estación", "Remolacha asada", "Croquetas de hongos", "Tostón ahumado"][itemIndex]
-          : category.title === "Principales"
-            ? ["Ojo de bife", "Pulpo grillado", "Pesca del día", "Pollo braseado"][itemIndex]
-            : category.title === "Pastas"
-              ? ["Ravioles de osobuco", "Sorrentinos de calabaza", "Pappardelle", "Ñoquis de papa"][itemIndex]
-              : category.title === "Postres"
-                ? ["Postre Demuru", "Chocolate y crema", "Flan de autor", "Frutas asadas"][itemIndex]
-                : ["Vino de la casa", "Aperitivo cítrico", "Copa especial", "Agua saborizada"][itemIndex],
-      description: category.description,
-      price: item.price + categoryIndex * 900,
-      imageSlot: `menu${itemIndex + 1}`,
-      imageUrl: "",
-    }));
-
-    return {
-      category: category.title,
-      items: baseItems,
-    };
-  });
+  const fallbackCategoryItems = v2MenuCategories.map((category) => ({
+    category: category.name,
+    items: v2MenuItems
+      .filter(
+        (item) =>
+          item.categoryId === category.id
+          && item.visible !== false
+          && item.status !== "paused",
+      )
+      .map((item, itemIndex) => ({
+        ...item,
+        imageSlot: `menu${itemIndex + 1}`,
+        imageUrl: item.imageUrl ?? "",
+      })),
+  }));
 
   const realMenuCategories = useMemo(
     () =>

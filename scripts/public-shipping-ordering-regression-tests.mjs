@@ -784,6 +784,16 @@ const pkg =
     sources.package,
   );
 
+const globalRegressionCommands =
+  (
+    pkg.scripts?.[
+      "test:regression"
+    ]
+    ?? ""
+  )
+    .split(" && ")
+    .filter(Boolean);
+
 check(
   "E34C forma parte del QA global",
   pkg.scripts?.[
@@ -794,11 +804,14 @@ check(
       "staging:test-public-shipping-ordering"
     ] ===
       "node scripts/public-shipping-ordering-staging-test.mjs"
-    && pkg.scripts?.[
-      "test:regression"
-    ]?.endsWith(
-      "npm run test:public-shipping-ordering",
-    ),
+    && globalRegressionCommands
+      .filter(
+        (command) =>
+          command
+          === "npm run test:public-shipping-ordering",
+      )
+      .length
+      === 1,
 );
 
 for (

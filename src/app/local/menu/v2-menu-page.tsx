@@ -100,6 +100,7 @@ function normalizeSearch(value: string) {
 const MENU_ITEMS_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuItems;
 const MENU_CATEGORIES_STORAGE_KEY = V2_OPERATIONAL_STORAGE_KEYS.menuCategories;
 const MENU_IMAGE_API_PATH = "/api/menu-images";
+const MENU_IMAGE_UPLOAD_API_PATH = "/api/menu-image-upload";
 const MENU_ITEMS_EVENT = V2_OPERATIONAL_EVENTS.menuItems;
 const MENU_CATEGORIES_EVENT = V2_OPERATIONAL_EVENTS.menuCategories;
 
@@ -147,9 +148,8 @@ function writeToStorage<T>(key: string, value: T) {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     if (error instanceof DOMException && error.name === "QuotaExceededError") {
-      console.error(
+      console.warn(
         `[menu] No se pudo guardar ${key}: el almacenamiento local está lleno.`,
-        error
       );
       return;
     }
@@ -208,6 +208,31 @@ async function compressMenuImage(file: File) {
   } finally {
     URL.revokeObjectURL(sourceUrl);
   }
+}
+
+async function uploadLocalMenuImage(
+  productName: string,
+  dataUrl: string,
+) {
+  const response = await fetch(MENU_IMAGE_UPLOAD_API_PATH, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ productName, dataUrl }),
+  });
+  const result = await response.json() as {
+    imageUrl?: string;
+    error?: string;
+  };
+
+  if (!response.ok || !result.imageUrl) {
+    throw new Error(
+      result.error ?? "No se pudo guardar la imagen local del menú.",
+    );
+  }
+
+  return result.imageUrl;
 }
 
 function V2MenuStatusBadge({ status }: { status: V2MenuItemStatus }) {
@@ -919,12 +944,29 @@ export function V2MenuPage({
       return;
     }
 
+    const productName = editingItem.name.trim();
+
+    if (!productName) {
+      event.target.value = "";
+      window.alert(
+        "Ingresá primero el nombre del producto antes de cargar una imagen.",
+      );
+      return;
+    }
+
     try {
       const compressedImage = await compressMenuImage(file);
-      setEditingItem((current) => current ? { ...current, imageUrl: compressedImage } : current);
+      const imageUrl = await uploadLocalMenuImage(productName, compressedImage);
+      setEditingItem((current) =>
+        current ? { ...current, imageUrl } : current
+      );
     } catch (error) {
-      console.error("[menu] No se pudo procesar la imagen seleccionada.", error);
-      window.alert("No se pudo procesar la imagen. Probá con otro archivo JPG, PNG o WEBP.");
+      console.warn("[menu] No se pudo procesar o guardar la imagen seleccionada.");
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo procesar la imagen. Probá con otro archivo JPG, PNG o WEBP.",
+      );
     } finally {
       event.target.value = "";
     }

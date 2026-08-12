@@ -15,7 +15,6 @@ import {
   ChartNoAxesCombined,
   WalletCards,
   Settings,
-  ShieldCheck,
   UsersRound,
   Utensils,
   ExternalLink,
@@ -30,6 +29,7 @@ import {
   type StaffModuleKey,
 } from "@/lib/staff/staff-contract";
 import { cn } from "@/lib/v2/v2-utils";
+import { V2SidebarUtilities } from "./v2-sidebar-utilities";
 
 type NavItem = {
   href: string;
@@ -54,17 +54,7 @@ const navItems: NavItem[] = [
   { href: "/local/gastos", label: "Gastos", icon: WalletCards, moduleKey: "expenses" },
   { href: "/local/web", label: "Web", icon: Globe2, moduleKey: "web" },
   { href: "/local/configuracion", label: "Configuración", icon: Settings, ownerOnly: true },
-  { href: "/local/seguridad", label: "Seguridad", icon: ShieldCheck, ownerOnly: true },
 ];
-
-function roleLabel(
-  role: "owner" | "admin" | "staff",
-  staffRoleName: string | null,
-) {
-  if (role === "owner") return "Dueño";
-  if (role === "admin") return "Administrador";
-  return staffRoleName ?? "Staff";
-}
 
 export function V2Sidebar() {
   const pathname = usePathname();
@@ -137,7 +127,9 @@ export function V2Sidebar() {
         </div>
       </div>
 
-      <nav className="mt-6 space-y-1 overflow-y-auto pr-1">
+      <V2SidebarUtilities />
+
+      <nav className="mt-4 space-y-1 overflow-y-auto pr-1">
         {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const active =
@@ -163,24 +155,6 @@ export function V2Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto rounded-[14px] border border-slate-200 bg-white p-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700">
-            {isOwner ? "D" : "S"}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-950">
-              Sesión activa
-            </p>
-            <p className="truncate text-xs text-slate-500">
-              {roleLabel(
-                activeBusiness.role,
-                activeBusiness.staffRoleName,
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }

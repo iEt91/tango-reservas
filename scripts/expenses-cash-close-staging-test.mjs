@@ -146,8 +146,6 @@ console.log(
 
 const businessA =
   fixture.businessAId;
-const businessB =
-  fixture.businessBId;
 
 const suffix =
   randomUUID();

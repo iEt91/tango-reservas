@@ -1,3 +1,9 @@
+import {
+  demuruDemoMenuCategories,
+  demuruDemoMenuItems,
+  demuruDemoStockProducts,
+} from "@/lib/demo-demuru-master-data";
+
 export type V2ReservationStatus =
   | "pending"
   | "confirmed"
@@ -681,139 +687,21 @@ export const v2Clients = [
 
 export type V2MenuItemStatus = "available" | "paused";
 
-export const v2MenuCategories = [
-  {
-    id: "cat-1",
-    name: "Pizzas clásicas",
-    description: "Muzzarella, napolitana, fugazzeta y variantes tradicionales.",
-    order: 1,
-    visible: true,
-    active: true,
-  },
-  {
-    id: "cat-2",
-    name: "Pizzas especiales",
-    description: "Sabores premium y combinaciones de la casa.",
-    order: 2,
-    visible: true,
-    active: true,
-  },
-  {
-    id: "cat-3",
-    name: "Empanadas",
-    description: "Empanadas al horno por unidad o docena.",
-    order: 3,
-    visible: true,
-    active: true,
-  },
-  {
-    id: "cat-4",
-    name: "Bebidas",
-    description: "Gaseosas, aguas y bebidas sin alcohol.",
-    order: 4,
-    visible: true,
-    active: true,
-  },
-  {
-    id: "cat-5",
-    name: "Promos",
-    description: "Combos y promociones destacadas.",
-    order: 5,
-    visible: false,
-    active: true,
-  },
-];
+export const v2MenuCategories =
+  demuruDemoMenuCategories.map(
+    (category) => ({
+      ...category,
+    }),
+  );
 
-export const v2MenuItems = [
-  {
-    id: "menu-1",
-    imageUrl: "/mock/menu/pizza-muzzarella.jfif",
-    name: "Pizza muzzarella grande",
-    categoryId: "cat-1",
-    description: "Salsa de tomate, muzzarella, aceitunas y orégano.",
-    price: 9500,
-    status: "available" as V2MenuItemStatus,
-    visible: true,
-    featured: true,
-  },
-  {
-    id: "menu-2",
-    imageUrl: "/mock/menu/pizza-napolitana.jfif",
-    name: "Pizza napolitana grande",
-    categoryId: "cat-1",
-    description: "Muzzarella, tomate natural, ajo, aceitunas y orégano.",
-    price: 11200,
-    status: "available" as V2MenuItemStatus,
-    visible: true,
-    featured: false,
-  },
-  {
-    id: "menu-3",
-    imageUrl: "/mock/menu/fugazzeta.jfif",
-    name: "Fugazzeta rellena",
-    categoryId: "cat-2",
-    description: "Masa casera, cebolla, doble muzzarella y relleno especial.",
-    price: 14500,
-    status: "available" as V2MenuItemStatus,
-    visible: true,
-    featured: true,
-  },
-  {
-    id: "menu-4",
-    imageUrl: "/mock/menu/pizza-calabresa.jfif",
-    name: "Pizza calabresa grande",
-    categoryId: "cat-2",
-    description: "Muzzarella, longaniza calabresa, ají molido y aceitunas.",
-    price: 13200,
-    status: "paused" as V2MenuItemStatus,
-    visible: true,
-    featured: false,
-  },
-  {
-    id: "menu-5",
-    imageUrl: "/mock/menu/empanada-carne.jfif",
-    name: "Empanada carne cortada a cuchillo",
-    categoryId: "cat-3",
-    description: "Carne cortada a cuchillo, cebolla, morrón y huevo.",
-    price: 1200,
-    status: "available" as V2MenuItemStatus,
-    visible: true,
-    featured: true,
-  },
-  {
-    id: "menu-6",
-    imageUrl: "/mock/menu/empanada-jamon-queso.jfif",
-    name: "Empanada jamón y queso",
-    categoryId: "cat-3",
-    description: "Jamón cocido, muzzarella y masa al horno.",
-    price: 1200,
-    status: "available" as V2MenuItemStatus,
-    visible: true,
-    featured: false,
-  },
-  {
-    id: "menu-7",
-    imageUrl: "/mock/menu/gaseosa-cola.jfif",
-    name: "Gaseosa cola 1.5L",
-    categoryId: "cat-4",
-    description: "Botella de gaseosa cola 1.5 litros.",
-    price: 2800,
-    status: "available" as V2MenuItemStatus,
-    visible: true,
-    featured: false,
-  },
-  {
-    id: "menu-8",
-    imageUrl: "/mock/menu/combo-pizza-empanadas.jfif",
-    name: "Combo pizza + 6 empanadas",
-    categoryId: "cat-5",
-    description: "Una pizza muzzarella grande y seis empanadas a elección.",
-    price: 15500,
-    status: "available" as V2MenuItemStatus,
-    visible: false,
-    featured: true,
-  },
-];
+export const v2MenuItems =
+  demuruDemoMenuItems.map(
+    (item) => ({
+      ...item,
+      status:
+        item.status as V2MenuItemStatus,
+    }),
+  );
 
 
 export const v2WebConfig = {
@@ -857,117 +745,26 @@ export type V2StockUnit =
 export type V2StockCategory =
   | "Verdulería"
   | "Carnicería"
+  | "Pescadería"
   | "Almacén"
   | "Bebidas"
+  | "Bodega"
+  | "Barra"
+  | "Panadería"
   | "Packaging"
   | "Lácteos";
 
-export const v2StockProducts = [
-  {
-    id: "stock-1",
-    supplier: "Congelados Costa",
-    unitCost: 1200,
-    name: "Papas congeladas",
-    category: "Verdulería" as V2StockCategory,
-    unit: "kg" as V2StockUnit,
-    totalStock: 20,
-    consumedBySales: 16.2,
-    alertBelow: 5,
-    lastUpdated: "15 may 2025",
-    note: "Comprar bolsa de 20 kg cuando entre en bajo stock.",
-  },
-  {
-    id: "stock-2",
-    supplier: "Carnicería Don Julio",
-    unitCost: 3900,
-    name: "Carne picada",
-    category: "Carnicería" as V2StockCategory,
-    unit: "kg" as V2StockUnit,
-    totalStock: 15,
-    consumedBySales: 13.4,
-    alertBelow: 2,
-    lastUpdated: "15 may 2025",
-    note: "Proveedor habitual: carnicería local.",
-  },
-  {
-    id: "stock-3",
-    supplier: "Molino Atlántico",
-    unitCost: 750,
-    name: "Harina 000",
-    category: "Almacén" as V2StockCategory,
-    unit: "kg" as V2StockUnit,
-    totalStock: 50,
-    consumedBySales: 18,
-    alertBelow: 10,
-    lastUpdated: "14 may 2025",
-    note: "Base para pizzas y empanadas.",
-  },
-  {
-    id: "stock-4",
-    supplier: "Lácteos del Sur",
-    unitCost: 4200,
-    name: "Muzzarella",
-    category: "Lácteos" as V2StockCategory,
-    unit: "kg" as V2StockUnit,
-    totalStock: 30,
-    consumedBySales: 24.5,
-    alertBelow: 6,
-    lastUpdated: "15 may 2025",
-    note: "Mantener refrigerada.",
-  },
-  {
-    id: "stock-5",
-    supplier: "Distribuidora Bodega Norte",
-    unitCost: 5200,
-    name: "Vino Malbec",
-    category: "Bebidas" as V2StockCategory,
-    unit: "botella" as V2StockUnit,
-    totalStock: 24,
-    consumedBySales: 17,
-    alertBelow: 6,
-    lastUpdated: "13 may 2025",
-    note: "Reponer por caja.",
-  },
-  {
-    id: "stock-6",
-    supplier: "Bebidas Pinamar",
-    unitCost: 1500,
-    name: "Gaseosa cola 1.5L",
-    category: "Bebidas" as V2StockCategory,
-    unit: "botella" as V2StockUnit,
-    totalStock: 36,
-    consumedBySales: 11,
-    alertBelow: 8,
-    lastUpdated: "15 may 2025",
-    note: "Producto usado en envíos.",
-  },
-  {
-    id: "stock-7",
-    supplier: "Packaging Ruta 11",
-    unitCost: 280,
-    name: "Cajas de pizza grandes",
-    category: "Packaging" as V2StockCategory,
-    unit: "unidad" as V2StockUnit,
-    totalStock: 120,
-    consumedBySales: 97,
-    alertBelow: 25,
-    lastUpdated: "15 may 2025",
-    note: "Packaging crítico para delivery.",
-  },
-  {
-    id: "stock-8",
-    supplier: "Almacén Mayorista Centro",
-    unitCost: 2600,
-    name: "Aceitunas",
-    category: "Almacén" as V2StockCategory,
-    unit: "kg" as V2StockUnit,
-    totalStock: 8,
-    consumedBySales: 8,
-    alertBelow: 1.5,
-    lastUpdated: "12 may 2025",
-    note: "Sin stock. Reponer urgente.",
-  },
-];
+export const v2StockProducts =
+  demuruDemoStockProducts.map(
+    (product) => ({
+      ...product,
+      category:
+        product.category as V2StockCategory,
+      unit:
+        product.unit as V2StockUnit,
+    }),
+  );
+
 
 export type V2LocalStatus = "active" | "draft" | "paused";
 export type V2BusinessType = "restaurant" | "professional" | "beauty" | "other";
