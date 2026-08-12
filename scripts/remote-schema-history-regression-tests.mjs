@@ -45,6 +45,8 @@ const kitchenOperationalWritePath =
   "supabase/migrations/20260811_021_kitchen_operational_write.sql";
 const shippingOrdersWritePath =
   "supabase/migrations/20260811_022_shipping_orders_write.sql";
+const publicShippingOrderingPath =
+  "supabase/migrations/20260811_023_public_shipping_ordering.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");
@@ -123,6 +125,10 @@ const kitchenOperationalWrite = await readFile(
 );
 const shippingOrdersWrite = await readFile(
   shippingOrdersWritePath,
+  "utf8",
+);
+const publicShippingOrdering = await readFile(
+  publicShippingOrderingPath,
   "utf8",
 );
 
@@ -650,6 +656,28 @@ assert.match(
 );
 console.log("✓ Envíos agrega pedido Stock Cocina y pago canónicos");
 
+assert.match(
+  publicShippingOrdering,
+  /service_get_public_business_ordering_snapshot/u,
+);
+assert.match(
+  publicShippingOrdering,
+  /service_create_public_shipping_order/u,
+);
+assert.match(
+  publicShippingOrdering,
+  /service_get_public_shipping_tracking/u,
+);
+assert.match(
+  publicShippingOrdering,
+  /business_public_request_limits/u,
+);
+assert.match(
+  publicShippingOrdering,
+  /to service_role/u,
+);
+console.log("✓ Pedidos web agrega gateway service-only y tracking mínimo");
+
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),
 );
@@ -663,4 +691,4 @@ assert.match(
 );
 console.log("✓ el historial remoto completo forma parte del QA");
 
-console.log("Todos los casos del historial remoto pasaron (23).");
+console.log("Todos los casos del historial remoto pasaron (24).");

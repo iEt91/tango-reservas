@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { assertServerOnly } from "@/lib/security/server-only";
 
@@ -18,6 +19,34 @@ export function hasSupabaseServerConfig() {
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
       process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
   );
+}
+
+export function createSupabaseServerHmac(
+  value: string,
+) {
+  assertServerOnly(
+    "El HMAC privilegiado de Supabase",
+  );
+
+  const secret =
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+      ?.trim();
+
+  if (!secret) {
+    throw new Error(
+      "Falta la clave server-only requerida para HMAC.",
+    );
+  }
+
+  return createHmac(
+    "sha256",
+    secret,
+  )
+    .update(
+      value,
+      "utf8",
+    )
+    .digest("hex");
 }
 
 export function getSupabaseServerClient() {

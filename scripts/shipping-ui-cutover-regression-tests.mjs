@@ -190,11 +190,17 @@ check(
     && /visibilitychange/u.test(sources.ui),
 );
 check(
-  "tracking persistente queda para E34C",
-  /disabled=\{isSupabasePersistence\}/u.test(sources.ui)
-    && /seguimiento público persistente se habilitará/u.test(sources.ui)
+  "frontera E34B admite tracking público E34C",
+  /businessSlug/u.test(sources.route)
+    && /businessSlug/u.test(sources.ui)
+    && /getDeliveryTrackingPath/u.test(sources.ui)
+    && /getDeliveryTrackingUrl/u.test(sources.ui)
+    && !/seguimiento público persistente se habilitará/u.test(
+      sources.ui,
+    )
     && /E34C/u.test(sources.docs),
 );
+
 check(
   "fallback local conserva motores mock",
   /applyStockMovements/u.test(sources.ui)
@@ -294,12 +300,26 @@ check(
 );
 
 const pkg = JSON.parse(sources.package);
+const regressionScript =
+  pkg.scripts?.["test:regression"]
+  ?? "";
+const shippingUiQaIndex =
+  regressionScript.indexOf(
+    "npm run test:shipping-ui-cutover",
+  );
+const publicShippingQaIndex =
+  regressionScript.indexOf(
+    "npm run test:public-shipping-ordering",
+  );
+
 check(
-  "E34B forma parte del QA global",
+  "E34B forma parte del QA global y admite suites posteriores",
   pkg.scripts?.["test:shipping-ui-cutover"]
     === "node scripts/shipping-ui-cutover-regression-tests.mjs"
-    && pkg.scripts?.["test:regression"]?.endsWith(
-      "npm run test:shipping-ui-cutover",
+    && shippingUiQaIndex >= 0
+    && (
+      publicShippingQaIndex < 0
+      || publicShippingQaIndex > shippingUiQaIndex
     ),
 );
 

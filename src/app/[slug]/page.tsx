@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useParams } from "next/navigation";
 import {
   Bike,
   CalendarDays,
@@ -18,7 +19,12 @@ import {
   Wine,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { getDataSource } from "@/lib/data/dataSource";
+import type {
+  PublicShippingCreateResult,
+  PublicShippingOrderingSnapshot,
+} from "@/lib/public-shipping/public-shipping-contract";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   V2_WEB_TEMPLATE_CONTENT_STORAGE_KEY,
@@ -1080,6 +1086,19 @@ function SectionTitle({ eyebrow, title }: { eyebrow?: string; title: string }) {
 }
 
 export default function PublicTemplatePage() {
+  const routeParams =
+    useParams<{
+      slug: string;
+    }>();
+  const publicSlug =
+    decodeURIComponent(
+      routeParams.slug,
+    )
+      .trim()
+      .toLowerCase();
+  const isSupabasePersistence =
+    getDataSource()
+      === "supabase";
   const [activeTemplateId, setActiveTemplateId] = useState(v2WebTemplates[0].id);
   const [isTemplateHydrated, setIsTemplateHydrated] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(menuCategories[0].title);
@@ -1124,6 +1143,11 @@ export default function PublicTemplatePage() {
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
   const [orderForm, setOrderForm] = useState<PublicOrderForm>(DEFAULT_PUBLIC_ORDER_FORM);
   const [orderError, setOrderError] = useState("");
+  const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
+  const orderRequestKeyRef =
+    useRef<string | null>(
+      null,
+    );
 
   useEffect(() => {
     function loadPublicTemplate() {
@@ -1150,6 +1174,10 @@ export default function PublicTemplatePage() {
   }, []);
 
   useEffect(() => {
+    if (isSupabasePersistence) {
+      return;
+    }
+
     function loadPublicWebConfig() {
       setPublicWebConfig(readPublicWebConfig());
       setPublicMenuSectionsConfig(readPublicMenuSectionsConfig());
@@ -1166,33 +1194,128 @@ export default function PublicTemplatePage() {
       window.removeEventListener(WEB_CONFIG_EVENT, loadPublicWebConfig);
       window.removeEventListener(PUBLIC_MENU_SECTIONS_EVENT, loadPublicWebConfig);
     };
-  }, []);
+  }, [isSupabasePersistence]);
 
   useEffect(() => {
-    function loadPublicMenuData() {
-      setStoredMenuItems(readPublicMenuItems());
-      setStoredMenuCategories(readPublicMenuCategories());
-      setStockProducts(
-        v2StockProducts.map((product) => ({
-          id: product.id,
-          name: product.name,
-          totalStock: product.totalStock,
-          consumedBySales: product.consumedBySales,
-          alertBelow: product.alertBelow,
-        }))
-      );
+    if (!isSupabasePersistence) {
+      function loadPublicMenuData() {
+        setStoredMenuItems(readPublicMenuItems());
+        setStoredMenuCategories(readPublicMenuCategories());
+        setStockProducts(
+          v2StockProducts.map((product) => ({
+            id: product.id,
+            name: product.name,
+            totalStock: product.totalStock,
+            consumedBySales: product.consumedBySales,
+            alertBelow: product.alertBelow,
+          }))
+        );
+      }
+
+      loadPublicMenuData();
+
+      window.addEventListener("storage", loadPublicMenuData);
+      window.addEventListener("focus", loadPublicMenuData);
+
+      return () => {
+        window.removeEventListener("storage", loadPublicMenuData);
+        window.removeEventListener("focus", loadPublicMenuData);
+      };
     }
 
-    loadPublicMenuData();
+    if (!publicSlug) {
+      return;
+    }
 
-    window.addEventListener("storage", loadPublicMenuData);
-    window.addEventListener("focus", loadPublicMenuData);
+    let cancelled = false;
+
+    async function loadPersistentOrdering() {
+      try {
+        const response =
+          await fetch(
+            `/api/public/${encodeURIComponent(publicSlug)}/ordering`,
+            {
+              cache: "no-store",
+            },
+          );
+        const payload =
+          await response.json() as {
+            snapshot?: PublicShippingOrderingSnapshot;
+            error?: string;
+          };
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!response.ok || !payload.snapshot) {
+          setOrderError(
+            payload.error
+            ?? "No se pudo cargar el menú público.",
+          );
+          setStoredMenuItems([]);
+          setStoredMenuCategories([]);
+          return;
+        }
+
+        const snapshot =
+          payload.snapshot;
+
+        setStoredMenuItems(
+          snapshot.items,
+        );
+        setStoredMenuCategories(
+          snapshot.categories.map(
+            (category) => ({
+              ...category,
+              fixedPrice:
+                category.fixedPrice
+                ?? undefined,
+              discountPercent:
+                category.discountPercent
+                ?? undefined,
+            }),
+          ),
+        );
+        setStockProducts([]);
+        setPublicWebConfig(
+          (current) => ({
+            ...current,
+            businessName:
+              snapshot.business.name,
+            address:
+              snapshot.business.address,
+            phone:
+              snapshot.business.phone,
+            whatsapp:
+              snapshot.business.whatsapp,
+            status:
+              "published",
+            showDelivery:
+              true,
+          }),
+        );
+        setOrderError("");
+      } catch {
+        if (!cancelled) {
+          setOrderError(
+            "No se pudo cargar el menú público.",
+          );
+          setStoredMenuItems([]);
+          setStoredMenuCategories([]);
+        }
+      }
+    }
+
+    void loadPersistentOrdering();
 
     return () => {
-      window.removeEventListener("storage", loadPublicMenuData);
-      window.removeEventListener("focus", loadPublicMenuData);
+      cancelled = true;
     };
-  }, []);
+  }, [
+    isSupabasePersistence,
+    publicSlug,
+  ]);
 
   useEffect(() => {
     function loadPublicReservationData() {
@@ -1372,13 +1495,16 @@ export default function PublicTemplatePage() {
           imageUrl: includedProducts[0]?.product.imageUrl ?? "",
           stockStatus,
           stockLabel: buildStockLabel(stockStatus),
-          orderable: stockStatus !== "out_of_stock" && price > 0,
+          orderable:
+            !isSupabasePersistence
+            && stockStatus !== "out_of_stock"
+            && price > 0,
         };
       })
       .filter((item) => item.price > 0);
 
     return [...promotionItems, ...productItems];
-  }, [realMenuCategories, stockProducts, storedMenuItems]);
+  }, [isSupabasePersistence, realMenuCategories, stockProducts, storedMenuItems]);
 
   const publicMenuItems = publicOrderItems.filter(
     (item) => item.category !== "Promociones"
@@ -1804,7 +1930,7 @@ export default function PublicTemplatePage() {
     setActiveOrderCategory(realMenuCategories[0]?.name ?? "Todos");
   }
 
-  function handlePublicOrderSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handlePublicOrderSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const client = orderForm.client.trim();
@@ -1828,6 +1954,122 @@ export default function PublicTemplatePage() {
 
     if (orderForm.deliveryType === "delivery" && !address) {
       setOrderError("Ingresá la dirección de entrega.");
+      return;
+    }
+
+    if (isSupabasePersistence) {
+      const requestKey =
+        orderRequestKeyRef.current
+        ?? `web:${crypto.randomUUID()}`;
+
+      orderRequestKeyRef.current =
+        requestKey;
+      setIsOrderSubmitting(true);
+      setOrderError("");
+
+      try {
+        const response =
+          await fetch(
+            `/api/public/${encodeURIComponent(publicSlug)}/shipping`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                client,
+                phone:
+                  orderForm.phone.trim(),
+                deliveryType:
+                  orderForm.deliveryType,
+                address:
+                  orderForm.deliveryType === "pickup"
+                    ? ""
+                    : address,
+                payment:
+                  orderForm.payment,
+                note:
+                  orderForm.note.trim(),
+                requestKey,
+                items:
+                  selectedOrderItems.map(
+                    (item) => ({
+                      menuItemId:
+                        item.id,
+                      quantity:
+                        item.quantity,
+                    }),
+                  ),
+              }),
+            },
+          );
+
+        const payload =
+          await response.json() as {
+            order?: PublicShippingCreateResult;
+            error?: string;
+          };
+
+        if (!response.ok || !payload.order) {
+          setOrderError(
+            payload.error
+            ?? "No se pudo crear el pedido.",
+          );
+          return;
+        }
+
+        const createdOrder =
+          payload.order;
+        const trackingUrl =
+          `${window.location.origin}/${encodeURIComponent(publicSlug)}/pedido/${encodeURIComponent(createdOrder.trackingId)}`;
+        const whatsappNumber =
+          publicWebConfig.whatsapp.replace(
+            /\D/g,
+            "",
+          );
+        const orderLines =
+          createdOrder.items.map(
+            (item) =>
+              `• ${item.quantity}x ${item.name} — ${formatCurrency(item.price * item.quantity)}`,
+          );
+        const message = [
+          `Hola ${publicWebConfig.businessName}, envié este pedido desde la web:`,
+          "",
+          ...orderLines,
+          "",
+          `Total: ${formatCurrency(createdOrder.total)}`,
+          `Tipo: ${createdOrder.deliveryType === "delivery" ? "Delivery" : "Retiro"}`,
+          `Código: ${createdOrder.trackingId}`,
+          "",
+          "El pedido quedó pendiente de aceptación.",
+          "Seguimiento:",
+          trackingUrl,
+        ].join("\n");
+
+        if (whatsappNumber) {
+          window.open(
+            `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`,
+            "_blank",
+            "noopener,noreferrer",
+          );
+        }
+
+        orderRequestKeyRef.current =
+          null;
+        setIsOrderPopupOpen(false);
+        resetPublicOrder();
+        window.location.assign(
+          trackingUrl,
+        );
+      } catch {
+        setOrderError(
+          "No se pudo crear el pedido. Podés reintentar sin duplicarlo.",
+        );
+      } finally {
+        setIsOrderSubmitting(false);
+      }
+
       return;
     }
 
@@ -2355,10 +2597,11 @@ export default function PublicTemplatePage() {
                 <div className="border-t border-[#c9a86a]/18 p-6">
                   <button
                     type="submit"
-                    className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#c97048] text-sm font-black uppercase tracking-[0.14em] text-white transition hover:bg-[#db8257]"
+                    disabled={isOrderSubmitting}
+                    className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#c97048] text-sm font-black uppercase tracking-[0.14em] text-white transition hover:bg-[#db8257] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <MessageCircle size={18} />
-                    Enviar por WhatsApp
+                    {isOrderSubmitting ? "Enviando…" : "Enviar por WhatsApp"}
                   </button>
                   <p className="mt-3 text-center text-xs leading-5 text-[#f4ead8]/45">
                     El pedido queda guardado en Envíos como pendiente de aceptación y también se envía por WhatsApp.

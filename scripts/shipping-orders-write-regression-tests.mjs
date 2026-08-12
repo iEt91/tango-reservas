@@ -296,9 +296,11 @@ check(
 );
 
 check(
-  "web pública y tracking permanecen fuera de E34A",
+  "frontera E34A admite la extensión pública E34C",
   /writePublicDeliveries/u.test(sources.publicWeb)
-    && /window\.localStorage/u.test(sources.trackingUi)
+    && /api\/public/u.test(sources.publicWeb)
+    && /getDataSource/u.test(sources.publicWeb)
+    && /getDataSource/u.test(sources.trackingUi)
     && /E34C/u.test(sources.docs),
 );
 

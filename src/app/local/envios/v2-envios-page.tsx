@@ -1073,14 +1073,28 @@ function getDeliveryTrackingId(delivery: Pick<V2Delivery, "id" | "trackingId">) 
   return delivery.trackingId || createPublicCode("PED", delivery.id);
 }
 
-function getDeliveryTrackingPath(delivery: Pick<V2Delivery, "id" | "trackingId">) {
-  return `/demuru/pedido/${getDeliveryTrackingId(delivery)}`;
+function getDeliveryTrackingPath(
+  delivery: Pick<V2Delivery, "id" | "trackingId">,
+  businessSlug = "demuru",
+) {
+  const normalizedSlug =
+    businessSlug.trim() || "demuru";
+
+  return `/${encodeURIComponent(normalizedSlug)}/pedido/${getDeliveryTrackingId(delivery)}`;
 }
 
-function getDeliveryTrackingUrl(delivery: Pick<V2Delivery, "id" | "trackingId">) {
-  if (typeof window === "undefined") return getDeliveryTrackingPath(delivery);
+function getDeliveryTrackingUrl(
+  delivery: Pick<V2Delivery, "id" | "trackingId">,
+  businessSlug = "demuru",
+) {
+  if (typeof window === "undefined") {
+    return getDeliveryTrackingPath(
+      delivery,
+      businessSlug,
+    );
+  }
 
-  return `${window.location.origin}${getDeliveryTrackingPath(delivery)}`;
+  return `${window.location.origin}${getDeliveryTrackingPath(delivery, businessSlug)}`;
 }
 
 function normalizeWhatsAppPhone(value: string) {
@@ -1105,6 +1119,7 @@ type V2EnviosPageProps = {
     | "supabase";
   canManageShipping?: boolean;
   canManageCash?: boolean;
+  businessSlug?: string;
   initialMenuCategories?: BusinessMenuCategoryEditor[];
   initialMenuItems?: BusinessMenuItemEditor[];
 };
@@ -1258,6 +1273,7 @@ export function V2EnviosPage({
   shippingPersistence = "local",
   canManageShipping = true,
   canManageCash = true,
+  businessSlug = "demuru",
   initialMenuCategories = [],
   initialMenuItems = [],
 }: V2EnviosPageProps = {}) {
@@ -2315,7 +2331,7 @@ export function V2EnviosPage({
           `Pedido: ${canonical.order}`,
           `Total: ${formatCurrency(canonical.total)}`,
           "",
-          "El seguimiento público persistente se habilitará con la web de pedidos.",
+          `Seguimiento: ${getDeliveryTrackingUrl(canonical, businessSlug)}`,
         ].join("\n");
 
         window.open(
@@ -2358,7 +2374,7 @@ export function V2EnviosPage({
 
     const clientPhone = acceptedDelivery.phone.replace(/\D/g, "");
     const trackingId = getDeliveryTrackingId(acceptedDelivery);
-    const trackingUrl = getDeliveryTrackingUrl(acceptedDelivery);
+    const trackingUrl = getDeliveryTrackingUrl(acceptedDelivery, businessSlug);
     const whatsappMessage = [
       `Hola ${acceptedDelivery.client}, tu pedido ${trackingId} en Demuru fue aceptado.`,
       "",
@@ -2738,7 +2754,7 @@ export function V2EnviosPage({
     note: string
   ) {
     const trackingId = getDeliveryTrackingId(delivery);
-    const trackingUrl = getDeliveryTrackingUrl(delivery);
+    const trackingUrl = getDeliveryTrackingUrl(delivery, businessSlug);
     const cleanNote = note.trim();
     const deliveryTypeLabel =
       delivery.deliveryType === "delivery" ? "Delivery" : "Retiro en el local";
@@ -2758,14 +2774,10 @@ export function V2EnviosPage({
         ? [
             "Si necesitás ayuda, comunicate con el restaurante por WhatsApp.",
           ]
-        : isSupabasePersistence
-          ? [
-              "El seguimiento público persistente se habilitará con la web de pedidos.",
-            ]
-          : [
-              "Podés seguir tu pedido acá:",
-              trackingUrl,
-            ];
+        : [
+            "Podés seguir tu pedido acá:",
+            trackingUrl,
+          ];
 
     return [
       introByAction[action],
@@ -3543,17 +3555,16 @@ export function V2EnviosPage({
                     Tracking público
                   </p>
                   <p className="mt-1 break-all text-xs font-medium text-blue-700">
-                    {getDeliveryTrackingPath(selectedDelivery)}
+                    {getDeliveryTrackingPath(selectedDelivery, businessSlug)}
                   </p>
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <V2Button
                       size="sm"
                       variant="secondary"
-                      disabled={isSupabasePersistence}
                       onClick={() =>
                         window.open(
-                          getDeliveryTrackingPath(selectedDelivery),
+                          getDeliveryTrackingPath(selectedDelivery, businessSlug),
                           "_blank",
                           "noopener,noreferrer"
                         )
@@ -3565,9 +3576,8 @@ export function V2EnviosPage({
                     <V2Button
                       size="sm"
                       variant="secondary"
-                      disabled={isSupabasePersistence}
                       onClick={async () => {
-                        const url = getDeliveryTrackingUrl(selectedDelivery);
+                        const url = getDeliveryTrackingUrl(selectedDelivery, businessSlug);
 
                         try {
                           await window.navigator.clipboard.writeText(url);

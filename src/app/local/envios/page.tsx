@@ -110,6 +110,7 @@ export default async function EnviosPage() {
       shippingPersistence="supabase"
       canManageShipping={canManageShipping}
       canManageCash={canManageCash}
+      businessSlug={activeBusiness.membership.business.slug}
       initialMenuCategories={menu.categories}
       initialMenuItems={menu.items}
     />
