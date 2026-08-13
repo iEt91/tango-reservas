@@ -1,3 +1,4 @@
+/* E36_UI_POLISH */
 "use client";
 
 import Link from "next/link";
@@ -395,6 +396,42 @@ function getAttentionBadgeTone(tone: AttentionItem["tone"]): "red" | "orange" | 
   if (tone === "green") return "green";
 
   return "slate";
+}
+
+function getAgendaRowToneClass(item: AgendaItem) {
+  const status = item.status.trim().toLowerCase();
+
+  if (status === "pending" || status === "pendiente") {
+    return "border-orange-200 bg-orange-50/80 hover:border-orange-300 hover:bg-orange-50";
+  }
+
+  if (
+    status === "confirmed" ||
+    status === "confirmada" ||
+    status === "confirmado" ||
+    status === "completed" ||
+    status === "completada" ||
+    status === "completado" ||
+    status === "entregado"
+  ) {
+    return "border-emerald-200 bg-emerald-50/80 hover:border-emerald-300 hover:bg-emerald-50";
+  }
+
+  if (status === "active" || status === "activo" || status === "activa") {
+    return "border-blue-200 bg-blue-50/80 hover:border-blue-300 hover:bg-blue-50";
+  }
+
+  if (
+    status === "cancelled" ||
+    status === "cancelada" ||
+    status === "cancelado" ||
+    status === "no_show" ||
+    status === "no-show"
+  ) {
+    return "border-red-200 bg-red-50/80 hover:border-red-300 hover:bg-red-50";
+  }
+
+  return "border-slate-200 bg-slate-50/80 hover:border-slate-300 hover:bg-slate-50";
 }
 
 function getPaymentMethodTotal(
@@ -997,7 +1034,7 @@ export function V2LocalPage() {
                     <a
                       key={item.id}
                       href={item.href}
-                      className="grid items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200 hover:bg-emerald-50/40 lg:grid-cols-[74px_130px_1fr_110px]"
+                      className={`grid items-center gap-3 rounded-2xl border p-4 transition lg:grid-cols-[74px_130px_1fr_110px] ${getAgendaRowToneClass(item)}`}
                     >
                       <div className="text-lg font-bold text-slate-950">{item.time}</div>
 

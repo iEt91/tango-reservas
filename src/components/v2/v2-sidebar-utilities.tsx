@@ -234,10 +234,12 @@ function NotificationIcon({ kind }: { kind: SidebarNotification["kind"] }) {
 export function V2SidebarUtilities() {
   const [open, setOpen] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [hydrated, setHydrated] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     setReadIds(new Set(readStorage<string[]>(READ_NOTIFICATIONS_STORAGE_KEY, [])));
+    setHydrated(true);
 
     const refresh = () => setRevision((current) => current + 1);
     window.addEventListener("focus", refresh);
@@ -257,7 +259,10 @@ export function V2SidebarUtilities() {
     };
   }, []);
 
-  const notifications = useMemo(() => { void revision; return buildNotifications(); }, [revision]);
+  const notifications = useMemo(() => {
+    void revision;
+    return hydrated ? buildNotifications() : [];
+  }, [hydrated, revision]);
   const unreadCount = notifications.filter((item) => !readIds.has(item.id)).length;
 
   function persistReadIds(next: Set<string>) {

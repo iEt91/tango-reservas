@@ -1,0 +1,29 @@
+====================================================
+  E39 - APLICACION Y QA
+====================================================
+Fecha/hora: mi‚. 12/08/2026 22:34:50,42
+Carpeta: C:\Users\Ismael\Desktop\Proyectos\tango-reservas
+
+HEAD actual:   0325d443ee9445b6ebbcd4a23d85e9dab6ad50d4
+HEAD esperado: 0325d443ee9445b6ebbcd4a23d85e9dab6ad50d4
+
+[OK] Cero staged.
+
+----------------------------------------------------
+APLICANDO E39
+----------------------------------------------------
+[OK] Tarjetas superiores de Reportes convertidas a E39.
+[OK] Los titulos ahora viven centrados en la parte superior de cada tarjeta.
+[OK] Los valores y helpers quedan debajo del titulo dentro de la misma tarjeta.
+
+----------------------------------------------------
+ESLINT ACOTADO
+----------------------------------------------------
+[OK] ESLint acotado.
+
+----------------------------------------------------
+TypeScript
+----------------------------------------------------
+src/app/local/reportes/page.tsx(292,28): error TS2503: Cannot find namespace 'JSX'.
+src/app/local/reportes/page.tsx(294,9): error TS2503: Cannot find namespace 'JSX'.
+[ERROR] TypeScript fallo.

@@ -1,3 +1,4 @@
+/* E36_UI_POLISH */
 "use client";
 
 import Link from "next/link";
@@ -1286,6 +1287,7 @@ export function V2EnviosPage({
     );
   const [deliveries, setDeliveries] = useState<V2Delivery[]>([]);
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<string>("");
+  const [isDeliveryDetailOpen, setIsDeliveryDetailOpen] = useState(false);
   const [isNewDeliveryOpen, setIsNewDeliveryOpen] = useState(false);
   const [editingDeliveryId, setEditingDeliveryId] = useState<string | null>(null);
   const [newDeliveryTab, setNewDeliveryTab] = useState<"cliente" | "pedido">(
@@ -2824,6 +2826,21 @@ export function V2EnviosPage({
     );
   }
 
+  function renderDeliveryDetailCell(delivery: V2Delivery, content: ReactNode) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          selectDelivery(delivery);
+          setIsDeliveryDetailOpen(true);
+        }}
+        className="w-full text-left"
+      >
+        {content}
+      </button>
+    );
+  }
+
   function closeActivePopup() {
     if (openActionsDeliveryId) {
       setOpenActionsDeliveryId(null);
@@ -3327,12 +3344,9 @@ export function V2EnviosPage({
                     header: "ID",
                     sortKey: "id",
                     cell: (row) =>
-                      renderSelectableCell(
-                        row,
-                        <span className="font-semibold text-slate-950">
+                      renderDeliveryDetailCell(row, <span className="font-semibold text-slate-950">
                           {getDeliveryTrackingId(row)}
-                        </span>
-                      ),
+                        </span>),
                   },
                   {
                     header: dateFilterMode === "range" ? "Fecha / hora" : "Hora",
@@ -3355,7 +3369,7 @@ export function V2EnviosPage({
                   {
                     header: "Cliente",
                     sortKey: "client",
-                    cell: (row) => renderSelectableCell(row, row.client),
+                    cell: (row) => renderDeliveryDetailCell(row, row.client),
                   },
                   {
                     header: "Teléfono",
@@ -3424,7 +3438,7 @@ export function V2EnviosPage({
           </div>
 
           <aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
-            <V2Card className="flex max-h-[260px] shrink-0 flex-col overflow-hidden">
+            <V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {webDeliveriesPendingAcceptance.length > 0 ? (
                 <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <h2 className="text-sm font-semibold text-amber-950">
@@ -3522,178 +3536,7 @@ export function V2EnviosPage({
               </div>
             </V2Card>
 
-            <V2Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm">
-              <h2 className="text-base font-semibold text-slate-950">
-                Pedido seleccionado
-              </h2>
 
-              {!selectedDelivery ? (
-                <p className="mt-4 text-sm leading-6 text-slate-500">
-                  Seleccioná un pedido para ver su información operativa.
-                </p>
-              ) : (
-              <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm">
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        {getDeliveryTrackingId(selectedDelivery)}
-                      </p>
-                      <p className="mt-1 font-semibold text-slate-950">
-                        {selectedDelivery.client}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {formatDateLabel(selectedDelivery.date ?? TODAY_DELIVERIES_DATE)} · {selectedDelivery.time}
-                      </p>
-                    </div>
-                    <V2DeliveryStatusBadge status={selectedDelivery.status} />
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
-                    Tracking público
-                  </p>
-                  <p className="mt-1 break-all text-xs font-medium text-blue-700">
-                    {getDeliveryTrackingPath(selectedDelivery, businessSlug)}
-                  </p>
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <V2Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() =>
-                        window.open(
-                          getDeliveryTrackingPath(selectedDelivery, businessSlug),
-                          "_blank",
-                          "noopener,noreferrer"
-                        )
-                      }
-                    >
-                      Ver tracking
-                    </V2Button>
-
-                    <V2Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={async () => {
-                        const url = getDeliveryTrackingUrl(selectedDelivery, businessSlug);
-
-                        try {
-                          await window.navigator.clipboard.writeText(url);
-                        } catch {
-                          const tempInput = document.createElement("input");
-                          tempInput.value = url;
-                          document.body.appendChild(tempInput);
-                          tempInput.select();
-                          document.execCommand("copy");
-                          document.body.removeChild(tempInput);
-                        }
-                      }}
-                    >
-                      Copiar link
-                    </V2Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Tipo
-                    </p>
-                    <p className="mt-1 text-slate-700">
-                      {selectedDelivery.deliveryType === "delivery" ? "Delivery" : "Retira"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Total
-                    </p>
-                    <p className="mt-1 font-semibold text-slate-950">
-                      {formatCurrency(selectedDelivery.total)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Teléfono
-                  </p>
-                  <p className="mt-1 break-words text-slate-700">
-                    {selectedDelivery.phone}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    {selectedDelivery.deliveryType === "delivery" ? "Dirección" : "Entrega"}
-                  </p>
-                  <p className="mt-1 text-slate-700">
-                    {selectedDelivery.deliveryType === "delivery"
-                      ? selectedDelivery.address
-                      : "Retira en local"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Pedido completo
-                  </p>
-                  <p className="mt-1 leading-6 text-slate-700">
-                    {selectedDelivery.order}
-                  </p>
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Pago
-                  </p>
-                  <p className="mt-1 text-slate-700">
-                    {selectedDelivery.payment}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Nota
-                  </p>
-                  <p className="mt-1 leading-6 text-slate-700">
-                    {selectedDelivery.note}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-100 bg-white p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Timeline
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    {[
-                      ["Entró pedido", selectedDelivery.createdAt],
-                      ["Confirmado", selectedDelivery.acceptedAt],
-                      ["En preparación", selectedDelivery.preparingAt],
-                      [
-                        selectedDelivery.deliveryType === "pickup"
-                          ? "Listo para retirar"
-                          : "En viaje al cliente",
-                        selectedDelivery.deliveryType === "pickup"
-                          ? selectedDelivery.readyAt
-                          : selectedDelivery.onTheWayAt,
-                      ],
-                      ["Entregado", selectedDelivery.deliveredAt],
-                      ["Cancelado", selectedDelivery.cancelledAt],
-                    ].map(([label, value]) =>
-                      value ? (
-                        <div key={label} className="flex justify-between gap-3 text-xs">
-                          <span className="font-medium text-slate-600">{label}</span>
-                          <span className="text-slate-500">
-                            {formatCompactDateTime(value)}
-                          </span>
-                        </div>
-                      ) : null
-                    )}
-                  </div>
-                </div>
-              </div>
-              )}
-            </V2Card>
           </aside>
         </div>
       </div>
@@ -4603,7 +4446,206 @@ export function V2EnviosPage({
           </div>
         </div>
       ) : null}
-      </V2AppShell>
+
+      {isDeliveryDetailOpen && selectedDelivery ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detalle de pedido"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar detalle de pedido"
+            className="absolute inset-0 bg-slate-950/40"
+            onClick={() => setIsDeliveryDetailOpen(false)}
+          />
+          <div className="relative z-10 flex h-[82vh] max-h-[760px] min-h-[560px] w-full max-w-[720px] flex-col">
+            <button
+              type="button"
+              aria-label="Cerrar detalle de pedido"
+              onClick={() => setIsDeliveryDetailOpen(false)}
+              className="absolute -right-3 -top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-lg transition hover:bg-slate-50 hover:text-slate-950"
+            >
+              <X size={18} />
+            </button>
+            <V2Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm">
+                          <h2 className="text-base font-semibold text-slate-950">
+                            Pedido seleccionado
+                          </h2>
+
+                          {!selectedDelivery ? (
+                            <p className="mt-4 text-sm leading-6 text-slate-500">
+                              Seleccioná un pedido para ver su información operativa.
+                            </p>
+                          ) : (
+                          <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm">
+                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    {getDeliveryTrackingId(selectedDelivery)}
+                                  </p>
+                                  <p className="mt-1 font-semibold text-slate-950">
+                                    {selectedDelivery.client}
+                                  </p>
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {formatDateLabel(selectedDelivery.date ?? TODAY_DELIVERIES_DATE)} · {selectedDelivery.time}
+                                  </p>
+                                </div>
+                                <V2DeliveryStatusBadge status={selectedDelivery.status} />
+                              </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
+                                Tracking público
+                              </p>
+                              <p className="mt-1 break-all text-xs font-medium text-blue-700">
+                                {getDeliveryTrackingPath(selectedDelivery, businessSlug)}
+                              </p>
+
+                              <div className="mt-3 grid grid-cols-2 gap-2">
+                                <V2Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    window.open(
+                                      getDeliveryTrackingPath(selectedDelivery, businessSlug),
+                                      "_blank",
+                                      "noopener,noreferrer"
+                                    )
+                                  }
+                                >
+                                  Ver tracking
+                                </V2Button>
+
+                                <V2Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={async () => {
+                                    const url = getDeliveryTrackingUrl(selectedDelivery, businessSlug);
+
+                                    try {
+                                      await window.navigator.clipboard.writeText(url);
+                                    } catch {
+                                      const tempInput = document.createElement("input");
+                                      tempInput.value = url;
+                                      document.body.appendChild(tempInput);
+                                      tempInput.select();
+                                      document.execCommand("copy");
+                                      document.body.removeChild(tempInput);
+                                    }
+                                  }}
+                                >
+                                  Copiar link
+                                </V2Button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Tipo
+                                </p>
+                                <p className="mt-1 text-slate-700">
+                                  {selectedDelivery.deliveryType === "delivery" ? "Delivery" : "Retira"}
+                                </p>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Total
+                                </p>
+                                <p className="mt-1 font-semibold text-slate-950">
+                                  {formatCurrency(selectedDelivery.total)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Teléfono
+                              </p>
+                              <p className="mt-1 break-words text-slate-700">
+                                {selectedDelivery.phone}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                {selectedDelivery.deliveryType === "delivery" ? "Dirección" : "Entrega"}
+                              </p>
+                              <p className="mt-1 text-slate-700">
+                                {selectedDelivery.deliveryType === "delivery"
+                                  ? selectedDelivery.address
+                                  : "Retira en local"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Pedido completo
+                              </p>
+                              <p className="mt-1 leading-6 text-slate-700">
+                                {selectedDelivery.order}
+                              </p>
+                              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Pago
+                              </p>
+                              <p className="mt-1 text-slate-700">
+                                {selectedDelivery.payment}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Nota
+                              </p>
+                              <p className="mt-1 leading-6 text-slate-700">
+                                {selectedDelivery.note}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-100 bg-white p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Timeline
+                              </p>
+                              <div className="mt-3 space-y-2">
+                                {[
+                                  ["Entró pedido", selectedDelivery.createdAt],
+                                  ["Confirmado", selectedDelivery.acceptedAt],
+                                  ["En preparación", selectedDelivery.preparingAt],
+                                  [
+                                    selectedDelivery.deliveryType === "pickup"
+                                      ? "Listo para retirar"
+                                      : "En viaje al cliente",
+                                    selectedDelivery.deliveryType === "pickup"
+                                      ? selectedDelivery.readyAt
+                                      : selectedDelivery.onTheWayAt,
+                                  ],
+                                  ["Entregado", selectedDelivery.deliveredAt],
+                                  ["Cancelado", selectedDelivery.cancelledAt],
+                                ].map(([label, value]) =>
+                                  value ? (
+                                    <div key={label} className="flex justify-between gap-3 text-xs">
+                                      <span className="font-medium text-slate-600">{label}</span>
+                                      <span className="text-slate-500">
+                                        {formatCompactDateTime(value)}
+                                      </span>
+                                    </div>
+                                  ) : null
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          )}
+                        </V2Card>
+          </div>
+        </div>
+      ) : null}
+
+    </V2AppShell>
     </>
   );
 }

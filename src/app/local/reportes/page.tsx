@@ -1,24 +1,11 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Banknote,
-  CalendarDays,
-  ChartNoAxesCombined,
-  ChevronLeft,
-  ChevronRight,
-  CreditCard,
-  Download,
-  FileSpreadsheet,
-  LockKeyhole,
-  PackageCheck,
-  Printer,
-  ReceiptText,
-  UsersRound,
-} from "lucide-react";
+import { Banknote, CalendarDays, ChartNoAxesCombined, ChevronLeft, ChevronRight, CreditCard, Download, FileSpreadsheet, LockKeyhole, PackageCheck, Printer, ReceiptText, UsersRound } from "lucide-react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Button } from "@/components/v2/v2-button";
-import { V2Card, V2MetricCard } from "@/components/v2/v2-card";
+import { V2Card } from "@/components/v2/v2-card";
 import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Input } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
@@ -38,6 +25,7 @@ const EXPENSES_EVENT = V2_OPERATIONAL_EVENTS.expenses;
 const CASH_REGISTER_EVENT = V2_OPERATIONAL_EVENTS.cashRegister;
 
 type ReportRange = "day" | "custom" | "all";
+type ReportDetailTab = "payments" | "products" | "ingredients";
 type PaymentBreakdown = {
   cash: number;
   card: number;
@@ -84,7 +72,7 @@ type Delivery = {
   paymentBreakdown?: Partial<PaymentBreakdown>;
   deliveredAt?: string;
 };
-type Expense = { id:string; date:string; amount:number; status:"paid"|"pending"; category?:string };
+type Expense = { id:string; date:string; dueDate?:string; description?:string; provider?:string; amount:number; status:"paid"|"pending"; category?:string; paymentMethod?:string; paidAt?:string };
 type CashMovement = { id:string; type:"income"|"withdrawal"; amount:number; reason:string; createdAt:string };
 type CashRegister = {
   id:string;
@@ -219,8 +207,42 @@ function getDeliveryPayment(delivery: Delivery): PaymentBreakdown {
   return result;
 }
 
+function paymentBreakdownTotal(payment: PaymentBreakdown) {
+  return payment.cash + payment.card + payment.mercadoPago + payment.transfer;
+}
+
+function lineItemsTotal(items: LineItem[] | undefined) {
+  return (items ?? []).reduce(
+    (total, item) => total + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+    0,
+  );
+}
+
 function normalizedName(value: string) {
   return value.trim().toLocaleLowerCase("es");
+}
+
+function normalizedAccountingKey(value?: string) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isInventoryPurchase(expense: Expense) {
+  const category = normalizedAccountingKey(expense.category);
+  return (
+    category === "compra de stock"
+    || category === "insumos"
+    || category === "bebidas"
+    || category === "mercaderia"
+    || category === "materia prima"
+  );
+}
+
+function expenseEffectiveDate(expense: Expense) {
+  return expense.paidAt?.slice(0, 10) || expense.date;
 }
 
 function convertQuantity(quantity: number, fromUnit: string, toUnit: string) {
@@ -263,8 +285,49 @@ function getRecipeUnitCost(
   }, 0);
 }
 
+/* E39_REPORTES_TOP_METRICS */
+type ReportsTopMetricCardTone = "green" | "blue" | "purple" | "orange" | "red" | "slate";
+
+type ReportsTopMetricCardProps = {
+  label: string;
+  value: string | number | ReactNode;
+  helper?: string;
+  icon: ReactNode;
+  tone?: ReportsTopMetricCardTone;
+  className?: string;
+};
+
+const REPORTS_TOP_METRIC_TONE_STYLES: Record<ReportsTopMetricCardTone, string> = {
+  green: "bg-emerald-50 text-emerald-600",
+  blue: "bg-blue-50 text-blue-600",
+  purple: "bg-violet-50 text-violet-600",
+  orange: "bg-orange-50 text-orange-600",
+  red: "bg-rose-50 text-rose-600",
+  slate: "bg-slate-100 text-slate-600",
+};
+
+function ReportsTopMetricCard({ label, value, helper, icon, tone = "slate", className = "" }: ReportsTopMetricCardProps) {
+  const toneClasses = REPORTS_TOP_METRIC_TONE_STYLES[tone] ?? REPORTS_TOP_METRIC_TONE_STYLES.slate;
+  const cardClassName = ["rounded-[28px] border border-slate-200 bg-white px-5 py-4 shadow-sm", className].filter(Boolean).join(" ");
+
+  return (
+    <article className={cardClassName}>
+      <div className="mb-3 text-center">
+        <p className="text-sm font-semibold tracking-tight text-slate-600">{label}</p>
+      </div>
+      <div className="flex items-center justify-center gap-3">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${toneClasses}`}>{icon}</div>
+        <div className="min-w-0 text-left">
+          <div className="text-2xl font-semibold leading-none text-slate-950">{value}</div>
+          {helper ? <div className="mt-1 text-xs font-medium text-slate-500">{helper}</div> : null}
+        </div>
+      </div>
+    </article>
+  );
+}
 export default function ReportesPage() {
   const [range, setRange] = useState<ReportRange>("day");
+  const [detailTab, setDetailTab] = useState<ReportDetailTab>("payments");
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [startDate, setStartDate] = useState(todayKey);
   const [endDate, setEndDate] = useState(todayKey);
@@ -320,33 +383,71 @@ export default function ReportesPage() {
         item.status === "completed" &&
         insideRange(item.date, range, selectedDate, startDate, endDate),
     );
-    const payments = [...closedReservations.map(getReservationPayment), ...closedDeliveries.map(getDeliveryPayment)]
-      .reduce<PaymentBreakdown>(
-        (total, item) => ({
-          cash: total.cash + item.cash,
-          card: total.card + item.card,
-          mercadoPago: total.mercadoPago + item.mercadoPago,
-          transfer: total.transfer + item.transfer,
-        }),
-        { cash: 0, card: 0, mercadoPago: 0, transfer: 0 },
-      );
-    const revenue = Object.values(payments).reduce((total, value) => total + value, 0);
-    const transactions = closedReservations.length + closedDeliveries.length;
-    const guests = closedReservations.reduce((total, item) => total + (Number(item.people) || 0), 0);
+
+    const reservationPaymentTotal = (item: Reservation) =>
+      paymentBreakdownTotal(getReservationPayment(item));
+    const deliveryPaymentTotal = (item: Delivery) =>
+      paymentBreakdownTotal(getDeliveryPayment(item));
+
+    const isReservationSettled = (item: Reservation) => {
+      const expected = Number(item.orderTotal) || 0;
+      const paid = reservationPaymentTotal(item);
+      return paid > 0 && (expected <= 0 || paid + 1 >= expected);
+    };
+    const isDeliverySettled = (item: Delivery) => {
+      const expected = Number(item.total) || 0;
+      const paid = deliveryPaymentTotal(item);
+      return paid > 0 && (expected <= 0 || paid + 1 >= expected);
+    };
+
+    const paidReservations = closedReservations.filter(isReservationSettled);
+    const paidDeliveries = closedDeliveries.filter(isDeliverySettled);
+    const pendingReservationCollections = closedReservations.filter(
+      (item) => (Number(item.orderTotal) || 0) > 0 && !isReservationSettled(item),
+    );
+    const pendingDeliveryCollections = closedDeliveries.filter(
+      (item) => (Number(item.total) || 0) > 0 && !isDeliverySettled(item),
+    );
+
+    const payments = [
+      ...paidReservations.map(getReservationPayment),
+      ...paidDeliveries.map(getDeliveryPayment),
+    ].reduce<PaymentBreakdown>(
+      (total, item) => ({
+        cash: total.cash + item.cash,
+        card: total.card + item.card,
+        mercadoPago: total.mercadoPago + item.mercadoPago,
+        transfer: total.transfer + item.transfer,
+      }),
+      { cash: 0, card: 0, mercadoPago: 0, transfer: 0 },
+    );
+
+    const revenue = paymentBreakdownTotal(payments);
+    const transactions = paidReservations.length + paidDeliveries.length;
+    const guests = closedReservations.reduce(
+      (total, item) => total + (Number(item.people) || 0),
+      0,
+    );
     const noShows = reservations.filter(
       (item) =>
         item.status === "no_show" &&
         insideRange(item.date, range, selectedDate, startDate, endDate),
     ).length;
+
     const soldItems = [
-      ...closedReservations.flatMap((item) => item.orderLineItems ?? []),
-      ...closedDeliveries.flatMap((item) => item.orderItems ?? []),
+      ...paidReservations.flatMap((item) => item.orderLineItems ?? []),
+      ...paidDeliveries.flatMap((item) => item.orderItems ?? []),
     ];
+
     const productMap = new Map<
       string,
       { name: string; quantity: number; revenue: number; cost: number; uncostedQuantity: number }
     >();
-    const ingredientMap = new Map<string, { name: string; quantity: number; unit: string; cost: number }>();
+    const ingredientMap = new Map<
+      string,
+      { name: string; quantity: number; unit: string; cost: number }
+    >();
+
     soldItems.forEach((item) => {
       const quantity = Number(item.quantity) || 0;
       const unitCost = getRecipeUnitCost(item, recipes, stockProducts);
@@ -370,6 +471,7 @@ export default function ReportesPage() {
           (itemId && candidate.menuItemId === itemId) ||
           normalizedName(candidate.name) === normalizedName(item.name),
       );
+
       recipe?.ingredients.forEach((ingredient) => {
         const product = stockProducts.find(
           (candidate) =>
@@ -391,31 +493,85 @@ export default function ReportesPage() {
         ingredientMap.set(ingredientKey, current);
       });
     });
+
     const products = [...productMap.values()]
       .map((item) => ({
         ...item,
         grossProfit: item.revenue - item.cost,
         grossMargin: item.revenue > 0 ? ((item.revenue - item.cost) / item.revenue) * 100 : 0,
       }))
-      .sort((a, b) => b.quantity - a.quantity);
-    const ingredients = [...ingredientMap.values()].sort((a, b) => b.cost - a.cost);
-    const ingredientCost = soldItems.reduce(
+      .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
+
+    const ingredients = [...ingredientMap.values()]
+      .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
+
+    const ingredientCost = products.reduce((total, item) => total + item.cost, 0);
+    const productRevenue = products.reduce((total, item) => total + item.revenue, 0);
+    const deliveryFees = paidDeliveries.reduce(
       (total, item) =>
-        total +
-        getRecipeUnitCost(item, recipes, stockProducts) * (Number(item.quantity) || 0),
+        total + Math.max((Number(item.total) || 0) - lineItemsTotal(item.orderItems), 0),
       0,
     );
+    const reconciliationDifference = revenue - productRevenue - deliveryFees;
     const grossProfit = revenue - ingredientCost;
     const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
-    const operationalExpenses = expenses
-      .filter((item) => item.status === "paid" && item.category !== "Compra de stock" && insideRange(item.date, range, selectedDate, startDate, endDate))
-      .reduce((total, item) => total + (Number(item.amount) || 0), 0);
+
+    const paidExpenseItems = expenses.filter(
+      (item) =>
+        item.status === "paid" &&
+        insideRange(expenseEffectiveDate(item), range, selectedDate, startDate, endDate),
+    );
+    const stockPurchaseItems = paidExpenseItems
+      .filter(isInventoryPurchase)
+      .sort((a, b) =>
+        (a.description ?? a.provider ?? a.category ?? "").localeCompare(
+          b.description ?? b.provider ?? b.category ?? "",
+          "es",
+          { sensitivity: "base" },
+        ),
+      );
+    const operationalExpenseItems = paidExpenseItems
+      .filter((item) => !isInventoryPurchase(item))
+      .sort((a, b) =>
+        (a.description ?? a.provider ?? a.category ?? "").localeCompare(
+          b.description ?? b.provider ?? b.category ?? "",
+          "es",
+          { sensitivity: "base" },
+        ),
+      );
+    const stockPurchases = stockPurchaseItems.reduce(
+      (total, item) => total + (Number(item.amount) || 0),
+      0,
+    );
+    const operationalExpenses = operationalExpenseItems.reduce(
+      (total, item) => total + (Number(item.amount) || 0),
+      0,
+    );
+
     const netResult = grossProfit - operationalExpenses;
     const netMargin = revenue > 0 ? (netResult / revenue) * 100 : 0;
-    const uncostedItems = soldItems.reduce((total, item) => {
-      const hasCost = getRecipeUnitCost(item, recipes, stockProducts) > 0;
-      return total + (hasCost ? 0 : Number(item.quantity) || 0);
-    }, 0);
+    const uncostedItems = products.reduce(
+      (total, item) => total + item.uncostedQuantity,
+      0,
+    );
+
+    const pendingCollectionAmount = [
+      ...pendingReservationCollections.map(
+        (item) =>
+          Math.max(
+            (Number(item.orderTotal) || 0) - reservationPaymentTotal(item),
+            0,
+          ),
+      ),
+      ...pendingDeliveryCollections.map(
+        (item) =>
+          Math.max(
+            (Number(item.total) || 0) - deliveryPaymentTotal(item),
+            0,
+          ),
+      ),
+    ].reduce((total, value) => total + value, 0);
+
     const periodCashRegisters = cashRegisters.filter((item) =>
       insideRange(item.date, range, selectedDate, startDate, endDate),
     );
@@ -428,17 +584,26 @@ export default function ReportesPage() {
     const legacyCashAdjustments = periodCashRegisters
       .filter((item) => !item.movements?.length && Number(item.adjustment) !== 0)
       .map((item) => Number(item.adjustment) || 0);
-    const manualCashIncome = cashMovements
-      .filter((item) => item.type === "income")
-      .reduce((total, item) => total + (Number(item.amount) || 0), 0) +
-      legacyCashAdjustments.filter((amount) => amount > 0).reduce((total, amount) => total + amount, 0);
-    const manualCashWithdrawals = cashMovements
-      .filter((item) => item.type === "withdrawal")
-      .reduce((total, item) => total + (Number(item.amount) || 0), 0) +
-      legacyCashAdjustments.filter((amount) => amount < 0).reduce((total, amount) => total + Math.abs(amount), 0);
+    const manualCashIncome =
+      cashMovements
+        .filter((item) => item.type === "income")
+        .reduce((total, item) => total + (Number(item.amount) || 0), 0) +
+      legacyCashAdjustments
+        .filter((amount) => amount > 0)
+        .reduce((total, amount) => total + amount, 0);
+    const manualCashWithdrawals =
+      cashMovements
+        .filter((item) => item.type === "withdrawal")
+        .reduce((total, item) => total + (Number(item.amount) || 0), 0) +
+      legacyCashAdjustments
+        .filter((amount) => amount < 0)
+        .reduce((total, amount) => total + Math.abs(amount), 0);
+
     return {
       closedReservations,
       closedDeliveries,
+      paidReservations,
+      paidDeliveries,
       payments,
       revenue,
       transactions,
@@ -447,9 +612,18 @@ export default function ReportesPage() {
       products,
       ingredients,
       ingredientCost,
+      productRevenue,
+      deliveryFees,
+      reconciliationDifference,
       grossProfit,
       grossMargin,
+      operationalExpenseItems,
       operationalExpenses,
+      stockPurchaseItems,
+      stockPurchases,
+      pendingCollectionCount:
+        pendingReservationCollections.length + pendingDeliveryCollections.length,
+      pendingCollectionAmount,
       netResult,
       netMargin,
       uncostedItems,
@@ -751,7 +925,7 @@ ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${i
           }
         />
 
-        <div className="mt-4 shrink-0">
+        <div className="-mt-2 shrink-0">
           <V2FilterBar>
             <div className="relative flex min-w-[340px] max-w-[560px] flex-1 items-center gap-2">
               <V2Button
@@ -870,153 +1044,381 @@ ${report.ingredients.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${i
             </div>
               ) : null}
             </div>
+
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {([
+                ["payments", "Ingresos por método"],
+                ["products", "Rentabilidad por producto"],
+                ["ingredients", "Insumos consumidos"],
+              ] as const).map(([tab, label]) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setDetailTab(tab)}
+                  className={`h-10 rounded-xl border px-3 text-xs font-semibold transition ${
+                    detailTab === tab
+                      ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </V2FilterBar>
         </div>
 
-        <div className="mt-4 grid shrink-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <V2MetricCard label="Facturación cobrada" value={money(report.revenue)} helper="Solo operaciones cerradas" tone="green" icon={<Banknote size={21} />} />
-          <V2MetricCard label="Ticket promedio" value={money(report.transactions ? report.revenue / report.transactions : 0)} helper={`${report.transactions} operaciones`} tone="blue" icon={<ReceiptText size={21} />} />
-          <V2MetricCard label="Personas atendidas" value={report.guests} helper={`${report.closedReservations.length} reservas completadas`} tone="purple" icon={<UsersRound size={21} />} />
-          <V2MetricCard label="Envíos entregados" value={report.closedDeliveries.length} helper={`${report.noShows} no-show`} tone="orange" icon={<PackageCheck size={21} />} />
+        <div className="mt-2 grid shrink-0 gap-2 md:grid-cols-4 xl:grid-cols-8">
+          {/* E38_REPORTES_LAYOUT */}
+          <ReportsTopMetricCard className="min-w-0" label="Facturación cobrada" value={money(report.revenue)} helper="Solo operaciones cerradas" tone="green" icon={<Banknote size={21} />} />
+          <ReportsTopMetricCard className="min-w-0" label="Ticket promedio" value={money(report.transactions ? report.revenue / report.transactions : 0)} helper={`${report.transactions} operaciones`} tone="blue" icon={<ReceiptText size={21} />} />
+          <ReportsTopMetricCard className="min-w-0" label="Personas atendidas" value={report.guests} helper={`${report.closedReservations.length} reservas completadas`} tone="purple" icon={<UsersRound size={21} />} />
+          <ReportsTopMetricCard className="min-w-0" label="Envíos entregados" value={report.closedDeliveries.length} helper={`${report.noShows} no-show`} tone="orange" icon={<PackageCheck size={21} />} />
+          {paymentCards.map(({ label, value, icon: Icon, tone }) => (
+            <ReportsTopMetricCard
+              key={label}
+              className="min-w-0"
+              label={label}
+              value={money(value)}
+              helper="Cobrado"
+              tone={tone}
+              icon={<Icon size={21} />}
+            />
+          ))}
         </div>
 
-        <div className="mt-3 grid min-h-0 flex-1 gap-3 xl:grid-cols-[1fr_1.25fr]">
-          <V2Card className="min-h-0 overflow-y-auto">
-            <div className="flex items-center gap-2">
-              <CalendarDays size={19} className="text-emerald-700" />
-              <h2 className="font-semibold text-slate-950">Ingresos por método</h2>
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {paymentCards.map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                    <Icon size={17} className={tone === "green" ? "text-emerald-700" : tone === "purple" ? "text-violet-700" : "text-blue-700"} />
-                    {label}
-                  </div>
-                  <p className="mt-2 text-xl font-bold text-slate-950">{money(value)}</p>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className={tone === "green" ? "h-full bg-emerald-500" : tone === "purple" ? "h-full bg-violet-500" : "h-full bg-blue-500"}
-                      style={{ width: `${report.revenue ? Math.max((value / report.revenue) * 100, value ? 3 : 0) : 0}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Costo de insumos
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">
-                    {money(report.ingredientCost)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Ganancia bruta
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-emerald-700">
-                    {money(report.grossProfit)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Gastos operativos
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-orange-700">
-                    {money(report.operationalExpenses)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Resultado neto
-                  </p>
-                  <p className={`mt-1 text-lg font-bold ${report.netResult >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                    {money(report.netResult)}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
-                Margen bruto: {report.grossMargin.toFixed(1)}% · Margen neto estimado: {report.netMargin.toFixed(1)}%.
-                Solo descuenta gastos pagados; las compras de stock no se duplican.
-                {report.uncostedItems > 0
-                  ? ` Hay ${report.uncostedItems} unidades vendidas sin costo configurado.`
-                  : ""}
+        <div className="mt-3 min-h-0 flex-1">
+          <V2Card className="flex h-full min-h-0 flex-col overflow-hidden p-0">
+            <div className="shrink-0 border-b border-slate-200 px-5 pb-2 pt-2">
+              <h2 className="font-semibold text-slate-950">
+                {detailTab === "payments"
+                  ? "Ingresos por método"
+                  : detailTab === "products"
+                    ? "Rentabilidad por producto"
+                    : "Insumos consumidos"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {detailTab === "payments"
+                  ? "Cobros conciliados, resultado del período y movimientos que explican la caja."
+                  : detailTab === "products"
+                    ? "Solo ventas completamente cobradas, ordenadas alfabéticamente."
+                    : "Consumo derivado de recetas cobradas, ordenado alfabéticamente."}
               </p>
             </div>
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center gap-2">
-                <LockKeyhole size={18} className="text-slate-500" />
-                <div>
-                  <h3 className="font-semibold text-slate-950">Control de caja</h3>
-                  <p className="mt-0.5 text-xs text-slate-500">Auditoría operativa del período; no modifica la facturación ni el resultado neto.</p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Cajas cerradas</p><p className="mt-1 text-lg font-bold text-slate-950">{report.closedCashRegisters.length}</p></div>
-                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Diferencia acumulada</p><p className={`mt-1 text-lg font-bold ${report.cashDifference === 0 ? "text-emerald-700" : "text-red-700"}`}>{money(report.cashDifference)}</p></div>
-                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ingresos manuales</p><p className="mt-1 text-lg font-bold text-emerald-700">{money(report.manualCashIncome)}</p></div>
-                <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Retiros manuales</p><p className="mt-1 text-lg font-bold text-orange-700">{money(report.manualCashWithdrawals)}</p></div>
-              </div>
-            </div>
-          </V2Card>
 
-          <V2Card className="flex min-h-0 flex-col overflow-hidden p-0">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h2 className="font-semibold text-slate-950">Rentabilidad por producto</h2>
-              <p className="mt-1 text-sm text-slate-500">Ventas cerradas, costo de receta y margen bruto.</p>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
-              {report.products.length ? (
-                <div className="space-y-2">
-                  {report.products.map((item, index) => (
-                    <div key={item.name} className="grid grid-cols-[38px_minmax(130px,1fr)_auto_auto_auto] items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600">{index + 1}</span>
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-950">{item.name}</p>
-                        <p className="mt-0.5 text-xs text-slate-500">{item.quantity} unidades · venta {money(item.revenue)}</p>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+              {detailTab === "payments" ? (
+                <div className="space-y-4">
+<div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-semibold text-slate-950">Conciliación de ventas</h3>
+                        <p className="mt-1 text-xs text-slate-500">
+                          La facturación se arma únicamente con operaciones cobradas.
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Costo</p>
-                        <p className="text-sm font-semibold text-slate-700">{money(item.cost)}</p>
+                      <span
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                          Math.abs(report.reconciliationDifference) <= 1
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-red-200 bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {Math.abs(report.reconciliationDifference) <= 1
+                          ? "Conciliado"
+                          : `Diferencia ${money(report.reconciliationDifference)}`}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-4">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Venta de productos
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-slate-950">
+                          {money(report.productRevenue)}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ganancia</p>
-                        <p className="text-sm font-semibold text-emerald-700">{money(item.grossProfit)}</p>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Envíos / otros cargos
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-slate-950">
+                          {money(report.deliveryFees)}
+                        </p>
                       </div>
-                      <div className="min-w-16 text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Margen</p>
-                        <p className="text-sm font-bold text-blue-700">{item.grossMargin.toFixed(1)}%</p>
+                      <div className="rounded-xl bg-emerald-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                          Facturación cobrada
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-emerald-800">
+                          {money(report.revenue)}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Operaciones cobradas
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-slate-950">
+                          {report.transactions}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                  {report.ingredients.length ? (
-                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <h3 className="font-semibold text-slate-950">Insumos consumidos</h3>
-                      <p className="mt-1 text-xs text-slate-500">Calculados desde las recetas de las ventas cerradas.</p>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {report.ingredients.map((item) => (
-                          <div key={`${item.name}-${item.unit}`} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-                              <p className="text-xs text-slate-500">
-                                {item.quantity.toLocaleString("es-AR", { maximumFractionDigits: 3 })} {item.unit}
+
+                    {report.pendingCollectionCount > 0 ? (
+                      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                        <strong>{report.pendingCollectionCount}</strong>{" "}
+                        {report.pendingCollectionCount === 1 ? "operación completada" : "operaciones completadas"}{" "}
+                        todavía {report.pendingCollectionCount === 1 ? "tiene" : "tienen"}{" "}
+                        {money(report.pendingCollectionAmount)} pendiente de cobro. No se mezcla con la facturación ni con la rentabilidad.
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <h3 className="font-semibold text-slate-950">Resultado del período</h3>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Costo de insumos consumidos
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-slate-950">
+                          {money(report.ingredientCost)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Ganancia bruta
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-emerald-700">
+                          {money(report.grossProfit)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Gastos operativos
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-orange-700">
+                          {money(report.operationalExpenses)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Resultado neto
+                        </p>
+                        <p
+                          className={`mt-1 text-lg font-bold ${
+                            report.netResult >= 0 ? "text-emerald-700" : "text-red-700"
+                          }`}
+                        >
+                          {money(report.netResult)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                      Facturación {money(report.revenue)} - insumos consumidos {money(report.ingredientCost)}
+                      {" "} - gastos operativos {money(report.operationalExpenses)}
+                      {" "} = resultado neto {money(report.netResult)}.
+                      {" "}Margen bruto {report.grossMargin.toFixed(1)}% · margen neto {report.netMargin.toFixed(1)}%.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-slate-950">Gastos operativos pagados</h3>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Estos sí reducen el resultado neto.
+                          </p>
+                        </div>
+                        <span className="text-lg font-bold text-orange-700">
+                          {money(report.operationalExpenses)}
+                        </span>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {report.operationalExpenseItems.length ? (
+                          report.operationalExpenseItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-slate-900">
+                                  {item.description || item.category || "Gasto operativo"}
+                                </p>
+                                <p className="mt-0.5 truncate text-xs text-slate-500">
+                                  {[item.provider, item.category, item.paymentMethod].filter(Boolean).join(" · ")}
+                                </p>
+                              </div>
+                              <p className="shrink-0 text-sm font-semibold text-orange-700">
+                                {money(item.amount)}
                               </p>
                             </div>
-                            <p className="shrink-0 text-sm font-semibold text-slate-700">{money(item.cost)}</p>
-                          </div>
-                        ))}
+                          ))
+                        ) : (
+                          <p className="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                            No hay gastos operativos pagados en este período.
+                          </p>
+                        )}
                       </div>
                     </div>
-                  ) : null}
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-slate-950">Compras de stock pagadas</h3>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Afectan caja, pero no se descuentan otra vez del resultado porque el costo se reconoce al consumir los insumos.
+                          </p>
+                        </div>
+                        <span className="text-lg font-bold text-blue-700">
+                          {money(report.stockPurchases)}
+                        </span>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {report.stockPurchaseItems.length ? (
+                          report.stockPurchaseItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-slate-900">
+                                  {item.description || item.category || "Compra de stock"}
+                                </p>
+                                <p className="mt-0.5 truncate text-xs text-slate-500">
+                                  {[item.provider, item.category, item.paymentMethod].filter(Boolean).join(" · ")}
+                                </p>
+                              </div>
+                              <p className="shrink-0 text-sm font-semibold text-blue-700">
+                                {money(item.amount)}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                            No hay compras de stock pagadas en este período.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center gap-2">
+                      <LockKeyhole size={18} className="text-slate-500" />
+                      <div>
+                        <h3 className="font-semibold text-slate-950">Control de caja</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Auditoría operativa. No modifica facturación ni resultado neto.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Cajas cerradas
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-slate-950">
+                          {report.closedCashRegisters.length}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Diferencia acumulada
+                        </p>
+                        <p
+                          className={`mt-1 text-lg font-bold ${
+                            report.cashDifference === 0 ? "text-emerald-700" : "text-red-700"
+                          }`}
+                        >
+                          {money(report.cashDifference)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Ingresos manuales
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-emerald-700">
+                          {money(report.manualCashIncome)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          Retiros manuales
+                        </p>
+                        <p className="mt-1 text-lg font-bold text-orange-700">
+                          {money(report.manualCashWithdrawals)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : detailTab === "products" ? (
+                report.products.length ? (
+                  <div className="space-y-2">
+                    {report.products.map((item) => (
+                      <div
+                        key={item.name}
+                        className="grid grid-cols-[minmax(180px,1fr)_auto_auto_auto] items-center gap-4 rounded-xl border border-slate-200 px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-slate-950">{item.name}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {item.quantity} unidades · venta {money(item.revenue)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Costo</p>
+                          <p className="text-sm font-semibold text-slate-700">{money(item.cost)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ganancia</p>
+                          <p className="text-sm font-semibold text-emerald-700">{money(item.grossProfit)}</p>
+                        </div>
+                        <div className="min-w-20 text-right">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Margen</p>
+                          <p className="text-sm font-bold text-blue-700">{item.grossMargin.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex min-h-56 flex-col items-center justify-center text-center">
+                    <ChartNoAxesCombined size={38} className="text-slate-300" />
+                    <p className="mt-3 font-semibold text-slate-950">No hay ventas cobradas</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Cambiá el período o cerrá el cobro de una operación.
+                    </p>
+                  </div>
+                )
+              ) : report.ingredients.length ? (
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {report.ingredients.map((item) => (
+                    <div
+                      key={`${item.name}-${item.unit}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {item.quantity.toLocaleString("es-AR", { maximumFractionDigits: 3 })} {item.unit}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-sm font-semibold text-slate-700">
+                        {money(item.cost)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
-                  <ChartNoAxesCombined size={38} className="text-slate-300" />
-                  <p className="mt-3 font-semibold text-slate-950">Todavía no hay ventas cerradas</p>
-                  <p className="mt-1 text-sm text-slate-500">Cambia el período o completa una operación.</p>
+                <div className="flex min-h-56 flex-col items-center justify-center text-center">
+                  <ReceiptText size={38} className="text-slate-300" />
+                  <p className="mt-3 font-semibold text-slate-950">No hay insumos consumidos</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Los insumos aparecen al cerrar ventas con recetas configuradas.
+                  </p>
                 </div>
               )}
             </div>

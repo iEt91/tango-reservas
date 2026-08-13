@@ -50,8 +50,9 @@ check(
   "la estética V2 original permanece como fuente visual",
   sources.ui.includes("<V2DataTable")
     && sources.ui.includes("Gestionar recetas")
-    && sources.ui.includes("Vincular imágenes")
-    && sources.ui.includes("Importar imágenes")
+    && !sources.ui.includes("Vincular imágenes")
+    && !sources.ui.includes("Importar imágenes")
+    && !sources.ui.includes("Menú sincronizado")
     && sources.ui.includes("md:grid-cols-3 xl:grid-cols-6")
     && sources.ui.includes('xl:grid-cols-[1fr_340px]')
     && sources.ui.includes("Categorías del menú"),

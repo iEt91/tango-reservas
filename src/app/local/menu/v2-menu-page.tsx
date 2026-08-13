@@ -1,3 +1,4 @@
+/* E36_UI_POLISH */
 "use client";
 
 import Link from "next/link";
@@ -293,53 +294,6 @@ function createEmptyCategory(nextOrder: number): V2MenuCategoryDraft {
     products: [],
   };
 }
-
-
-type V2MenuImageFile = {
-  fileName: string;
-  name: string;
-  imageUrl: string;
-};
-
-function normalizeMenuProductName(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\.[a-z0-9]+$/i, "")
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-async function fetchAvailableMenuImages() {
-  try {
-    const response = await fetch("/api/menu-images/_list", { cache: "no-store" });
-
-    if (!response.ok) return [];
-
-    const data = (await response.json()) as { files?: V2MenuImageFile[] };
-
-    return Array.isArray(data.files) ? data.files : [];
-  } catch {
-    return [];
-  }
-}
-
-function createMenuImageProductDraft(file: V2MenuImageFile): V2MenuItemDraft {
-  return {
-    id: `img-product-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: file.name,
-    description: "",
-    categoryId: "",
-    price: 0,
-    status: "available",
-    visible: true,
-    featured: false,
-    imageUrl: file.imageUrl,
-  };
-}
-
 
 
 type V2MenuPageProps = {
@@ -972,14 +926,6 @@ export function V2MenuPage({
     }
   }
 
-  function linkGeneratedMenuImages() {
-    if (usesSupabaseMenu) {
-      window.alert("La vinculación automática de imágenes queda fuera del corte persistente actual.");
-      return;
-    }
-    setMenuItems((current) => applyAutomaticMenuImages(current));
-  }
-
   function renderSelectableCell(item: V2MenuItemDraft, content: ReactNode) {
     return (
       <button type="button" onClick={() => openEditor(item)} className="w-full text-left">
@@ -1444,39 +1390,6 @@ export function V2MenuPage({
     setDeleteConfirmation("");
   }
 
-  async function importProductsFromImageFolder() {
-    if (usesSupabaseMenu) {
-      window.alert("La importación binaria desde la carpeta de imágenes queda fuera del corte persistente actual.");
-      return;
-    }
-
-    const files = await fetchAvailableMenuImages();
-    if (!files.length) {
-      window.alert("No se encontraron imágenes en src/app/local/menu/img.");
-      return;
-    }
-
-    const existingNames = new Set(menuItems.map((item) => normalizeMenuProductName(item.name)));
-    const productsToCreate = files
-      .filter((file) => !existingNames.has(normalizeMenuProductName(file.name)))
-      .map(createMenuImageProductDraft);
-
-    if (!productsToCreate.length) {
-      window.alert("No hay productos nuevos para importar. Las imágenes ya coinciden con productos existentes.");
-      return;
-    }
-
-    setMenuItems((currentItems) => {
-      const currentNames = new Set(currentItems.map((item) => normalizeMenuProductName(item.name)));
-      const uniqueProducts = productsToCreate.filter(
-        (product) => !currentNames.has(normalizeMenuProductName(product.name))
-      );
-      return [...currentItems, ...uniqueProducts];
-    });
-
-    window.alert(`Se importaron ${productsToCreate.length} productos desde la carpeta de imágenes.`);
-  }
-
   return (
     <V2AppShell>
       <div className="flex h-full min-h-0 flex-col">
@@ -1493,27 +1406,11 @@ export function V2MenuPage({
                 Gestionar recetas
               </Link>
 
-              <V2Button
-                variant="secondary"
-                icon={<ImageIcon size={18} />}
-                onClick={linkGeneratedMenuImages}
-              >
-                Vincular imágenes
-              </V2Button>
-              <V2Button type="button" variant="secondary" onClick={importProductsFromImageFolder}>
-                <Plus size={16} />
-                Importar imágenes
-              </V2Button>
-
-              {hasQuickChanges ? (
+{hasQuickChanges ? (
                 <V2Button type="button" variant="success" onClick={confirmQuickChanges}>
                   Guardar cambios rápidos
                 </V2Button>
-              ) : (
-                <span className="inline-flex h-10 items-center rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700">
-                  Menú sincronizado
-                </span>
-              )}
+              ) : null}
 
               <V2Button
                 variant="secondary"

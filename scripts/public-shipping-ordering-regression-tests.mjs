@@ -532,7 +532,7 @@ check(
 
 check(
   "panel re-habilita tracking persistente",
-  !/disabled=\{isSupabasePersistence\}[\s\S]*?getDeliveryTrackingPath/u.test(
+  !/Tracking p\u00fablico[\s\S]*?disabled=\{isSupabasePersistence\}[\s\S]*?Copiar link/u.test(
       sources.shippingUi,
     )
     && /getDeliveryTrackingPath/u.test(

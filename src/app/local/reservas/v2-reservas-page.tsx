@@ -1,3 +1,4 @@
+/* E36_UI_POLISH */
 "use client";
 
 import Link from "next/link";
@@ -1782,6 +1783,7 @@ export function V2ReservasPage({
   const [editingMode, setEditingMode] = useState<"create" | "edit">("edit");
   const [selectedReservationSnapshot, setSelectedReservation] =
     useState<V2ReservationDraft | null>(null);
+  const [isReservationDetailOpen, setIsReservationDetailOpen] = useState(false);
   const [noteModalReservation, setNoteModalReservation] =
     useState<V2ReservationDraft | null>(null);
   const [openActionsReservationId, setOpenActionsReservationId] =
@@ -2021,8 +2023,6 @@ export function V2ReservasPage({
     [localConfig, selectedDate]
   );
 
-  const isSelectedDateOpen = selectedDateBusinessSlots.length > 0;
-  const isSelectedDateInsideBookingWindow = isDateInsideBookingWindow(localConfig, selectedDate);
   const maxBookingDate = getMaxBookingDate(localConfig);
 
   const peopleBySelectedSlot = useMemo(() => {
@@ -3778,6 +3778,24 @@ export function V2ReservasPage({
     );
   }
 
+  function renderReservationDetailCell(
+    reservation: V2ReservationDraft,
+    content: ReactNode
+  ) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          selectReservationWithTone(reservation);
+          setIsReservationDetailOpen(true);
+        }}
+        className="w-full text-left"
+      >
+        {content}
+      </button>
+    );
+  }
+
   function exportReservationsCsv() {
     const header = [
       "ID",
@@ -3855,6 +3873,30 @@ export function V2ReservasPage({
         <V2PageHeader
           title="Reservas"
           description="Gestioná, filtrá y actualizá las reservas del local."
+          descriptionAside={
+            <>
+              <span>
+                Duración estándar:{" "}
+                <strong className="text-slate-950">{localConfig.standardDurationMinutes} min</strong>
+              </span>
+              <span>
+                Ventana:{" "}
+                <strong className="text-slate-950">{localConfig.bookingWindowDays} días</strong>
+              </span>
+              <span>
+                Capacidad por horario:{" "}
+                <strong className="text-slate-950">
+                  {peopleBySelectedSlot}/{localConfig.maxPeoplePerSlot} personas
+                </strong>
+              </span>
+              <span>
+                Horario del día:{" "}
+                <strong className="text-slate-950">
+                  {formatBusinessHourSlots(selectedDateBusinessSlots)}
+                </strong>
+              </span>
+            </>
+          }
           actions={
             <>
               <V2Button
@@ -3937,45 +3979,7 @@ export function V2ReservasPage({
               />
             </div>
 
-            <div className="shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <span>
-                  Duración estándar:{" "}
-                  <strong className="text-slate-950">{localConfig.standardDurationMinutes} min</strong>
-                </span>
-                <span>
-                  Ventana:{" "}
-                  <strong className="text-slate-950">{localConfig.bookingWindowDays} días</strong>
-                </span>
-                <span>
-                  Capacidad por horario:{" "}
-                  <strong className="text-slate-950">
-                    {peopleBySelectedSlot}/{localConfig.maxPeoplePerSlot} personas
-                  </strong>
-                </span>
-                <span>
-                  Horario del día:{" "}
-                  <strong className="text-slate-950">
-                    {formatBusinessHourSlots(selectedDateBusinessSlots)}
-                  </strong>
-                </span>
-              </div>
-              {!localConfig.reservationEnabled ? (
-                <p className="mt-2 font-semibold text-red-600">
-                  Reservas desactivadas desde Configuración.
-                </p>
-              ) : null}
-              {localConfig.reservationEnabled && !isSelectedDateOpen ? (
-                <p className="mt-2 font-semibold text-orange-600">
-                  El local figura cerrado para esta fecha.
-                </p>
-              ) : null}
-              {localConfig.reservationEnabled && !isSelectedDateInsideBookingWindow ? (
-                <p className="mt-2 font-semibold text-orange-600">
-                  Esta fecha está fuera de la ventana configurada. Máximo: {formatCompactDate(maxBookingDate)}.
-                </p>
-              ) : null}
-            </div>
+
 
             <div className="-mt-2 shrink-0">
                       <V2FilterBar>
@@ -4243,12 +4247,9 @@ export function V2ReservasPage({
                     header: "ID",
                     sortKey: "id",
                     cell: (row) =>
-                      renderSelectableCell(
-                        row,
-                        <span className="font-semibold text-slate-950">
+                      renderReservationDetailCell(row, <span className="font-semibold text-slate-950">
                           {getReservationCode(row)}
-                        </span>
-                      ),
+                        </span>),
                   },
                   {
                     header: dateFilterMode === "range" ? "Fecha / hora" : "Hora",
@@ -4275,17 +4276,14 @@ export function V2ReservasPage({
                     sortKey: "client",
                     align: "left",
                     cell: (row) =>
-                      renderSelectableCell(
-                        row,
-                        <div>
+                      renderReservationDetailCell(row, <div>
                           <p className="font-semibold text-slate-950">
                             {row.client}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
                             {row.email || "Sin email"}
                           </p>
-                        </div>
-                      ),
+                        </div>),
                   },
                   {
                     header: "Personas",
@@ -4375,7 +4373,7 @@ export function V2ReservasPage({
                           {!isClosed ? (
                             <V2Button
                               size="sm"
-                              variant="secondary"
+                              variant="primary"
                               icon={<Plus size={15} />}
                               onClick={() => openOrderPopup(row)}
                             >
@@ -4385,7 +4383,7 @@ export function V2ReservasPage({
 
                           <V2Button
                             size="sm"
-                            variant="secondary"
+                            variant="dangerSolid"
                             onClick={() => setOpenActionsReservationId(row.id)}
                           >
                             Acciones
@@ -4402,7 +4400,7 @@ export function V2ReservasPage({
           </div>
 
           <aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
-            <V2Card className="flex max-h-[260px] shrink-0 flex-col overflow-hidden">
+            <V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <h2 className="shrink-0 text-base font-semibold text-slate-950">
                 Próximas acciones
               </h2>
@@ -4478,234 +4476,7 @@ export function V2ReservasPage({
               </div>
             </V2Card>
 
-            <V2Card
-              className={`flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm ${
-                selectedReservation
-                  ? DETAIL_BORDER_TONES[selectedDetailToneIndex]
-                  : ""
-              } ${
-                selectedReservation?.status === "pending"
-                  ? "bg-amber-50/40"
-                  : ""
-              }`}
-            >
-              <div className="shrink-0 flex items-start justify-between gap-3">
-                <h2 className="text-base font-semibold text-slate-950">
-                  Detalle seleccionado
-                </h2>
 
-                {selectedReservation ? (
-                  <V2ReservationStatusBadge status={selectedReservation.status} />
-                ) : null}
-              </div>
-
-              {selectedReservation ? (
-                <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm text-slate-600">
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      {getReservationCode(selectedReservation)}
-                    </p>
-                    <p className="mt-1 font-semibold text-slate-950">
-                      {selectedReservation.client}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {formatDateLabel(selectedReservation.date)} · {selectedReservation.time}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
-                      Tracking público
-                    </p>
-                    <p className="mt-1 break-all text-xs font-medium text-blue-700">
-                      {getReservationTrackingPath(selectedReservation)}
-                    </p>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <V2Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => openReservationTracking(selectedReservation)}
-                      >
-                        Ver tracking
-                      </V2Button>
-
-                      <V2Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => copyReservationTrackingLink(selectedReservation)}
-                      >
-                        Copiar link
-                      </V2Button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Personas
-                      </p>
-                      <p className="mt-1 font-semibold text-slate-950">
-                        {selectedReservation.people}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Duración
-                      </p>
-                      <p className="mt-1 font-semibold text-slate-950">
-                        {selectedReservation.durationMinutes ?? 120} min
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Teléfono
-                    </p>
-                    <p className="mt-1 break-words text-slate-700">
-                      {selectedReservation.phone}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Origen
-                      </p>
-                      <p className="mt-1 text-slate-700">
-                        {ORIGIN_LABELS[selectedReservation.origin ?? "manual"]}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Mesa
-                      </p>
-                      <p className="mt-1 text-slate-700">
-                        {selectedReservation.tableName || "Sin asignar"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Nota
-                    </p>
-                    <p className="mt-1 leading-6 text-slate-700">
-                      {formatReservationNote(selectedReservation.note)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Pedido / consumo
-                    </p>
-                    <p className="mt-1 leading-6 text-slate-700">
-                      {formatReservationOrderItems(selectedReservation)}
-                    </p>
-                    <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Total consumo
-                    </p>
-                    <p className="mt-1 font-semibold text-slate-950">
-                      {formatMoney(selectedReservation.orderTotal ?? 0)}
-                    </p>
-
-                    {selectedReservation.paymentMethod ? (
-                      <>
-                        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                          Pago
-                        </p>
-                        <div className="mt-2 grid gap-2 text-xs text-slate-600">
-                          <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">
-                            {formatPaymentMethod(selectedReservation.paymentMethod)} · {formatMoney(selectedReservation.paidAmount ?? selectedReservation.orderTotal ?? 0)}
-                          </span>
-                          {selectedReservation.paymentBreakdown &&
-                          selectedReservation.paymentMethod === "Mixto" ? (
-                            <span className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                              Efectivo {formatMoney(selectedReservation.paymentBreakdown.cash)} · Tarjeta {formatMoney(selectedReservation.paymentBreakdown.card)} · Mercado Pago {formatMoney(selectedReservation.paymentBreakdown.mercadoPago)} · Transferencia {formatMoney(selectedReservation.paymentBreakdown.transfer)}
-                            </span>
-                          ) : null}
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Timeline
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      {[
-                        ["Creada", selectedReservation.createdAt],
-                        ["Confirmada", selectedReservation.confirmedAt],
-                        ["Sentada / mesa", selectedReservation.seatedAt],
-                        ["Consumo cargado", selectedReservation.consumptionStartedAt],
-                        ["Completada", selectedReservation.completedAt],
-                        ["Cancelada", selectedReservation.cancelledAt],
-                        ["No-show", selectedReservation.noShowAt],
-                      ].map(([label, value]) =>
-                        value ? (
-                          <div key={label} className="flex justify-between gap-3 text-xs">
-                            <span className="font-medium text-slate-600">{label}</span>
-                            <span className="text-slate-500">
-                              {formatCompactDateTime(value)}
-                            </span>
-                          </div>
-                        ) : null
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <V2Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => openReservationEditor(selectedReservation)}
-                    >
-                      Editar
-                    </V2Button>
-
-                    <V2Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => copyReservationTrackingLink(selectedReservation)}
-                    >
-                      Copiar link
-                    </V2Button>
-
-                    {selectedReservation.status !== "cancelled" &&
-                    selectedReservation.status !== "completed" &&
-                    selectedReservation.status !== "no_show" ? (
-                      <V2Button
-                        size="sm"
-                        variant="secondary"
-                        icon={<Plus size={15} />}
-                        onClick={() => openOrderPopup(selectedReservation)}
-                      >
-                        Consumo
-                      </V2Button>
-                    ) : null}
-
-                    {selectedReservation.status === "confirmed" &&
-                    reservationNeedsTable(selectedReservation) ? (
-                      <V2Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => openReservationEditor(selectedReservation)}
-                      >
-                        Asignar mesa
-                      </V2Button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 text-sm text-slate-500">
-                  Seleccioná una reserva para ver su información operativa.
-                </div>
-              )}
-            </V2Card>
           </aside>
         </div>
       </div>
@@ -6147,6 +5918,267 @@ export function V2ReservasPage({
           </div>
         </div>
       ) : null}
+
+      {isReservationDetailOpen && selectedReservation ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detalle de reserva"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar detalle de reserva"
+            className="absolute inset-0 bg-slate-950/40"
+            onClick={() => setIsReservationDetailOpen(false)}
+          />
+          <div className="relative z-10 flex h-[82vh] max-h-[760px] min-h-[560px] w-full max-w-[720px] flex-col">
+            <button
+              type="button"
+              aria-label="Cerrar detalle de reserva"
+              onClick={() => setIsReservationDetailOpen(false)}
+              className="absolute -right-3 -top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-lg transition hover:bg-slate-50 hover:text-slate-950"
+            >
+              <X size={18} />
+            </button>
+            <V2Card
+                          className={`flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm ${
+                            selectedReservation
+                              ? DETAIL_BORDER_TONES[selectedDetailToneIndex]
+                              : ""
+                          } ${
+                            selectedReservation?.status === "pending"
+                              ? "bg-amber-50/40"
+                              : ""
+                          }`}
+                        >
+                          <div className="shrink-0 flex items-start justify-between gap-3">
+                            <h2 className="text-base font-semibold text-slate-950">
+                              Detalle seleccionado
+                            </h2>
+
+                            {selectedReservation ? (
+                              <V2ReservationStatusBadge status={selectedReservation.status} />
+                            ) : null}
+                          </div>
+
+                          {selectedReservation ? (
+                            <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm text-slate-600">
+                              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  {getReservationCode(selectedReservation)}
+                                </p>
+                                <p className="mt-1 font-semibold text-slate-950">
+                                  {selectedReservation.client}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {formatDateLabel(selectedReservation.date)} · {selectedReservation.time}
+                                </p>
+                              </div>
+
+                              <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
+                                  Tracking público
+                                </p>
+                                <p className="mt-1 break-all text-xs font-medium text-blue-700">
+                                  {getReservationTrackingPath(selectedReservation)}
+                                </p>
+
+                                <div className="mt-3 grid grid-cols-2 gap-2">
+                                  <V2Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => openReservationTracking(selectedReservation)}
+                                  >
+                                    Ver tracking
+                                  </V2Button>
+
+                                  <V2Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => copyReservationTrackingLink(selectedReservation)}
+                                  >
+                                    Copiar link
+                                  </V2Button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Personas
+                                  </p>
+                                  <p className="mt-1 font-semibold text-slate-950">
+                                    {selectedReservation.people}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Duración
+                                  </p>
+                                  <p className="mt-1 font-semibold text-slate-950">
+                                    {selectedReservation.durationMinutes ?? 120} min
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Teléfono
+                                </p>
+                                <p className="mt-1 break-words text-slate-700">
+                                  {selectedReservation.phone}
+                                </p>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Origen
+                                  </p>
+                                  <p className="mt-1 text-slate-700">
+                                    {ORIGIN_LABELS[selectedReservation.origin ?? "manual"]}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Mesa
+                                  </p>
+                                  <p className="mt-1 text-slate-700">
+                                    {selectedReservation.tableName || "Sin asignar"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Nota
+                                </p>
+                                <p className="mt-1 leading-6 text-slate-700">
+                                  {formatReservationNote(selectedReservation.note)}
+                                </p>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Pedido / consumo
+                                </p>
+                                <p className="mt-1 leading-6 text-slate-700">
+                                  {formatReservationOrderItems(selectedReservation)}
+                                </p>
+                                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Total consumo
+                                </p>
+                                <p className="mt-1 font-semibold text-slate-950">
+                                  {formatMoney(selectedReservation.orderTotal ?? 0)}
+                                </p>
+
+                                {selectedReservation.paymentMethod ? (
+                                  <>
+                                    <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                      Pago
+                                    </p>
+                                    <div className="mt-2 grid gap-2 text-xs text-slate-600">
+                                      <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">
+                                        {formatPaymentMethod(selectedReservation.paymentMethod)} · {formatMoney(selectedReservation.paidAmount ?? selectedReservation.orderTotal ?? 0)}
+                                      </span>
+                                      {selectedReservation.paymentBreakdown &&
+                                      selectedReservation.paymentMethod === "Mixto" ? (
+                                        <span className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                                          Efectivo {formatMoney(selectedReservation.paymentBreakdown.cash)} · Tarjeta {formatMoney(selectedReservation.paymentBreakdown.card)} · Mercado Pago {formatMoney(selectedReservation.paymentBreakdown.mercadoPago)} · Transferencia {formatMoney(selectedReservation.paymentBreakdown.transfer)}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </>
+                                ) : null}
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-100 bg-white p-3">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Timeline
+                                </p>
+                                <div className="mt-3 space-y-2">
+                                  {[
+                                    ["Creada", selectedReservation.createdAt],
+                                    ["Confirmada", selectedReservation.confirmedAt],
+                                    ["Sentada / mesa", selectedReservation.seatedAt],
+                                    ["Consumo cargado", selectedReservation.consumptionStartedAt],
+                                    ["Completada", selectedReservation.completedAt],
+                                    ["Cancelada", selectedReservation.cancelledAt],
+                                    ["No-show", selectedReservation.noShowAt],
+                                  ].map(([label, value]) =>
+                                    value ? (
+                                      <div key={label} className="flex justify-between gap-3 text-xs">
+                                        <span className="font-medium text-slate-600">{label}</span>
+                                        <span className="text-slate-500">
+                                          {formatCompactDateTime(value)}
+                                        </span>
+                                      </div>
+                                    ) : null
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <V2Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => {
+                        setIsReservationDetailOpen(false);
+                        openReservationEditor(selectedReservation);
+                      }}
+                    >
+                      Editar
+                                </V2Button>
+
+                                <V2Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => copyReservationTrackingLink(selectedReservation)}
+                                >
+                                  Copiar link
+                                </V2Button>
+
+                                {selectedReservation.status !== "cancelled" &&
+                                selectedReservation.status !== "completed" &&
+                                selectedReservation.status !== "no_show" ? (
+                                  <V2Button
+                                    size="sm"
+                                    variant="primary"
+                                    icon={<Plus size={15} />}
+                                    onClick={() => openOrderPopup(selectedReservation)}
+                                  >
+                                    Consumo
+                                  </V2Button>
+                                ) : null}
+
+                                {selectedReservation.status === "confirmed" &&
+                                reservationNeedsTable(selectedReservation) ? (
+                                  <V2Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => {
+                          setIsReservationDetailOpen(false);
+                          openReservationEditor(selectedReservation);
+                        }}
+                      >
+                        Asignar mesa
+                                  </V2Button>
+                                ) : null}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-4 text-sm text-slate-500">
+                              Seleccioná una reserva para ver su información operativa.
+                            </div>
+                          )}
+                        </V2Card>
+          </div>
+        </div>
+      ) : null}
+
     </V2AppShell>
   );
 }
