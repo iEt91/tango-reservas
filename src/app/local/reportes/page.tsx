@@ -315,7 +315,7 @@ function ReportsTopMetricCard({ label, value, helper, icon, tone = "slate", clas
       <div className="mb-3 text-center">
         <p className="text-sm font-semibold tracking-tight text-slate-600">{label}</p>
       </div>
-      <div className="flex items-center justify-center gap-3">
+      <div className="grid h-14 grid-cols-[44px_minmax(0,1fr)] items-center gap-3">
         <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${toneClasses}`}>{icon}</div>
         <div className="min-w-0 text-left">
           <div className="text-2xl font-semibold leading-none text-slate-950">{value}</div>
