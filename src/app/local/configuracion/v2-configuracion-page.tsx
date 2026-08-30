@@ -44,6 +44,7 @@ import {
   saveBusinessHoursAction,
   saveReservationConfigurationAction,
 } from "./actions";
+import { createOrResetBusinessSandboxAction } from "./sandbox-actions";
 import {
   saveBusinessServiceAction,
   setBusinessServiceActiveAction,
@@ -349,6 +350,18 @@ function sortBusinessServices(
   });
 }
 
+const CONFIG_SECTION_LINKS = [
+  { id: "datos", label: "Datos" },
+  { id: "contacto", label: "Contacto" },
+  { id: "horarios", label: "Horarios" },
+  { id: "reservas", label: "Reservas" },
+  { id: "servicios", label: "Servicios" },
+  { id: "envios", label: "Envíos" },
+  { id: "notificaciones", label: "Notificaciones" },
+  { id: "staff", label: "Staff" },
+  { id: "sistema", label: "Sistema" },
+] as const;
+
 export function V2ConfiguracionPage({
   initialBusinessHours = null,
   initialReservationSettings = null,
@@ -360,6 +373,8 @@ export function V2ConfiguracionPage({
   staffPersistence = "local",
   canManageBusinessServices = false,
   canManageStaff = false,
+  businessName = "",
+  initialSandbox = null,
 }: {
   initialBusinessHours?: V2BusinessHourConfig[] | null;
   initialReservationSettings?: ReservationSettingsEditor | null;
@@ -371,6 +386,14 @@ export function V2ConfiguracionPage({
   staffPersistence?: "local" | "supabase";
   canManageBusinessServices?: boolean;
   canManageStaff?: boolean;
+  businessName?: string;
+  initialSandbox?: {
+    businessId: string;
+    sourceBusinessId: string;
+    isActiveSandbox: boolean;
+    seedVersion: string;
+    lastResetAt: string;
+  } | null;
 }) {
   const [config, setConfig] = useState<V2LocalConfigState>(() => getDefaultConfig());
   const [saveStatus, setSaveStatus] = useState<
@@ -394,6 +417,13 @@ export function V2ConfiguracionPage({
     );
   const [serviceMutationError, setServiceMutationError] =
     useState("");
+  const [sandbox, setSandbox] = useState(initialSandbox);
+  const [sandboxModalOpen, setSandboxModalOpen] = useState(false);
+  const [sandboxConfirmation, setSandboxConfirmation] = useState("");
+  const [sandboxStatus, setSandboxStatus] = useState<"idle" | "saving" | "error">("idle");
+  const [sandboxError, setSandboxError] = useState("");
+  const configScrollRef = useRef<HTMLDivElement>(null);
+  const [activeConfigSection, setActiveConfigSection] = useState("datos");
 
   useEffect(() => {
     const localConfig = readConfigFromStorage();
@@ -421,6 +451,29 @@ export function V2ConfiguracionPage({
     );
   }, [initialBusinessServices]);
 
+  useEffect(() => {
+    const scrollRoot = configScrollRef.current;
+    if (!scrollRoot) return;
+
+    const updateActiveSection = () => {
+      const rootTop = scrollRoot.getBoundingClientRect().top;
+      let nextSection: string = CONFIG_SECTION_LINKS[0].id;
+
+      for (const section of CONFIG_SECTION_LINKS) {
+        const element = document.getElementById(`config-${section.id}`);
+        if (element && element.getBoundingClientRect().top - rootTop <= 128) {
+          nextSection = section.id;
+        }
+      }
+
+      setActiveConfigSection((current) => current === nextSection ? current : nextSection);
+    };
+
+    updateActiveSection();
+    scrollRoot.addEventListener("scroll", updateActiveSection, { passive: true });
+    return () => scrollRoot.removeEventListener("scroll", updateActiveSection);
+  }, []);
+
   const openDays = useMemo(
     () => config.businessHours.filter((item) => item.enabled),
     [config.businessHours]
@@ -446,6 +499,29 @@ export function V2ConfiguracionPage({
     setConfig((current) => ({ ...current, [field]: value }));
     setSaveStatus("idle");
     setSaveError("");
+  }
+
+  async function createOrResetSandbox() {
+    setSandboxStatus("saving");
+    setSandboxError("");
+    const result = await createOrResetBusinessSandboxAction(sandboxConfirmation);
+
+    if (!result.ok) {
+      setSandboxStatus("error");
+      setSandboxError(result.error);
+      return;
+    }
+
+    setSandbox({
+      businessId: result.sandboxBusinessId,
+      sourceBusinessId: "",
+      isActiveSandbox: false,
+      seedVersion: result.seedVersion,
+      lastResetAt: new Date().toISOString(),
+    });
+    setSandboxStatus("idle");
+    setSandboxModalOpen(false);
+    setSandboxConfirmation("");
   }
 
   function updateConfirmationMode(
@@ -842,19 +918,20 @@ export function V2ConfiguracionPage({
         />
 
         <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 overflow-hidden xl:grid-cols-[1fr_340px]">
-          <div className="v2-config-scrollbar min-h-0 overflow-y-auto pr-1 pb-2">
+          <div ref={configScrollRef} className="v2-config-scrollbar min-h-0 overflow-y-auto pr-1 pb-2">
             <div className="space-y-4 pb-2">
               <div className="sticky top-0 z-20 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
                 <div className="flex items-center gap-2 overflow-x-auto">
-                  <a href="#config-datos" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Datos</a>
-                  <a href="#config-contacto" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Contacto</a>
-                  <a href="#config-horarios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Horarios</a>
-                  <a href="#config-reservas" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Reservas</a>
-                  <a href="#config-servicios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Servicios</a>
-                  <a href="#config-envios" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Envíos</a>
-                  <a href="#config-notificaciones" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Notificaciones</a>
-                  <a href="#config-staff" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Staff</a>
-                  <a href="#config-sistema" className="whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">Sistema</a>
+                  {CONFIG_SECTION_LINKS.map((section) => (
+                    <a
+                      key={section.id}
+                      href={`#config-${section.id}`}
+                      onClick={() => setActiveConfigSection(section.id)}
+                      className={`whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-semibold transition ${activeConfigSection === section.id ? "border-emerald-200 bg-emerald-100 text-emerald-800" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"}`}
+                    >
+                      {section.label}
+                    </a>
+                  ))}
                 </div>
               </div>
 
@@ -1359,6 +1436,49 @@ export function V2ConfiguracionPage({
                     <p className="mt-1 text-lg font-bold text-slate-950">{v2LocalSettings.version}</p>
                   </div>
 
+                  {businessHoursPersistence === "supabase" ? (
+                    <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                          <Briefcase size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-950">Local de simulación</p>
+                          <p className="mt-1 text-sm leading-5 text-slate-600">
+                            {sandbox?.isActiveSandbox
+                              ? "Estás dentro de una simulación. Sus datos son independientes y no se publican."
+                              : sandbox
+                              ? "Datos ficticios aislados del local real. Reiniciarlo elimina únicamente esa simulación."
+                              : "Creá un local ficticio aislado para practicar sin modificar datos reales."}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {sandbox?.isActiveSandbox ? (
+                          <form action="/auth/select-business/activate" method="post">
+                            <input type="hidden" name="businessId" value={sandbox.sourceBusinessId} />
+                            <input type="hidden" name="next" value="/local" />
+                            <V2Button type="submit" variant="success">Volver al local real</V2Button>
+                          </form>
+                        ) : sandbox ? (
+                          <form action="/auth/select-business/activate" method="post">
+                            <input type="hidden" name="businessId" value={sandbox.businessId} />
+                            <input type="hidden" name="next" value="/local" />
+                            <V2Button type="submit" variant="success">Entrar a simulación</V2Button>
+                          </form>
+                        ) : null}
+                        {!sandbox?.isActiveSandbox ? <V2Button variant={sandbox ? "danger" : "secondary"} onClick={() => {
+                          setSandboxError("");
+                          setSandboxConfirmation("");
+                          setSandboxModalOpen(true);
+                        }}>
+                          {sandbox ? "Reiniciar simulación" : "Crear simulación"}
+                        </V2Button> : null}
+                      </div>
+                      {sandbox ? <p className="mt-3 text-xs text-slate-500">Base {sandbox.seedVersion} · último reinicio {new Date(sandbox.lastResetAt).toLocaleString("es-AR")}</p> : null}
+                    </div>
+                  ) : null}
+
                   <div className="mt-4 rounded-2xl border border-slate-200 p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
@@ -1567,6 +1687,31 @@ export function V2ConfiguracionPage({
             ) : null}
           </div>
         ) : null}
+      </V2Modal>
+
+      <V2Modal
+        open={sandboxModalOpen}
+        title={sandbox ? "Reiniciar local de simulación" : "Crear local de simulación"}
+        description="La simulación es un negocio separado. Nunca comparte reservas, caja, stock ni clientes con el local real."
+        onClose={() => sandboxStatus !== "saving" && setSandboxModalOpen(false)}
+        footer={<>
+          <V2Button variant="secondary" onClick={() => setSandboxModalOpen(false)} disabled={sandboxStatus === "saving"}>Cancelar</V2Button>
+          <V2Button variant={sandbox ? "dangerSolid" : "success"} onClick={() => void createOrResetSandbox()} disabled={sandboxStatus === "saving" || sandboxConfirmation !== businessName}>
+            {sandboxStatus === "saving" ? "Preparando..." : sandbox ? "Reiniciar simulación" : "Crear simulación"}
+          </V2Button>
+        </>}
+      >
+        <div className="space-y-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">
+            {sandbox
+              ? "Se creará una simulación nueva y se eliminarán todos los datos de la simulación anterior. El local real no se toca."
+              : "Se crea con mesas, menú y reservas ficticias para que puedas practicar flujos sin afectar el local real."}
+          </div>
+          <V2Field label={`Escribí “${businessName}” para confirmar`}>
+            <V2Input value={sandboxConfirmation} onChange={(event) => setSandboxConfirmation(event.target.value)} autoComplete="off" />
+          </V2Field>
+          {sandboxStatus === "error" ? <p className="text-sm font-medium text-red-700">{sandboxError}</p> : null}
+        </div>
       </V2Modal>
 
       <style jsx global>{`

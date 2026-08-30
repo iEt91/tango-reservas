@@ -23,6 +23,7 @@ import { V2Button } from "@/components/v2/v2-button";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
+import { saveBusinessPublicWebSettingsAction } from "./actions";
 import { V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
 import {
   v2WebConfig,
@@ -431,10 +432,17 @@ function ToggleRow({
   );
 }
 
-export function V2WebPage() {
+export function V2WebPage({
+  initialConfig,
+  persistence = "local",
+}: {
+  initialConfig?: Partial<WebConfigState>;
+  persistence?: "local" | "supabase";
+}) {
   const [activeTab, setActiveTab] = useState<WebTab>("portada");
-  const [config, setConfig] = useState<WebConfigState>(() => normalizeWebConfig());
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const [config, setConfig] = useState<WebConfigState>(() => normalizeWebConfig(initialConfig));
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
   const [localMenuProducts, setLocalMenuProducts] = useState<LocalMenuProduct[]>([]);
   const [publicMenuSections, setPublicMenuSections] = useState<PublicMenuSection[]>([]);
   const [selectedPublicMenuSectionId, setSelectedPublicMenuSectionId] = useState("");
@@ -443,7 +451,11 @@ export function V2WebPage() {
   const [publicMenuIconSearch, setPublicMenuIconSearch] = useState("");
 
   useEffect(() => {
-    setConfig(readStoredWebConfig());
+    setConfig(
+      persistence === "supabase"
+        ? normalizeWebConfig(initialConfig)
+        : readStoredWebConfig(),
+    );
 
     function loadMenuPublicSections() {
       const products = readLocalMenuProducts();
@@ -472,7 +484,7 @@ export function V2WebPage() {
       window.removeEventListener(MENU_ITEMS_EVENT, loadMenuPublicSections);
       window.removeEventListener(MENU_CATEGORIES_EVENT, loadMenuPublicSections);
     };
-  }, []);
+  }, [initialConfig, persistence]);
 
   function selectPublicMenuSection(sectionId: string) {
     setSelectedPublicMenuSectionId(sectionId);
@@ -529,11 +541,27 @@ export function V2WebPage() {
       [key]: value,
     }));
     setSaveStatus("idle");
+    setSaveError("");
   }
 
-  function saveConfig() {
-    writeStoredWebConfig(config);
-    writePublicMenuSections(publicMenuSections);
+  async function saveConfig() {
+    if (persistence !== "supabase") {
+      writeStoredWebConfig(config);
+      writePublicMenuSections(publicMenuSections);
+      setSaveStatus("saved");
+      return;
+    }
+
+    setSaveStatus("saving");
+    setSaveError("");
+    const result = await saveBusinessPublicWebSettingsAction(config);
+
+    if (!result.ok) {
+      setSaveStatus("error");
+      setSaveError(result.error);
+      return;
+    }
+
     setSaveStatus("saved");
   }
 
@@ -698,6 +726,12 @@ export function V2WebPage() {
                 </span>
               ) : null}
 
+              {saveStatus === "error" ? (
+                <span className="inline-flex h-10 max-w-sm items-center truncate rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-700">
+                  {saveError}
+                </span>
+              ) : null}
+
               <Link
                 href="/local/web/plantillas"
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -724,8 +758,8 @@ export function V2WebPage() {
                 Ver sitio
               </a>
 
-              <V2Button variant="primary" icon={<Save size={17} />} onClick={saveConfig}>
-                Guardar cambios
+              <V2Button variant="primary" icon={<Save size={17} />} onClick={() => void saveConfig()} disabled={saveStatus === "saving"}>
+                {saveStatus === "saving" ? "Guardando..." : "Guardar cambios"}
               </V2Button>
             </>
           }
@@ -952,8 +986,11 @@ export function V2WebPage() {
 
                         <button
                           type="button"
-                          onClick={() => setIsPublicMenuPopupOpen(true)}
-                          className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                          onClick={() => {
+                            if (persistence === "local") setIsPublicMenuPopupOpen(true);
+                          }}
+                          disabled={persistence === "supabase"}
+                          className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Abrir configuración
                         </button>
@@ -1418,7 +1455,7 @@ export function V2WebPage() {
                 <V2Button
                   variant="primary"
                   onClick={() => {
-                    saveConfig();
+                    void saveConfig();
                     setIsPublicMenuPopupOpen(false);
                   }}
                 >

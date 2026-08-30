@@ -1,5 +1,5 @@
 import { assertServerOnly } from "@/lib/security/server-only";
-import { createSupabaseServerHmac } from "@/lib/supabase/server";
+import { createPublicRequestHmac } from "@/lib/supabase/server";
 
 assertServerOnly(
   "El fingerprint público anti-abuso",
@@ -47,7 +47,7 @@ export function createPublicRequestFingerprint(
       512,
     );
 
-  return createSupabaseServerHmac(
+  return createPublicRequestHmac(
     [
       forwardedFor,
       realIp,

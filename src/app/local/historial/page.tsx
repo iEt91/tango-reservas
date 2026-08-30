@@ -79,6 +79,12 @@ type V2Delivery = {
   orderItems?: V2DeliveryOrderItem[];
   total: number;
   payment: string;
+  paymentBreakdown?: {
+    cash: number;
+    card: number;
+    mercadoPago: number;
+    transfer: number;
+  };
   note: string;
   status: V2DeliveryStatus;
   source?: "web" | "manual";
@@ -563,6 +569,10 @@ function normalizeDeliveryPaymentMethod(value?: string) {
 
 function getDeliveryCashTotal(deliveries: V2Delivery[]) {
   return deliveries.reduce((total, delivery) => {
+    if (delivery.paymentBreakdown) {
+      return total + (Number(delivery.paymentBreakdown.cash) || 0);
+    }
+
     const method = normalizeDeliveryPaymentMethod(delivery.payment);
     const amount = Number(delivery.total) || 0;
 
@@ -572,6 +582,14 @@ function getDeliveryCashTotal(deliveries: V2Delivery[]) {
 
 function getDeliveryNonCashTotal(deliveries: V2Delivery[]) {
   return deliveries.reduce((total, delivery) => {
+    if (delivery.paymentBreakdown) {
+      const breakdown = delivery.paymentBreakdown;
+      return total
+        + (Number(breakdown.card) || 0)
+        + (Number(breakdown.mercadoPago) || 0)
+        + (Number(breakdown.transfer) || 0);
+    }
+
     const method = normalizeDeliveryPaymentMethod(delivery.payment);
     const amount = Number(delivery.total) || 0;
 
@@ -884,6 +902,27 @@ function getStatusBadgeTone(status: string): "green" | "orange" | "red" | "blue"
   if (status === "pending") return "orange";
 
   return "blue";
+}
+
+function getHistoryCardTone(status: string, needsAcceptance = false) {
+  if (needsAcceptance || status === "pending") return "border-amber-200 !bg-amber-50/80 hover:!bg-amber-100/70";
+  if (status === "completed") return "border-emerald-200 !bg-emerald-50/80 hover:!bg-emerald-100/70";
+  if (status === "cancelled" || status === "no_show") return "border-red-200 !bg-red-50/80 hover:!bg-red-100/70";
+
+  return "border-blue-200 !bg-blue-50/80 hover:!bg-blue-100/70";
+}
+
+function getStockHistoryCardTone(entry: StockHistoryEntry) {
+  return entry.quantityDelta < 0
+    ? "border-amber-200 !bg-amber-50/80 hover:!bg-amber-100/70"
+    : "border-emerald-200 !bg-emerald-50/80 hover:!bg-emerald-100/70";
+}
+
+function getKitchenHistoryCardTone(status: KitchenHistoryEntry["status"]) {
+  if (status === "pending") return "border-amber-200 !bg-amber-50/80 hover:!bg-amber-100/70";
+  if (status === "preparing") return "border-blue-200 !bg-blue-50/80 hover:!bg-blue-100/70";
+
+  return "border-emerald-200 !bg-emerald-50/80 hover:!bg-emerald-100/70";
 }
 
 function getDeliveryStatusLabel(delivery: V2Delivery) {
@@ -1923,7 +1962,7 @@ export default function HistorialPage() {
                   return (
                     <V2Card
                       key={entry.id}
-                      className="overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                      className={`overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getStockHistoryCardTone(entry)}`}
                     >
                       <button
                         type="button"
@@ -1932,7 +1971,7 @@ export default function HistorialPage() {
                             isOpen ? null : entry.id,
                           )
                         }
-                        className="grid w-full items-center gap-3 bg-gradient-to-br from-white to-slate-50 px-5 py-3 text-left transition hover:bg-emerald-50/40 lg:grid-cols-[150px_1.25fr_130px_1fr_150px_38px]"
+                        className="grid w-full items-center gap-3 bg-transparent px-5 py-3 text-left transition lg:grid-cols-[150px_1.25fr_130px_1fr_150px_38px]"
                       >
                         <div className="pl-2">
                           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -2114,11 +2153,11 @@ export default function HistorialPage() {
                 const timeline = deliveryTimeline(delivery);
 
                 return (
-                  <V2Card key={delivery.id} className="overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <V2Card key={delivery.id} className={`overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getHistoryCardTone(delivery.status, delivery.needsAcceptance)}`}>
                     <button
                       type="button"
                       onClick={() => setOpenId(isOpen ? null : delivery.id)}
-                      className="grid w-full items-center gap-3 bg-gradient-to-br from-white to-slate-50 px-5 py-3 text-left transition hover:bg-emerald-50/40 lg:grid-cols-[140px_1.1fr_1.7fr_150px_140px_38px]"
+                      className="grid w-full items-center gap-3 bg-transparent px-5 py-3 text-left transition lg:grid-cols-[140px_1.1fr_1.7fr_150px_140px_38px]"
                     >
                       <div className="pl-2">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -2226,11 +2265,11 @@ export default function HistorialPage() {
                 const timeline = reservationTimeline(reservation);
 
                 return (
-                  <V2Card key={reservation.id} className="overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <V2Card key={reservation.id} className={`overflow-hidden p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getHistoryCardTone(reservation.status)}`}>
                     <button
                       type="button"
                       onClick={() => setOpenId(isOpen ? null : reservation.id)}
-                      className="grid w-full items-center gap-3 bg-gradient-to-br from-white to-slate-50 px-5 py-3 text-left transition hover:bg-emerald-50/40 lg:grid-cols-[140px_1.1fr_1.5fr_120px_140px_38px]"
+                      className="grid w-full items-center gap-3 bg-transparent px-5 py-3 text-left transition lg:grid-cols-[140px_1.1fr_1.5fr_120px_140px_38px]"
                     >
                       <div className="pl-2">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -2347,11 +2386,11 @@ export default function HistorialPage() {
                 ].filter((item) => item.value);
 
                 return (
-                  <V2Card key={entry.id} className="overflow-hidden p-0 shadow-sm">
+                  <V2Card key={entry.id} className={`overflow-hidden p-0 shadow-sm ${getKitchenHistoryCardTone(entry.status)}`}>
                     <button
                       type="button"
                       onClick={() => setOpenId(isOpen ? null : entry.id)}
-                      className="grid w-full items-center gap-3 bg-gradient-to-br from-white to-slate-50 px-5 py-3 text-left transition hover:bg-emerald-50/40 lg:grid-cols-[140px_1fr_1.7fr_150px_150px_38px]"
+                      className="grid w-full items-center gap-3 bg-transparent px-5 py-3 text-left transition lg:grid-cols-[140px_1fr_1.7fr_150px_150px_38px]"
                     >
                       <div className="pl-2">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">

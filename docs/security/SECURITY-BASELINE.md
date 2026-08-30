@@ -20,16 +20,25 @@ de identidad, autorización, datos y operaciones financieras.
 
 ## Controles todavía pendientes
 
-- RLS en todas las tablas privadas;
 - MFA para owner/admin;
-- expiración y revocación de sesiones;
+- política explícita de expiración y revocación de sesiones;
 - CSP completa con nonce o SRI;
-- rate limiting y CAPTCHA;
+- CAPTCHA y cobertura de rate limiting para reservas públicas; los pedidos públicos
+  ya tienen límite atómico en base de datos;
 - sanitización y política de uploads;
 - auditoría inmutable;
 - cifrado y restauración de backups;
 - DAST sobre staging;
 - pentest independiente.
+
+## Estado de RLS y funciones privilegiadas
+
+Las tablas operativas permanecen con RLS y `FORCE RLS`. Algunas no tienen políticas
+directas porque operan con bloqueo por defecto y RPCs controladas. El Security
+Advisor marca las funciones `SECURITY DEFINER` ejecutables por usuarios autenticados:
+son parte de la arquitectura de RPC y cada una requiere control de identidad,
+membresía y alcance por negocio. Esto se revisa en cada migración y no debe
+suprimirse como advertencia genérica.
 
 Esta entrega no declara al sistema listo para producción. Crea controles que impiden
 avanzar silenciosamente con patrones inseguros.

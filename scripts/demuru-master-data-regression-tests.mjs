@@ -11,6 +11,8 @@ const publicPagePath =
   "src/app/[slug]/page.tsx";
 const shellPath =
   "src/components/v2/v2-app-shell.tsx";
+const stockPagePath =
+  "src/app/local/productos/v2-productos-page.tsx";
 const docsPath =
   "docs/demo/DEMURU-MASTER-DATA.md";
 
@@ -20,6 +22,7 @@ const [
   mock,
   publicPage,
   shell,
+  stockPage,
   docs,
   packageText,
 ] = await Promise.all([
@@ -28,6 +31,7 @@ const [
   readFile(mockPath, "utf8"),
   readFile(publicPagePath, "utf8"),
   readFile(shellPath, "utf8"),
+  readFile(stockPagePath, "utf8"),
   readFile(docsPath, "utf8"),
   readFile("package.json", "utf8"),
 ]);
@@ -233,6 +237,37 @@ assert.equal(
 );
 console.log(
   "✓ todas las cantidades de receta son positivas",
+);
+
+const aperitivoRecipe = master.match(
+  /"id": "recipe-aperitivo"[\s\S]*?\n  \},\n  \{/u,
+);
+
+assert.ok(aperitivoRecipe, "No se encontró la receta de Aperitivo cítrico");
+for (const expectedIngredient of [
+  '"stockProductId": "stock-bitter-naranja"[\\s\\S]{0,80}"quantity": 0.06',
+  '"stockProductId": "stock-espumante"[\\s\\S]{0,80}"quantity": 0.08',
+  '"stockProductId": "stock-pomelo"[\\s\\S]{0,80}"quantity": 60',
+  '"stockProductId": "stock-soda"[\\s\\S]{0,80}"quantity": 0.02',
+  '"stockProductId": "stock-almibar"[\\s\\S]{0,80}"quantity": 10[\\s\\S]{0,40}"unit": "ml"',
+]) {
+  assert.match(
+    aperitivoRecipe[0],
+    new RegExp(expectedIngredient, "u"),
+    "La receta de Aperitivo cítrico cambió sin actualizar sus cantidades de stock",
+  );
+}
+console.log(
+  "✓ Aperitivo cítrico descuenta 80 ml de espumante y 10 ml de almíbar por unidad",
+);
+
+assert.match(
+  stockPage,
+  /maximumFractionDigits:\s*3/u,
+  "Stock debe mostrar hasta tres decimales para no redondear 0,01 l a 0,1 l",
+);
+console.log(
+  "✓ Stock muestra 0,01 l sin redondearlo de forma engañosa",
 );
 
 const supportedUnits =

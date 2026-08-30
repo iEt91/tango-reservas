@@ -38,6 +38,7 @@ export function V2DataTable<T>({
   sortKey,
   sortDirection,
   onSortChange,
+  onRowClick,
 }: {
   columns: Array<V2Column<T>>;
   rows: T[];
@@ -48,6 +49,7 @@ export function V2DataTable<T>({
   sortKey?: string | null;
   sortDirection?: V2SortDirection;
   onSortChange?: (sortKey: string) => void;
+  onRowClick?: (row: T) => void;
 }) {
   return (
     <V2Card className={cn("flex flex-col overflow-hidden p-0", className)}>
@@ -100,8 +102,10 @@ export function V2DataTable<T>({
             {rows.map((row) => (
               <tr
                 key={getRowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
                   "border-b border-slate-100 transition-colors last:border-b-0",
+                  onRowClick && "cursor-pointer",
                   rowClassName?.(row) ?? "hover:bg-slate-50/70"
                 )}
               >

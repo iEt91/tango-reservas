@@ -119,43 +119,13 @@ async function snapshotMenu(businessId) {
 }
 
 async function restoreMenu(
-  businessId,
   snapshot,
+  created,
 ) {
-  const { error: relationDeleteError } =
-    await admin
-      .from("menu_category_products")
-      .delete()
-      .eq("business_id", businessId);
-
-  if (relationDeleteError) {
-    throw relationDeleteError;
-  }
-
-  const { error: itemDeleteError } =
-    await admin
-      .from("menu_items")
-      .delete()
-      .eq("business_id", businessId);
-
-  if (itemDeleteError) {
-    throw itemDeleteError;
-  }
-
-  const { error: categoryDeleteError } =
-    await admin
-      .from("menu_categories")
-      .delete()
-      .eq("business_id", businessId);
-
-  if (categoryDeleteError) {
-    throw categoryDeleteError;
-  }
-
   if (snapshot.categories.length > 0) {
     const { error } = await admin
       .from("menu_categories")
-      .insert(snapshot.categories);
+      .upsert(snapshot.categories, { onConflict: "id" });
 
     if (error) {
       throw error;
@@ -165,7 +135,7 @@ async function restoreMenu(
   if (snapshot.items.length > 0) {
     const { error } = await admin
       .from("menu_items")
-      .insert(snapshot.items);
+      .upsert(snapshot.items, { onConflict: "id" });
 
     if (error) {
       throw error;
@@ -178,9 +148,47 @@ async function restoreMenu(
   ) {
     const { error } = await admin
       .from("menu_category_products")
-      .insert(snapshot.categoryProducts);
+      .upsert(snapshot.categoryProducts, {
+        onConflict: "business_id,category_id,menu_item_id",
+      });
 
     if (error) {
+      throw error;
+    }
+  }
+
+  if (created.itemId) {
+    const { error } = await admin
+      .from("menu_items")
+      .delete()
+      .eq("id", created.itemId);
+
+    if (error?.code === "23503") {
+      const { error: archiveError } = await admin
+        .from("menu_items")
+        .update({ archived_at: new Date().toISOString(), is_visible: false, status: "paused" })
+        .eq("id", created.itemId);
+
+      if (archiveError) throw archiveError;
+    } else if (error) {
+      throw error;
+    }
+  }
+
+  for (const categoryId of created.categoryIds) {
+    const { error } = await admin
+      .from("menu_categories")
+      .delete()
+      .eq("id", categoryId);
+
+    if (error?.code === "23503") {
+      const { error: archiveError } = await admin
+        .from("menu_categories")
+        .update({ archived_at: new Date().toISOString(), is_active: false, is_visible: false })
+        .eq("id", categoryId);
+
+      if (archiveError) throw archiveError;
+    } else if (error) {
       throw error;
     }
   }
@@ -212,6 +220,7 @@ const menuA =
   await snapshotMenu(fixture.businessAId);
 const menuB =
   await snapshotMenu(fixture.businessBId);
+const created = { itemId: null, categoryIds: [] };
 
 try {
   await signIn(
@@ -310,6 +319,8 @@ try {
   }
 
   assert.equal(item.category_id, category.id);
+  created.itemId = item.id;
+  created.categoryIds.push(category.id);
   assert.equal(Number(item.price), 12500.5);
   console.log(
     "✓ owner A creó un producto categorizado",
@@ -367,6 +378,7 @@ try {
   if (categoryTwoError) {
     throw categoryTwoError;
   }
+  created.categoryIds.push(categoryTwo.id);
 
   const {
     data: reordered,
@@ -498,15 +510,9 @@ try {
     "✓ las operaciones de A no modificaron B",
   );
 } finally {
-  await restoreMenu(
-    fixture.businessAId,
-    menuA,
-  );
+  await restoreMenu(menuA, created);
   console.log("✓ menú A restaurado");
-  await restoreMenu(
-    fixture.businessBId,
-    menuB,
-  );
+  await restoreMenu(menuB, { itemId: null, categoryIds: [] });
   console.log("✓ menú B restaurado");
   await userA.auth.signOut();
   await userB.auth.signOut();

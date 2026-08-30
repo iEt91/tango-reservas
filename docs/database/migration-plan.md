@@ -86,6 +86,11 @@ Objetivo:
 
 ## Fase Admin read-only
 
+> Estado actual: esta fase fue retirada. En Supabase, `/admin` se redirige a
+> `/local` hasta que exista un rol `platform_admin`, sus politicas RLS y una
+> auditoria separados. No se habilita `businesses` con la clave publica ni se
+> reemplaza un error por datos local/mock.
+
 - con `NEXT_PUBLIC_DATA_SOURCE=local`, `/admin` sigue usando la fuente local/mock de siempre
 - con `NEXT_PUBLIC_DATA_SOURCE=supabase`, `/admin` lista `businesses` desde `public.businesses`
 - la escritura en Admin todavia no esta implementada en Supabase
@@ -116,6 +121,10 @@ Objetivo:
 - si falla una tabla relacionada, la UI muestra un error claro y se elimina el negocio nuevo para evitar dejar basura parcial
 
 ## Policies DEV para defaults relacionados
+
+> Estado actual: esta excepcion de desarrollo esta retirada. Las operaciones
+> del negocio activo se autorizan por membresia y `businesses` no acepta
+> escrituras desde la clave publica.
 
 - durante desarrollo se permite escribir con la anon key en `businesses`, `business_web_content`, `floor_plan_settings` y `services`
 - esto permite probar la creación de negocios completos sin usar `SUPABASE_SERVICE_ROLE_KEY` en frontend

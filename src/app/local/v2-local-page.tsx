@@ -1,4 +1,8 @@
 /* E36_UI_POLISH */
+/* E42_INICIO_RESERVAS_PULIDO */
+/* E44_ENVIO_RESERVA_INTERACCION */
+/* E45_PULIDO_VISUAL */
+/* E45C_CORRECCION */
 "use client";
 
 import Link from "next/link";
@@ -8,7 +12,6 @@ import {
   CalendarDays,
   CheckCircle2,
   CreditCard,
-  Clock3,
   Landmark,
   PackageCheck,
   Plus,
@@ -126,6 +129,12 @@ type V2DeliveryDraft = {
   orderItems?: V2DeliveryOrderItem[];
   total: number;
   payment: string;
+  paymentBreakdown?: {
+    cash: number;
+    card: number;
+    mercadoPago: number;
+    transfer: number;
+  };
   note: string;
   status: V2DeliveryStatus;
   source?: "web" | "manual";
@@ -402,7 +411,7 @@ function getAgendaRowToneClass(item: AgendaItem) {
   const status = item.status.trim().toLowerCase();
 
   if (status === "pending" || status === "pendiente") {
-    return "border-orange-200 bg-orange-50/80 hover:border-orange-300 hover:bg-orange-50";
+    return "border-orange-200 bg-orange-100/80 hover:border-orange-300 hover:bg-orange-200/50";
   }
 
   if (
@@ -414,11 +423,11 @@ function getAgendaRowToneClass(item: AgendaItem) {
     status === "completado" ||
     status === "entregado"
   ) {
-    return "border-emerald-200 bg-emerald-50/80 hover:border-emerald-300 hover:bg-emerald-50";
+    return "border-emerald-200 bg-emerald-100/80 hover:border-emerald-300 hover:bg-emerald-200/50";
   }
 
   if (status === "active" || status === "activo" || status === "activa") {
-    return "border-blue-200 bg-blue-50/80 hover:border-blue-300 hover:bg-blue-50";
+    return "border-blue-200 bg-blue-100/80 hover:border-blue-300 hover:bg-blue-200/50";
   }
 
   if (
@@ -428,10 +437,10 @@ function getAgendaRowToneClass(item: AgendaItem) {
     status === "no_show" ||
     status === "no-show"
   ) {
-    return "border-red-200 bg-red-50/80 hover:border-red-300 hover:bg-red-50";
+    return "border-red-200 bg-red-100/80 hover:border-red-300 hover:bg-red-200/50";
   }
 
-  return "border-slate-200 bg-slate-50/80 hover:border-slate-300 hover:bg-slate-50";
+  return "border-slate-200 bg-slate-100/80 hover:border-slate-300 hover:bg-slate-200/50";
 }
 
 function getPaymentMethodTotal(
@@ -566,10 +575,23 @@ export function V2LocalPage() {
   const paymentTotals = [
     ...todayDeliveries
       .filter((delivery) => delivery.status === "completed")
-      .map((delivery) => ({
-        method: normalizePaymentMethod(delivery.payment),
-        amount: Number(delivery.total) || 0,
-      })),
+      .flatMap((delivery) => {
+        const breakdown = delivery.paymentBreakdown;
+
+        if (breakdown) {
+          return [
+            { method: "Efectivo", amount: Number(breakdown.cash) || 0 },
+            { method: "Tarjeta", amount: Number(breakdown.card) || 0 },
+            { method: "Mercado Pago", amount: Number(breakdown.mercadoPago) || 0 },
+            { method: "Transferencia", amount: Number(breakdown.transfer) || 0 },
+          ];
+        }
+
+        return [{
+          method: normalizePaymentMethod(delivery.payment),
+          amount: Number(delivery.total) || 0,
+        }];
+      }),
     ...todayReservations
       .filter((reservation) => reservation.status === "completed")
       .flatMap((reservation) => {
@@ -901,22 +923,65 @@ export function V2LocalPage() {
           title="Inicio"
           description={`Centro de control operativo · ${formatTodayLabel()}`}
           actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <Link href="/local/reservas">
-                <V2Button variant="secondary" icon={<CalendarDays size={18} />}>
-                  Reservas
-                </V2Button>
-              </Link>
-              <Link href="/local/envios">
-                <V2Button variant="secondary" icon={<ShoppingBag size={18} />}>
-                  Envíos
-                </V2Button>
-              </Link>
-              <Link href="/local/reservas">
-                <V2Button variant="primary" icon={<Plus size={18} />}>
-                  Nueva reserva
-                </V2Button>
-              </Link>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Link href="/local/reservas">
+                  <V2Button variant="secondary" icon={<CalendarDays size={18} />}>
+                    Reservas
+                  </V2Button>
+                </Link>
+                <Link href="/local/envios">
+                  <V2Button variant="secondary" icon={<ShoppingBag size={18} />}>
+                    Envíos
+                  </V2Button>
+                </Link>
+                <Link href="/local/reservas">
+                  <V2Button variant="primary" icon={<Plus size={18} />}>
+                    Nueva reserva
+                  </V2Button>
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-1.5 text-[11px]">
+                <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
+                  <span className="font-medium text-slate-500">Reservas online</span>
+                  <V2Badge tone={localConfig.reservationEnabled === false ? "red" : "green"}>
+                    {localConfig.reservationEnabled === false ? "Desactivadas" : "Activas"}
+                  </V2Badge>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
+                  <span className="font-medium text-slate-500">Pedidos online</span>
+                  <V2Badge
+                    tone={
+                      localConfig.deliveryEnabled === false && localConfig.pickupEnabled === false
+                        ? "red"
+                        : "green"
+                    }
+                  >
+                    {localConfig.deliveryEnabled === false && localConfig.pickupEnabled === false
+                      ? "Desactivados"
+                      : "Activos"}
+                  </V2Badge>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
+                  <span className="font-medium text-slate-500">Web pública</span>
+                  <V2Badge
+                    tone={
+                      webConfig.status === "paused"
+                        ? "orange"
+                        : webConfig.status === "draft"
+                          ? "slate"
+                          : "green"
+                    }
+                  >
+                    {webConfig.status === "paused"
+                      ? "Pausada"
+                      : webConfig.status === "draft"
+                        ? "Borrador"
+                        : "Publicada"}
+                  </V2Badge>
+                </div>
+              </div>
             </div>
           }
         />
@@ -925,6 +990,7 @@ export function V2LocalPage() {
           <div className="flex min-h-0 min-w-0 flex-col gap-3">
             <div className="dashboard-top-metrics grid shrink-0 gap-2 md:grid-cols-3 xl:grid-cols-6">
               <V2MetricCard
+                className="h-[116px] self-start gap-2 px-2 py-2 [&>div:first-child]:h-9 [&>div:first-child]:w-9"
                 label="Reservas hoy"
                 value={todayReservations.length}
                 helper={`${todayReservationPeople} personas esperadas`}
@@ -933,6 +999,7 @@ export function V2LocalPage() {
               />
 
               <V2MetricCard
+                className="h-[116px] self-start gap-2 px-2 py-2 [&>div:first-child]:h-9 [&>div:first-child]:w-9"
                 label="Pedidos hoy"
                 value={todayDeliveries.length}
                 helper={`${activeTodayDeliveries.length} activos`}
@@ -941,6 +1008,7 @@ export function V2LocalPage() {
               />
 
               <V2MetricCard
+                className="h-[116px] self-start gap-2 px-2 py-2 [&>div:first-child]:h-9 [&>div:first-child]:w-9"
                 label="Mesas abiertas"
                 value={openTableReservations.length || reservedOrOccupiedTables.length}
                 helper={`${availableTables.length} disp. · ${blockedTables.length} bloqueadas`}
@@ -949,6 +1017,7 @@ export function V2LocalPage() {
               />
 
               <V2MetricCard
+                className="h-[116px] self-start gap-2 px-2 py-2 [&>div:first-child]:h-9 [&>div:first-child]:w-9"
                 label="Stock crítico"
                 value={criticalStock.length}
                 helper={criticalStock.length > 0 ? "Revisar reposición" : "Sin alertas"}
@@ -957,7 +1026,7 @@ export function V2LocalPage() {
               />
 
               <Link href="/local/caja" className="block rounded-[14px] focus:outline-none focus:ring-2 focus:ring-emerald-600/20">
-              <V2Card className="flex min-h-[86px] flex-col justify-between gap-1 px-2 py-2 transition hover:border-emerald-300 hover:shadow-sm">
+              <V2Card className="flex h-[116px] flex-col justify-between gap-1 px-2 py-2 transition hover:border-emerald-300 hover:shadow-sm">
                 <div className="flex min-w-0 items-center justify-center gap-2">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                     <Banknote size={19} />
@@ -1007,6 +1076,7 @@ export function V2LocalPage() {
               </Link>
 
               <V2MetricCard
+                className="h-[116px] self-start gap-2 px-2 py-2 [&>div:first-child]:h-9 [&>div:first-child]:w-9"
                 label="Requiere atención"
                 value={attentionItems.length}
                 helper={criticalCount > 0 ? `${criticalCount} críticas` : "Sin críticas"}
@@ -1086,8 +1156,8 @@ export function V2LocalPage() {
             </V2Card>
           </div>
 
-          <aside className="flex min-h-0 flex-col gap-3">
-            <V2Card className="flex min-h-[260px] flex-[1.2] flex-col overflow-hidden">
+          <aside className="flex min-h-0 flex-col">
+            <V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="flex shrink-0 items-start justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold text-slate-950">Requiere atención</h2>
@@ -1141,60 +1211,11 @@ export function V2LocalPage() {
               </div>
             </V2Card>
 
-            <V2Card className="flex flex-[0.8] flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
-                    <Clock3 size={18} />
-                  </div>
-                  <h2 className="text-base font-semibold text-slate-950">Estado operativo</h2>
-                </div>
-
-                <div className="mt-3 space-y-2 text-sm">
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-2.5">
-                    <span className="text-slate-600">Reservas online</span>
-                    <V2Badge tone={localConfig.reservationEnabled === false ? "red" : "green"}>
-                      {localConfig.reservationEnabled === false ? "Desactivadas" : "Activas"}
-                    </V2Badge>
-                  </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-2.5">
-                    <span className="text-slate-600">Pedidos online</span>
-                    <V2Badge
-                      tone={
-                        localConfig.deliveryEnabled === false && localConfig.pickupEnabled === false
-                          ? "red"
-                          : "green"
-                      }
-                    >
-                      {localConfig.deliveryEnabled === false && localConfig.pickupEnabled === false
-                        ? "Desactivados"
-                        : "Activos"}
-                    </V2Badge>
-                  </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-2.5">
-                    <span className="text-slate-600">Web pública</span>
-                    <V2Badge tone={webConfig.status === "paused" ? "orange" : webConfig.status === "draft" ? "slate" : "green"}>
-                      {webConfig.status === "paused" ? "Pausada" : webConfig.status === "draft" ? "Borrador" : "Publicada"}
-                    </V2Badge>
-                  </div>
-                </div>
-              </div>
-            </V2Card>
           </aside>
         </div>
       </div>
 
       <style jsx global>{`
-        .dashboard-top-metrics > * {
-          min-height: 86px;
-        }
-
-        .dashboard-top-metrics > * > div,
-        .dashboard-top-metrics > * {
-          padding-top: 0.625rem;
-          padding-bottom: 0.625rem;
-        }
-
         .dashboard-top-metrics p {
           line-height: 1.15;
         }

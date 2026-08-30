@@ -26,7 +26,7 @@ function assert(condition, message) {
 function asideSegment(source, marker) {
   const markerIndex = source.indexOf(marker);
   if (markerIndex < 0) return "";
-  const asideStart = source.lastIndexOf('<aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">', markerIndex);
+  const asideStart = source.lastIndexOf("<aside", markerIndex);
   if (asideStart < 0) return "";
   const asideEnd = source.indexOf("</aside>", asideStart);
   if (asideEnd < 0) return "";
@@ -57,9 +57,9 @@ assert(!menu.includes("importProductsFromImageFolder"), "Menú elimina la import
 
 assert(home.includes("function getAgendaRowToneClass"), "Inicio define colores de fondo por estado");
 assert(home.includes("getAgendaRowToneClass(item)"), "Agenda operativa aplica el color de cada estado");
-assert(home.includes("bg-blue-50/80"), "Activo conserva tono azul");
-assert(home.includes("bg-orange-50/80"), "Pendiente conserva tono naranja");
-assert(home.includes("bg-emerald-50/80"), "Confirmado conserva tono verde");
+assert(home.includes("bg-blue-100/80"), "Activo conserva tono azul");
+assert(home.includes("bg-orange-100/80"), "Pendiente conserva tono naranja");
+assert(home.includes("bg-emerald-100/80"), "Confirmado conserva tono verde");
 
 assert(
   reservations.includes('variant="primary"') &&
@@ -72,11 +72,27 @@ assert(
   "Reservas muestra Acciones con estilo rojo",
 );
 assert(
-  reservations.includes("descriptionAside={") &&
-    reservations.includes("Duración estándar:") &&
-    reservations.includes("Capacidad por horario:") &&
-    reservations.includes("Horario del día:"),
-  "Reservas integra la información operativa a la derecha del subtítulo",
+  !reservations.includes("Duración estándar:") &&
+    !reservations.includes("Ventana:") &&
+    !reservations.includes("Capacidad por horario:") &&
+    !reservations.includes("Horario del día:"),
+  "Reservas elimina el resumen operativo del encabezado",
+);
+assert(
+  (home.match(/h-\[116px\]/g) ?? []).length === 6,
+  "Inicio alinea las seis tarjetas de resumen a la altura de Caja del día",
+);
+assert(
+  reservations.includes("showSingleReservationDay") &&
+    reservations.includes("showThirtyReservationDays") &&
+    reservations.includes("showAllReservations") &&
+    reservations.includes("Todo el historial"),
+  "Reservas incorpora los filtros Día, Rango, 30 días y Todo",
+);
+assert(
+  reservations.includes('<option value="no_show">No-show</option>') &&
+    !reservations.includes("Todos los tipos"),
+  "Reservas conserva estados propios y no agrega filtro de tipo",
 );
 assert(
   !reservations.includes('className="shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600"'),
@@ -105,13 +121,13 @@ assert(
   "Detalle de pedido pasa a modal centrado y abre desde ID/cliente",
 );
 assert(
-  !asideSegment(shipping, "Envíos pendientes").includes("Pedido seleccionado"),
-  "El lateral de Envíos conserva solo Envíos pendientes",
+  !asideSegment(shipping, "Próximas acciones").includes("Pedido seleccionado"),
+  "El lateral de Envíos conserva solo Próximas acciones",
 );
 assert(
   shipping.includes('<V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">') &&
-    shipping.includes("Envíos pendientes"),
-  "Envíos pendientes ocupa toda la altura lateral disponible",
+    shipping.includes("Próximas acciones"),
+  "Próximas acciones de Envíos ocupa toda la altura lateral disponible",
 );
 
 assert(

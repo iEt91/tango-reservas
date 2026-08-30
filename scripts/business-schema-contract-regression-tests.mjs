@@ -10,6 +10,7 @@ const adapterPath =
   "src/lib/data/supabase/businesses.ts";
 const adminAdapterPath =
   "src/lib/data/admin-businesses.ts";
+const adminLayoutPath = "src/app/admin/layout.tsx";
 const publicWebPath =
   "src/lib/data/supabase/publicWeb.ts";
 const reservationsPath =
@@ -23,6 +24,7 @@ const requiredFiles = [
   migrationPath,
   adapterPath,
   adminAdapterPath,
+  adminLayoutPath,
   publicWebPath,
   reservationsPath,
   reservationsWriteMigrationPath,
@@ -42,6 +44,7 @@ const adminAdapter = await readFile(
   adminAdapterPath,
   "utf8",
 );
+const adminLayout = await readFile(adminLayoutPath, "utf8");
 const publicWeb = await readFile(publicWebPath, "utf8");
 const reservations = await readFile(
   reservationsPath,
@@ -171,6 +174,12 @@ assert.doesNotMatch(
   /google_maps_embed_url|public_template_id/u,
 );
 console.log("✓ cambios de estado usan un update mínimo");
+
+assert.match(adminLayout, /getDataSource\(\) === "supabase"/u);
+assert.match(adminLayout, /redirect\("\/local"\)/u);
+assert.doesNotMatch(adminAdapter, /Supabase fallback[\s\S]+local\/mock/u);
+assert.doesNotMatch(adminAdapter, /fallbackUsed:\s*true/u);
+console.log("Admin en Supabase no reemplaza datos por mocks.");
 
 const packageJson = JSON.parse(
   await readFile("package.json", "utf8"),

@@ -113,24 +113,28 @@ async function snapshotReservations(businessId) {
   return data ?? [];
 }
 
-async function restoreReservations(businessId, snapshot) {
+async function restoreReservations(snapshot, createdReservationId) {
+  if (snapshot.length > 0) {
+    const { error: restoreError } = await admin
+      .from("reservations")
+      .upsert(snapshot, { onConflict: "id" });
+
+    if (restoreError) {
+      throw restoreError;
+    }
+  }
+
+  if (!createdReservationId) {
+    return;
+  }
+
   const { error: deleteError } = await admin
     .from("reservations")
     .delete()
-    .eq("business_id", businessId);
+    .eq("id", createdReservationId);
 
   if (deleteError) {
     throw deleteError;
-  }
-
-  if (snapshot.length > 0) {
-    const { error: insertError } = await admin
-      .from("reservations")
-      .insert(snapshot);
-
-    if (insertError) {
-      throw insertError;
-    }
   }
 }
 
@@ -144,6 +148,7 @@ const reservationsA = await snapshotReservations(
 const reservationsB = await snapshotReservations(
   fixture.businessBId,
 );
+let createdReservationId = null;
 
 try {
   await signIn(
@@ -206,6 +211,7 @@ try {
   assert.equal(created.customer_phone, "541155550180");
   assert.equal(created.status, "pending");
   assert.match(created.public_code, /^RES-[A-Z0-9]{12}$/u);
+  createdReservationId = created.id;
   console.log("✓ usuario A creó una reserva con contrato exacto");
 
   const { data: retried, error: retryError } =
@@ -389,14 +395,8 @@ try {
   );
   console.log("✓ las operaciones de A no modificaron B");
 } finally {
-  await restoreReservations(
-    fixture.businessAId,
-    reservationsA,
-  );
-  await restoreReservations(
-    fixture.businessBId,
-    reservationsB,
-  );
+  await restoreReservations(reservationsA, createdReservationId);
+  await restoreReservations(reservationsB, null);
   console.log("✓ reservas A y B restauradas");
   await userA.auth.signOut();
   await userB.auth.signOut();

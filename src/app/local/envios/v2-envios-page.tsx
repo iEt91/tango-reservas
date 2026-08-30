@@ -1,9 +1,13 @@
 /* E36_UI_POLISH */
+/* E44_ENVIO_RESERVA_INTERACCION */
+/* E45_PULIDO_VISUAL */
+/* E45C_CORRECCION */
 "use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  AlertTriangle,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
@@ -29,7 +33,6 @@ import { V2Badge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
 import { V2MetricCard, V2Card } from "@/components/v2/v2-card";
 import { V2DataTable } from "@/components/v2/v2-data-table";
-import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import { createV2OperationalId, V2_OPERATIONAL_EVENTS, V2_OPERATIONAL_STORAGE_KEYS } from "@/lib/v2-operational-storage";
@@ -75,6 +78,7 @@ type V2DeliveryWhatsAppAction = "confirmation" | "modification" | "cancellation"
 type V2SortDirection = "asc" | "desc";
 type V2DateFilterMode = "single" | "range" | "all";
 type V2DeliveryColumnSortKey = "id" | "time" | "client" | "phone" | "type" | "total" | "payment";
+type V2DeliveryStatusFilter = V2DeliveryStatus | "pending" | "all";
 
 type V2DeliveryStockMovement = {
   productId: string;
@@ -563,6 +567,34 @@ function resolveStockMovementsForDelivery(delivery: V2Delivery) {
 
   return Array.from(movements.values());
 }
+
+function getDeliveryStockShortages(delivery: V2Delivery) {
+  const products = readStockProductsFromStorage();
+
+  return resolveStockMovementsForDelivery(delivery)
+    .flatMap((movement) => {
+      const product = products.find(
+        (candidate) => candidate.id === movement.productId,
+      );
+      const available = Math.max(
+        0,
+        Number(product?.totalStock ?? 0)
+          - Number(product?.consumedBySales ?? 0),
+      );
+
+      return movement.quantity > available
+        ? [{
+            name: movement.productName,
+            missing: Number((movement.quantity - available).toFixed(2)),
+          }]
+        : [];
+    });
+}
+
+function isDeliveryKitchenReady(delivery: V2Delivery) {
+  return delivery.kitchenStatus === "ready"
+    || delivery.kitchenStatus === "completed";
+}
 function applyStockMovements(
   movements: V2DeliveryStockMovement[],
   direction: "discount" | "return",
@@ -595,14 +627,6 @@ function applyStockMovements(
   }
 }
 
-function formatStockMovementsSummary(movements: V2DeliveryStockMovement[]) {
-  if (movements.length === 0) return "sin movimientos de stock";
-
-  return movements
-    .map((movement) => `${movement.productName}: ${movement.quantity}`)
-    .join(", ");
-}
-
 function createDeliveryTimestamp(date?: string, time?: string) {
   const fallbackDate = date || TODAY_DELIVERIES_DATE;
   const fallbackTime = time || "00:00";
@@ -615,6 +639,18 @@ function createDeliveryTimestamp(date?: string, time?: string) {
 
 function getNowTimestamp() {
   return new Date().toISOString();
+}
+
+function getCustomerDeliveryNote(note?: string) {
+  const value = note?.trim() ?? "";
+
+  if (!value || value === "—") return "—";
+
+  // Stock, aceptación y cancelación conservan su propia evidencia. La nota es
+  // exclusivamente la indicación que dejó el cliente.
+  return value
+    .split(/\s+·\s+(?=(?:Stock reservado|Stock descontado|Pedido aceptado|Pedido rechazado|Pedido cancelado))/iu)[0]
+    .trim() || "—";
 }
 
 function withDeliveryStatusTimestamp(
@@ -652,10 +688,13 @@ function withDeliveryStatusTimestamp(
 }
 
 function normalizeDelivery(delivery: V2Delivery): V2Delivery {
+  const rawNote = delivery.note ?? "";
+  const legacyNote = rawNote.toLowerCase();
+
   return {
     ...delivery,
     date: delivery.date || TODAY_DELIVERIES_DATE,
-    note: delivery.note || "—",
+    note: getCustomerDeliveryNote(rawNote),
     address:
       delivery.deliveryType === "pickup"
         ? "Retira en local"
@@ -664,8 +703,12 @@ function normalizeDelivery(delivery: V2Delivery): V2Delivery {
     source: delivery.source ?? "manual",
     needsAcceptance: Boolean(delivery.needsAcceptance),
     trackingId: delivery.trackingId ?? createPublicCode("PED", delivery.id),
-    stockDiscounted: Boolean(delivery.stockDiscounted),
-    stockReturned: Boolean(delivery.stockReturned),
+    stockDiscounted:
+      Boolean(delivery.stockDiscounted) ||
+      legacyNote.includes("stock reservado") ||
+      legacyNote.includes("stock descontado"),
+    stockReturned:
+      Boolean(delivery.stockReturned) || legacyNote.includes("stock devuelto"),
     stockMovements: delivery.stockMovements ?? [],
     createdAt: delivery.createdAt ?? createDeliveryTimestamp(delivery.date, delivery.time),
     acceptedAt:
@@ -727,27 +770,24 @@ function reserveStockForDeliveryIfNeeded(delivery: V2Delivery) {
     stockDiscounted: true,
     stockReturned: false,
     stockMovements,
-    note:
-      delivery.note && delivery.note !== "—"
-        ? `${delivery.note} · Stock reservado: ${formatStockMovementsSummary(stockMovements)}.`
-        : `Stock reservado: ${formatStockMovementsSummary(stockMovements)}.`,
+    note: getCustomerDeliveryNote(delivery.note),
   };
 }
 
 function getDeliveryRowToneClass(delivery: V2Delivery) {
   if (isWebDeliveryPendingAcceptance(delivery)) {
-    return "bg-amber-100/60 hover:bg-amber-100";
+    return "bg-amber-100/80 hover:bg-amber-200/80";
   }
 
   if (delivery.status === "completed") {
-    return "bg-blue-100/60 hover:bg-blue-100";
+    return "bg-blue-100/80 hover:bg-blue-200/80";
   }
 
   if (delivery.status === "cancelled") {
-    return "bg-red-100/60 hover:bg-red-100";
+    return "bg-red-100/80 hover:bg-red-200/80";
   }
 
-  return "bg-emerald-100/60 hover:bg-emerald-100";
+  return "bg-emerald-100/80 hover:bg-emerald-200/80";
 }
 
 
@@ -1043,17 +1083,21 @@ function subtractDeliveryKitchenTicketItems(
   return nextTickets.filter((ticket) => ticket.items.length > 0);
 }
 
-function V2DeliveryStatusBadge({ status }: { status: V2DeliveryStatus }) {
+function V2DeliveryStatusBadge({ delivery }: { delivery: V2Delivery }) {
   const config: Record<
     V2DeliveryStatus,
-    { label: string; tone: "green" | "blue" | "red" }
+    { label: string; tone: "green" | "blue" | "red" | "orange" }
   > = {
     confirmed: { label: "Confirmado", tone: "green" },
     completed: { label: "Entregado", tone: "blue" },
     cancelled: { label: "Cancelado", tone: "red" },
   };
 
-  return <V2Badge tone={config[status].tone}>{config[status].label}</V2Badge>;
+  const status = isWebDeliveryPendingAcceptance(delivery)
+    ? { label: "Pendiente de aceptación", tone: "orange" as const }
+    : config[delivery.status];
+
+  return <V2Badge tone={status.tone}>{status.label}</V2Badge>;
 }
 
 function createPublicCode(prefix: "PED" | "RES", seed?: string) {
@@ -1318,7 +1362,7 @@ export function V2EnviosPage({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(TODAY_DELIVERIES_DATE);
   const [searchValue, setSearchValue] = useState("");
-  const [statusFilter, setStatusFilter] = useState<V2DeliveryStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<V2DeliveryStatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<V2DeliveryType | "all">("all");
   const [tableSort, setTableSort] = useState<{
     key: V2DeliveryColumnSortKey;
@@ -1345,6 +1389,22 @@ export function V2EnviosPage({
     note: string;
   } | null>(null);
 
+
+  useEffect(() => {
+    if (!isDeliveryDetailOpen) return;
+
+    function handleDeliveryDetailEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsDeliveryDetailOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleDeliveryDetailEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleDeliveryDetailEscape);
+    };
+  }, [isDeliveryDetailOpen]);
 
   const refreshPersistentDeliveries =
     useCallback(
@@ -1707,7 +1767,10 @@ export function V2EnviosPage({
         delivery.phone.toLowerCase().includes(query) ||
         delivery.address.toLowerCase().includes(query);
       const matchesStatus =
-        statusFilter === "all" || delivery.status === statusFilter;
+        statusFilter === "all" ||
+        (statusFilter === "pending"
+          ? isWebDeliveryPendingAcceptance(delivery)
+          : delivery.status === statusFilter);
       const matchesType =
         typeFilter === "all" || delivery.deliveryType === typeFilter;
 
@@ -1888,7 +1951,10 @@ export function V2EnviosPage({
       deliveryType: delivery.deliveryType,
       address: delivery.deliveryType === "pickup" ? "" : delivery.address,
       payment: delivery.payment || "Efectivo",
-      note: delivery.note && delivery.note !== "—" ? delivery.note : "",
+      note:
+        getCustomerDeliveryNote(delivery.note) === "—"
+          ? ""
+          : getCustomerDeliveryNote(delivery.note),
       status: delivery.status,
     });
     setDeliveryFormError("");
@@ -2235,6 +2301,20 @@ export function V2EnviosPage({
     }
 
     if (!existingDelivery) {
+      const shortages = getDeliveryStockShortages(nextDelivery);
+
+      if (
+        status !== "cancelled"
+        && !nextDelivery.needsAcceptance
+        && shortages.length > 0
+      ) {
+        setDeliveryFormError(
+          `No hay Stock suficiente: ${shortages.map((item) => `${item.name} (${item.missing})`).join(", ")}.`,
+        );
+        setNewDeliveryTab("pedido");
+        return;
+      }
+
       nextDelivery = reserveStockForDeliveryIfNeeded(nextDelivery);
     }
 
@@ -2349,6 +2429,15 @@ export function V2EnviosPage({
       ? acceptedDelivery.stockMovements ?? []
       : resolveStockMovementsForDelivery(acceptedDelivery);
 
+    const shortages = getDeliveryStockShortages(acceptedDelivery);
+
+    if (shortages.length > 0) {
+      setOperationError(
+        `No podés aceptar el pedido: falta Stock de ${shortages.map((item) => item.name).join(", ")}.`,
+      );
+      return;
+    }
+
     if (!acceptedDelivery.stockDiscounted) {
       applyStockMovements(stockMovements, "discount", acceptedDelivery);
     }
@@ -2363,10 +2452,7 @@ export function V2EnviosPage({
             stockDiscounted: true,
             stockReturned: false,
             stockMovements,
-            note:
-              delivery.note && delivery.note !== "—"
-                ? `${delivery.note} · Pedido aceptado por el local. ETA ${acceptanceEtaMinutes} min. Stock descontado: ${formatStockMovementsSummary(stockMovements)}.`
-                : `Pedido aceptado por el local. ETA ${acceptanceEtaMinutes} min. Stock descontado: ${formatStockMovementsSummary(stockMovements)}.`,
+            note: getCustomerDeliveryNote(delivery.note),
           }
         : delivery
     );
@@ -2444,10 +2530,7 @@ export function V2EnviosPage({
             ...delivery,
             status: "cancelled" as V2DeliveryStatus,
             needsAcceptance: false,
-            note:
-              delivery.note && delivery.note !== "—"
-                ? `${delivery.note} · Pedido rechazado por el local.`
-                : "Pedido rechazado por el local.",
+            note: getCustomerDeliveryNote(delivery.note),
           }
         : delivery
     );
@@ -2544,14 +2627,7 @@ export function V2EnviosPage({
             stockDiscounted: true,
             stockReturned: shouldReturnStock,
             stockMovements,
-            note:
-              delivery.note && delivery.note !== "—"
-                ? `${delivery.note} · Pedido cancelado${
-                    shouldReturnStock ? " y stock devuelto." : " sin devolver stock."
-                  }`
-                : `Pedido cancelado${
-                    shouldReturnStock ? " y stock devuelto." : " sin devolver stock."
-                  }`,
+            note: getCustomerDeliveryNote(delivery.note),
           }
         : delivery
     );
@@ -2641,6 +2717,17 @@ export function V2EnviosPage({
       return;
     }
 
+    if (
+      delivery.orderItems?.length
+      && !isDeliveryKitchenReady(delivery)
+    ) {
+      setOpenActionsDeliveryId(null);
+      setOperationError(
+        "Cocina debe marcar el pedido como listo antes de entregarlo y cobrarlo.",
+      );
+      return;
+    }
+
     updateDeliveryStatus(id, "completed");
   }
 
@@ -2676,6 +2763,14 @@ export function V2EnviosPage({
       );
       publishShippingRefresh();
       await refreshPersistentDeliveries();
+      return;
+    }
+
+    const delivery = deliveries.find((item) => item.id === id);
+    if (delivery?.orderItems?.length && !isDeliveryKitchenReady(delivery)) {
+      setOperationError(
+        "Cocina debe marcar el pedido como listo antes de enviarlo.",
+      );
       return;
     }
 
@@ -2724,6 +2819,14 @@ export function V2EnviosPage({
       );
       publishShippingRefresh();
       await refreshPersistentDeliveries();
+      return;
+    }
+
+    const delivery = deliveries.find((item) => item.id === id);
+    if (delivery?.orderItems?.length && !isDeliveryKitchenReady(delivery)) {
+      setOperationError(
+        "Cocina debe marcar el pedido como listo antes de avisar el retiro.",
+      );
       return;
     }
 
@@ -2814,11 +2917,19 @@ export function V2EnviosPage({
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   }
 
+  function openDeliveryDetail(delivery: V2Delivery) {
+    selectDelivery(delivery);
+    setIsDeliveryDetailOpen(true);
+  }
+
   function renderSelectableCell(delivery: V2Delivery, content: ReactNode) {
     return (
       <button
         type="button"
-        onClick={() => selectDelivery(delivery)}
+        onClick={(event) => {
+          event.stopPropagation();
+          openDeliveryDetail(delivery);
+        }}
         className="w-full text-left"
       >
         {content}
@@ -2830,9 +2941,9 @@ export function V2EnviosPage({
     return (
       <button
         type="button"
-        onClick={() => {
-          selectDelivery(delivery);
-          setIsDeliveryDetailOpen(true);
+        onClick={(event) => {
+          event.stopPropagation();
+          openDeliveryDetail(delivery);
         }}
         className="w-full text-left"
       >
@@ -2963,7 +3074,6 @@ export function V2EnviosPage({
       <div className="flex h-full min-h-0 flex-col">
         <V2PageHeader
           title="Envíos"
-          description="Gestioná pedidos por teléfono, WhatsApp y delivery."
           actions={
             <>
               <V2Button
@@ -2987,66 +3097,10 @@ export function V2EnviosPage({
               </V2Button>
             </>
           }
-        />
-
-        {operationError || operationMessage ? (
-          <div
-            className={`mt-3 shrink-0 rounded-xl border px-3 py-2 text-sm ${
-              operationError
-                ? "border-red-200 bg-red-50 text-red-800"
-                : "border-emerald-200 bg-emerald-50 text-emerald-800"
-            }`}
-          >
-            {operationError || operationMessage}
-          </div>
-        ) : null}
-
-        <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
-          <div className="flex min-h-0 flex-col gap-4">
-            <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <V2MetricCard
-                label="Total"
-                value={filteredDeliveries.length}
-                helper="Pedidos filtrados"
-                tone="blue"
-                icon={<PackageCheck size={22} />}
-              />
-
-              <V2MetricCard
-                label="Confirmados"
-                value={confirmedDeliveries.length}
-                helper="Por preparar/enviar"
-                tone="green"
-                icon={<CheckCircle2 size={22} />}
-              />
-
-              <V2MetricCard
-                label="Entregados"
-                value={completedDeliveries.length}
-                helper="Pedidos"
-                tone="blue"
-                icon={<CheckCircle2 size={22} />}
-              />
-
-              <V2MetricCard
-                label="Cancelados"
-                value={cancelledDeliveries.length}
-                helper="Pedidos"
-                tone="red"
-                icon={<XCircle size={22} />}
-              />
-
-              <V2MetricCard
-                label="Facturación"
-                value={formatCurrency(totalBilling)}
-                helper="Sin cancelados"
-                tone="green"
-                icon={<DollarSign size={22} />}
-              />
-            </div>
-
-            <div className="-mt-2 shrink-0">
-              <V2FilterBar>
+          compact
+        >
+          <div className="mt-1">
+              <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 md:flex-row md:flex-wrap md:items-center">
                 <div className="relative flex min-w-[340px] flex-1 items-center gap-2">
                   <V2Button
                     size="md"
@@ -3283,10 +3337,11 @@ export function V2EnviosPage({
                   <V2Select
                     value={statusFilter}
                     onChange={(event) =>
-                      setStatusFilter(event.target.value as V2DeliveryStatus | "all")
+                      setStatusFilter(event.target.value as V2DeliveryStatusFilter)
                     }
                   >
                     <option value="all">Todos los estados</option>
+                    <option value="pending">Pendientes de aceptación</option>
                     <option value="confirmed">Confirmados</option>
                     <option value="completed">Entregados</option>
                     <option value="cancelled">Cancelados</option>
@@ -3306,36 +3361,74 @@ export function V2EnviosPage({
                   </V2Select>
                 </div>
 
-              </V2FilterBar>
-            </div>
-
-            <div className="-mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600">
-                <span className="text-slate-400">Leyenda:</span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-amber-200" />
-                  Pendiente web
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-emerald-200" />
-                  Confirmado
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-blue-200" />
-                  Entregado
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-red-200" />
-                  Cancelado
-                </span>
               </div>
             </div>
+        </V2PageHeader>
 
-            <div className="min-h-0 flex-1">
+        {operationError || operationMessage ? (
+          <div
+            className={`mt-3 shrink-0 rounded-xl border px-3 py-2 text-sm ${
+              operationError
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+            }`}
+          >
+            {operationError || operationMessage}
+          </div>
+        ) : null}
+
+        <div className="mt-0 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
+          <div className="flex min-h-0 flex-col gap-4">
+            <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <V2MetricCard
+                label="Total"
+                value={filteredDeliveries.length}
+                helper="Pedidos filtrados"
+                tone="blue"
+                icon={<PackageCheck size={22} />}
+              />
+
+              <V2MetricCard
+                label="Confirmados"
+                value={confirmedDeliveries.length}
+                helper="Por preparar/enviar"
+                tone="green"
+                icon={<CheckCircle2 size={22} />}
+              />
+
+              <V2MetricCard
+                label="Entregados"
+                value={completedDeliveries.length}
+                helper="Pedidos"
+                tone="blue"
+                icon={<CheckCircle2 size={22} />}
+              />
+
+              <V2MetricCard
+                label="Cancelados"
+                value={cancelledDeliveries.length}
+                helper="Pedidos"
+                tone="red"
+                icon={<XCircle size={22} />}
+              />
+
+              <V2MetricCard
+                label="Facturación"
+                value={formatCurrency(totalBilling)}
+                helper="Sin cancelados"
+                tone="green"
+                icon={<DollarSign size={22} />}
+              />
+            </div>
+
+            <V2Card className="min-h-0 flex-1 overflow-hidden p-2 pt-0">
               <V2DataTable
                 rows={filteredDeliveries}
                 getRowKey={(row) => row.id}
-                rowClassName={(row) => getDeliveryRowToneClass(row)}
+                onRowClick={openDeliveryDetail}
+                rowClassName={(row) =>
+                  `${getDeliveryRowToneClass(row)} border-b-0 [&>td]:border-y [&>td]:border-slate-200 [&>td]:bg-inherit [&>td:first-child]:rounded-l-2xl [&>td:first-child]:border-l [&>td:last-child]:rounded-r-2xl [&>td:last-child]:border-r`
+                }
                 sortKey={tableSort?.key ?? null}
                 sortDirection={tableSort?.direction}
                 onSortChange={toggleDeliveryTableSort}
@@ -3369,12 +3462,12 @@ export function V2EnviosPage({
                   {
                     header: "Cliente",
                     sortKey: "client",
-                    cell: (row) => renderDeliveryDetailCell(row, row.client),
+                    cell: (row) => renderDeliveryDetailCell(row, <span className="font-semibold text-slate-950">{row.client}</span>),
                   },
                   {
                     header: "Teléfono",
                     sortKey: "phone",
-                    cell: (row) => renderSelectableCell(row, row.phone),
+                    cell: (row) => renderSelectableCell(row, <span className="font-semibold text-slate-950">{row.phone}</span>),
                   },
                   {
                     header: "Tipo",
@@ -3399,7 +3492,7 @@ export function V2EnviosPage({
                   {
                     header: "Pago",
                     sortKey: "payment",
-                    cell: (row) => renderSelectableCell(row, row.payment),
+                    cell: (row) => renderSelectableCell(row, <span className="font-semibold text-slate-950">{row.payment}</span>),
                   },
                   {
                     header: "Acciones",
@@ -3432,111 +3525,92 @@ export function V2EnviosPage({
                     className: "text-right",
                   },
                 ]}
-                className="h-full"
+                className="h-full !border-0 !bg-transparent [&_table]:!border-separate [&_table]:border-spacing-y-2 [&_th]:!py-2"
               />
-            </div>
+            </V2Card>
           </div>
 
-          <aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+          <aside className="flex h-full min-h-0 flex-col overflow-hidden">
             <V2Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {webDeliveriesPendingAcceptance.length > 0 ? (
-                <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                  <h2 className="text-sm font-semibold text-amber-950">
-                    Pedidos web para aceptar
-                  </h2>
-                  <div className="mt-3 space-y-3">
-                    {webDeliveriesPendingAcceptance.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-xl border border-amber-200 bg-white p-3 text-left text-sm transition hover:border-amber-300"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => selectDelivery(item)}
-                          className="block w-full text-left"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-slate-950">
-                                {item.time} · {item.client}
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500">
-                                {item.deliveryType === "delivery" ? item.address : "Retira en local"}
-                              </p>
-                            </div>
-                            <span className="shrink-0 text-sm font-semibold text-amber-700">
-                              {formatCurrency(item.total)}
-                            </span>
-                          </div>
-                        </button>
-
-                        <div className="mt-3 flex gap-2">
-                          <V2Button
-                            size="sm"
-                            variant="success"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              acceptWebDelivery(item.id);
-                            }}
-                          >
-                            Aceptar
-                          </V2Button>
-                          <V2Button
-                            size="sm"
-                            variant="danger"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void rejectWebDelivery(item.id);
-                            }}
-                          >
-                            Rechazar
-                          </V2Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
               <h2 className="shrink-0 text-base font-semibold text-slate-950">
-                Envíos pendientes
+                Próximas acciones
               </h2>
 
               <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
                 <div className="space-y-3 text-sm">
+                  {webDeliveriesPendingAcceptance.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-3 shadow-sm"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => openDeliveryDetail(item)}
+                        className="flex w-full items-start gap-3 text-left"
+                      >
+                        <div className="flex min-w-[48px] shrink-0 flex-col items-center gap-2">
+                          <span className="text-center font-semibold text-orange-600">{item.time}</span>
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 shadow-sm">
+                            <AlertTriangle size={17} />
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-slate-950">Aceptar pedido de {item.client}</p>
+                            <V2Badge tone="orange">Pendiente web</V2Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {item.deliveryType === "delivery" ? item.address : "Retira en local"}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-amber-700">{formatCurrency(item.total)}</p>
+                        </div>
+                      </button>
+                      <div className="mt-3 flex gap-2 pl-[60px]" onClick={(event) => event.stopPropagation()}>
+                        <V2Button size="sm" variant="success" onClick={() => acceptWebDelivery(item.id)}>
+                          Aceptar
+                        </V2Button>
+                        <V2Button size="sm" variant="danger" onClick={() => void rejectWebDelivery(item.id)}>
+                          Rechazar
+                        </V2Button>
+                      </div>
+                    </div>
+                  ))}
+
                   {confirmedDeliveries.map((item) => (
                     <button
                       type="button"
                       key={item.id}
-                      onClick={() => selectDelivery(item)}
-                      className="group block w-full rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-md"
+                      onClick={() => openDeliveryDetail(item)}
+                      className="group flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-md"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-slate-950">
-                            {item.time} · {item.client}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {item.deliveryType === "delivery"
-                              ? item.address
-                              : "Retira en local"}
-                          </p>
-                        </div>
-                        <span className="shrink-0 text-sm font-semibold text-emerald-700">
-                          {formatCurrency(item.total)}
+                      <div className="flex min-w-[48px] shrink-0 flex-col items-center gap-2">
+                        <span className="text-center font-semibold text-emerald-600">{item.time}</span>
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-600 shadow-sm">
+                          <PackageCheck size={17} />
                         </span>
                       </div>
-
-                      <p className="mt-2 text-xs text-slate-500">
-                        {shortenOrder(item.order)}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-slate-950">Gestionar envío de {item.client}</p>
+                          <V2Badge tone="green">Confirmado</V2Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {item.deliveryType === "delivery" ? item.address : "Retira en local"}
+                        </p>
+                        <p className="mt-1 truncate text-xs text-slate-500">{shortenOrder(item.order)}</p>
+                        <p className="mt-1 text-xs font-semibold text-emerald-700">{formatCurrency(item.total)}</p>
+                      </div>
                     </button>
                   ))}
+
+                  {webDeliveriesPendingAcceptance.length === 0 && confirmedDeliveries.length === 0 ? (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                      No hay envíos pendientes de acción.
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </V2Card>
-
-
           </aside>
         </div>
       </div>
@@ -4159,10 +4233,19 @@ export function V2EnviosPage({
                       )
                     }
                   >
-                    <option value="confirmed">Confirmado</option>
+                    <option value="confirmed">
+                      {editingDelivery?.needsAcceptance
+                        ? "Pendiente de aceptación"
+                        : "Confirmado"}
+                    </option>
                     <option value="completed">Entregado</option>
                     <option value="cancelled">Cancelado</option>
                   </V2Select>
+                  {editingDelivery?.needsAcceptance ? (
+                    <p className="text-xs font-normal text-amber-700">
+                      Aceptalo desde Acciones para verificar Stock y enviarlo a Cocina.
+                    </p>
+                  ) : null}
                 </label>
 
                 <label className="grid gap-2 text-sm font-medium text-slate-700">
@@ -4493,7 +4576,7 @@ export function V2EnviosPage({
                                     {formatDateLabel(selectedDelivery.date ?? TODAY_DELIVERIES_DATE)} · {selectedDelivery.time}
                                   </p>
                                 </div>
-                                <V2DeliveryStatusBadge status={selectedDelivery.status} />
+                                <V2DeliveryStatusBadge delivery={selectedDelivery} />
                               </div>
                             </div>
 

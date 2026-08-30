@@ -209,18 +209,11 @@ export function reserveStockForClientDelivery<T extends StockReservableDelivery>
   );
   window.dispatchEvent(new Event(STOCK_PRODUCTS_EVENT));
 
-  const summary = movements
-    .map((movement) => `${movement.productName}: ${movement.quantity}`)
-    .join(", ");
-
   return {
     ...delivery,
     stockDiscounted: true,
     stockReturned: false,
     stockMovements: movements,
-    note:
-      delivery.note && delivery.note !== "—"
-        ? `${delivery.note} · Stock reservado: ${summary}.`
-        : `Stock reservado: ${summary}.`,
+    note: delivery.note,
   };
 }

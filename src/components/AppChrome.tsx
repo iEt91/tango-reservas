@@ -16,6 +16,7 @@ function shouldHideGlobalChrome(pathname: string) {
 
 export function AppChrome({ children }: AppChromeProps) {
   const pathname = usePathname();
+  const isSupabase = process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase";
 
   if (shouldHideGlobalChrome(pathname)) {
     return <>{children}</>;
@@ -33,9 +34,11 @@ export function AppChrome({ children }: AppChromeProps) {
               <Link className="rounded-full px-3 py-2 transition hover:bg-white/5 hover:text-white" href="/">
                 Inicio
               </Link>
-              <Link className="rounded-full px-3 py-2 transition hover:bg-white/5 hover:text-white" href="/admin">
-                Admin
-              </Link>
+              {!isSupabase ? (
+                <Link className="rounded-full px-3 py-2 transition hover:bg-white/5 hover:text-white" href="/admin">
+                  Admin
+                </Link>
+              ) : null}
               <Link className="rounded-full px-3 py-2 transition hover:bg-white/5 hover:text-white" href="/local">
                 Panel local
               </Link>

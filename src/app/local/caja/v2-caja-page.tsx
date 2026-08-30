@@ -66,11 +66,12 @@ type Reservation = {
   paymentMethod?: string;
   paymentBreakdown?: Partial<PaymentTotals>;
 };
-type Delivery = { date?: string; status: string; total?: number; payment?: string };
+type Delivery = { date?: string; status: string; total?: number; payment?: string; paymentBreakdown?: Partial<PaymentTotals> };
 type Expense = { date: string; status: string; amount: number; paymentMethod?: string };
 type CashMovement = {
   id: string;
   type: "income" | "withdrawal";
+  paymentMethod?: "cash" | "card" | "mercado_pago" | "transfer";
   amount: number;
   reason: string;
   createdAt: string;
@@ -157,6 +158,22 @@ function paymentKey(value?: string) {
   return "cash" as const;
 }
 
+function paymentMethodLabel(value?: CashMovement["paymentMethod"]) {
+  if (value === "card") return "Tarjeta";
+  if (value === "mercado_pago") return "Mercado Pago";
+  if (value === "transfer") return "Transferencia";
+
+  return "Efectivo";
+}
+
+function getMovementPaymentMethod(
+  movement: CashMovement | BusinessCashReconciliation["movements"][number],
+) {
+  return "paymentMethod" in movement
+    ? movement.paymentMethod ?? "cash"
+    : "cash";
+}
+
 function reservationPayment(reservation: Reservation): PaymentTotals {
   const breakdown = reservation.paymentBreakdown;
   if (breakdown) {
@@ -170,6 +187,22 @@ function reservationPayment(reservation: Reservation): PaymentTotals {
   const result: PaymentTotals = { cash: 0, card: 0, mercadoPago: 0, transfer: 0 };
   result[paymentKey(reservation.paymentMethod || reservation.payment)] =
     Number(reservation.paidAmount ?? reservation.orderTotal) || 0;
+  return result;
+}
+
+function deliveryPayment(delivery: Delivery): PaymentTotals {
+  const breakdown = delivery.paymentBreakdown;
+  if (breakdown) {
+    return {
+      cash: Number(breakdown.cash) || 0,
+      card: Number(breakdown.card) || 0,
+      mercadoPago: Number(breakdown.mercadoPago) || 0,
+      transfer: Number(breakdown.transfer) || 0,
+    };
+  }
+
+  const result: PaymentTotals = { cash: 0, card: 0, mercadoPago: 0, transfer: 0 };
+  result[paymentKey(delivery.payment)] = Number(delivery.total) || 0;
   return result;
 }
 
@@ -226,6 +259,7 @@ export function V2CajaPage({
   const [showClose, setShowClose] = useState(false);
   const [showMovement, setShowMovement] = useState(false);
   const [movementType, setMovementType] = useState<CashMovement["type"]>("withdrawal");
+  const [movementPaymentMethod, setMovementPaymentMethod] = useState<NonNullable<CashMovement["paymentMethod"]>>("cash");
   const [movementAmount, setMovementAmount] = useState("");
   const [movementReason, setMovementReason] = useState("");
   const today = todayKey();
@@ -450,7 +484,11 @@ export function V2CajaPage({
     deliveries
       .filter((item) => (item.date ?? selectedDate) === selectedDate && item.status === "completed")
       .forEach((item) => {
-        totals[paymentKey(item.payment)] += Number(item.total) || 0;
+        const payment = deliveryPayment(item);
+        totals.cash += payment.cash;
+        totals.card += payment.card;
+        totals.mercadoPago += payment.mercadoPago;
+        totals.transfer += payment.transfer;
       });
     return totals;
   }, [
@@ -498,7 +536,7 @@ export function V2CajaPage({
         ?? []
       : selectedClose?.movements ?? [];
   const movementNet = movements.reduce(
-    (total, movement) => total + (movement.type === "income" ? movement.amount : -movement.amount),
+    (total, movement) => total + (getMovementPaymentMethod(movement) === "cash" ? movement.type === "income" ? movement.amount : -movement.amount : 0),
     0,
   );
   const legacyAdjustment =
@@ -635,6 +673,13 @@ export function V2CajaPage({
     if (!Number.isFinite(actual) || actual < 0) return;
 
     if (isSupabasePersistence) {
+      if (movementPaymentMethod !== "cash") {
+        setCashOperationError(
+          "Los movimientos no efectivos todavía no están habilitados en Caja conectada.",
+        );
+        return;
+      }
+
       if (
         !canManageCash
         || isCashMutating
@@ -779,6 +824,7 @@ export function V2CajaPage({
     cashMovementOperationKeyRef.current =
       null;
     setMovementType("withdrawal");
+    setMovementPaymentMethod("cash");
     setMovementAmount("");
     setMovementReason("");
     setShowMovement(true);
@@ -813,8 +859,10 @@ export function V2CajaPage({
           await addBusinessCashMovementAction({
             cashSessionId:
               selectedClose.id,
-            type:
-              movementType,
+          type:
+            movementType,
+          paymentMethod:
+            movementPaymentMethod,
             amount,
             reason:
               movementReason.trim(),
@@ -854,6 +902,7 @@ export function V2CajaPage({
     previousMovements.push({
       id: createV2OperationalId("cash-movement"),
       type: movementType,
+      paymentMethod: movementPaymentMethod,
       amount,
       reason: movementReason.trim(),
       createdAt: new Date().toISOString(),
@@ -1155,10 +1204,10 @@ export function V2CajaPage({
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
-                { label: "Efectivo", value: displaySales.cash, icon: Banknote, tone: "bg-emerald-50 text-emerald-800" },
-                { label: "Tarjeta", value: displaySales.card, icon: CreditCard, tone: "bg-blue-50 text-blue-800" },
-                { label: "Mercado Pago", value: displaySales.mercadoPago, icon: WalletCards, tone: "bg-sky-50 text-sky-800" },
-                { label: "Transferencia", value: displaySales.transfer, icon: Landmark, tone: "bg-indigo-50 text-indigo-800" },
+                { label: "Efectivo", value: displaySales.cash, icon: Banknote, tone: "bg-emerald-50 text-slate-950" },
+                { label: "Tarjeta", value: displaySales.card, icon: CreditCard, tone: "bg-blue-50 text-slate-950" },
+                { label: "Mercado Pago", value: displaySales.mercadoPago, icon: WalletCards, tone: "bg-sky-50 text-slate-950" },
+                { label: "Transferencia", value: displaySales.transfer, icon: Landmark, tone: "bg-indigo-50 text-slate-950" },
               ].map((item) => {
                 const Icon = item.icon;
                 return <div key={item.label} className={`rounded-xl p-4 ${item.tone}`}><div className="flex items-center gap-2 text-sm font-semibold"><Icon size={17} />{item.label}</div><p className="mt-3 text-xl font-bold">{money(item.value)}</p></div>;
@@ -1167,7 +1216,7 @@ export function V2CajaPage({
             <div className="mt-4 border-t border-slate-200 pt-4">
               <div className="flex items-center justify-between"><div><h3 className="text-sm font-semibold text-slate-900">Movimientos manuales</h3><p className="mt-0.5 text-xs text-slate-500">{isSupabasePersistence ? "Ingresos y retiros persistentes con trazabilidad." : "Ingresos y retiros de efectivo con trazabilidad."}</p></div><span className={`text-sm font-bold ${adjustment >= 0 ? "text-emerald-700" : "text-red-600"}`}>{money(adjustment)}</span></div>
               <div className="mt-3 max-h-36 space-y-2 overflow-y-auto pr-1">
-                {movements.map((movement) => <div key={movement.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2"><div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-800">{movement.reason}</p><p className="text-[11px] text-slate-500">{dateTimeLabel(movement.createdAt)}</p></div><div className="flex items-center gap-2"><span className={`text-xs font-bold ${movement.type === "income" ? "text-emerald-700" : "text-red-600"}`}>{movement.type === "income" ? "+" : "−"}{money(movement.amount)}</span>{isToday && selectedClose?.status === "open" && (!isSupabasePersistence || canFullCash) ? <button type="button" onClick={() => void removeMovement(movement.id)} disabled={isCashMutating} className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Eliminar movimiento"><Trash2 size={14} /></button> : null}</div></div>)}
+                {movements.map((movement) => <div key={movement.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2"><div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-800">{movement.reason}</p><p className="text-[11px] text-slate-500">{paymentMethodLabel(getMovementPaymentMethod(movement))} · {dateTimeLabel(movement.createdAt)}</p></div><div className="flex items-center gap-2"><span className={`text-xs font-bold ${movement.type === "income" ? "text-emerald-700" : "text-red-600"}`}>{movement.type === "income" ? "+" : "−"}{money(movement.amount)}</span>{isToday && selectedClose?.status === "open" && (!isSupabasePersistence || canFullCash) ? <button type="button" onClick={() => void removeMovement(movement.id)} disabled={isCashMutating} className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Eliminar movimiento"><Trash2 size={14} /></button> : null}</div></div>)}
                 {!movements.length && legacyAdjustment === 0 ? <p className="rounded-lg border border-dashed border-slate-200 py-5 text-center text-xs text-slate-500">Sin movimientos manuales.</p> : null}
                 {!movements.length && legacyAdjustment !== 0 ? <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Ajuste anterior: {money(legacyAdjustment)}</div> : null}
               </div>
@@ -1178,7 +1227,7 @@ export function V2CajaPage({
           <V2Card className="flex min-h-0 flex-col overflow-hidden">
             <div className="flex items-center gap-2"><History size={18} className="text-slate-500" /><h2 className="font-semibold text-slate-950">Historial de cierres</h2></div>
             <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
-              {history.length ? <div className="space-y-2">{history.map((item) => <button type="button" onClick={() => selectDate(item.date)} key={item.id} className={`grid w-full grid-cols-[100px_1fr_1fr_1fr] items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition hover:border-emerald-300 hover:bg-emerald-50/40 ${item.date === selectedDate ? "border-emerald-300 bg-emerald-50/60" : "border-slate-200"}`}><p className="font-semibold text-slate-900">{dateLabel(item.date)}</p><div><p className="text-xs text-slate-500">Esperado</p><p className="font-semibold">{money(Number(item.expectedCash) || 0)}</p></div><div><p className="text-xs text-slate-500">Contado</p><p className="font-semibold">{money(Number(item.actualCash) || 0)}</p></div><div><p className="text-xs text-slate-500">Diferencia</p><p className={`font-bold ${Number(item.difference) === 0 ? "text-emerald-700" : "text-red-600"}`}>{money(Number(item.difference) || 0)}</p></div></button>)}</div> : <div className="flex h-full min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-500">Todavía no hay cierres registrados.</div>}
+              {history.length ? <div className="space-y-2">{history.map((item) => { const isBalancedOrPositive = Number(item.difference) >= 0; return <button type="button" onClick={() => selectDate(item.date)} key={item.id} className={`grid w-full grid-cols-[100px_1fr_1fr_1fr] items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition ${isBalancedOrPositive ? "border-emerald-300 bg-emerald-100/70 hover:border-emerald-400 hover:bg-emerald-100" : "border-red-300 bg-red-100/70 hover:border-red-400 hover:bg-red-100"}`}><p className="font-semibold text-slate-900">{dateLabel(item.date)}</p><div><p className="text-xs text-slate-500">Esperado</p><p className="font-semibold">{money(Number(item.expectedCash) || 0)}</p></div><div><p className="text-xs text-slate-500">Contado</p><p className="font-semibold">{money(Number(item.actualCash) || 0)}</p></div><div><p className="text-xs text-slate-500">Diferencia</p><p className="font-bold text-slate-950">{money(Number(item.difference) || 0)}</p></div></button>; })}</div> : <div className="flex h-full min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-500">Todavía no hay cierres registrados.</div>}
             </div>
           </V2Card>
         </div>
@@ -1205,7 +1254,8 @@ export function V2CajaPage({
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-200 p-5"><div><p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Caja abierta</p><h2 className="mt-1 text-lg font-semibold text-slate-950">Registrar movimiento</h2></div><button type="button" onClick={() => setShowMovement(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18} /></button></div>
             <div className="space-y-4 p-5">
-              <V2Field label="Tipo"><V2Select value={movementType} onChange={(event) => setMovementType(event.target.value as CashMovement["type"])}><option value="income">Ingreso de efectivo</option><option value="withdrawal">Retiro de efectivo</option></V2Select></V2Field>
+              <V2Field label="Tipo"><V2Select value={movementType} onChange={(event) => setMovementType(event.target.value as CashMovement["type"])}><option value="income">Ingreso</option><option value="withdrawal">Retiro</option></V2Select></V2Field>
+              <V2Field label="Medio de pago"><V2Select value={movementPaymentMethod} onChange={(event) => setMovementPaymentMethod(event.target.value as NonNullable<CashMovement["paymentMethod"]>)}><option value="cash">Efectivo</option><option value="card">Tarjeta</option><option value="mercado_pago">Mercado Pago</option><option value="transfer">Transferencia</option></V2Select></V2Field>
               <V2Field label="Importe"><V2Input type="number" min="0" value={movementAmount} onChange={(event) => setMovementAmount(event.target.value)} /></V2Field>
               <V2Field label="Motivo" helper="Obligatorio para mantener trazabilidad."><V2Input value={movementReason} onChange={(event) => setMovementReason(event.target.value)} placeholder="Ej.: retiro para cambio o ingreso extraordinario" /></V2Field>
             </div>

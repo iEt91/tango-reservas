@@ -337,11 +337,11 @@ check(
 );
 
 check(
-  "fingerprint HMAC delega el secreto al módulo privilegiado",
+  "fingerprint HMAC usa un secreto dedicado del módulo privilegiado",
   /assertServerOnly/u.test(
     sources.fingerprint,
   )
-    && /createSupabaseServerHmac/u.test(
+    && /createPublicRequestHmac/u.test(
       sources.fingerprint,
     )
     && !/createHmac/u.test(
@@ -353,13 +353,13 @@ check(
     && !/NEXT_PUBLIC_SUPABASE/u.test(
       sources.fingerprint,
     )
-    && /createSupabaseServerHmac/u.test(
+    && /createPublicRequestHmac/u.test(
       sources.supabaseServer,
     )
     && /createHmac/u.test(
       sources.supabaseServer,
     )
-    && /SUPABASE_SERVICE_ROLE_KEY/u.test(
+    && /PUBLIC_REQUEST_FINGERPRINT_SECRET/u.test(
       sources.supabaseServer,
     ),
 );

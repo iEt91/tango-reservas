@@ -396,7 +396,9 @@ function getStockStatusPriority(product: V2StockProduct) {
 }
 
 function formatAmount(value: number, unit: V2StockUnit) {
-  return `${Number.isInteger(value) ? value : value.toFixed(1)} ${unit}`;
+  return `${new Intl.NumberFormat("es-AR", {
+    maximumFractionDigits: 3,
+  }).format(value)} ${unit}`;
 }
 
 function formatCurrency(value: number) {

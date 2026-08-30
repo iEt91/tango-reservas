@@ -48,10 +48,6 @@ export type AdminBusinessesSnapshot = {
   businesses: Business[];
 };
 
-export type LoadAdminBusinessesSnapshotOptions = {
-  allowFallback?: boolean;
-};
-
 function normalizeBusinessStatus(
   value: string | null | undefined,
 ): BusinessStatus {
@@ -183,51 +179,20 @@ export async function getBusinesses() {
   return snapshot.businesses;
 }
 
-export async function loadAdminBusinessesSnapshot(
-  options: LoadAdminBusinessesSnapshotOptions = {},
-): Promise<AdminBusinessesSnapshot> {
+export async function loadAdminBusinessesSnapshot(): Promise<AdminBusinessesSnapshot> {
   const requestedSource = getDataSource();
-  const allowFallback = options.allowFallback ?? true;
 
   if (requestedSource === "supabase") {
     const result = await fetchSupabaseBusinesses();
 
     if (!result.connected) {
-      if (!allowFallback) {
-        return {
-          requestedSource,
-          resolvedSource: "supabase",
-          fallbackUsed: false,
-          warning: result.error?.message ?? null,
-          error: result.error?.message ?? null,
-          businesses: [],
-        };
-      }
-
-      const fallbackBusinesses = getLocalBusinesses();
-      const warning = result.error
-        ? (
-            "Supabase falló y se usó local/mock "
-            + `como fallback: ${result.error.message}`
-          )
-        : (
-            "Supabase falló y se usó local/mock "
-            + "como fallback."
-          );
-
-      console.warn(
-        "[admin-businesses] Supabase fallback "
-        + "to local/mock",
-        result.error,
-      );
-
       return {
         requestedSource,
-        resolvedSource: "local",
-        fallbackUsed: true,
-        warning,
+        resolvedSource: "supabase",
+        fallbackUsed: false,
+        warning: result.error?.message ?? null,
         error: result.error?.message ?? null,
-        businesses: fallbackBusinesses,
+        businesses: [],
       };
     }
 

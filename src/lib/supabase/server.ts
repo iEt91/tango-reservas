@@ -21,20 +21,20 @@ export function hasSupabaseServerConfig() {
   );
 }
 
-export function createSupabaseServerHmac(
+export function createPublicRequestHmac(
   value: string,
 ) {
   assertServerOnly(
-    "El HMAC privilegiado de Supabase",
+    "El HMAC de solicitudes públicas",
   );
 
   const secret =
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.PUBLIC_REQUEST_FINGERPRINT_SECRET
       ?.trim();
 
   if (!secret) {
     throw new Error(
-      "Falta la clave server-only requerida para HMAC.",
+      "Falta el secreto server-only de solicitudes públicas.",
     );
   }
 

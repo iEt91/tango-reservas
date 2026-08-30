@@ -221,6 +221,26 @@ check(
 );
 
 check(
+  "Caja local registra y muestra el medio de pago de cada movimiento",
+  /movementPaymentMethod/u.test(
+    sources.cashUi,
+  )
+    && /label="Medio de pago"/u.test(
+      sources.cashUi,
+    )
+    && /paymentMethodLabel\(getMovementPaymentMethod\(movement\)\)/u.test(
+      sources.cashUi,
+    ),
+);
+
+check(
+  "solo los movimientos en efectivo alteran el efectivo esperado local",
+  /getMovementPaymentMethod\(movement\) === "cash"/u.test(
+    sources.cashUi,
+  ),
+);
+
+check(
   "sincronización cash mantiene reconciliación con dominios posteriores",
   /\|\s*"cash"/u.test(
     sources.serverSync,

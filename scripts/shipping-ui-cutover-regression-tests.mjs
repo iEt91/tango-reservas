@@ -128,6 +128,14 @@ check(
   /acceptBusinessShippingOrderAction/u.test(sources.ui)
     && /acceptanceEtaMinutes/u.test(sources.ui),
 );
+
+check(
+  "pedido web pendiente se identifica sin confundirlo con un confirmado",
+  /type V2DeliveryStatusFilter = V2DeliveryStatus \| "pending" \| "all"/u.test(sources.ui)
+    && /Pendientes de aceptación/u.test(sources.ui)
+    && /Pendiente de aceptación/u.test(sources.ui)
+    && /isWebDeliveryPendingAcceptance\(delivery\)/u.test(sources.ui),
+);
 check(
   "hitos incluyen en camino y listo retiro",
   /setBusinessShippingMilestoneAction/u.test(sources.ui)
@@ -207,6 +215,14 @@ check(
     && /appendDeliveryKitchenTicket/u.test(sources.ui)
     && /getCashRegisterError/u.test(sources.ui)
     && /getDeliveryTrackingUrl/u.test(sources.ui),
+);
+
+check(
+  "la nota del envío conserva sólo la indicación del cliente",
+  /function getCustomerDeliveryNote/u.test(sources.ui)
+    && /note:\s*getCustomerDeliveryNote\(delivery\.note\)/u.test(sources.ui)
+    && !/Stock reservado: \$\{formatStockMovementsSummary/u.test(sources.ui)
+    && !/Pedido aceptado por el local\. ETA \$\{acceptanceEtaMinutes\}/u.test(sources.ui),
 );
 check(
   "acciones E34A siguen autorizando en servidor",

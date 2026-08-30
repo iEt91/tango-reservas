@@ -702,8 +702,63 @@ try {
     ),
     true,
   );
+  for (const cash of closedCash) {
+    const paymentTotals = {
+      cash: 0,
+      card: 0,
+      mercadoPago: 0,
+      transfer: 0,
+    };
+    const completedSales = [
+      ...snapshot.reservations.filter(
+        (reservation) =>
+          reservation.date === cash.date
+          && reservation.status === "completed",
+      ),
+      ...snapshot.deliveries.filter(
+        (delivery) =>
+          delivery.date === cash.date
+          && delivery.status === "completed",
+      ),
+    ];
+
+    for (const sale of completedSales) {
+      const breakdown = sale.paymentBreakdown;
+      assert.ok(breakdown, `venta ${sale.id} conserva desglose de pago`);
+      const total = Number(sale.orderTotal ?? sale.total) || 0;
+      const breakdownTotal =
+        (Number(breakdown.cash) || 0)
+        + (Number(breakdown.card) || 0)
+        + (Number(breakdown.mercadoPago) || 0)
+        + (Number(breakdown.transfer) || 0);
+      assert.equal(breakdownTotal, total, `pago de ${sale.id} coincide con su venta`);
+      paymentTotals.cash += Number(breakdown.cash) || 0;
+      paymentTotals.card += Number(breakdown.card) || 0;
+      paymentTotals.mercadoPago += Number(breakdown.mercadoPago) || 0;
+      paymentTotals.transfer += Number(breakdown.transfer) || 0;
+    }
+
+    const cashExpenses = snapshot.expenses
+      .filter(
+        (expense) =>
+          expense.date === cash.date
+          && expense.status === "paid"
+          && expense.paymentMethod.toLowerCase().includes("efectivo"),
+      )
+      .reduce((total, expense) => total + expense.amount, 0);
+    const movementNet = cash.movements.reduce(
+      (total, movement) => total + (movement.type === "income" ? movement.amount : -movement.amount),
+      0,
+    );
+    const expectedCash = cash.openingAmount + paymentTotals.cash - cashExpenses + movementNet;
+
+    assert.deepEqual(cash.salesSnapshot, paymentTotals, `ventas por medio de ${cash.date} coinciden con el cierre`);
+    assert.equal(cash.cashExpensesSnapshot, cashExpenses, `gastos en efectivo de ${cash.date} coinciden con el cierre`);
+    assert.equal(cash.expectedCash, expectedCash, `efectivo esperado de ${cash.date} coincide con ventas, gastos y movimientos`);
+    assert.equal(cash.actualCash - cash.expectedCash, cash.difference, `diferencia de ${cash.date} coincide con contado menos esperado`);
+  }
   console.log(
-    "✓ Caja tiene cierres históricos conciliados y una sesión abierta para hoy",
+    "✓ Caja concilia cada cierre con ventas, gastos, movimientos y efectivo contado",
   );
 
   assert.equal(

@@ -241,6 +241,27 @@ type PublicWebConfigState = {
   showDelivery: boolean;
 };
 
+type PublicSiteSnapshot = {
+  name: string;
+  slug: string;
+  description: string;
+  address: string;
+  phone: string;
+  whatsapp: string;
+  instagram_url: string;
+  hero_eyebrow: string;
+  hero_title: string;
+  hero_subtitle: string;
+  cta_label: string;
+  secondary_cta_label: string;
+  show_menu: boolean;
+  show_reservation: boolean;
+  show_whatsapp_button: boolean;
+  show_gallery: boolean;
+  show_location: boolean;
+  show_delivery: boolean;
+};
+
 type PublicDeliveryRecord = {
   id: string;
   date: string;
@@ -1139,6 +1160,8 @@ export default function PublicTemplatePage() {
     useState<PendingPublicReservation | null>(null);
   const [createdReservationSummary, setCreatedReservationSummary] =
     useState<CreatedPublicReservationSummary | null>(null);
+  const [isReservationSubmitting, setIsReservationSubmitting] = useState(false);
+  const reservationRequestKeyRef = useRef<string | null>(null);
   const [isOrderPopupOpen, setIsOrderPopupOpen] = useState(false);
   const [activeOrderCategory, setActiveOrderCategory] = useState(menuCategories[0].title);
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
@@ -1234,24 +1257,24 @@ export default function PublicTemplatePage() {
 
     async function loadPersistentOrdering() {
       try {
-        const response =
-          await fetch(
-            `/api/public/${encodeURIComponent(publicSlug)}/ordering`,
-            {
-              cache: "no-store",
-            },
-          );
-        const payload =
-          await response.json() as {
-            snapshot?: PublicShippingOrderingSnapshot;
-            error?: string;
-          };
+        const [orderingResponse, siteResponse] = await Promise.all([
+          fetch(`/api/public/${encodeURIComponent(publicSlug)}/ordering`, { cache: "no-store" }),
+          fetch(`/api/public/${encodeURIComponent(publicSlug)}/site`, { cache: "no-store" }),
+        ]);
+        const payload = await orderingResponse.json() as {
+          snapshot?: PublicShippingOrderingSnapshot;
+          error?: string;
+        };
+        const sitePayload = await siteResponse.json() as {
+          site?: PublicSiteSnapshot;
+          error?: string;
+        };
 
         if (cancelled) {
           return;
         }
 
-        if (!response.ok || !payload.snapshot) {
+        if (!orderingResponse.ok || !payload.snapshot || !siteResponse.ok || !sitePayload.site) {
           setOrderError(
             payload.error
             ?? "No se pudo cargar el menú público.",
@@ -1261,8 +1284,8 @@ export default function PublicTemplatePage() {
           return;
         }
 
-        const snapshot =
-          payload.snapshot;
+        const snapshot = payload.snapshot;
+        const site = sitePayload.site;
 
         setStoredMenuItems(
           snapshot.items,
@@ -1284,18 +1307,25 @@ export default function PublicTemplatePage() {
         setPublicWebConfig(
           (current) => ({
             ...current,
-            businessName:
-              snapshot.business.name,
-            address:
-              snapshot.business.address,
-            phone:
-              snapshot.business.phone,
-            whatsapp:
-              snapshot.business.whatsapp,
-            status:
-              "published",
-            showDelivery:
-              true,
+            businessName: site.name,
+            publicUrl: `${site.slug}.tangoreservas.com`,
+            status: "published",
+            heroEyebrow: site.hero_eyebrow,
+            heroTitle: site.hero_title,
+            heroSubtitle: site.hero_subtitle,
+            primaryButtonLabel: site.cta_label,
+            secondaryButtonLabel: site.secondary_cta_label,
+            description: site.description,
+            address: site.address,
+            phone: site.phone,
+            whatsapp: site.whatsapp,
+            instagram: site.instagram_url,
+            showMenu: site.show_menu,
+            showReservations: site.show_reservation,
+            showWhatsApp: site.show_whatsapp_button,
+            showGallery: site.show_gallery,
+            showMap: site.show_location,
+            showDelivery: site.show_delivery,
           }),
         );
         setOrderError("");
@@ -1800,8 +1830,98 @@ export default function PublicTemplatePage() {
     return normalizedTables.length > 0 ? normalizedTables : DEFAULT_PUBLIC_FLOOR_TABLES;
   }
 
-  function confirmPublicReservation() {
+  async function confirmPublicReservation() {
     if (!pendingReservation) return;
+
+    if (isSupabasePersistence) {
+      setIsReservationSubmitting(true);
+      setReservationError("");
+
+      try {
+        if (!reservationRequestKeyRef.current) {
+          reservationRequestKeyRef.current = crypto.randomUUID();
+        }
+
+        const response = await fetch(
+          `/api/public/${encodeURIComponent(publicSlug)}/reservations`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              client: pendingReservation.client,
+              phone: pendingReservation.phone,
+              email: pendingReservation.email,
+              date: pendingReservation.date,
+              time: pendingReservation.time,
+              people: pendingReservation.people,
+              note: pendingReservation.note,
+              requestKey: reservationRequestKeyRef.current,
+            }),
+          },
+        );
+        const payload = await response.json().catch(() => null) as {
+          error?: unknown;
+          reservation?: {
+            reservationCode?: unknown;
+            status?: unknown;
+            date?: unknown;
+            time?: unknown;
+            people?: unknown;
+          };
+        } | null;
+
+        if (!response.ok || !payload?.reservation) {
+          throw new Error(
+            typeof payload?.error === "string"
+              ? payload.error
+              : "No se pudo registrar la reserva.",
+          );
+        }
+
+        const reservation = payload.reservation;
+        const reservationCode = typeof reservation.reservationCode === "string"
+          ? reservation.reservationCode
+          : "";
+        const status = reservation.status === "confirmed" ? "confirmed" : "pending";
+
+        if (!reservationCode) {
+          throw new Error("No se pudo registrar la reserva.");
+        }
+
+        setCreatedReservationSummary({
+          client: pendingReservation.client,
+          reservationCode,
+          date: typeof reservation.date === "string" ? reservation.date : pendingReservation.date,
+          time: typeof reservation.time === "string" ? reservation.time.slice(0, 5) : pendingReservation.time,
+          people: Number.isInteger(Number(reservation.people))
+            ? Number(reservation.people)
+            : pendingReservation.people,
+          phone: pendingReservation.phone,
+          status,
+        });
+        reservationRequestKeyRef.current = null;
+        setPendingReservation(null);
+        setReservationForm((current) => ({
+          ...current,
+          client: "",
+          phone: "",
+          email: "",
+          people: 2,
+          time: "",
+          note: "",
+        }));
+      } catch (error) {
+        setReservationError(
+          error instanceof Error
+            ? error.message
+            : "No se pudo registrar la reserva.",
+        );
+      } finally {
+        setIsReservationSubmitting(false);
+      }
+
+      return;
+    }
 
     const configForReservation = readLivePublicConfig();
     const reservationsForReservation = readLivePublicReservations();
@@ -2201,9 +2321,10 @@ export default function PublicTemplatePage() {
                 <button
                   type="button"
                   onClick={confirmPublicReservation}
+                  disabled={isReservationSubmitting}
                   className="h-12 rounded-xl bg-[#c97048] text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#db8257]"
                 >
-                  Confirmar reserva
+                  {isReservationSubmitting ? "Registrando..." : "Confirmar reserva"}
                 </button>
               </div>
             </div>

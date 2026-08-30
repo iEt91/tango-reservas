@@ -12,6 +12,13 @@ Tango Reservas es una base tecnica para un sistema multi-negocio de reservas con
 
 `v5.6-configuracion-lab`
 
+## Seguridad de administracion
+
+- Con `NEXT_PUBLIC_DATA_SOURCE=supabase`, `/admin` se redirige a `/local`.
+- No existe aun un rol de plataforma para administrar todos los negocios.
+- `businesses` no se abre a `anon` y no hay fallback automatico a local/mock.
+- `/admin` queda disponible solo para el demo con fuente local.
+
 Esta version compacta `/local/configuracion-lab`, ajusta Horarios comerciales y hace visibles los contenidos de Reservas, Web publica y Notificaciones.
 
 ## Etapa v5.6-configuracion-lab
@@ -886,6 +893,7 @@ Variables esperadas:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `PUBLIC_REQUEST_FINGERPRINT_SECRET` (secreto server-only separado para limitar solicitudes públicas)
 
 Todavia no estan conectadas al frontend.
 

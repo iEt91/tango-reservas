@@ -88,6 +88,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // This is intentionally best-effort. The scheduled database job keeps the
+  // window current, and entering the disposable sandbox provides a safe catch-up.
+  const { error: sandboxRefreshError } = await supabase.rpc(
+    "refresh_business_sandbox_reservation_window",
+    { p_sandbox_business_id: businessId },
+  );
+
+  if (sandboxRefreshError) {
+    console.error("[business-sandbox] agenda refresh skipped", {
+      code: sandboxRefreshError.code ?? null,
+    });
+  }
+
   const response = privateRedirect(request, nextPath);
   response.cookies.set(ACTIVE_BUSINESS_COOKIE, businessId, {
     httpOnly: true,

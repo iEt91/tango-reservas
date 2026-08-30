@@ -1,5 +1,9 @@
 # Historial remoto de staging
 
+> Esta página registra una verificación histórica. No constituye evidencia de
+> seguridad o release actual: antes de cada corte se deben ejecutar preflight,
+> pruebas de aislamiento y Advisors contra el proyecto activo.
+
 ## Proyecto
 
 - Nombre: `tango-resto`
@@ -21,8 +25,9 @@
 - solo business_members concede SELECT autenticado;
 - helper SECURITY DEFINER únicamente en private;
 - search_path vacío;
-- cero alertas críticas o altas del Security Advisor.
+- sin alertas críticas o altas en la captura original del Security Advisor.
 
 Los avisos informativos `rls_enabled_no_policy` sobre tablas operativas son
 intencionales: esas tablas permanecen bloqueadas hasta que cada módulo tenga
-políticas y pruebas negativas específicas.
+políticas y pruebas negativas específicas. Los avisos nuevos deben compararse con
+la evidencia actual, no con esta captura.

@@ -7,6 +7,7 @@ import { getBusinessHoursForBusiness } from "@/lib/data/server/business-hours";
 import { getBusinessServicesForBusiness } from "@/lib/data/server/business-services";
 import { getBusinessStaffForBusiness } from "@/lib/data/server/business-staff";
 import { getReservationSettingsForBusiness } from "@/lib/data/server/reservation-settings";
+import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
 
 export default async function Page() {
   const activeBusiness = await resolveActiveBusiness();
@@ -51,6 +52,14 @@ export default async function Page() {
     getBusinessServicesForBusiness(businessId),
     getBusinessStaffForBusiness(businessId),
   ]);
+  const supabase = await createSupabaseAuthServerClient();
+  const { data: sandboxData } = supabase
+    ? await supabase
+        .from("business_sandboxes")
+        .select("source_business_id, sandbox_business_id, seed_version, last_reset_at")
+        .or(`source_business_id.eq.${businessId},sandbox_business_id.eq.${businessId}`)
+        .maybeSingle()
+    : { data: null };
 
   return (
     <V2ConfiguracionPage
@@ -64,6 +73,14 @@ export default async function Page() {
       staffPersistence="supabase"
       canManageBusinessServices
       canManageStaff
+      businessName={activeBusiness.membership.business.name}
+      initialSandbox={sandboxData ? {
+        businessId: sandboxData.sandbox_business_id,
+        sourceBusinessId: sandboxData.source_business_id,
+        isActiveSandbox: sandboxData.sandbox_business_id === businessId,
+        seedVersion: sandboxData.seed_version,
+        lastResetAt: sandboxData.last_reset_at,
+      } : null}
     />
   );
 }

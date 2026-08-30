@@ -80,24 +80,28 @@ async function snapshotServices(businessId) {
   return data ?? [];
 }
 
-async function restoreServices(businessId, snapshot) {
+async function restoreServices(snapshot, createdServiceId) {
+  if (snapshot.length > 0) {
+    const { error: restoreError } = await admin
+      .from("services")
+      .upsert(snapshot, { onConflict: "id" });
+
+    if (restoreError) {
+      throw restoreError;
+    }
+  }
+
+  if (!createdServiceId) {
+    return;
+  }
+
   const { error: deleteError } = await admin
     .from("services")
     .delete()
-    .eq("business_id", businessId);
+    .eq("id", createdServiceId);
 
   if (deleteError) {
     throw deleteError;
-  }
-
-  if (snapshot.length > 0) {
-    const { error: insertError } = await admin
-      .from("services")
-      .insert(snapshot);
-
-    if (insertError) {
-      throw insertError;
-    }
   }
 }
 
@@ -105,6 +109,7 @@ console.log("Ejecutando escritura segura de servicios en staging...");
 
 const servicesA = await snapshotServices(fixture.businessAId);
 const servicesB = await snapshotServices(fixture.businessBId);
+let createdServiceId = null;
 
 try {
   await signIn(
@@ -163,6 +168,7 @@ try {
   assert.equal(created.duration_minutes, 90);
   assert.equal(created.capacity, 24);
   assert.equal(Number(created.price), 12500.5);
+  createdServiceId = created.id;
   console.log("✓ owner A creó un servicio con contrato exacto");
 
   const { data: updated, error: updateError } =
@@ -256,9 +262,9 @@ try {
   );
   console.log("✓ las operaciones de A no modificaron B");
 } finally {
-  await restoreServices(fixture.businessAId, servicesA);
+  await restoreServices(servicesA, createdServiceId);
   console.log("✓ servicios A restaurados");
-  await restoreServices(fixture.businessBId, servicesB);
+  await restoreServices(servicesB, null);
   console.log("✓ servicios B restaurados");
   await userA.auth.signOut();
   await userB.auth.signOut();

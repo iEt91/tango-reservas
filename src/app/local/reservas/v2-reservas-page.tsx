@@ -1,4 +1,8 @@
 /* E36_UI_POLISH */
+/* E42_INICIO_RESERVAS_PULIDO */
+/* E43_RESERVAS_HEADER_COMPACTO */
+/* E44_ENVIO_RESERVA_INTERACCION */
+/* E45_PULIDO_VISUAL */
 "use client";
 
 import Link from "next/link";
@@ -16,10 +20,10 @@ import {
   Download,
   Eye,
   EyeOff,
-  Filter,
   Landmark,
   Plus,
   Search,
+  Table2,
   UserRound,
   Users,
   Wallet,
@@ -31,7 +35,6 @@ import { V2ReservationStatusBadge } from "@/components/v2/v2-badge";
 import { V2Button } from "@/components/v2/v2-button";
 import { V2MetricCard, V2Card } from "@/components/v2/v2-card";
 import { V2DataTable } from "@/components/v2/v2-data-table";
-import { V2FilterBar } from "@/components/v2/v2-filter-bar";
 import { V2Field, V2Input, V2Select, V2Textarea } from "@/components/v2/v2-input";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import {
@@ -303,10 +306,9 @@ type V2LocalConfigState = {
   allowTableCombinations: boolean;
 };
 
-type V2SortMode = "time" | "latest" | "status";
 type V2SortDirection = "asc" | "desc";
 type V2ReservationColumnSortKey = "id" | "time" | "client" | "people" | "phone" | "table";
-type V2DateFilterMode = "single" | "range";
+type V2DateFilterMode = "single" | "range" | "all";
 type V2ReservationStatusFilter = V2ReservationStatus | "all";
 type V2ReservationOrigin =
   | "web"
@@ -1661,30 +1663,34 @@ function reservationCanBeCompleted(reservation: V2ReservationDraft) {
   return reservation.status === "confirmed" && !reservationNeedsTable(reservation);
 }
 
+/* E41_RESERVAS_VISUAL */
 function getReservationRowToneClass(reservation: V2ReservationDraft) {
+  const cardShape =
+    "border-b-0 [&>td]:border-y [&>td:first-child]:rounded-l-2xl [&>td:first-child]:border-l [&>td:last-child]:rounded-r-2xl [&>td:last-child]:border-r";
+
   if (reservation.status === "completed") {
-    return "bg-blue-100/60 hover:bg-blue-100/100";
+    return `${cardShape} [&>td]:border-blue-200 [&>td]:bg-blue-100/80 hover:[&>td]:bg-blue-200/80`;
   }
 
   if (reservation.status === "cancelled") {
-    return "bg-red-100/60 hover:bg-red-100/100";
+    return `${cardShape} [&>td]:border-red-200 [&>td]:bg-red-100/80 hover:[&>td]:bg-red-200/80`;
   }
 
   if (reservation.status === "no_show") {
-    return "bg-slate-100/30 hover:bg-slate-100/100";
+    return `${cardShape} [&>td]:border-slate-200 [&>td]:bg-slate-100/80 hover:[&>td]:bg-slate-200/80`;
   }
 
   if (reservation.status === "pending") {
-    return "bg-amber-100/60 hover:bg-amber-100/100";
+    return `${cardShape} [&>td]:border-amber-200 [&>td]:bg-amber-100/80 hover:[&>td]:bg-amber-200/80`;
   }
 
-  return "bg-emerald-100/60 hover:bg-emerald-100/100";
+  return `${cardShape} [&>td]:border-emerald-200 [&>td]:bg-emerald-100/80 hover:[&>td]:bg-emerald-200/80`;
 }
 
 function getReservationRowAccentClass(reservation: V2ReservationDraft) {
   return reservationNeedsTable(reservation)
-    ? "border-l-4 border-l-amber-400"
-    : "border-l-4 border-l-transparent";
+    ? "[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-amber-400"
+    : "";
 }
 
 function getMaxSingleTableCapacity(tables: V2FloorPlanTable[]) {
@@ -1763,7 +1769,6 @@ export function V2ReservasPage({
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<V2ReservationStatusFilter>("all");
-  const [sortMode, setSortMode] = useState<V2SortMode>("time");
   const [tableSort, setTableSort] = useState<{
     key: V2ReservationColumnSortKey;
     direction: V2SortDirection;
@@ -2009,6 +2014,10 @@ export function V2ReservasPage({
   }, [reservations]);
 
   const selectedDateLabel = useMemo(() => {
+    if (dateFilterMode === "all") {
+      return "Todo el historial";
+    }
+
     if (dateFilterMode === "single") {
       return formatDateLabel(selectedDate);
     }
@@ -2018,34 +2027,7 @@ export function V2ReservasPage({
     return `${formatCompactDate(start)} — ${formatCompactDate(end)}`;
   }, [dateFilterMode, rangeEndDate, rangeStartDate, selectedDate]);
 
-  const selectedDateBusinessSlots = useMemo(
-    () => getBusinessHourSlotsForDate(localConfig, selectedDate),
-    [localConfig, selectedDate]
-  );
-
   const maxBookingDate = getMaxBookingDate(localConfig);
-
-  const peopleBySelectedSlot = useMemo(() => {
-    return reservations
-      .filter((reservation) => {
-        if (reservation.id === editingReservation?.id) return false;
-        if (reservation.date !== selectedDate) return false;
-        if (!isActiveReservationStatus(reservation.status)) return false;
-
-        return reservationRangesOverlap(reservation, {
-          time: editingReservation?.time ?? "20:00",
-          durationMinutes: editingReservation?.durationMinutes ?? localConfig.standardDurationMinutes,
-        });
-      })
-      .reduce((total, reservation) => total + reservation.people, 0);
-  }, [
-    editingReservation?.durationMinutes,
-    editingReservation?.id,
-    editingReservation?.time,
-    localConfig.standardDurationMinutes,
-    reservations,
-    selectedDate,
-  ]);
 
   function getReservationSortValue(
     reservation: V2ReservationDraft,
@@ -2077,9 +2059,11 @@ export function V2ReservasPage({
 
     const filtered = reservations.filter((reservation) => {
       const matchesDate =
-        dateFilterMode === "single"
-          ? reservation.date === selectedDate
-          : reservation.date >= start && reservation.date <= end;
+        dateFilterMode === "all"
+          ? true
+          : dateFilterMode === "single"
+            ? reservation.date === selectedDate
+            : reservation.date >= start && reservation.date <= end;
 
       const matchesSearch =
         query.length === 0 ||
@@ -2106,26 +2090,6 @@ export function V2ReservasPage({
         return timeToMinutes(a.time) - timeToMinutes(b.time);
       }
 
-      if (sortMode === "latest") {
-        const dateComparison = b.date.localeCompare(a.date);
-
-        if (dateComparison !== 0) return dateComparison;
-
-        return Number(b.id.replace(/\D/g, "")) - Number(a.id.replace(/\D/g, ""));
-      }
-
-      if (sortMode === "status") {
-        const statusComparison = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
-
-        if (statusComparison !== 0) return statusComparison;
-
-        const dateComparison = a.date.localeCompare(b.date);
-
-        if (dateComparison !== 0) return dateComparison;
-
-        return timeToMinutes(a.time) - timeToMinutes(b.time);
-      }
-
       const dateComparison = a.date.localeCompare(b.date);
 
       if (dateComparison !== 0) return dateComparison;
@@ -2139,7 +2103,6 @@ export function V2ReservasPage({
     reservations,
     searchValue,
     selectedDate,
-    sortMode,
     statusFilter,
     tableSort,
   ]);
@@ -2390,14 +2353,31 @@ export function V2ReservasPage({
     );
   }, [editingReservation, reservations]);
 
+  useEffect(() => {
+    if (!isReservationDetailOpen) return;
+
+    function handleReservationDetailEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsReservationDetailOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleReservationDetailEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleReservationDetailEscape);
+    };
+  }, [isReservationDetailOpen]);
+
   function selectReservationWithTone(reservation: V2ReservationDraft) {
     setSelectedReservation(reservation);
     setSelectedDetailToneIndex((current) => (current + 1) % DETAIL_BORDER_TONES.length);
   }
 
   function openQuickAction(reservation: V2ReservationDraft) {
-    selectReservationWithTone(reservation);
-    setQuickActionReservation(reservation);
+    // La tarjeta de "Próximas acciones" y la lista deben llevar al mismo
+    // detalle: evita dos pop-ups con información parcialmente duplicada.
+    openReservationDetail(reservation);
   }
 
   function closeQuickAction() {
@@ -2491,8 +2471,11 @@ export function V2ReservasPage({
   }
 
   function selectCalendarDate(date: string) {
-    if (dateFilterMode === "single") {
+    if (dateFilterMode === "single" || dateFilterMode === "all") {
+      setDateFilterMode("single");
       setSelectedDate(date);
+      setRangeStartDate(date);
+      setRangeEndDate(date);
       setCalendarMonth(date);
       setIsCalendarOpen(false);
       return;
@@ -2530,6 +2513,31 @@ export function V2ReservasPage({
     setCalendarMonth(selectedDate);
     setIsPickingRangeEnd(false);
     setIsCalendarOpen(true);
+  }
+
+  function showSingleReservationDay() {
+    setDateFilterMode("single");
+    setRangeStartDate(selectedDate);
+    setRangeEndDate(selectedDate);
+    setCalendarMonth(selectedDate);
+    setIsPickingRangeEnd(false);
+  }
+
+  function showThirtyReservationDays() {
+    const startDate = addDays(TODAY_RESERVATIONS_DATE, -29);
+
+    setDateFilterMode("range");
+    setRangeStartDate(startDate);
+    setRangeEndDate(TODAY_RESERVATIONS_DATE);
+    setCalendarMonth(startDate);
+    setIsPickingRangeEnd(false);
+    setIsCalendarOpen(false);
+  }
+
+  function showAllReservations() {
+    setDateFilterMode("all");
+    setIsPickingRangeEnd(false);
+    setIsCalendarOpen(false);
   }
 
   function openReservationEditor(reservation: V2ReservationDraft) {
@@ -3763,6 +3771,11 @@ export function V2ReservasPage({
     });
   }
 
+  function openReservationDetail(reservation: V2ReservationDraft) {
+    selectReservationWithTone(reservation);
+    setIsReservationDetailOpen(true);
+  }
+
   function renderSelectableCell(
     reservation: V2ReservationDraft,
     content: ReactNode
@@ -3770,7 +3783,10 @@ export function V2ReservasPage({
     return (
       <button
         type="button"
-        onClick={() => selectReservationWithTone(reservation)}
+        onClick={(event) => {
+          event.stopPropagation();
+          openReservationDetail(reservation);
+        }}
         className="w-full text-left"
       >
         {content}
@@ -3785,9 +3801,9 @@ export function V2ReservasPage({
     return (
       <button
         type="button"
-        onClick={() => {
-          selectReservationWithTone(reservation);
-          setIsReservationDetailOpen(true);
+        onClick={(event) => {
+          event.stopPropagation();
+          openReservationDetail(reservation);
         }}
         className="w-full text-left"
       >
@@ -3872,31 +3888,6 @@ export function V2ReservasPage({
       <div className="flex h-full min-h-0 flex-col">
         <V2PageHeader
           title="Reservas"
-          description="Gestioná, filtrá y actualizá las reservas del local."
-          descriptionAside={
-            <>
-              <span>
-                Duración estándar:{" "}
-                <strong className="text-slate-950">{localConfig.standardDurationMinutes} min</strong>
-              </span>
-              <span>
-                Ventana:{" "}
-                <strong className="text-slate-950">{localConfig.bookingWindowDays} días</strong>
-              </span>
-              <span>
-                Capacidad por horario:{" "}
-                <strong className="text-slate-950">
-                  {peopleBySelectedSlot}/{localConfig.maxPeoplePerSlot} personas
-                </strong>
-              </span>
-              <span>
-                Horario del día:{" "}
-                <strong className="text-slate-950">
-                  {formatBusinessHourSlots(selectedDateBusinessSlots)}
-                </strong>
-              </span>
-            </>
-          }
           actions={
             <>
               <V2Button
@@ -3926,63 +3917,10 @@ export function V2ReservasPage({
               </V2Button>
             </>
           }
-        />
-
-        {isSupabasePersistence ? (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-            <strong>Reservas conectadas a Supabase.</strong>{" "}
-            Alta, edición, estados, consumo de mesa y cobros son persistentes. Las mesas se administran desde Plano; Cocina sigue bloqueada hasta su corte canónico.
-          </div>
-        ) : null}
-
-        <div className="mt-4 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
-          <div className="flex min-h-0 flex-col gap-4">
-            <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <V2MetricCard
-                label="Total"
-                value={totalReservations}
-                helper="Reservas filtradas"
-                tone="blue"
-                icon={<CalendarDays size={22} />}
-              />
-
-              <V2MetricCard
-                label="Pendientes"
-                value={pendingReservations.length}
-                helper="Por confirmar"
-                tone="orange"
-                icon={<Clock3 size={22} />}
-              />
-
-              <V2MetricCard
-                label="Confirmadas"
-                value={confirmedReservations.length}
-                helper="Reservas activas"
-                tone="green"
-                icon={<CheckCircle2 size={22} />}
-              />
-
-              <V2MetricCard
-                label="Personas"
-                value={totalPeople}
-                helper="Total día"
-                tone="purple"
-                icon={<Users size={22} />}
-              />
-
-              <V2MetricCard
-                label="Canceladas"
-                value={cancelledReservations.length + noShowReservations.length}
-                helper="Canceladas / no-show"
-                tone="red"
-                icon={<XCircle size={22} />}
-              />
-            </div>
-
-
-
-            <div className="-mt-2 shrink-0">
-                      <V2FilterBar>
+          compact
+        >
+          <div className="mt-1">
+                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 md:flex-row md:items-center">
                         <div className="relative flex min-w-[340px] flex-1 items-center gap-2">
                           <V2Button
                             size="md"
@@ -4151,6 +4089,52 @@ export function V2ReservasPage({
                           ) : null}
                         </div>
 
+                        <div className="flex min-w-0 justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={showSingleReservationDay}
+                            className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                              dateFilterMode === "single"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                            }`}
+                          >
+                            Día
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={startReservationRangeSelection}
+                            className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                              dateFilterMode === "range"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                            }`}
+                          >
+                            Rango
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={showThirtyReservationDays}
+                            className="h-10 shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                          >
+                            30 días
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={showAllReservations}
+                            className={`h-10 shrink-0 rounded-xl border px-3 text-xs font-semibold transition ${
+                              dateFilterMode === "all"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                            }`}
+                          >
+                            Todo
+                          </button>
+                        </div>
+
                         <div className="min-w-[260px] flex-[1.5]">
                           <div className="relative">
                             <Search
@@ -4182,60 +4166,63 @@ export function V2ReservasPage({
                           </V2Select>
                         </div>
 
-                        <div className="min-w-[150px]">
-                          <V2Select
-                            value={sortMode}
-                            onChange={(event) => {
-                              setSortMode(event.target.value as V2SortMode);
-                              setTableSort(null);
-                            }}
-                          >
-                            <option value="time">Horario</option>
-                            <option value="latest">Últimas primero</option>
-                            <option value="status">Estado</option>
-                          </V2Select>
-                        </div>
-
-                        <V2Button variant="secondary" icon={<Filter size={17} />}>
-                          Más filtros
-                        </V2Button>
-                      </V2FilterBar>
+                      </div>
                     </div>
+        </V2PageHeader>
 
-            <div className="-mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600">
-                <span className="text-slate-400">Leyenda:</span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-emerald-200" />
-                  Confirmada
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-amber-200" />
-                  Pendiente
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-blue-200" />
-                  Completada
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-red-200" />
-                  Cancelada
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-slate-300" />
-                  No-show
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-4 w-1 rounded-full bg-amber-400" />
-                  Requiere mesa
-                </span>
-              </div>
+
+
+        <div className="mt-0 grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
+          <div className="flex min-h-0 flex-col gap-4">
+            <div className="grid shrink-0 gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <V2MetricCard
+                label="Total"
+                value={totalReservations}
+                helper="Reservas filtradas"
+                tone="blue"
+                icon={<CalendarDays size={22} />}
+              />
+
+              <V2MetricCard
+                label="Pendientes"
+                value={pendingReservations.length}
+                helper="Por confirmar"
+                tone="orange"
+                icon={<Clock3 size={22} />}
+              />
+
+              <V2MetricCard
+                label="Confirmadas"
+                value={confirmedReservations.length}
+                helper="Reservas activas"
+                tone="green"
+                icon={<CheckCircle2 size={22} />}
+              />
+
+              <V2MetricCard
+                label="Personas"
+                value={totalPeople}
+                helper="Total día"
+                tone="purple"
+                icon={<Users size={22} />}
+              />
+
+              <V2MetricCard
+                label="Canceladas"
+                value={cancelledReservations.length + noShowReservations.length}
+                helper="Canceladas / no-show"
+                tone="red"
+                icon={<XCircle size={22} />}
+              />
             </div>
 
-            <div className="min-h-0 flex-1">
+
+
+            <V2Card className="min-h-0 flex-1 overflow-hidden p-2 pt-0">
               <V2DataTable
                 rows={filteredReservations}
                 getRowKey={(row) => row.id}
+                onRowClick={openReservationDetail}
                 rowClassName={(row) =>
                   `${getReservationRowToneClass(row)} ${getReservationRowAccentClass(row)}`
                 }
@@ -4394,9 +4381,9 @@ export function V2ReservasPage({
                     className: "text-right",
                   },
                 ]}
-                className="h-full"
+                className="h-full !border-0 !bg-transparent [&_table]:!border-separate [&_table]:border-spacing-y-2 [&_th]:!py-2"
               />
-            </div>
+            </V2Card>
           </div>
 
           <aside className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
@@ -4424,20 +4411,41 @@ export function V2ReservasPage({
                                 : "border-slate-200 bg-gradient-to-br from-white to-slate-50"
                           }`}
                         >
-                          <span
-                            className={
-                              item.status === "pending"
-                                ? "min-w-[42px] font-semibold text-orange-600"
-                                : "min-w-[42px] font-semibold text-emerald-600"
-                            }
-                          >
-                            {dateFilterMode === "range" ? (
-                              <span className="mb-0.5 block text-[10px] font-semibold text-slate-400">
-                                {formatShortDate(item.date)}
-                              </span>
-                            ) : null}
-                            {item.time}
-                          </span>
+                          <div className="flex min-w-[48px] shrink-0 flex-col items-center gap-2">
+                            <span
+                              className={
+                                item.status === "pending"
+                                  ? "text-center font-semibold text-orange-600"
+                                  : needsTable
+                                    ? "text-center font-semibold text-orange-600"
+                                    : "text-center font-semibold text-emerald-600"
+                              }
+                            >
+                              {dateFilterMode === "range" ? (
+                                <span className="mb-0.5 block text-[10px] font-semibold text-slate-400">
+                                  {formatShortDate(item.date)}
+                                </span>
+                              ) : null}
+                              {item.time}
+                            </span>
+
+                            <span
+                              className={
+                                item.status === "pending" || needsTable
+                                  ? "flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 shadow-sm"
+                                  : "flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-600 shadow-sm"
+                              }
+                              aria-hidden="true"
+                            >
+                              {item.status === "pending" ? (
+                                <AlertTriangle size={17} />
+                              ) : needsTable ? (
+                                <Table2 size={17} />
+                              ) : (
+                                <CheckCircle2 size={17} />
+                              )}
+                            </span>
+                          </div>
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
@@ -5942,7 +5950,7 @@ export function V2ReservasPage({
               <X size={18} />
             </button>
             <V2Card
-                          className={`flex min-h-[420px] flex-1 flex-col overflow-hidden shadow-sm ${
+                          className={`flex min-h-[420px] flex-1 flex-col overflow-hidden border-0 shadow-sm ring-0 ${
                             selectedReservation
                               ? DETAIL_BORDER_TONES[selectedDetailToneIndex]
                               : ""
@@ -5985,9 +5993,9 @@ export function V2ReservasPage({
                                 </p>
 
                                 <div className="mt-3 grid grid-cols-2 gap-2">
-                                  <V2Button
-                                    size="sm"
-                                    variant="secondary"
+                              <V2Button
+                                size="sm"
+                                variant="secondary"
                                     onClick={() => openReservationTracking(selectedReservation)}
                                   >
                                     Ver tracking
@@ -6166,6 +6174,65 @@ export function V2ReservasPage({
                       >
                         Asignar mesa
                                   </V2Button>
+                                ) : null}
+
+                                {selectedReservation.status === "pending" ? (
+                                  <>
+                                    <V2Button
+                                      size="sm"
+                                      variant="danger"
+                                      onClick={() =>
+                                        updateReservationStatus(
+                                          selectedReservation.id,
+                                          "cancelled"
+                                        )
+                                      }
+                                    >
+                                      Cancelar
+                                    </V2Button>
+                                    <V2Button
+                                      size="sm"
+                                      variant="success"
+                                      onClick={() =>
+                                        updateReservationStatus(
+                                          selectedReservation.id,
+                                          "confirmed"
+                                        )
+                                      }
+                                    >
+                                      Confirmar
+                                    </V2Button>
+                                  </>
+                                ) : null}
+
+                                {selectedReservation.status === "confirmed" &&
+                                !reservationNeedsTable(selectedReservation) ? (
+                                  <>
+                                    <V2Button
+                                      size="sm"
+                                      variant="danger"
+                                      onClick={() =>
+                                        updateReservationStatus(
+                                          selectedReservation.id,
+                                          "no_show"
+                                        )
+                                      }
+                                    >
+                                      No-show
+                                    </V2Button>
+                                    <V2Button
+                                      size="sm"
+                                      variant="success"
+                                      onClick={() =>
+                                        updateReservationStatus(
+                                          selectedReservation.id,
+                                          "completed"
+                                        )
+                                      }
+                                    >
+                                      Completar
+                                    </V2Button>
+                                  </>
                                 ) : null}
                               </div>
                             </div>

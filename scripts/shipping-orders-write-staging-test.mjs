@@ -389,6 +389,40 @@ try {
   );
   if (startError) throw startError;
 
+  await expectFailure(
+    userA.rpc("set_business_shipping_milestone", {
+      p_business_id: businessA,
+      p_shipping_id: manualShipping.id,
+      p_milestone: "on_the_way",
+      p_operation_key: `e34a-on-way-before-kitchen-${suffix}`,
+    }),
+    "Shipping cannot go on the way before kitchen readiness",
+  );
+
+  const { error: readyError } = await userA.rpc(
+    "set_business_shipping_kitchen_command_status",
+    {
+      p_business_id: businessA,
+      p_order_id: manualShipping.orderId,
+      p_ticket_id: null,
+      p_status: "ready",
+      p_operation_key: `e34a-kitchen-ready-${suffix}`,
+    },
+  );
+  if (readyError) throw readyError;
+
+  const { error: onTheWayError } = await userA.rpc(
+    "set_business_shipping_milestone",
+    {
+      p_business_id: businessA,
+      p_shipping_id: manualShipping.id,
+      p_milestone: "on_the_way",
+      p_operation_key: `e34a-on-way-after-kitchen-${suffix}`,
+    },
+  );
+  if (onTheWayError) throw onTheWayError;
+  console.log("✓ Shipping waits for Cocina before going on the way");
+
   const { data: edited, error: editError } = await userA.rpc(
     "save_business_shipping_order",
     {
@@ -471,6 +505,47 @@ try {
   cashSessionId = cashSession.id;
 
   const subtotal = Number(pickup.order.subtotal);
+  await expectFailure(
+    userA.rpc("complete_business_shipping_payment", {
+      p_business_id: businessA,
+      p_shipping_id: pickup.id,
+      p_payments: subtotal === 0
+        ? []
+        : [{ method: "transfer", amount: subtotal }],
+      p_operation_key: `e34a-payment-before-kitchen-${suffix}`,
+    }),
+    "Shipping payment must wait for kitchen readiness",
+  );
+
+  const { data: pickupKitchenSnapshot, error: pickupKitchenError } =
+    await userA.rpc(
+      "get_business_shipping_kitchen_snapshot",
+      {
+        p_business_id: businessA,
+        p_business_date: businessDate,
+      },
+    );
+  if (pickupKitchenError) throw pickupKitchenError;
+  const pickupKitchenCommand = pickupKitchenSnapshot.commands.find(
+    (command) => command.orderId === pickup.orderId && !command.isAddition,
+  );
+  assert.ok(pickupKitchenCommand);
+
+  for (const status of ["preparing", "ready"]) {
+    const { error: kitchenStatusError } = await userA.rpc(
+      "set_business_shipping_kitchen_command_status",
+      {
+        p_business_id: businessA,
+        p_order_id: pickup.orderId,
+        p_ticket_id: null,
+        p_status: status,
+        p_operation_key: `e34a-pickup-kitchen-${status}-${suffix}`,
+      },
+    );
+    if (kitchenStatusError) throw kitchenStatusError;
+  }
+  console.log("✓ Shipping waits for Cocina before payment");
+
   const { data: paid, error: paymentError } = await userA.rpc(
     "complete_business_shipping_payment",
     {

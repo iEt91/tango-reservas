@@ -17,6 +17,7 @@ const paths = {
   migration017: "supabase/migrations/20260810_017_reservation_consumption_write.sql",
   migration019: "supabase/migrations/20260810_019_cash_payments_write.sql",
   migration021: "supabase/migrations/20260811_021_kitchen_operational_write.sql",
+  migration027: "supabase/migrations/20260814144312_enforce_shipping_kitchen_readiness.sql",
   shippingUi: "src/app/local/envios/v2-envios-page.tsx",
   publicWeb: "src/app/[slug]/page.tsx",
   trackingUi: "src/app/[slug]/pedido/[trackingId]/page.tsx",
@@ -151,6 +152,14 @@ check(
 );
 
 check(
+  "Envios no puede avanzar ni cobrarse antes de Cocina",
+  /business_shipping_orders_require_kitchen_ready/u.test(sources.migration027)
+    && /before update of ready_at, on_the_way_at, shipping_status/u.test(sources.migration027)
+    && /kitchen_status_value not in \('ready', 'completed'\)/u.test(sources.migration027)
+    && /Shipping requires a kitchen order marked ready/u.test(sources.migration027),
+);
+
+check(
   "022 reutiliza trigger 021 sin reemplazarlo",
   /business_order_items_sync_kitchen_delta/u.test(sources.postflight)
     && /business_order_items_sync_kitchen_delta/u.test(sources.migration021)
@@ -214,6 +223,13 @@ check(
 check(
   "todas las funciones SECURITY DEFINER fijan search_path",
   (sources.migration.match(/security definer\s+set search_path = ''/gu) ?? []).length >= 9,
+);
+
+check(
+  "la interfaz local anticipa faltantes de Stock y Cocina",
+  /function getDeliveryStockShortages/u.test(sources.shippingUi)
+    && /No hay Stock suficiente/u.test(sources.shippingUi)
+    && /Cocina debe marcar el pedido como listo/u.test(sources.shippingUi),
 );
 
 check(

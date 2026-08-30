@@ -81,43 +81,48 @@ async function snapshotMenu(businessId) {
   };
 }
 
-async function restoreMenu(businessId, snapshot) {
-  const { error: relationDeleteError } = await admin
-    .from("menu_category_products")
-    .delete()
-    .eq("business_id", businessId);
-  if (relationDeleteError) throw relationDeleteError;
-
-  const { error: itemDeleteError } = await admin
-    .from("menu_items")
-    .delete()
-    .eq("business_id", businessId);
-  if (itemDeleteError) throw itemDeleteError;
-
-  const { error: categoryDeleteError } = await admin
-    .from("menu_categories")
-    .delete()
-    .eq("business_id", businessId);
-  if (categoryDeleteError) throw categoryDeleteError;
-
+async function restoreMenu(snapshot, created) {
   if (snapshot.categories.length > 0) {
     const { error } = await admin
       .from("menu_categories")
-      .insert(snapshot.categories);
+      .upsert(snapshot.categories, { onConflict: "id" });
     if (error) throw error;
   }
 
   if (snapshot.items.length > 0) {
     const { error } = await admin
       .from("menu_items")
-      .insert(snapshot.items);
+      .upsert(snapshot.items, { onConflict: "id" });
     if (error) throw error;
   }
 
   if (snapshot.categoryProducts.length > 0) {
     const { error } = await admin
       .from("menu_category_products")
-      .insert(snapshot.categoryProducts);
+      .upsert(snapshot.categoryProducts, {
+        onConflict: "business_id,category_id,menu_item_id",
+      });
+    if (error) throw error;
+  }
+
+  if (created.promotionId) {
+    const { error } = await admin
+      .from("menu_category_products")
+      .delete()
+      .eq("category_id", created.promotionId);
+    if (error) throw error;
+  }
+
+  for (const itemId of created.itemIds) {
+    const { error } = await admin.from("menu_items").delete().eq("id", itemId);
+    if (error) throw error;
+  }
+
+  if (created.promotionId) {
+    const { error } = await admin
+      .from("menu_categories")
+      .delete()
+      .eq("id", created.promotionId);
     if (error) throw error;
   }
 }
@@ -138,6 +143,7 @@ console.log("Ejecutando promociones y combos de menú en staging...");
 
 const menuA = await snapshotMenu(fixture.businessAId);
 const menuB = await snapshotMenu(fixture.businessBId);
+const created = { itemIds: [], promotionId: null };
 
 try {
   await signIn(userA, context.userAEmail, context.userAPassword);
@@ -153,6 +159,7 @@ try {
     },
   );
   if (itemOneError) throw itemOneError;
+  created.itemIds.push(itemOne.id);
 
   const { data: itemTwo, error: itemTwoError } = await userA.rpc(
     "save_business_menu_item",
@@ -163,6 +170,7 @@ try {
     },
   );
   if (itemTwoError) throw itemTwoError;
+  created.itemIds.push(itemTwo.id);
   console.log("✓ se crearon productos temporales para el combo");
 
   const promotionPayload = {
@@ -199,6 +207,7 @@ try {
     },
   );
   if (promotionError) throw promotionError;
+  created.promotionId = promotion.id;
 
   assert.equal(promotion.business_id, fixture.businessAId);
   assert.equal(promotion.is_promotion, true);
@@ -335,9 +344,9 @@ try {
   assert.deepEqual(await snapshotMenu(fixture.businessBId), menuB);
   console.log("✓ las operaciones de A no modificaron B");
 } finally {
-  await restoreMenu(fixture.businessAId, menuA);
+  await restoreMenu(menuA, created);
   console.log("✓ menú A restaurado");
-  await restoreMenu(fixture.businessBId, menuB);
+  await restoreMenu(menuB, { itemIds: [], promotionId: null });
   console.log("✓ menú B restaurado");
   await userA.auth.signOut();
   await userB.auth.signOut();

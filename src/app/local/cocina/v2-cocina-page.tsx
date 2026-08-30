@@ -455,24 +455,24 @@ function getCommandTone(
   status: KitchenStatus,
 ) {
   if (status === "ready") {
-    return "border-emerald-200 bg-emerald-50/40";
+    return "border-emerald-300 bg-emerald-100/80";
   }
 
   if (
     elapsedSeconds
     >= targetSeconds
   ) {
-    return "border-red-200 bg-red-50/40";
+    return "border-red-300 bg-red-100/80";
   }
 
   if (
     elapsedSeconds
     >= targetSeconds * 0.75
   ) {
-    return "border-orange-200 bg-orange-50/40";
+    return "border-orange-300 bg-orange-100/80";
   }
 
-  return "border-emerald-200 bg-emerald-50/30";
+  return "border-emerald-300 bg-emerald-100/70";
 }
 
 function getTimerBadgeTone(
