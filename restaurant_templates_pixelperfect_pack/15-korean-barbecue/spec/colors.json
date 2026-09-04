@@ -1,0 +1,14 @@
+{
+  "template": "15-korean-barbecue",
+  "dominant_reference_colors": [
+    "#0c0c0c",
+    "#242424",
+    "#3c0c0c",
+    "#543c24",
+    "#9c2424",
+    "#6c240c",
+    "#84543c",
+    "#9c6c54"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

@@ -1,0 +1,14 @@
+{
+  "template": "19-steakhouse-bodega",
+  "dominant_reference_colors": [
+    "#0c0c0c",
+    "#840c0c",
+    "#3c240c",
+    "#0c3c24",
+    "#6c3c0c",
+    "#3c3c3c",
+    "#9c2424",
+    "#845424"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

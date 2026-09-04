@@ -9,6 +9,7 @@ import { V2Card } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
 import {
   V2_WEB_TEMPLATE_STORAGE_KEY,
+  getDefaultV2WebTemplate,
   getV2WebTemplateById,
   v2WebTemplates,
 } from "@/lib/v2/v2-web-templates";
@@ -36,7 +37,7 @@ export default function V2WebTemplatesPage() {
   const activeTemplateId = useSyncExternalStore(
     subscribeActiveTemplate,
     getActiveTemplateId,
-    () => v2WebTemplates[0]?.id ?? "",
+    () => getDefaultV2WebTemplate().id,
   );
   const activeTemplate = useMemo(
     () => getV2WebTemplateById(activeTemplateId),
@@ -83,7 +84,7 @@ export default function V2WebTemplatesPage() {
       />
 
       <div className="grid h-[calc(100vh-175px)] min-h-[660px] gap-4 xl:grid-cols-[1fr_340px]">
-        <div className="min-h-0 space-y-4 pr-2">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2 pb-4">
           <V2Card>
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">

@@ -1,0 +1,14 @@
+{
+  "template": "16-cocina-libanesa",
+  "dominant_reference_colors": [
+    "#240c24",
+    "#fce4cc",
+    "#3c240c",
+    "#e4ccb4",
+    "#543c24",
+    "#845424",
+    "#b48454",
+    "#ccb49c"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

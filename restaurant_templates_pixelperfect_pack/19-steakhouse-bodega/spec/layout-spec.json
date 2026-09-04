@@ -1,0 +1,77 @@
+{
+  "template": "19-steakhouse-bodega",
+  "reference": {
+    "file": "reference/reference.png",
+    "width": 864,
+    "height": 1821
+  },
+  "reference_scale_rule": "Implement at native 864px width first; scale uniformly only after pixel matching.",
+  "detected_section_guides": [
+    {
+      "id": "section_01",
+      "y_start": 0,
+      "y_end": 184,
+      "height": 184
+    },
+    {
+      "id": "section_02",
+      "y_start": 184,
+      "y_end": 292,
+      "height": 108
+    },
+    {
+      "id": "section_03",
+      "y_start": 292,
+      "y_end": 376,
+      "height": 84
+    },
+    {
+      "id": "section_04",
+      "y_start": 376,
+      "y_end": 684,
+      "height": 308
+    },
+    {
+      "id": "section_05",
+      "y_start": 684,
+      "y_end": 953,
+      "height": 269
+    },
+    {
+      "id": "section_06",
+      "y_start": 953,
+      "y_end": 1093,
+      "height": 140
+    },
+    {
+      "id": "section_07",
+      "y_start": 1093,
+      "y_end": 1261,
+      "height": 168
+    },
+    {
+      "id": "section_08",
+      "y_start": 1261,
+      "y_end": 1505,
+      "height": 244
+    },
+    {
+      "id": "section_09",
+      "y_start": 1505,
+      "y_end": 1821,
+      "height": 316
+    }
+  ],
+  "guide_note": "Section boundaries are machine-detected guides. The reference PNG remains authoritative.",
+  "dynamic_content_policy": {
+    "menu_photos": "restaurant-provided; never bake reference photos into the template",
+    "gallery_photos": "restaurant-provided where supported",
+    "venue_or_hero_photos": "use restaurant-configurable content when available, keeping exact reference slot geometry"
+  },
+  "image_rules": {
+    "preserve_aspect_ratio": true,
+    "forbid_object_fit_fill": true,
+    "forbid_background_size_100_100_for_decorations": true,
+    "patterns": "repeat, never stretch"
+  }
+}

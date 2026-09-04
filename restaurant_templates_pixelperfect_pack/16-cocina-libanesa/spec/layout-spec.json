@@ -1,0 +1,77 @@
+{
+  "template": "16-cocina-libanesa",
+  "reference": {
+    "file": "reference/reference.png",
+    "width": 864,
+    "height": 1821
+  },
+  "reference_scale_rule": "Implement at native 864px width first; scale uniformly only after pixel matching.",
+  "detected_section_guides": [
+    {
+      "id": "section_01",
+      "y_start": 0,
+      "y_end": 208,
+      "height": 208
+    },
+    {
+      "id": "section_02",
+      "y_start": 208,
+      "y_end": 364,
+      "height": 156
+    },
+    {
+      "id": "section_03",
+      "y_start": 364,
+      "y_end": 472,
+      "height": 108
+    },
+    {
+      "id": "section_04",
+      "y_start": 472,
+      "y_end": 604,
+      "height": 132
+    },
+    {
+      "id": "section_05",
+      "y_start": 604,
+      "y_end": 1141,
+      "height": 537
+    },
+    {
+      "id": "section_06",
+      "y_start": 1141,
+      "y_end": 1273,
+      "height": 132
+    },
+    {
+      "id": "section_07",
+      "y_start": 1273,
+      "y_end": 1357,
+      "height": 84
+    },
+    {
+      "id": "section_08",
+      "y_start": 1357,
+      "y_end": 1673,
+      "height": 316
+    },
+    {
+      "id": "section_09",
+      "y_start": 1673,
+      "y_end": 1821,
+      "height": 148
+    }
+  ],
+  "guide_note": "Section boundaries are machine-detected guides. The reference PNG remains authoritative.",
+  "dynamic_content_policy": {
+    "menu_photos": "restaurant-provided; never bake reference photos into the template",
+    "gallery_photos": "restaurant-provided where supported",
+    "venue_or_hero_photos": "use restaurant-configurable content when available, keeping exact reference slot geometry"
+  },
+  "image_rules": {
+    "preserve_aspect_ratio": true,
+    "forbid_object_fit_fill": true,
+    "forbid_background_size_100_100_for_decorations": true,
+    "patterns": "repeat, never stretch"
+  }
+}

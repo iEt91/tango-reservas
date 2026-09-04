@@ -1,0 +1,14 @@
+{
+  "template": "10-panaderia-brunch",
+  "dominant_reference_colors": [
+    "#fcfcfc",
+    "#fce4cc",
+    "#e4ccb4",
+    "#543c24",
+    "#ccb49c",
+    "#b48454",
+    "#b49c84",
+    "#9c6c3c"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

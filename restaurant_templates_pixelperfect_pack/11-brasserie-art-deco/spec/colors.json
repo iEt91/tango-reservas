@@ -1,0 +1,14 @@
+{
+  "template": "11-brasserie-art-deco",
+  "dominant_reference_colors": [
+    "#0c0c24",
+    "#fce4e4",
+    "#3c240c",
+    "#543c24",
+    "#6c543c",
+    "#e4ccb4",
+    "#9c846c",
+    "#846c54"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

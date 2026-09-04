@@ -1,0 +1,77 @@
+{
+  "template": "13-nordico-estacional",
+  "reference": {
+    "file": "reference/reference.png",
+    "width": 864,
+    "height": 1821
+  },
+  "reference_scale_rule": "Implement at native 864px width first; scale uniformly only after pixel matching.",
+  "detected_section_guides": [
+    {
+      "id": "section_01",
+      "y_start": 0,
+      "y_end": 116,
+      "height": 116
+    },
+    {
+      "id": "section_02",
+      "y_start": 116,
+      "y_end": 264,
+      "height": 148
+    },
+    {
+      "id": "section_03",
+      "y_start": 264,
+      "y_end": 448,
+      "height": 184
+    },
+    {
+      "id": "section_04",
+      "y_start": 448,
+      "y_end": 692,
+      "height": 244
+    },
+    {
+      "id": "section_05",
+      "y_start": 692,
+      "y_end": 856,
+      "height": 164
+    },
+    {
+      "id": "section_06",
+      "y_start": 856,
+      "y_end": 1021,
+      "height": 165
+    },
+    {
+      "id": "section_07",
+      "y_start": 1021,
+      "y_end": 1153,
+      "height": 132
+    },
+    {
+      "id": "section_08",
+      "y_start": 1153,
+      "y_end": 1385,
+      "height": 232
+    },
+    {
+      "id": "section_09",
+      "y_start": 1385,
+      "y_end": 1821,
+      "height": 436
+    }
+  ],
+  "guide_note": "Section boundaries are machine-detected guides. The reference PNG remains authoritative.",
+  "dynamic_content_policy": {
+    "menu_photos": "restaurant-provided; never bake reference photos into the template",
+    "gallery_photos": "restaurant-provided where supported",
+    "venue_or_hero_photos": "use restaurant-configurable content when available, keeping exact reference slot geometry"
+  },
+  "image_rules": {
+    "preserve_aspect_ratio": true,
+    "forbid_object_fit_fill": true,
+    "forbid_background_size_100_100_for_decorations": true,
+    "patterns": "repeat, never stretch"
+  }
+}

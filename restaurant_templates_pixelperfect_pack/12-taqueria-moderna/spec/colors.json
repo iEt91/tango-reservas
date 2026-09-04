@@ -1,0 +1,14 @@
+{
+  "template": "12-taqueria-moderna",
+  "dominant_reference_colors": [
+    "#fce4e4",
+    "#0c2484",
+    "#cc0c54",
+    "#cc3c0c",
+    "#0c0c0c",
+    "#e4e4b4",
+    "#3c240c",
+    "#fcb40c"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

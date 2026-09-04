@@ -1,0 +1,171 @@
+[
+  {
+    "template": "10-panaderia-brunch",
+    "path": "10-panaderia-brunch",
+    "asset_count": 49,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "ornaments": 5,
+      "icons": 28,
+      "ui": 9,
+      "dividers": 6,
+      "panels": 1
+    }
+  },
+  {
+    "template": "11-brasserie-art-deco",
+    "path": "11-brasserie-art-deco",
+    "asset_count": 41,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "ornaments": 3,
+      "icons": 30,
+      "dividers": 3,
+      "ui": 4,
+      "panels": 1
+    }
+  },
+  {
+    "template": "12-taqueria-moderna",
+    "path": "12-taqueria-moderna",
+    "asset_count": 77,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "icons": 59,
+      "dividers": 12,
+      "ui": 4,
+      "ornaments": 1,
+      "panels": 1
+    }
+  },
+  {
+    "template": "13-nordico-estacional",
+    "path": "13-nordico-estacional",
+    "asset_count": 44,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "icons": 32,
+      "ui": 4,
+      "dividers": 5,
+      "ornaments": 3
+    }
+  },
+  {
+    "template": "14-cevicheria-peruana",
+    "path": "14-cevicheria-peruana",
+    "asset_count": 63,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "dividers": 12,
+      "icons": 35,
+      "ornaments": 8,
+      "ui": 7,
+      "panels": 1
+    }
+  },
+  {
+    "template": "15-korean-barbecue",
+    "path": "15-korean-barbecue",
+    "asset_count": 62,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "ornaments": 1,
+      "icons": 52,
+      "dividers": 3,
+      "ui": 6
+    }
+  },
+  {
+    "template": "16-cocina-libanesa",
+    "path": "16-cocina-libanesa",
+    "asset_count": 102,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "icons": 85,
+      "dividers": 12,
+      "ornaments": 2,
+      "ui": 3
+    }
+  },
+  {
+    "template": "17-diner-retro",
+    "path": "17-diner-retro",
+    "asset_count": 52,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "ornaments": 3,
+      "ui": 15,
+      "icons": 28,
+      "dividers": 6
+    }
+  },
+  {
+    "template": "18-thai-street-food",
+    "path": "18-thai-street-food",
+    "asset_count": 35,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "icons": 26,
+      "dividers": 9
+    }
+  },
+  {
+    "template": "19-steakhouse-bodega",
+    "path": "19-steakhouse-bodega",
+    "asset_count": 63,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "icons": 50,
+      "ui": 3,
+      "dividers": 7,
+      "ornaments": 2,
+      "panels": 1
+    }
+  },
+  {
+    "template": "20-mariscos-sustentable",
+    "path": "20-mariscos-sustentable",
+    "asset_count": 61,
+    "reference_size": [
+      864,
+      1821
+    ],
+    "counts": {
+      "ornaments": 5,
+      "icons": 43,
+      "ui": 6,
+      "dividers": 6,
+      "panels": 1
+    }
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "template": "17-diner-retro",
+  "dominant_reference_colors": [
+    "#fcfce4",
+    "#0c3c3c",
+    "#0c0c0c",
+    "#e4e4cc",
+    "#3c2424",
+    "#9c0c0c",
+    "#6c3c24",
+    "#546c6c"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

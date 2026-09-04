@@ -29,9 +29,9 @@ import {
   V2WebTemplateContent,
   V2WebTemplateSectionId,
   createDefaultV2WebTemplateContent,
+  getDefaultV2WebTemplate,
   getV2WebTemplateById,
   mergeV2WebTemplateContent,
-  v2WebTemplates,
 } from "@/lib/v2/v2-web-templates";
 
 type EditorTab = "texts" | "images" | "sections";
@@ -73,7 +73,7 @@ function writeStoredTemplateContent(contentByTemplate: Record<string, V2WebTempl
 }
 
 export default function V2WebEditorPage() {
-  const [activeTemplateId, setActiveTemplateId] = useState(v2WebTemplates[0]?.id ?? "");
+  const [activeTemplateId, setActiveTemplateId] = useState(getDefaultV2WebTemplate().id);
   const [activeTab, setActiveTab] = useState<EditorTab>("texts");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
@@ -84,12 +84,12 @@ export default function V2WebEditorPage() {
   );
 
   const [content, setContent] = useState<V2WebTemplateContent>(() =>
-    createDefaultV2WebTemplateContent(v2WebTemplates[0])
+    createDefaultV2WebTemplateContent(getDefaultV2WebTemplate())
   );
 
   useEffect(() => {
     const storedTemplateId =
-      window.localStorage.getItem(V2_WEB_TEMPLATE_STORAGE_KEY) ?? v2WebTemplates[0].id;
+      window.localStorage.getItem(V2_WEB_TEMPLATE_STORAGE_KEY) ?? getDefaultV2WebTemplate().id;
     const template = getV2WebTemplateById(storedTemplateId);
     const storedContent = readStoredTemplateContent()[template.id];
 

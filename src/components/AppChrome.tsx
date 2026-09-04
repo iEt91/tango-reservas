@@ -11,7 +11,15 @@ type AppChromeProps = {
 };
 
 function shouldHideGlobalChrome(pathname: string) {
-  return pathname.startsWith("/local") || pathname.startsWith("/auth");
+  if (pathname.startsWith("/local") || pathname.startsWith("/auth")) return true;
+
+  const firstSegment = pathname.split("/").filter(Boolean)[0];
+  const applicationRoutes = new Set(["admin", "api", "dashboard", "historial"]);
+
+  // Los slugs de primer nivel representan la web pública de cada local.
+  // Su propia plantilla incluye navegación y pie, por lo que no debe envolverse
+  // con la barra técnica de Tango Reservas.
+  return Boolean(firstSegment && !applicationRoutes.has(firstSegment));
 }
 
 export function AppChrome({ children }: AppChromeProps) {

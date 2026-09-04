@@ -1,0 +1,14 @@
+{
+  "template": "13-nordico-estacional",
+  "dominant_reference_colors": [
+    "#fce4e4",
+    "#0c243c",
+    "#0c546c",
+    "#e4ccb4",
+    "#0c849c",
+    "#9cb4cc",
+    "#9c9c9c",
+    "#ccb49c"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

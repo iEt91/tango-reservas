@@ -1,0 +1,77 @@
+{
+  "template": "14-cevicheria-peruana",
+  "reference": {
+    "file": "reference/reference.png",
+    "width": 864,
+    "height": 1821
+  },
+  "reference_scale_rule": "Implement at native 864px width first; scale uniformly only after pixel matching.",
+  "detected_section_guides": [
+    {
+      "id": "section_01",
+      "y_start": 0,
+      "y_end": 120,
+      "height": 120
+    },
+    {
+      "id": "section_02",
+      "y_start": 120,
+      "y_end": 248,
+      "height": 128
+    },
+    {
+      "id": "section_03",
+      "y_start": 248,
+      "y_end": 328,
+      "height": 80
+    },
+    {
+      "id": "section_04",
+      "y_start": 328,
+      "y_end": 672,
+      "height": 344
+    },
+    {
+      "id": "section_05",
+      "y_start": 672,
+      "y_end": 864,
+      "height": 192
+    },
+    {
+      "id": "section_06",
+      "y_start": 864,
+      "y_end": 1417,
+      "height": 553
+    },
+    {
+      "id": "section_07",
+      "y_start": 1417,
+      "y_end": 1553,
+      "height": 136
+    },
+    {
+      "id": "section_08",
+      "y_start": 1553,
+      "y_end": 1741,
+      "height": 188
+    },
+    {
+      "id": "section_09",
+      "y_start": 1741,
+      "y_end": 1821,
+      "height": 80
+    }
+  ],
+  "guide_note": "Section boundaries are machine-detected guides. The reference PNG remains authoritative.",
+  "dynamic_content_policy": {
+    "menu_photos": "restaurant-provided; never bake reference photos into the template",
+    "gallery_photos": "restaurant-provided where supported",
+    "venue_or_hero_photos": "use restaurant-configurable content when available, keeping exact reference slot geometry"
+  },
+  "image_rules": {
+    "preserve_aspect_ratio": true,
+    "forbid_object_fit_fill": true,
+    "forbid_background_size_100_100_for_decorations": true,
+    "patterns": "repeat, never stretch"
+  }
+}

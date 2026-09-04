@@ -1,0 +1,12 @@
+{
+  "template": "18-thai-street-food",
+  "dominant_reference_colors": [
+    "#0c0c0c",
+    "#3c240c",
+    "#543c24",
+    "#84543c",
+    "#6c240c",
+    "#9c6c54"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}
