@@ -2,7 +2,7 @@
 
 ## Alcance
 
-La migración `20260802_003_business_identity_read_rls.sql` abre únicamente la
+La migración `20260802000300_003_business_identity_read_rls.sql` abre únicamente la
 lectura autenticada de:
 
 - `public.businesses`;

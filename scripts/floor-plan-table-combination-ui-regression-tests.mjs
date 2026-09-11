@@ -9,7 +9,7 @@ const files = {
   helper:
     "src/lib/floor-plan/v2-floor-table-combination.ts",
   migration:
-    "supabase/migrations/20260804_010_floor_plan_write_rpc.sql",
+    "supabase/migrations/20260804001000_010_floor_plan_write_rpc.sql",
   package: "package.json",
   docs:
     "docs/database/FLOOR-PLAN-TABLE-COMBINATION-UI-CUTOVER.md",

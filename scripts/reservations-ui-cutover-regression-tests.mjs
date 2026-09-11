@@ -10,7 +10,7 @@ const files = {
   reader:
     "src/lib/data/server/business-reservations.ts",
   migration:
-    "supabase/migrations/20260804_009_reservations_write_rpc.sql",
+    "supabase/migrations/20260804000900_009_reservations_write_rpc.sql",
   package: "package.json",
   docs:
     "docs/database/RESERVATIONS-UI-CUTOVER.md",

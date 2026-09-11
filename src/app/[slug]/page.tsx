@@ -42,6 +42,12 @@ import { BistroContemporaryPublicSite } from "@/components/bistro/BistroContempo
 import { MediterraneanPizzeriaSite } from "@/components/restaurant-templates/MediterraneanPizzeriaSite";
 import { RestaurantTemplateSite, type RestaurantTemplateVariant } from "@/components/restaurant-templates/RestaurantTemplateSite";
 import { PanaderiaBrunchPublicSite } from "@/components/pixel-perfect/PanaderiaBrunchPublicSite";
+import { BrasserieArtDecoPublicSite } from "@/components/pixel-perfect/BrasserieArtDecoPublicSite";
+import { TaqueriaModernaPublicSite } from "@/components/pixel-perfect/TaqueriaModernaPublicSite";
+import { NordicoEstacionalPublicSite } from "@/components/pixel-perfect/NordicoEstacionalPublicSite";
+import { CevicheriaPeruanaPublicSite } from "@/components/pixel-perfect/CevicheriaPeruanaPublicSite";
+import { KoreanBarbecuePublicSite } from "@/components/pixel-perfect/KoreanBarbecuePublicSite";
+import { RestaurantPublicTemplateRenderer } from "@/components/public-templates/RestaurantPublicTemplateRenderer";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -2256,16 +2262,18 @@ export default function PublicTemplatePage() {
   );
 
   const publicMapQuery = `${publicWebConfig.businessName} ${publicWebConfig.address}`;
-  const isPopArtTemplate = isTemplateHydrated && activeTemplate.id === "pop-art-maximalista";
-  const isBistroTemplate = isTemplateHydrated && activeTemplate.id === "bistro-contemporaneo";
-  const isMediterraneanPizzeriaTemplate = isTemplateHydrated && activeTemplate.id === "pizzeria-mediterranea";
-  const isPixelPerfectBakeryTemplate = isTemplateHydrated && activeTemplate.id === "10-panaderia-brunch";
-  const restaurantTemplateIds: RestaurantTemplateVariant[] = [
-    "mediterraneo-costero", "izakaya-japones", "trattoria-italiana", "parrilla-argentina", "cafe-vegetal",
-    "menu-degustacion", "pizzeria-napolitana", "sushi-omakase",
-  ];
-  const isRestaurantTemplate = isTemplateHydrated && restaurantTemplateIds.includes(activeTemplate.id as RestaurantTemplateVariant);
-  const isCustomTemplate = isPopArtTemplate || isBistroTemplate || isMediterraneanPizzeriaTemplate || isPixelPerfectBakeryTemplate || isRestaurantTemplate;
+  // El renderer único toma el control de toda la página pública para las 50 plantillas.
+  const isCustomTemplate = isTemplateHydrated;
+  const isPopArtTemplate = false;
+  const isBistroTemplate = activeTemplate.id === "01-bistro-contemporaneo";
+  const isMediterraneanPizzeriaTemplate = false;
+  const isPixelPerfectBakeryTemplate = false;
+  const isPixelPerfectBrasserieTemplate = false;
+  const isPixelPerfectTaqueriaTemplate = false;
+  const isPixelPerfectNordicoTemplate = false;
+  const isPixelPerfectCevicheriaTemplate = false;
+  const isPixelPerfectKoreanBarbecueTemplate = false;
+  const isRestaurantTemplate = false;
 
   return (
     <main className="min-h-screen bg-[#15110d] text-[#f4ead8]">
@@ -2806,6 +2814,35 @@ export default function PublicTemplatePage() {
         }
       `}</style>
 
+      {isTemplateHydrated && !isBistroTemplate ? (
+        <RestaurantPublicTemplateRenderer
+          template={activeTemplate}
+          businessName={publicWebConfig.businessName}
+          eyebrow={content.textValues.heroEyebrow || publicWebConfig.heroEyebrow}
+          title={content.textValues.heroTitle || publicWebConfig.heroTitle}
+          subtitle={content.textValues.heroSubtitle || publicWebConfig.heroSubtitle}
+          description={publicWebConfig.description}
+          address={publicWebConfig.address}
+          phone={publicWebConfig.phone}
+          instagram={publicWebConfig.instagram}
+          showMenu={publicWebConfig.showMenu}
+          showReservations={publicWebConfig.showReservations}
+          showDelivery={publicWebConfig.showDelivery}
+          showGallery={publicWebConfig.showGallery}
+          bookingWindowDays={localConfig.bookingWindowDays}
+          durationMinutes={localConfig.standardDurationMinutes}
+          capacity={publicCapacity}
+          menuItems={publicFeaturedMenuItems}
+          imageValues={content.imageValues}
+          reservationForm={reservationForm}
+          availableTimes={publicAvailableTimeSlots}
+          reservationError={reservationError}
+          onOpenOrder={() => setIsOrderPopupOpen(true)}
+          onReservationChange={updateReservationForm}
+          onReservationSubmit={handlePublicReservationSubmit}
+        />
+      ) : null}
+
       {isPopArtTemplate ? (
         <PopArtPublicSite
           businessName={publicWebConfig.businessName}
@@ -2916,6 +2953,146 @@ export default function PublicTemplatePage() {
         />
       ) : null}
 
+      {isPixelPerfectBrasserieTemplate ? (
+        <BrasserieArtDecoPublicSite
+          businessName={publicWebConfig.businessName}
+          eyebrow={content.textValues.heroEyebrow || publicWebConfig.heroEyebrow}
+          title={content.textValues.heroTitle || publicWebConfig.heroTitle}
+          subtitle={content.textValues.heroSubtitle || publicWebConfig.heroSubtitle}
+          description={publicWebConfig.description}
+          address={publicWebConfig.address}
+          phone={publicWebConfig.phone}
+          instagram={publicWebConfig.instagram}
+          showMenu={publicWebConfig.showMenu}
+          showReservations={publicWebConfig.showReservations}
+          showDelivery={publicWebConfig.showDelivery}
+          showGallery={publicWebConfig.showGallery}
+          bookingWindowDays={localConfig.bookingWindowDays}
+          durationMinutes={localConfig.standardDurationMinutes}
+          capacity={publicCapacity}
+          menuItems={publicFeaturedMenuItems}
+          imageValues={content.imageValues}
+          reservationForm={reservationForm}
+          availableTimes={publicAvailableTimeSlots}
+          reservationError={reservationError}
+          onOpenOrder={() => setIsOrderPopupOpen(true)}
+          onReservationChange={updateReservationForm}
+          onReservationSubmit={handlePublicReservationSubmit}
+        />
+      ) : null}
+
+      {isPixelPerfectTaqueriaTemplate ? (
+        <TaqueriaModernaPublicSite
+          businessName={publicWebConfig.businessName}
+          eyebrow={content.textValues.heroEyebrow || publicWebConfig.heroEyebrow}
+          title={content.textValues.heroTitle || publicWebConfig.heroTitle}
+          subtitle={content.textValues.heroSubtitle || publicWebConfig.heroSubtitle}
+          description={publicWebConfig.description}
+          address={publicWebConfig.address}
+          phone={publicWebConfig.phone}
+          instagram={publicWebConfig.instagram}
+          showMenu={publicWebConfig.showMenu}
+          showReservations={publicWebConfig.showReservations}
+          showDelivery={publicWebConfig.showDelivery}
+          showGallery={publicWebConfig.showGallery}
+          bookingWindowDays={localConfig.bookingWindowDays}
+          durationMinutes={localConfig.standardDurationMinutes}
+          capacity={publicCapacity}
+          menuItems={publicFeaturedMenuItems}
+          imageValues={content.imageValues}
+          reservationForm={reservationForm}
+          availableTimes={publicAvailableTimeSlots}
+          reservationError={reservationError}
+          onOpenOrder={() => setIsOrderPopupOpen(true)}
+          onReservationChange={updateReservationForm}
+          onReservationSubmit={handlePublicReservationSubmit}
+        />
+      ) : null}
+
+      {isPixelPerfectNordicoTemplate ? (
+        <NordicoEstacionalPublicSite
+          businessName={publicWebConfig.businessName}
+          eyebrow={content.textValues.heroEyebrow || publicWebConfig.heroEyebrow}
+          title={content.textValues.heroTitle || publicWebConfig.heroTitle}
+          subtitle={content.textValues.heroSubtitle || publicWebConfig.heroSubtitle}
+          description={publicWebConfig.description}
+          address={publicWebConfig.address}
+          phone={publicWebConfig.phone}
+          instagram={publicWebConfig.instagram}
+          showMenu={publicWebConfig.showMenu}
+          showReservations={publicWebConfig.showReservations}
+          showDelivery={publicWebConfig.showDelivery}
+          showGallery={publicWebConfig.showGallery}
+          bookingWindowDays={localConfig.bookingWindowDays}
+          durationMinutes={localConfig.standardDurationMinutes}
+          capacity={publicCapacity}
+          menuItems={publicFeaturedMenuItems}
+          imageValues={content.imageValues}
+          reservationForm={reservationForm}
+          availableTimes={publicAvailableTimeSlots}
+          reservationError={reservationError}
+          onOpenOrder={() => setIsOrderPopupOpen(true)}
+          onReservationChange={updateReservationForm}
+          onReservationSubmit={handlePublicReservationSubmit}
+        />
+      ) : null}
+
+      {isPixelPerfectCevicheriaTemplate ? (
+        <CevicheriaPeruanaPublicSite
+          businessName={publicWebConfig.businessName}
+          eyebrow={content.textValues.heroEyebrow || publicWebConfig.heroEyebrow}
+          title={content.textValues.heroTitle || publicWebConfig.heroTitle}
+          subtitle={content.textValues.heroSubtitle || publicWebConfig.heroSubtitle}
+          description={publicWebConfig.description}
+          address={publicWebConfig.address}
+          phone={publicWebConfig.phone}
+          instagram={publicWebConfig.instagram}
+          showMenu={publicWebConfig.showMenu}
+          showReservations={publicWebConfig.showReservations}
+          showDelivery={publicWebConfig.showDelivery}
+          showGallery={publicWebConfig.showGallery}
+          bookingWindowDays={localConfig.bookingWindowDays}
+          durationMinutes={localConfig.standardDurationMinutes}
+          capacity={publicCapacity}
+          menuItems={publicFeaturedMenuItems}
+          imageValues={content.imageValues}
+          reservationForm={reservationForm}
+          availableTimes={publicAvailableTimeSlots}
+          reservationError={reservationError}
+          onOpenOrder={() => setIsOrderPopupOpen(true)}
+          onReservationChange={updateReservationForm}
+          onReservationSubmit={handlePublicReservationSubmit}
+        />
+      ) : null}
+
+      {isPixelPerfectKoreanBarbecueTemplate ? (
+        <KoreanBarbecuePublicSite
+          businessName={publicWebConfig.businessName}
+          eyebrow={content.textValues.heroEyebrow || publicWebConfig.heroEyebrow}
+          title={content.textValues.heroTitle || publicWebConfig.heroTitle}
+          subtitle={content.textValues.heroSubtitle || publicWebConfig.heroSubtitle}
+          description={publicWebConfig.description}
+          address={publicWebConfig.address}
+          phone={publicWebConfig.phone}
+          instagram={publicWebConfig.instagram}
+          showMenu={publicWebConfig.showMenu}
+          showReservations={publicWebConfig.showReservations}
+          showDelivery={publicWebConfig.showDelivery}
+          showGallery={publicWebConfig.showGallery}
+          bookingWindowDays={localConfig.bookingWindowDays}
+          durationMinutes={localConfig.standardDurationMinutes}
+          capacity={publicCapacity}
+          menuItems={publicFeaturedMenuItems}
+          imageValues={content.imageValues}
+          reservationForm={reservationForm}
+          availableTimes={publicAvailableTimeSlots}
+          reservationError={reservationError}
+          onOpenOrder={() => setIsOrderPopupOpen(true)}
+          onReservationChange={updateReservationForm}
+          onReservationSubmit={handlePublicReservationSubmit}
+        />
+      ) : null}
+
       {isRestaurantTemplate ? (
         <RestaurantTemplateSite
           variant={activeTemplate.id as RestaurantTemplateVariant}
@@ -2949,9 +3126,9 @@ export default function PublicTemplatePage() {
 
       {content.visibleSections.hero ? (
         <section id="inicio" className="relative min-h-[760px] overflow-hidden bg-[#110e0b]">
-          {isTemplateHydrated ? (
+          {isTemplateHydrated && content.imageValues.hero ? (
             <Image
-              src={content.imageValues.hero ?? activeTemplate.previewImage}
+              src={content.imageValues.hero}
               alt={publicWebConfig.heroTitle || content.textValues.heroTitle}
               fill
               priority

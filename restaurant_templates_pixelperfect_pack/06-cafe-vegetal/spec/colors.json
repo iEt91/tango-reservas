@@ -1,0 +1,14 @@
+{
+  "template": "06-cafe-vegetal",
+  "dominant_reference_colors": [
+    "#f7f3ee",
+    "#a1a786",
+    "#ebe9dc",
+    "#6e5932",
+    "#7d8051",
+    "#383617",
+    "#a68f69",
+    "#bfb393"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

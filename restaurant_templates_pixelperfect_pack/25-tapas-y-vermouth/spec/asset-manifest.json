@@ -1,0 +1,373 @@
+{
+  "templateId": "25-tapas-y-vermouth",
+  "reference": "reference/reference.png",
+  "design": {
+    "width": 864,
+    "height": 1821
+  },
+  "contentPolicy": {
+    "restaurantPhotographyIsDynamic": true,
+    "menuPhotosAreNotTemplateAssets": true,
+    "galleryPhotosAreNotTemplateAssets": true,
+    "referenceImageMayNotBeUsedAsPublicContentFallback": true
+  },
+  "assets": [
+    {
+      "file": "assets/ornaments/header_sunburst.png",
+      "category": "ornaments",
+      "section": "header",
+      "sourceBBox": [
+        21,
+        17,
+        59,
+        52
+      ],
+      "width": 34,
+      "height": 35,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/header_terracotta_pill.png",
+      "category": "ui",
+      "section": "header",
+      "sourceBBox": [
+        740,
+        19,
+        833,
+        48
+      ],
+      "width": 90,
+      "height": 29,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/hero_palm_leaf_left.png",
+      "category": "ornaments",
+      "section": "hero",
+      "sourceBBox": [
+        0,
+        62,
+        222,
+        259
+      ],
+      "width": 222,
+      "height": 197,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/hero_terracotta_circle.png",
+      "category": "ornaments",
+      "section": "hero",
+      "sourceBBox": [
+        159,
+        61,
+        304,
+        207
+      ],
+      "width": 145,
+      "height": 146,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/hero_terracotta_button.png",
+      "category": "ui",
+      "section": "hero",
+      "sourceBBox": [
+        65,
+        327,
+        159,
+        356
+      ],
+      "width": 94,
+      "height": 22,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/hero_outline_button.png",
+      "category": "ui",
+      "section": "hero",
+      "sourceBBox": [
+        172,
+        326,
+        268,
+        356
+      ],
+      "width": 93,
+      "height": 23,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/dividers/menu_sun_divider.png",
+      "category": "dividers",
+      "section": "menu",
+      "sourceBBox": [
+        360,
+        557,
+        507,
+        602
+      ],
+      "width": 132,
+      "height": 29,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/category_olives.png",
+      "category": "icons",
+      "section": "categories",
+      "sourceBBox": [
+        69,
+        826,
+        139,
+        917
+      ],
+      "width": 67,
+      "height": 59,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/category_fish.png",
+      "category": "icons",
+      "section": "categories",
+      "sourceBBox": [
+        177,
+        827,
+        246,
+        917
+      ],
+      "width": 37,
+      "height": 35,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/category_chili.png",
+      "category": "icons",
+      "section": "categories",
+      "sourceBBox": [
+        295,
+        827,
+        362,
+        917
+      ],
+      "width": 15,
+      "height": 48,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/category_cheese.png",
+      "category": "icons",
+      "section": "categories",
+      "sourceBBox": [
+        410,
+        827,
+        480,
+        917
+      ],
+      "width": 22,
+      "height": 36,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/category_ham.png",
+      "category": "icons",
+      "section": "categories",
+      "sourceBBox": [
+        527,
+        827,
+        595,
+        917
+      ],
+      "width": 10,
+      "height": 13,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/category_drink.png",
+      "category": "icons",
+      "section": "categories",
+      "sourceBBox": [
+        647,
+        827,
+        714,
+        917
+      ],
+      "width": 4,
+      "height": 11,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/experience_table_line_art.png",
+      "category": "ornaments",
+      "section": "experience",
+      "sourceBBox": [
+        153,
+        1030,
+        385,
+        1212
+      ],
+      "width": 165,
+      "height": 164,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/experience_terracotta_button.png",
+      "category": "ui",
+      "section": "experience",
+      "sourceBBox": [
+        53,
+        1159,
+        141,
+        1191
+      ],
+      "width": 85,
+      "height": 31,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/gallery_palm_leaf_left.png",
+      "category": "ornaments",
+      "section": "gallery",
+      "sourceBBox": [
+        0,
+        1307,
+        147,
+        1436
+      ],
+      "width": 147,
+      "height": 119,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/contact_pin_terracotta.png",
+      "category": "icons",
+      "section": "map_contact",
+      "sourceBBox": [
+        44,
+        1502,
+        70,
+        1531
+      ],
+      "width": 21,
+      "height": 7,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/contact_clock_terracotta.png",
+      "category": "icons",
+      "section": "map_contact",
+      "sourceBBox": [
+        44,
+        1566,
+        70,
+        1594
+      ],
+      "width": 18,
+      "height": 5,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/contact_calendar_terracotta.png",
+      "category": "icons",
+      "section": "map_contact",
+      "sourceBBox": [
+        44,
+        1624,
+        70,
+        1656
+      ],
+      "width": 20,
+      "height": 5,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/footer_dark_green_wave.png",
+      "category": "ornaments",
+      "section": "footer",
+      "sourceBBox": [
+        0,
+        1698,
+        864,
+        1821
+      ],
+      "width": 864,
+      "height": 123,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": false,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/footer_sunburst.png",
+      "category": "ornaments",
+      "section": "footer",
+      "sourceBBox": [
+        775,
+        1757,
+        820,
+        1800
+      ],
+      "width": 38,
+      "height": 39,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    }
+  ]
+}

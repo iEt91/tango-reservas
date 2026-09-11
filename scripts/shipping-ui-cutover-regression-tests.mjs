@@ -18,7 +18,7 @@ const paths = {
   e33bRegression:
     "scripts/kitchen-ui-cutover-regression-tests.mjs",
   migration:
-    "supabase/migrations/20260811_022_shipping_orders_write.sql",
+    "supabase/migrations/20260811002200_022_shipping_orders_write.sql",
   rollback:
     "supabase/rollbacks/20260811_022_shipping_orders_write.down.sql",
   docs: "docs/database/SHIPPING-UI-CUTOVER.md",

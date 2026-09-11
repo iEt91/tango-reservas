@@ -21,12 +21,11 @@ durante una presentación.
 
 Desde la raíz del repositorio ejecutar:
 
-`INICIAR_DEMO_DEMURU.bat`
+1. `npm run demo:doctor`;
+2. `npm run demo:start`.
 
-El launcher hace dos cosas:
-
-1. ejecuta `npm run demo:doctor`;
-2. ejecuta `npm run demo:start`.
+El primer comando valida los datos de la demo. El segundo sólo inicia la demo
+cuando esa validación terminó correctamente.
 
 El doctor transpila y ejecuta el Master Data y el historial operativo reales,
 genera el snapshot con la fecha actual y verifica:

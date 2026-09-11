@@ -1,0 +1,783 @@
+{
+  "kit_name": "40_Wabi_Sabi_Ceramic_Zen_Kit",
+  "source_file": "40_wabi_sabi_ceramic_zen_asset_sheet.png",
+  "has_transparency": true,
+  "sections": [
+    {
+      "file": "assets/sections/section_01.png",
+      "bbox": [
+        843,
+        20,
+        81,
+        280
+      ]
+    },
+    {
+      "file": "assets/sections/section_02.png",
+      "bbox": [
+        620,
+        23,
+        208,
+        166
+      ]
+    },
+    {
+      "file": "assets/sections/section_03.png",
+      "bbox": [
+        925,
+        27,
+        75,
+        74
+      ]
+    },
+    {
+      "file": "assets/sections/section_04.png",
+      "bbox": [
+        32,
+        39,
+        331,
+        317
+      ]
+    },
+    {
+      "file": "assets/sections/section_05.png",
+      "bbox": [
+        926,
+        97,
+        74,
+        73
+      ]
+    },
+    {
+      "file": "assets/sections/section_06.png",
+      "bbox": [
+        402,
+        148,
+        450,
+        156
+      ]
+    },
+    {
+      "file": "assets/sections/section_07.png",
+      "bbox": [
+        926,
+        166,
+        74,
+        73
+      ]
+    },
+    {
+      "file": "assets/sections/section_08.png",
+      "bbox": [
+        286,
+        264,
+        393,
+        211
+      ]
+    },
+    {
+      "file": "assets/sections/section_09.png",
+      "bbox": [
+        876,
+        295,
+        120,
+        134
+      ]
+    },
+    {
+      "file": "assets/sections/section_10.png",
+      "bbox": [
+        676,
+        315,
+        195,
+        131
+      ]
+    },
+    {
+      "file": "assets/sections/section_11.png",
+      "bbox": [
+        19,
+        332,
+        258,
+        346
+      ]
+    },
+    {
+      "file": "assets/sections/section_12.png",
+      "bbox": [
+        186,
+        418,
+        263,
+        242
+      ]
+    },
+    {
+      "file": "assets/sections/section_13.png",
+      "bbox": [
+        733,
+        437,
+        270,
+        193
+      ]
+    },
+    {
+      "file": "assets/sections/section_14.png",
+      "bbox": [
+        576,
+        452,
+        148,
+        156
+      ]
+    },
+    {
+      "file": "assets/sections/section_15.png",
+      "bbox": [
+        468,
+        513,
+        111,
+        103
+      ]
+    },
+    {
+      "file": "assets/sections/section_16.png",
+      "bbox": [
+        306,
+        555,
+        161,
+        104
+      ]
+    },
+    {
+      "file": "assets/sections/section_17.png",
+      "bbox": [
+        541,
+        626,
+        313,
+        197
+      ]
+    },
+    {
+      "file": "assets/sections/section_18.png",
+      "bbox": [
+        435,
+        631,
+        103,
+        104
+      ]
+    },
+    {
+      "file": "assets/sections/section_19.png",
+      "bbox": [
+        851,
+        633,
+        153,
+        394
+      ]
+    },
+    {
+      "file": "assets/sections/section_20.png",
+      "bbox": [
+        176,
+        651,
+        255,
+        391
+      ]
+    },
+    {
+      "file": "assets/sections/section_21.png",
+      "bbox": [
+        24,
+        675,
+        153,
+        363
+      ]
+    },
+    {
+      "file": "assets/sections/section_22.png",
+      "bbox": [
+        437,
+        736,
+        116,
+        118
+      ]
+    },
+    {
+      "file": "assets/sections/section_23.png",
+      "bbox": [
+        557,
+        819,
+        293,
+        43
+      ]
+    },
+    {
+      "file": "assets/sections/section_24.png",
+      "bbox": [
+        435,
+        856,
+        419,
+        176
+      ]
+    },
+    {
+      "file": "assets/sections/section_25.png",
+      "bbox": [
+        27,
+        1035,
+        347,
+        234
+      ]
+    },
+    {
+      "file": "assets/sections/section_26.png",
+      "bbox": [
+        644,
+        1035,
+        357,
+        240
+      ]
+    },
+    {
+      "file": "assets/sections/section_27.png",
+      "bbox": [
+        369,
+        1040,
+        281,
+        220
+      ]
+    },
+    {
+      "file": "assets/sections/section_28.png",
+      "bbox": [
+        27,
+        1261,
+        326,
+        237
+      ]
+    },
+    {
+      "file": "assets/sections/section_29.png",
+      "bbox": [
+        749,
+        1291,
+        163,
+        167
+      ]
+    },
+    {
+      "file": "assets/sections/section_30.png",
+      "bbox": [
+        598,
+        1401,
+        140,
+        46
+      ]
+    },
+    {
+      "file": "assets/sections/section_31.png",
+      "bbox": [
+        598,
+        1441,
+        195,
+        63
+      ]
+    }
+  ],
+  "components": [
+    {
+      "file": "assets/decor/decor_001.png",
+      "category": "decor",
+      "source_section": "section_01.png",
+      "bbox_in_section": [
+        0,
+        0,
+        81,
+        280
+      ]
+    },
+    {
+      "file": "assets/photos/photo_002.png",
+      "category": "photos",
+      "source_section": "section_02.png",
+      "bbox_in_section": [
+        0,
+        0,
+        208,
+        166
+      ]
+    },
+    {
+      "file": "assets/icons/icon_003.png",
+      "category": "icons",
+      "source_section": "section_03.png",
+      "bbox_in_section": [
+        0,
+        0,
+        75,
+        74
+      ]
+    },
+    {
+      "file": "assets/photos/photo_004.png",
+      "category": "photos",
+      "source_section": "section_04.png",
+      "bbox_in_section": [
+        2,
+        2,
+        327,
+        313
+      ]
+    },
+    {
+      "file": "assets/icons/icon_005.png",
+      "category": "icons",
+      "source_section": "section_04.png",
+      "bbox_in_section": [
+        256,
+        249,
+        75,
+        68
+      ]
+    },
+    {
+      "file": "assets/icons/icon_006.png",
+      "category": "icons",
+      "source_section": "section_05.png",
+      "bbox_in_section": [
+        0,
+        0,
+        74,
+        73
+      ]
+    },
+    {
+      "file": "assets/ui/ui_007.png",
+      "category": "ui",
+      "source_section": "section_06.png",
+      "bbox_in_section": [
+        224,
+        0,
+        142,
+        39
+      ]
+    },
+    {
+      "file": "assets/photos/photo_008.png",
+      "category": "photos",
+      "source_section": "section_06.png",
+      "bbox_in_section": [
+        2,
+        2,
+        446,
+        152
+      ]
+    },
+    {
+      "file": "assets/ui/ui_009.png",
+      "category": "ui",
+      "source_section": "section_06.png",
+      "bbox_in_section": [
+        0,
+        118,
+        253,
+        38
+      ]
+    },
+    {
+      "file": "assets/icons/icon_010.png",
+      "category": "icons",
+      "source_section": "section_07.png",
+      "bbox_in_section": [
+        0,
+        0,
+        74,
+        73
+      ]
+    },
+    {
+      "file": "assets/icons/icon_011.png",
+      "category": "icons",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        0,
+        0,
+        58,
+        68
+      ]
+    },
+    {
+      "file": "assets/photos/photo_012.png",
+      "category": "photos",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        2,
+        2,
+        389,
+        207
+      ]
+    },
+    {
+      "file": "assets/icons/icon_013.png",
+      "category": "icons",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        0,
+        156,
+        44,
+        55
+      ]
+    },
+    {
+      "file": "assets/icons/icon_014.png",
+      "category": "icons",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        297,
+        190,
+        96,
+        21
+      ]
+    },
+    {
+      "file": "assets/decor/decor_015.png",
+      "category": "decor",
+      "source_section": "section_09.png",
+      "bbox_in_section": [
+        0,
+        0,
+        120,
+        134
+      ]
+    },
+    {
+      "file": "assets/photos/photo_016.png",
+      "category": "photos",
+      "source_section": "section_10.png",
+      "bbox_in_section": [
+        0,
+        0,
+        195,
+        131
+      ]
+    },
+    {
+      "file": "assets/icons/icon_017.png",
+      "category": "icons",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        127,
+        0,
+        117,
+        22
+      ]
+    },
+    {
+      "file": "assets/decor/decor_018.png",
+      "category": "decor",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        2,
+        2,
+        254,
+        342
+      ]
+    },
+    {
+      "file": "assets/icons/icon_019.png",
+      "category": "icons",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        225,
+        127,
+        33,
+        55
+      ]
+    },
+    {
+      "file": "assets/icons/icon_020.png",
+      "category": "icons",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        169,
+        210,
+        89,
+        116
+      ]
+    },
+    {
+      "file": "assets/icons/icon_021.png",
+      "category": "icons",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        159,
+        321,
+        99,
+        25
+      ]
+    },
+    {
+      "file": "assets/icons/icon_022.png",
+      "category": "icons",
+      "source_section": "section_12.png",
+      "bbox_in_section": [
+        0,
+        0,
+        64,
+        66
+      ]
+    },
+    {
+      "file": "assets/icons/icon_023.png",
+      "category": "icons",
+      "source_section": "section_12.png",
+      "bbox_in_section": [
+        153,
+        0,
+        110,
+        53
+      ]
+    },
+    {
+      "file": "assets/photos/photo_024.png",
+      "category": "photos",
+      "source_section": "section_12.png",
+      "bbox_in_section": [
+        2,
+        2,
+        259,
+        238
+      ]
+    },
+    {
+      "file": "assets/ui/ui_025.png",
+      "category": "ui",
+      "source_section": "section_12.png",
+      "bbox_in_section": [
+        122,
+        139,
+        141,
+        100
+      ]
+    },
+    {
+      "file": "assets/photos/photo_026.png",
+      "category": "photos",
+      "source_section": "section_13.png",
+      "bbox_in_section": [
+        0,
+        0,
+        270,
+        193
+      ]
+    },
+    {
+      "file": "assets/decor/decor_027.png",
+      "category": "decor",
+      "source_section": "section_14.png",
+      "bbox_in_section": [
+        0,
+        0,
+        148,
+        156
+      ]
+    },
+    {
+      "file": "assets/icons/icon_028.png",
+      "category": "icons",
+      "source_section": "section_15.png",
+      "bbox_in_section": [
+        0,
+        0,
+        111,
+        103
+      ]
+    },
+    {
+      "file": "assets/ui/ui_029.png",
+      "category": "ui",
+      "source_section": "section_16.png",
+      "bbox_in_section": [
+        2,
+        2,
+        157,
+        100
+      ]
+    },
+    {
+      "file": "assets/icons/icon_030.png",
+      "category": "icons",
+      "source_section": "section_16.png",
+      "bbox_in_section": [
+        0,
+        17,
+        37,
+        41
+      ]
+    },
+    {
+      "file": "assets/photos/photo_031.png",
+      "category": "photos",
+      "source_section": "section_17.png",
+      "bbox_in_section": [
+        0,
+        0,
+        313,
+        197
+      ]
+    },
+    {
+      "file": "assets/icons/icon_032.png",
+      "category": "icons",
+      "source_section": "section_18.png",
+      "bbox_in_section": [
+        0,
+        0,
+        103,
+        104
+      ]
+    },
+    {
+      "file": "assets/decor/decor_033.png",
+      "category": "decor",
+      "source_section": "section_19.png",
+      "bbox_in_section": [
+        0,
+        0,
+        153,
+        394
+      ]
+    },
+    {
+      "file": "assets/photos/photo_034.png",
+      "category": "photos",
+      "source_section": "section_20.png",
+      "bbox_in_section": [
+        0,
+        0,
+        255,
+        391
+      ]
+    },
+    {
+      "file": "assets/decor/decor_035.png",
+      "category": "decor",
+      "source_section": "section_21.png",
+      "bbox_in_section": [
+        0,
+        0,
+        153,
+        363
+      ]
+    },
+    {
+      "file": "assets/icons/icon_036.png",
+      "category": "icons",
+      "source_section": "section_22.png",
+      "bbox_in_section": [
+        0,
+        0,
+        116,
+        118
+      ]
+    },
+    {
+      "file": "assets/ui/ui_037.png",
+      "category": "ui",
+      "source_section": "section_23.png",
+      "bbox_in_section": [
+        0,
+        0,
+        293,
+        43
+      ]
+    },
+    {
+      "file": "assets/photos/photo_038.png",
+      "category": "photos",
+      "source_section": "section_24.png",
+      "bbox_in_section": [
+        0,
+        0,
+        419,
+        176
+      ]
+    },
+    {
+      "file": "assets/photos/photo_039.png",
+      "category": "photos",
+      "source_section": "section_25.png",
+      "bbox_in_section": [
+        0,
+        0,
+        347,
+        234
+      ]
+    },
+    {
+      "file": "assets/photos/photo_040.png",
+      "category": "photos",
+      "source_section": "section_26.png",
+      "bbox_in_section": [
+        0,
+        0,
+        357,
+        240
+      ]
+    },
+    {
+      "file": "assets/photos/photo_041.png",
+      "category": "photos",
+      "source_section": "section_27.png",
+      "bbox_in_section": [
+        0,
+        0,
+        281,
+        220
+      ]
+    },
+    {
+      "file": "assets/photos/photo_042.png",
+      "category": "photos",
+      "source_section": "section_28.png",
+      "bbox_in_section": [
+        0,
+        0,
+        326,
+        237
+      ]
+    },
+    {
+      "file": "assets/decor/decor_043.png",
+      "category": "decor",
+      "source_section": "section_29.png",
+      "bbox_in_section": [
+        0,
+        0,
+        163,
+        167
+      ]
+    },
+    {
+      "file": "assets/ui/ui_044.png",
+      "category": "ui",
+      "source_section": "section_30.png",
+      "bbox_in_section": [
+        0,
+        0,
+        140,
+        46
+      ]
+    },
+    {
+      "file": "assets/ui/ui_045.png",
+      "category": "ui",
+      "source_section": "section_31.png",
+      "bbox_in_section": [
+        0,
+        0,
+        195,
+        63
+      ]
+    }
+  ]
+}

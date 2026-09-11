@@ -4,6 +4,7 @@ import {
   readFile,
   writeFile,
 } from "node:fs/promises";
+import { assertDedicatedStagingProjectRef } from "./lib/staging-context.mjs";
 
 const stagingPath = ".env.staging.local";
 const localPath = ".env.local";
@@ -79,6 +80,8 @@ if (!url || !publicKey || !expectedProjectRef) {
 if (projectRefFromUrl(url) !== expectedProjectRef) {
   throw new Error("La URL pública no coincide con el project ref de staging.");
 }
+
+assertDedicatedStagingProjectRef(expectedProjectRef);
 
 if (!isPublicKey(publicKey)) {
   throw new Error("La clave seleccionada no es una clave pública válida.");

@@ -17,6 +17,7 @@ function unquote(value) {
 
 export async function loadLocalEnv(
   fileName = ".env.staging.local",
+  { override = false } = {},
 ) {
   const path = resolve(process.cwd(), fileName);
 
@@ -46,7 +47,7 @@ export async function loadLocalEnv(
     const key = line.slice(0, separator).trim();
     const value = unquote(line.slice(separator + 1).trim());
 
-    if (!(key in process.env)) {
+    if (override || !(key in process.env)) {
       process.env[key] = value;
     }
   }

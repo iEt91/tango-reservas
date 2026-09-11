@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const migrationPath =
-  "supabase/migrations/20260810_017_reservation_consumption_write.sql";
+  "supabase/migrations/20260810001700_017_reservation_consumption_write.sql";
 const rollbackPath =
   "supabase/rollbacks/20260810_017_reservation_consumption_write.down.sql";
 const postflightPath =
@@ -420,7 +420,7 @@ console.log(
 
 assert.match(
   manifest,
-  /20260810_017_reservation_consumption_write\.sql/u,
+  /20260810001700_017_reservation_consumption_write\.sql/u,
 );
 assert.match(
   manifest,

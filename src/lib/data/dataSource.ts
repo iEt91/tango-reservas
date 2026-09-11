@@ -7,5 +7,11 @@ export function getDataSource(): DataSource {
     return "supabase";
   }
 
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_DATA_SOURCE debe ser 'supabase' en producción.",
+    );
+  }
+
   return "local";
 }

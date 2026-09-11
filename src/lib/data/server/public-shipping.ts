@@ -1,4 +1,5 @@
 import { assertServerOnly } from "@/lib/security/server-only";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
   mapPublicShippingCreateResult,
@@ -38,6 +39,19 @@ function getServerClient() {
   if (!supabase) {
     throw new PublicShippingGatewayError(
       "El servicio de pedidos no está disponible.",
+      503,
+    );
+  }
+
+  return supabase;
+}
+
+function getPublicReadClient() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    throw new PublicShippingGatewayError(
+      "El menú público no está disponible.",
       503,
     );
   }
@@ -102,8 +116,7 @@ export async function getPublicShippingOrderingSnapshot(
     "getPublicShippingOrderingSnapshot",
   );
 
-  const supabase =
-    getServerClient();
+  const supabase = getPublicReadClient();
 
   const {
     data,

@@ -1,0 +1,77 @@
+{
+  "template": "09-sushi-omakase",
+  "reference": {
+    "file": "reference/reference.png",
+    "width": 864,
+    "height": 1821
+  },
+  "reference_scale_rule": "Implement at native 864px width first; scale uniformly only after pixel matching.",
+  "detected_section_guides": [
+    {
+      "id": "section_01",
+      "y_start": 0,
+      "y_end": 320,
+      "height": 320
+    },
+    {
+      "id": "section_02",
+      "y_start": 320,
+      "y_end": 399,
+      "height": 79
+    },
+    {
+      "id": "section_03",
+      "y_start": 399,
+      "y_end": 727,
+      "height": 328
+    },
+    {
+      "id": "section_04",
+      "y_start": 727,
+      "y_end": 987,
+      "height": 260
+    },
+    {
+      "id": "section_05",
+      "y_start": 987,
+      "y_end": 1247,
+      "height": 260
+    },
+    {
+      "id": "section_06",
+      "y_start": 1247,
+      "y_end": 1450,
+      "height": 203
+    },
+    {
+      "id": "section_07",
+      "y_start": 1450,
+      "y_end": 1578,
+      "height": 128
+    },
+    {
+      "id": "section_08",
+      "y_start": 1578,
+      "y_end": 1732,
+      "height": 154
+    },
+    {
+      "id": "section_09",
+      "y_start": 1732,
+      "y_end": 1821,
+      "height": 89
+    }
+  ],
+  "guide_note": "Section boundaries are machine-detected guides. The reference PNG remains authoritative.",
+  "dynamic_content_policy": {
+    "menu_photos": "restaurant-provided; never bake reference photos into the template",
+    "gallery_photos": "restaurant-provided where supported",
+    "venue_or_hero_photos": "use restaurant-configurable content when available, keeping exact reference slot geometry"
+  },
+  "image_rules": {
+    "preserve_aspect_ratio": true,
+    "forbid_object_fit_fill": true,
+    "forbid_background_size_100_100_for_decorations": true,
+    "patterns": "repeat, never stretch"
+  }
+}

@@ -39,6 +39,11 @@ const FIXTURE_IDS = {
   customerB: "50000000-0000-4000-8000-00000000000b",
   reservationA: "60000000-0000-4000-8000-00000000000a",
   reservationB: "60000000-0000-4000-8000-00000000000b",
+  menuCategoryA: "70000000-0000-4000-8000-00000000000a",
+  menuItemA: "71000000-0000-4000-8000-00000000000a",
+  stockProductA: "80000000-0000-4000-8000-00000000000a",
+  menuRecipeA: "90000000-0000-4000-8000-00000000000a",
+  menuRecipeIngredientA: "a0000000-0000-4000-8000-00000000000a",
 };
 
 async function findUserByEmail(email) {
@@ -319,6 +324,86 @@ async function ensureCustomer({
   return data.id;
 }
 
+async function ensurePublicOrderingFixture(businessId) {
+  const { error: activateError } = await admin
+    .from("businesses")
+    .update({ status: "active" })
+    .eq("id", businessId);
+
+  if (activateError) throw activateError;
+
+  const records = [
+    ["menu_categories", {
+      id: FIXTURE_IDS.menuCategoryA,
+      business_id: businessId,
+      name: "Fixture public ordering",
+      description: "Categoría exclusiva de staging",
+      sort_order: 1,
+      is_visible: true,
+      is_active: true,
+      archived_at: null,
+    }],
+    ["menu_items", {
+      id: FIXTURE_IDS.menuItemA,
+      business_id: businessId,
+      category_id: FIXTURE_IDS.menuCategoryA,
+      name: "Plato fixture público",
+      description: "Producto exclusivo de pruebas staging",
+      price: 1250,
+      status: "available",
+      is_visible: true,
+      is_featured: false,
+      image_url: "",
+      sort_order: 1,
+      archived_at: null,
+    }],
+    ["stock_products", {
+      id: FIXTURE_IDS.stockProductA,
+      business_id: businessId,
+      name: "Insumo fixture público",
+      category: "Staging",
+      supplier: "",
+      unit: "unidad",
+      unit_cost: 10,
+      alert_below: 0,
+      note: "Sólo para pruebas de pedidos públicos",
+      is_active: true,
+      archived_at: null,
+    }],
+    ["menu_recipes", {
+      id: FIXTURE_IDS.menuRecipeA,
+      business_id: businessId,
+      menu_item_id: FIXTURE_IDS.menuItemA,
+      name: "Receta fixture público",
+      preparation_time_seconds: 60,
+      revision: 1,
+    }],
+    ["menu_recipe_ingredients", {
+      id: FIXTURE_IDS.menuRecipeIngredientA,
+      business_id: businessId,
+      recipe_id: FIXTURE_IDS.menuRecipeA,
+      stock_product_id: FIXTURE_IDS.stockProductA,
+      quantity: 1,
+      unit: "unidad",
+      sort_order: 0,
+    }],
+  ];
+
+  for (const [table, record] of records) {
+    const { error } = await admin
+      .from(table)
+      .upsert(record, { onConflict: "id" });
+
+    if (error) throw error;
+  }
+
+  return {
+    menuItemAId: FIXTURE_IDS.menuItemA,
+    menuRecipeAId: FIXTURE_IDS.menuRecipeA,
+    stockProductAId: FIXTURE_IDS.stockProductA,
+  };
+}
+
 function nextWeekday(targetDay) {
   const date = new Date();
   date.setUTCHours(12, 0, 0, 0);
@@ -546,6 +631,10 @@ const reservationBId = await ensureReservation({
   idempotencyKey: "fixture-reservation-b",
 });
 
+const publicOrderingFixture = await ensurePublicOrderingFixture(
+  businessA.id,
+);
+
 console.log("✓ horarios, reglas, servicios, clientes y reservas exclusivos preparados");
 
 await mkdir(".tango", { recursive: true });
@@ -570,6 +659,7 @@ await writeFile(
       customerBId,
       reservationAId,
       reservationBId,
+      ...publicOrderingFixture,
       createdAt: new Date().toISOString(),
     },
     null,

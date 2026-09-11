@@ -1,0 +1,14 @@
+{
+  "template": "01-bistro-contemporaneo",
+  "dominant_reference_colors": [
+    "#f5f0e6",
+    "#18251a",
+    "#12120b",
+    "#794d31",
+    "#4e341d",
+    "#271b0e",
+    "#322c1b",
+    "#cbbfab"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

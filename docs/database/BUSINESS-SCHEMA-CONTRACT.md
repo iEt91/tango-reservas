@@ -5,7 +5,7 @@
 El contrato versionado de `public.businesses` es la migración:
 
 ```text
-supabase/migrations/20260802_001_initial_schema_lockdown.sql
+supabase/migrations/20260802000100_001_initial_schema_lockdown.sql
 ```
 
 El adaptador TypeScript debe consultar y escribir exclusivamente las columnas

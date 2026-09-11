@@ -10,14 +10,30 @@ function normalizeSupabaseUrl(url: string) {
   return url.replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/u, "");
 }
 
+function getSupabaseServerUrl() {
+  return (
+    process.env.SUPABASE_URL?.trim()
+    || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+    || null
+  );
+}
+
+function getSupabaseServerSecret() {
+  return (
+    process.env.SUPABASE_SECRET_KEY?.trim()
+    || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+    || null
+  );
+}
+
 export function hasSupabaseServerConfig() {
   if (typeof window !== "undefined") {
     return false;
   }
 
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
+    getSupabaseServerUrl()
+      && getSupabaseServerSecret(),
   );
 }
 
@@ -57,9 +73,16 @@ export function getSupabaseServerClient() {
   }
 
   if (!supabaseServerClient) {
+    const url = getSupabaseServerUrl();
+    const secret = getSupabaseServerSecret();
+
+    if (!url || !secret) {
+      return null;
+    }
+
     supabaseServerClient = createClient(
-      normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!.trim()),
-      process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
+      normalizeSupabaseUrl(url),
+      secret,
       {
         auth: {
           autoRefreshToken: false,

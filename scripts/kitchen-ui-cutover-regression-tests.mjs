@@ -16,7 +16,7 @@ const paths = {
   e33aRegression:
     "scripts/kitchen-operational-write-regression-tests.mjs",
   migration:
-    "supabase/migrations/20260811_021_kitchen_operational_write.sql",
+    "supabase/migrations/20260811002100_021_kitchen_operational_write.sql",
   rollback:
     "supabase/rollbacks/20260811_021_kitchen_operational_write.down.sql",
   docs:

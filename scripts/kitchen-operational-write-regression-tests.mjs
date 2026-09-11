@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const paths = {
   migration:
-    "supabase/migrations/20260811_021_kitchen_operational_write.sql",
+    "supabase/migrations/20260811002100_021_kitchen_operational_write.sql",
   rollback:
     "supabase/rollbacks/20260811_021_kitchen_operational_write.down.sql",
   postflight:
@@ -24,7 +24,7 @@ const paths = {
   package:
     "package.json",
   reservationConsumption:
-    "supabase/migrations/20260810_017_reservation_consumption_write.sql",
+    "supabase/migrations/20260810001700_017_reservation_consumption_write.sql",
   staffContract:
     "src/lib/staff/staff-contract.ts",
   kitchenUi:
@@ -504,7 +504,7 @@ check(
 
 check(
   "historial remoto incorpora migración 021",
-  /20260811_021_kitchen_operational_write\.sql/u.test(
+  /20260811002100_021_kitchen_operational_write\.sql/u.test(
     sources.remoteHistory,
   )
     && /Cocina agrega estado operativo y comandas incrementales/u.test(
@@ -515,7 +515,7 @@ check(
 check(
   "manifiesto protege migración y rollback 021",
   sources.manifest.includes(
-    "62d8b0232f23e69195832fb84445126864f15d31b72e53527aa96362030590a6  supabase/migrations/20260811_021_kitchen_operational_write.sql",
+    "62d8b0232f23e69195832fb84445126864f15d31b72e53527aa96362030590a6  supabase/migrations/20260811002100_021_kitchen_operational_write.sql",
   )
     && sources.manifest.includes(
       "2f228000c815e09a32c6f4e28a903cfcd902144d00ab82cbd2fcf6adf77f5ee6  supabase/rollbacks/20260811_021_kitchen_operational_write.down.sql",
@@ -533,10 +533,10 @@ check(
 check(
   "migraciones financieras 019 y 020 no se modifican",
   sources.manifest.includes(
-    "e4aa218d4d24848f7381fc08685070fdb85b73816c17df9952e27ec4fa46e69f  supabase/migrations/20260810_019_cash_payments_write.sql",
+    "e4aa218d4d24848f7381fc08685070fdb85b73816c17df9952e27ec4fa46e69f  supabase/migrations/20260810001900_019_cash_payments_write.sql",
   )
     && sources.manifest.includes(
-      "d19277d5449443562b60b4809eb89089f158edf19d82a8b121ca6ff444cec935  supabase/migrations/20260811_020_expenses_cash_close.sql",
+      "d19277d5449443562b60b4809eb89089f158edf19d82a8b121ca6ff444cec935  supabase/migrations/20260811002000_020_expenses_cash_close.sql",
     ),
 );
 

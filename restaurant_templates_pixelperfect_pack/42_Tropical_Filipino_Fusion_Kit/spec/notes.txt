@@ -1,0 +1,3 @@
+Separated asset pack reconstructed from the approved composite asset sheet.
+Folders include reference preview, original source sheet, extracted sections, and individual PNG crops.
+Photos/content imagery remain visual placeholders from the approved design kit.

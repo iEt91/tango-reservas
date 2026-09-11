@@ -23,14 +23,19 @@ const envTemplate = await readFile(
 );
 assert.match(
   envTemplate,
-  /TANGO_STAGING_PROJECT_REF=yzkeugxygfdgzhlwdeek/u,
+  /TANGO_STAGING_PROJECT_REF=replace-with-dedicated-staging-project-ref/u,
 );
 assert.match(
   envTemplate,
-  /TANGO_PRODUCTION_PROJECT_REF=ekyfplzpbirsjwluktda/u,
+  /TANGO_PRODUCTION_PROJECT_REF=yzkeugxygfdgzhlwdeek/u,
+);
+assert.doesNotMatch(
+  envTemplate,
+  /TANGO_STAGING_PROJECT_REF=yzkeugxygfdgzhlwdeek/u,
 );
 assert.match(envTemplate, /TANGO_TEST_USER_A_PASSWORD/u);
 assert.match(envTemplate, /TANGO_TEST_USER_B_PASSWORD/u);
+assert.match(envTemplate, /SUPABASE_SECRET_KEY/u);
 assert.doesNotMatch(
   envTemplate,
   /sb_secret_[A-Za-z0-9_-]{20,}/u,
@@ -47,11 +52,14 @@ const context = await readFile(
 );
 assert.match(context, /requireServerSecret = false/u);
 assert.match(context, /requireTestUsers = false/u);
+assert.match(context, /SUPABASE_SECRET_KEY/u);
 assert.match(context, /secret === publicKey/u);
 assert.match(context, /payload\.role !== "service_role"/u);
 assert.match(context, /secret\.startsWith\("sb_secret_"\)/u);
 assert.match(context, /debe tener al menos 20 caracteres/u);
 assert.match(context, /stagingProjectRef === productionProjectRef/u);
+assert.match(context, /KNOWN_PRODUCTION_PROJECT_REFS/u);
+assert.match(context, /assertDedicatedStagingProjectRef/u);
 console.log("✓ el contexto rechaza claves, entornos y credenciales inválidas");
 
 const seed = await readFile(

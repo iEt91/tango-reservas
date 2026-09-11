@@ -327,11 +327,11 @@ check(
 );
 
 check(
-  "la cabecera comunica consumo y cobro persistentes sin prometer Cocina",
+  "la UI conserva cobros persistentes sin el aviso obsoleto de Cocina bloqueada",
   sources.ui.includes(
-    "Alta, edición, estados, consumo de mesa y cobros son persistentes.",
+    "completeBusinessReservationPaymentAction",
   )
-    && sources.ui.includes(
+    && !sources.ui.includes(
       "Cocina sigue bloqueada",
     ),
 );

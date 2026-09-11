@@ -35,6 +35,7 @@ console.log("✓ Git ignora entornos, claves y directorios de secretos");
 
 const envExample = await readFile(".env.example", "utf8");
 assert.match(envExample, /NEXT_PUBLIC_SUPABASE_URL/);
+assert.match(envExample, /SUPABASE_SECRET_KEY/);
 assert.match(envExample, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.doesNotMatch(envExample, /eyJ[A-Za-z0-9._-]{40,}/);
 console.log("✓ la plantilla de entorno no contiene credenciales reales");
@@ -60,6 +61,7 @@ const serverModule = await readFile(
   "utf8",
 );
 assert.match(serverModule, /assertServerOnly/);
+assert.match(serverModule, /SUPABASE_SECRET_KEY/);
 assert.match(serverModule, /SUPABASE_SERVICE_ROLE_KEY/);
 
 const serverGuard = await readFile(
@@ -144,6 +146,7 @@ const staticScan = await readFile(
 );
 assert.match(staticScan, /PRIVATE KEY/);
 assert.match(staticScan, /dangerouslySetInnerHTML/);
+assert.match(staticScan, /SUPABASE_SECRET_KEY/);
 assert.match(staticScan, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(staticScan, /Access-Control-Allow-Origin/);
 

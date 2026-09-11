@@ -1,0 +1,87 @@
+{
+  "templateId": "26-pasteleria-y-cafe",
+  "source": "reference/reference.png",
+  "dominantColors": [
+    {
+      "hex": "#faf4f0",
+      "rgb": [
+        250,
+        244,
+        240
+      ],
+      "weight": 0.1893
+    },
+    {
+      "hex": "#e6dade",
+      "rgb": [
+        230,
+        218,
+        222
+      ],
+      "weight": 0.1329
+    },
+    {
+      "hex": "#4e3026",
+      "rgb": [
+        78,
+        48,
+        38
+      ],
+      "weight": 0.127
+    },
+    {
+      "hex": "#b49898",
+      "rgb": [
+        180,
+        152,
+        152
+      ],
+      "weight": 0.1226
+    },
+    {
+      "hex": "#d5c3c0",
+      "rgb": [
+        213,
+        195,
+        192
+      ],
+      "weight": 0.1192
+    },
+    {
+      "hex": "#8a665f",
+      "rgb": [
+        138,
+        102,
+        95
+      ],
+      "weight": 0.1157
+    },
+    {
+      "hex": "#ede3e2",
+      "rgb": [
+        237,
+        227,
+        226
+      ],
+      "weight": 0.1108
+    },
+    {
+      "hex": "#f8f2ed",
+      "rgb": [
+        248,
+        242,
+        237
+      ],
+      "weight": 0.0493
+    },
+    {
+      "hex": "#fbf6f1",
+      "rgb": [
+        251,
+        246,
+        241
+      ],
+      "weight": 0.0332
+    }
+  ]
+}

@@ -19,8 +19,6 @@ const paths = {
     "scripts/demuru-demo-doctor.mjs",
   start:
     "scripts/start-demuru-demo.mjs",
-  launcher:
-    "INICIAR_DEMO_DEMURU.bat",
   expensesStaging:
     "scripts/expenses-cash-close-staging-test.mjs",
   docs:
@@ -74,7 +72,7 @@ assert.equal(
   "node scripts/demuru-demo-readiness-regression-tests.mjs",
 );
 console.log(
-  "✓ launcher, doctor y regresión final tienen scripts explícitos",
+  "✓ doctor, arranque y regresión final tienen scripts explícitos",
 );
 
 const regressionCommands =
@@ -230,33 +228,6 @@ console.log(
   "✓ start fuerza modo local, elige puerto libre y abre /demuru sin Supabase",
 );
 
-assert.match(
-  sources.launcher,
-  /npm run demo:doctor/u,
-);
-assert.match(
-  sources.launcher,
-  /npm run demo:start/u,
-);
-for (
-  const forbiddenCommand
-  of [
-    /call\s+npm\s+run\s+staging/iu,
-    /\bnpx\s+supabase\b/iu,
-    /\bsupabase\s+db\b/iu,
-    /\bgit\s+commit\b/iu,
-    /\bgit\s+push\b/iu,
-  ]
-) {
-  assert.doesNotMatch(
-    sources.launcher,
-    forbiddenCommand,
-  );
-}
-console.log(
-  "✓ INICIAR_DEMO_DEMURU.bat sólo valida y arranca la demo",
-);
-
 const doctorOutput =
   execFileSync(
     process.execPath,
@@ -297,7 +268,8 @@ console.log(
 for (
   const marker
   of [
-    "INICIAR_DEMO_DEMURU.bat",
+    "npm run demo:doctor",
+    "npm run demo:start",
     "120 días",
     "14 días",
     "modo local",

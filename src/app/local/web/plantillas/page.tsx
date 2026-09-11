@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Check, Eye, Image as ImageIcon, LayoutTemplate, Pencil, Sparkles } from "lucide-react";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { V2AppShell } from "@/components/v2/v2-app-shell";
 import { V2Card } from "@/components/v2/v2-card";
 import { V2PageHeader } from "@/components/v2/v2-page-header";
@@ -12,6 +12,8 @@ import {
   getDefaultV2WebTemplate,
   getV2WebTemplateById,
   v2WebTemplates,
+  v2WebTemplateCategories,
+  type V2WebTemplateCategory,
 } from "@/lib/v2/v2-web-templates";
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -34,6 +36,8 @@ function getActiveTemplateId() {
 }
 
 export default function V2WebTemplatesPage() {
+  const [category, setCategory] = useState<V2WebTemplateCategory | "Todas">("Todas");
+  const filteredTemplates = v2WebTemplates.filter((template) => category === "Todas" || template.category === category);
   const activeTemplateId = useSyncExternalStore(
     subscribeActiveTemplate,
     getActiveTemplateId,
@@ -101,8 +105,32 @@ export default function V2WebTemplatesPage() {
             </div>
           </V2Card>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            {v2WebTemplates.map((template) => {
+          <V2Card>
+            <h2 className="text-sm font-semibold text-slate-950">Tipo de restaurante</h2>
+            <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Filtrar plantillas por tipo de restaurante">
+              {(["Todas", ...v2WebTemplateCategories] as const).map((item) => {
+                const count = item === "Todas" ? v2WebTemplates.length : v2WebTemplates.filter((template) => template.category === item).length;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    aria-pressed={category === item}
+                    aria-controls="template-gallery"
+                    onClick={() => setCategory(item)}
+                    className={cn("rounded-xl border px-3 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700", category === item ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")}
+                  >
+                    {item} <span className="ml-1 opacity-75">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-xs text-slate-500" role="status">
+              {filteredTemplates.length} {filteredTemplates.length === 1 ? "plantilla disponible" : "plantillas disponibles"}{category !== "Todas" ? ` · ${category}` : ""}
+            </p>
+          </V2Card>
+
+          <div id="template-gallery" className="grid gap-4 lg:grid-cols-2">
+            {filteredTemplates.map((template) => {
               const isActive = template.id === activeTemplateId;
 
               return (
@@ -147,6 +175,7 @@ export default function V2WebTemplatesPage() {
                   </div>
 
                   <div className="space-y-3 p-4">
+                    {template.previewUrl && <Link href={template.previewUrl} target="_blank" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 underline"><Eye size={16} /> Ver propuesta de {template.name}</Link>}
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                         Recomendada para
@@ -260,15 +289,19 @@ export default function V2WebTemplatesPage() {
                   key={slot.id}
                   className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2"
                 >
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
-                    <Image
-                      src={slot.defaultSrc}
-                      alt={slot.label}
-                      fill
-                      sizes="48px"
-                      unoptimized
-                      className="object-cover"
-                    />
+                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-400">
+                    {slot.defaultSrc ? (
+                      <Image
+                        src={slot.defaultSrc}
+                        alt={slot.label}
+                        fill
+                        sizes="48px"
+                        unoptimized
+                        className="object-cover"
+                      />
+                    ) : (
+                      <ImageIcon size={18} aria-hidden="true" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-950">

@@ -1,0 +1,449 @@
+{
+  "kit_name": "39_Monochrome_Brutalist_Fine_Dining_Kit",
+  "source_file": "39_monochrome_brutalist_fine_dining_asset_sheet.png",
+  "has_transparency": true,
+  "sections": [
+    {
+      "file": "assets/sections/section_01.png",
+      "bbox": [
+        457,
+        16,
+        555,
+        353
+      ]
+    },
+    {
+      "file": "assets/sections/section_02.png",
+      "bbox": [
+        33,
+        23,
+        339,
+        276
+      ]
+    },
+    {
+      "file": "assets/sections/section_03.png",
+      "bbox": [
+        23,
+        329,
+        276,
+        217
+      ]
+    },
+    {
+      "file": "assets/sections/section_04.png",
+      "bbox": [
+        510,
+        362,
+        513,
+        193
+      ]
+    },
+    {
+      "file": "assets/sections/section_05.png",
+      "bbox": [
+        325,
+        363,
+        191,
+        188
+      ]
+    },
+    {
+      "file": "assets/sections/section_06.png",
+      "bbox": [
+        19,
+        554,
+        490,
+        169
+      ]
+    },
+    {
+      "file": "assets/sections/section_07.png",
+      "bbox": [
+        522,
+        554,
+        491,
+        171
+      ]
+    },
+    {
+      "file": "assets/sections/section_08.png",
+      "bbox": [
+        643,
+        720,
+        369,
+        229
+      ]
+    },
+    {
+      "file": "assets/sections/section_09.png",
+      "bbox": [
+        175,
+        727,
+        163,
+        220
+      ]
+    },
+    {
+      "file": "assets/sections/section_10.png",
+      "bbox": [
+        332,
+        727,
+        162,
+        220
+      ]
+    },
+    {
+      "file": "assets/sections/section_11.png",
+      "bbox": [
+        489,
+        727,
+        161,
+        220
+      ]
+    },
+    {
+      "file": "assets/sections/section_12.png",
+      "bbox": [
+        19,
+        728,
+        160,
+        219
+      ]
+    },
+    {
+      "file": "assets/sections/section_13.png",
+      "bbox": [
+        219,
+        947,
+        202,
+        179
+      ]
+    },
+    {
+      "file": "assets/sections/section_14.png",
+      "bbox": [
+        420,
+        947,
+        196,
+        179
+      ]
+    },
+    {
+      "file": "assets/sections/section_15.png",
+      "bbox": [
+        613,
+        947,
+        196,
+        179
+      ]
+    },
+    {
+      "file": "assets/sections/section_16.png",
+      "bbox": [
+        18,
+        948,
+        206,
+        179
+      ]
+    },
+    {
+      "file": "assets/sections/section_17.png",
+      "bbox": [
+        807,
+        948,
+        205,
+        178
+      ]
+    },
+    {
+      "file": "assets/sections/section_18.png",
+      "bbox": [
+        644,
+        1123,
+        366,
+        229
+      ]
+    },
+    {
+      "file": "assets/sections/section_19.png",
+      "bbox": [
+        19,
+        1124,
+        349,
+        230
+      ]
+    },
+    {
+      "file": "assets/sections/section_20.png",
+      "bbox": [
+        367,
+        1124,
+        280,
+        229
+      ]
+    },
+    {
+      "file": "assets/sections/section_21.png",
+      "bbox": [
+        698,
+        1346,
+        314,
+        180
+      ]
+    },
+    {
+      "file": "assets/sections/section_22.png",
+      "bbox": [
+        272,
+        1353,
+        424,
+        163
+      ]
+    }
+  ],
+  "components": [
+    {
+      "file": "assets/photos/photo_001.png",
+      "category": "photos",
+      "source_section": "section_01.png",
+      "bbox_in_section": [
+        0,
+        0,
+        555,
+        353
+      ]
+    },
+    {
+      "file": "assets/photos/photo_002.png",
+      "category": "photos",
+      "source_section": "section_02.png",
+      "bbox_in_section": [
+        0,
+        0,
+        339,
+        276
+      ]
+    },
+    {
+      "file": "assets/photos/photo_003.png",
+      "category": "photos",
+      "source_section": "section_03.png",
+      "bbox_in_section": [
+        0,
+        0,
+        276,
+        217
+      ]
+    },
+    {
+      "file": "assets/photos/photo_004.png",
+      "category": "photos",
+      "source_section": "section_04.png",
+      "bbox_in_section": [
+        0,
+        0,
+        513,
+        193
+      ]
+    },
+    {
+      "file": "assets/photos/photo_005.png",
+      "category": "photos",
+      "source_section": "section_05.png",
+      "bbox_in_section": [
+        0,
+        0,
+        191,
+        188
+      ]
+    },
+    {
+      "file": "assets/photos/photo_006.png",
+      "category": "photos",
+      "source_section": "section_06.png",
+      "bbox_in_section": [
+        0,
+        0,
+        490,
+        169
+      ]
+    },
+    {
+      "file": "assets/photos/photo_007.png",
+      "category": "photos",
+      "source_section": "section_07.png",
+      "bbox_in_section": [
+        0,
+        0,
+        491,
+        171
+      ]
+    },
+    {
+      "file": "assets/photos/photo_008.png",
+      "category": "photos",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        0,
+        0,
+        369,
+        229
+      ]
+    },
+    {
+      "file": "assets/decor/decor_009.png",
+      "category": "decor",
+      "source_section": "section_09.png",
+      "bbox_in_section": [
+        0,
+        0,
+        163,
+        220
+      ]
+    },
+    {
+      "file": "assets/decor/decor_010.png",
+      "category": "decor",
+      "source_section": "section_10.png",
+      "bbox_in_section": [
+        0,
+        0,
+        162,
+        220
+      ]
+    },
+    {
+      "file": "assets/decor/decor_011.png",
+      "category": "decor",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        0,
+        0,
+        161,
+        220
+      ]
+    },
+    {
+      "file": "assets/decor/decor_012.png",
+      "category": "decor",
+      "source_section": "section_12.png",
+      "bbox_in_section": [
+        0,
+        0,
+        160,
+        219
+      ]
+    },
+    {
+      "file": "assets/photos/photo_013.png",
+      "category": "photos",
+      "source_section": "section_13.png",
+      "bbox_in_section": [
+        0,
+        0,
+        202,
+        179
+      ]
+    },
+    {
+      "file": "assets/photos/photo_014.png",
+      "category": "photos",
+      "source_section": "section_14.png",
+      "bbox_in_section": [
+        0,
+        0,
+        196,
+        179
+      ]
+    },
+    {
+      "file": "assets/photos/photo_015.png",
+      "category": "photos",
+      "source_section": "section_15.png",
+      "bbox_in_section": [
+        0,
+        0,
+        196,
+        179
+      ]
+    },
+    {
+      "file": "assets/photos/photo_016.png",
+      "category": "photos",
+      "source_section": "section_16.png",
+      "bbox_in_section": [
+        0,
+        0,
+        206,
+        179
+      ]
+    },
+    {
+      "file": "assets/photos/photo_017.png",
+      "category": "photos",
+      "source_section": "section_17.png",
+      "bbox_in_section": [
+        0,
+        0,
+        205,
+        178
+      ]
+    },
+    {
+      "file": "assets/photos/photo_018.png",
+      "category": "photos",
+      "source_section": "section_18.png",
+      "bbox_in_section": [
+        0,
+        0,
+        366,
+        229
+      ]
+    },
+    {
+      "file": "assets/photos/photo_019.png",
+      "category": "photos",
+      "source_section": "section_19.png",
+      "bbox_in_section": [
+        0,
+        0,
+        349,
+        230
+      ]
+    },
+    {
+      "file": "assets/photos/photo_020.png",
+      "category": "photos",
+      "source_section": "section_20.png",
+      "bbox_in_section": [
+        0,
+        0,
+        280,
+        229
+      ]
+    },
+    {
+      "file": "assets/photos/photo_021.png",
+      "category": "photos",
+      "source_section": "section_21.png",
+      "bbox_in_section": [
+        0,
+        0,
+        314,
+        180
+      ]
+    },
+    {
+      "file": "assets/photos/photo_022.png",
+      "category": "photos",
+      "source_section": "section_22.png",
+      "bbox_in_section": [
+        0,
+        0,
+        424,
+        163
+      ]
+    }
+  ]
+}

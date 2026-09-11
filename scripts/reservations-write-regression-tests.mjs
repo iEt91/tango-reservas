@@ -5,7 +5,7 @@ import {
 } from "node:fs/promises";
 
 const migrationPath =
-  "supabase/migrations/20260804_009_reservations_write_rpc.sql";
+  "supabase/migrations/20260804000900_009_reservations_write_rpc.sql";
 const rollbackPath =
   "supabase/rollbacks/20260804_009_reservations_write_rpc.down.sql";
 const postflightPath =

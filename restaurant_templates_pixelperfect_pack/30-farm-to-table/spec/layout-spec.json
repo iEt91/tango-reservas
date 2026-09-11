@@ -1,0 +1,72 @@
+{
+  "templateId": "30-farm-to-table",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 51,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.02801
+    },
+    {
+      "id": "hero",
+      "y": 51,
+      "height": 408,
+      "yStartRatio": 0.02801,
+      "heightRatio": 0.22405
+    },
+    {
+      "id": "values",
+      "y": 459,
+      "height": 120,
+      "yStartRatio": 0.25206,
+      "heightRatio": 0.0659
+    },
+    {
+      "id": "menu",
+      "y": 579,
+      "height": 263,
+      "yStartRatio": 0.31796,
+      "heightRatio": 0.14443
+    },
+    {
+      "id": "story",
+      "y": 842,
+      "height": 272,
+      "yStartRatio": 0.46238,
+      "heightRatio": 0.14937
+    },
+    {
+      "id": "events_gallery",
+      "y": 1114,
+      "height": 220,
+      "yStartRatio": 0.61175,
+      "heightRatio": 0.12081
+    },
+    {
+      "id": "gallery",
+      "y": 1334,
+      "height": 201,
+      "yStartRatio": 0.73256,
+      "heightRatio": 0.11038
+    },
+    {
+      "id": "map_contact",
+      "y": 1535,
+      "height": 193,
+      "yStartRatio": 0.84294,
+      "heightRatio": 0.10599
+    },
+    {
+      "id": "footer",
+      "y": 1728,
+      "height": 93,
+      "yStartRatio": 0.94893,
+      "heightRatio": 0.05107
+    }
+  ]
+}

@@ -56,9 +56,9 @@ const secretPatterns = [
     expression: /\bAKIA[0-9A-Z]{16}\b/u,
   },
   {
-    name: "valor de service role incrustado",
+    name: "valor privilegiado de Supabase incrustado",
     expression:
-      /SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["']?eyJ[A-Za-z0-9._-]{40,}/u,
+      /SUPABASE_(?:SECRET_KEY|SERVICE_ROLE_KEY)\s*[:=]\s*["']?(?:eyJ[A-Za-z0-9._-]{40,}|sb_secret_[A-Za-z0-9_-]{20,})/u,
   },
 ];
 
@@ -244,6 +244,7 @@ for (const file of files) {
     content.includes('"use client"')
     && (
       content.includes("SUPABASE_SERVICE_ROLE_KEY")
+      || content.includes("SUPABASE_SECRET_KEY")
       || content.includes("getSupabaseServerClient")
     )
   ) {
@@ -266,7 +267,10 @@ for (const file of files) {
   }
 
   if (
-    content.includes("SUPABASE_SERVICE_ROLE_KEY")
+    (
+      content.includes("SUPABASE_SERVICE_ROLE_KEY")
+      || content.includes("SUPABASE_SECRET_KEY")
+    )
     && normalized !== "src/lib/supabase/server.ts"
   ) {
     recordFinding(

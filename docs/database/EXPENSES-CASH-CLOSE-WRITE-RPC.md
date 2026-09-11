@@ -11,7 +11,7 @@ en staging.
 
 ## Migración 020
 
-`20260811_020_expenses_cash_close.sql` agrega:
+`20260811002000_020_expenses_cash_close.sql` agrega:
 
 - `business_expenses`
 - `business_expense_operations`

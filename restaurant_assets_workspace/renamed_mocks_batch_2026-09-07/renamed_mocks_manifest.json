@@ -1,0 +1,198 @@
+{
+  "batch": "2026-09-07-renamed-mocks",
+  "source_of_commercial_data": "restaurant_assets_workspace/Prospectos_Pinamar_Depurados_Activos_2026-09-04.xlsx",
+  "total": 10,
+  "completed": 10,
+  "items": [
+    {
+      "source_mock_brand": "Casa Mar",
+      "new_business": "Cooperativa de Pescadores",
+      "business_type": "Mariscos / argentina",
+      "address": "Av. del Mar y Eolo, Pinamar",
+      "phone": "+54 2254 51-5390",
+      "instagram": "@cooperativa_pesca_pinamar",
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/01_cooperativa_de_pescadores.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          940,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Mirasoles",
+      "new_business": "Balneario Marbella",
+      "business_type": "Balneario / restaurante",
+      "address": "Av. del Mar 152, Pinamar",
+      "phone": "+54 2254 48-1393",
+      "instagram": "@marbellapinamar",
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/02_balneario_marbella.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Mama Beach",
+      "new_business": "Bruni Beach",
+      "business_type": "Beach club / restaurante",
+      "address": "Av. del Mar y Álamos, Pinamar",
+      "phone": "+54 2254 42-3056",
+      "instagram": null,
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/03_bruni_beach.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Balneario Cocodrilo",
+      "new_business": "Nelson Beach",
+      "business_type": "Restaurante / beach club",
+      "address": "Av. del Mar y Jilguero, Pinamar",
+      "phone": "+54 2254 51-8818",
+      "instagram": "@nelsonbeachpinamar",
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/04_nelson_beach.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Balneario Salvador Gaviota",
+      "new_business": "Paradise Beach Club Pinamar",
+      "business_type": "Beach club / restaurante",
+      "address": "Av. del Mar 402-500, Pinamar",
+      "phone": "+54 11 2370-9500",
+      "instagram": null,
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/05_paradise_beach_club.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Olimpo Bar de Amigos",
+      "new_business": "Bar Borneo",
+      "business_type": "Bar",
+      "address": "Av. del Mar 40, Pinamar",
+      "phone": null,
+      "instagram": null,
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/06_bar_borneo.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "corrected_opaque"
+    },
+    {
+      "source_mock_brand": "Mosto Vinos & Tapas",
+      "new_business": "Viejo Taller Bar de Barrio",
+      "business_type": "Bar de barrio",
+      "address": "Eneas 599, Pinamar",
+      "phone": "+54 2267 40-4622",
+      "instagram": null,
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/07_viejo_taller_bar_de_barrio.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "corrected_opaque"
+    },
+    {
+      "source_mock_brand": "El Bar",
+      "new_business": "VL BAR",
+      "business_type": "Bar",
+      "address": "Av. Bunge 198, Pinamar",
+      "phone": "+54 9 2267 44-7268",
+      "instagram": null,
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/08_vl_bar.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Baum Pinamar",
+      "new_business": "La Única Cervecería",
+      "business_type": "Cervecería / restaurante",
+      "address": "Av. Bunge 400, Pinamar",
+      "phone": "+54 2254 49-1119",
+      "instagram": null,
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/09_la_unica_cerveceria.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    },
+    {
+      "source_mock_brand": "Antiek Cafe Bar",
+      "new_business": "Barcelona Resto Bar",
+      "business_type": "Resto-bar / grill / cocina de mar",
+      "address": "Av. Constitución 380 local 86, Pinamar",
+      "phone": "+54 2254 62-0485",
+      "instagram": "@barcelona_resto",
+      "output": "restaurant_assets_workspace/renamed_mocks_batch_2026-09-07/10_barcelona_resto_bar.png",
+      "image": {
+        "format": "PNG",
+        "size": [
+          941,
+          1672
+        ],
+        "mode": "RGB",
+        "alpha_extrema": null
+      },
+      "status": "done"
+    }
+  ]
+}

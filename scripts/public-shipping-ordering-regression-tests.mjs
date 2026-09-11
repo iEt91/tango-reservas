@@ -4,7 +4,15 @@ import { readFile } from "node:fs/promises";
 
 const paths = {
   migration:
-    "supabase/migrations/20260811_023_public_shipping_ordering.sql",
+    "supabase/migrations/20260811002300_023_public_shipping_ordering.sql",
+  leastPrivilegeMigration:
+    "supabase/migrations/20260904100000_public_read_least_privilege.sql",
+  leastPrivilegeRollback:
+    "supabase/rollbacks/20260904100000_public_read_least_privilege.down.sql",
+  publicSiteMigration:
+    "supabase/migrations/20260905100000_public_site_rpc_least_privilege.sql",
+  publicSiteRollback:
+    "supabase/rollbacks/20260905100000_public_site_rpc_least_privilege.down.sql",
   rollback:
     "supabase/rollbacks/20260811_023_public_shipping_ordering.down.sql",
   postflight:
@@ -19,6 +27,8 @@ const paths = {
     "src/lib/supabase/server.ts",
   orderingRoute:
     "src/app/api/public/[slug]/ordering/route.ts",
+  siteRoute:
+    "src/app/api/public/[slug]/site/route.ts",
   createRoute:
     "src/app/api/public/[slug]/shipping/route.ts",
   trackingRoute:
@@ -42,7 +52,7 @@ const paths = {
   manifest:
     "supabase/MIGRATIONS.sha256",
   migration022:
-    "supabase/migrations/20260811_022_shipping_orders_write.sql",
+    "supabase/migrations/20260811002200_022_shipping_orders_write.sql",
   rollback022:
     "supabase/rollbacks/20260811_022_shipping_orders_write.down.sql",
   docs:
@@ -295,22 +305,19 @@ check(
 );
 
 check(
-  "RPC service-only no quedan ejecutables por anon authenticated",
-  (
-    sources.migration.match(
-      /revoke all on function public\.service_/gu,
-    )
-    ?? []
-  ).length === 4
-    && /from public, anon, authenticated/u.test(
+  "sólo create y tracking conservan acceso service-only",
+  /revoke all on function public\.service_create_public_shipping_order\([\s\S]*?\) from public, anon, authenticated;/u.test(
+    sources.migration,
+  )
+    && /revoke all on function public\.service_get_public_shipping_tracking\([\s\S]*?\) from public, anon, authenticated;/u.test(
       sources.migration,
     )
-    && (
-      sources.migration.match(
-        /to service_role;/gu,
-      )
-      ?? []
-    ).length >= 4,
+    && /grant execute on function public\.service_create_public_shipping_order\([\s\S]*?\) to service_role;/u.test(
+      sources.migration,
+    )
+    && /grant execute on function public\.service_get_public_shipping_tracking\([\s\S]*?\) to service_role;/u.test(
+      sources.migration,
+    ),
 );
 
 check(
@@ -365,11 +372,14 @@ check(
 );
 
 check(
-  "gateway usa cliente privilegiado sólo servidor",
+  "gateway limita el cliente privilegiado a escritura y tracking",
   /assertServerOnly/u.test(
     sources.gateway,
   )
     && /getSupabaseServerClient/u.test(
+      sources.gateway,
+    )
+    && /getSupabaseClient/u.test(
       sources.gateway,
     )
     && /service_get_public_business_ordering_snapshot/u.test(
@@ -380,6 +390,71 @@ check(
     )
     && /service_get_public_shipping_tracking/u.test(
       sources.gateway,
+    ),
+);
+
+check(
+  "lecturas públicas no requieren secret y tienen permisos acotados",
+  /grant select \([\s\S]*?show_delivery[\s\S]*?\) on table public\.businesses to anon/u.test(
+    sources.leastPrivilegeMigration,
+  )
+    && /create policy businesses_select_active_public_site/u.test(
+      sources.leastPrivilegeMigration,
+    )
+    && /security definer/u.test(
+      sources.leastPrivilegeMigration,
+    )
+    && /to anon, service_role/u.test(
+      sources.leastPrivilegeMigration,
+    ),
+);
+
+check(
+  "el sitio público usa una RPC con proyección fija, no SELECT de tabla",
+  /create or replace function public\.public_get_business_site/u.test(
+    sources.publicSiteMigration,
+  )
+    && /security definer/u.test(sources.publicSiteMigration)
+    && /set search_path = ''/u.test(sources.publicSiteMigration)
+    && /business\.status = 'active'/u.test(sources.publicSiteMigration)
+    && /grant execute on function public\.public_get_business_site\(text\)[\s\S]*?to anon, service_role/u.test(
+      sources.publicSiteMigration,
+    )
+    && !/grant select on table public\.businesses to anon/u.test(
+      sources.publicSiteMigration,
+    ),
+);
+
+check(
+  "la ruta site no consulta businesses directamente",
+  /public_get_business_site/u.test(sources.siteRoute)
+    && !/\.from\("businesses"\)/u.test(sources.siteRoute)
+    && /\.rpc\(/u.test(sources.siteRoute),
+);
+
+check(
+  "la RPC del sitio tiene reversión sin borrar datos",
+  /drop function if exists public\.public_get_business_site/u.test(
+    sources.publicSiteRollback,
+  )
+    && !/drop table|drop column|delete from|truncate/iu.test(
+      sources.publicSiteRollback,
+    ),
+);
+
+check(
+  "la lectura pública tiene reversión sin borrar datos",
+  /revoke select \([\s\S]*?show_delivery[\s\S]*?\) on table public\.businesses from anon/u.test(
+    sources.leastPrivilegeRollback,
+  )
+    && /drop policy if exists businesses_select_active_public_site/u.test(
+      sources.leastPrivilegeRollback,
+    )
+    && /security invoker/u.test(
+      sources.leastPrivilegeRollback,
+    )
+    && !/drop table|drop column|delete from|truncate/iu.test(
+      sources.leastPrivilegeRollback,
     ),
 );
 
@@ -728,7 +803,7 @@ check(
 
 check(
   "historial remoto incorpora 023",
-  /20260811_023_public_shipping_ordering\.sql/u.test(
+  /20260811002300_023_public_shipping_ordering\.sql/u.test(
     sources.remoteHistory,
   )
     && /Pedidos web agrega gateway service-only y tracking mínimo/u.test(
@@ -737,11 +812,14 @@ check(
 );
 
 check(
-  "manifiesto protege 023 y rollback",
-  /20260811_023_public_shipping_ordering\.sql/u.test(
+  "manifiesto protege 023, rollback y lectura pública acotada",
+  /20260811002300_023_public_shipping_ordering\.sql/u.test(
     sources.manifest,
   )
     && /20260811_023_public_shipping_ordering\.down\.sql/u.test(
+      sources.manifest,
+    )
+    && /20260904100000_public_read_least_privilege\.sql/u.test(
       sources.manifest,
     ),
 );

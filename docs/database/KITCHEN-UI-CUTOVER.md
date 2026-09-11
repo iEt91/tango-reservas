@@ -140,7 +140,7 @@ E33B no agrega ni aplica migraciones.
 
 Deben permanecer byte-identical:
 
-- `20260811_021_kitchen_operational_write.sql`;
+- `20260811002100_021_kitchen_operational_write.sql`;
 - `20260811_021_kitchen_operational_write.down.sql`.
 
 No se ejecuta `staging:cleanup-isolation`.

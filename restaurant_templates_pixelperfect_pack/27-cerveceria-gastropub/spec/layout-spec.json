@@ -1,0 +1,58 @@
+{
+  "templateId": "27-cerveceria-gastropub",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 58,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.03185
+    },
+    {
+      "id": "hero",
+      "y": 58,
+      "height": 467,
+      "yStartRatio": 0.03185,
+      "heightRatio": 0.25645
+    },
+    {
+      "id": "beer_menu_split",
+      "y": 525,
+      "height": 331,
+      "yStartRatio": 0.2883,
+      "heightRatio": 0.18177
+    },
+    {
+      "id": "events",
+      "y": 856,
+      "height": 382,
+      "yStartRatio": 0.47007,
+      "heightRatio": 0.20977
+    },
+    {
+      "id": "gallery",
+      "y": 1238,
+      "height": 251,
+      "yStartRatio": 0.67985,
+      "heightRatio": 0.13784
+    },
+    {
+      "id": "visit_map",
+      "y": 1489,
+      "height": 229,
+      "yStartRatio": 0.81768,
+      "heightRatio": 0.12576
+    },
+    {
+      "id": "footer",
+      "y": 1718,
+      "height": 103,
+      "yStartRatio": 0.94344,
+      "heightRatio": 0.05656
+    }
+  ]
+}

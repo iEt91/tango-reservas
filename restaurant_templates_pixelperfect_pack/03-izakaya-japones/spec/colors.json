@@ -1,0 +1,12 @@
+{
+  "template": "03-izakaya-japones",
+  "dominant_reference_colors": [
+    "#0a0a09",
+    "#e1d7c8",
+    "#6c3f24",
+    "#3c2a19",
+    "#201911",
+    "#a68d71"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

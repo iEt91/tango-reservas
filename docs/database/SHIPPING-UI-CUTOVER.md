@@ -108,7 +108,7 @@ E34B no crea ni aplica migraciones.
 
 Deben permanecer byte-identical:
 
-- `20260811_022_shipping_orders_write.sql`;
+- `20260811002200_022_shipping_orders_write.sql`;
 - `20260811_022_shipping_orders_write.down.sql`.
 
 No se ejecuta `staging:cleanup-isolation`.

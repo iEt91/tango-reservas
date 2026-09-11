@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getPublicShippingOrderingSnapshot } from "@/lib/data/server/public-shipping";
+import {
+  PublicShippingGatewayError,
+  getPublicShippingOrderingSnapshot,
+} from "@/lib/data/server/public-shipping";
 import { normalizePublicShippingSlug } from "@/lib/public-shipping/public-shipping-contract";
 
 type RouteContext = {
@@ -70,20 +73,23 @@ export async function GET(
       },
     );
   } catch (error) {
+    const status = error instanceof PublicShippingGatewayError
+      ? error.status
+      : 500;
+
     console.error(
       "[public-shipping] ordering failed",
-      error instanceof Error
-        ? error.message
-        : "unknown",
+      { status },
     );
 
     return NextResponse.json(
       {
-        error:
-          "No se pudo cargar el menú público.",
+        error: status === 503
+          ? "El menú público no está disponible."
+          : "No se pudo cargar el menú público.",
       },
       {
-        status: 500,
+        status: status === 503 ? 503 : 500,
         headers: {
           "Cache-Control":
             "no-store",

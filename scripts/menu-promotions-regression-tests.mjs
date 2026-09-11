@@ -3,7 +3,7 @@ import { access, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
 const files = {
-  migration: "supabase/migrations/20260807_012_menu_promotions_rpc.sql",
+  migration: "supabase/migrations/20260807001200_012_menu_promotions_rpc.sql",
   rollback: "supabase/rollbacks/20260807_012_menu_promotions_rpc.down.sql",
   postflight: "supabase/preflight/20260807_012_menu_promotions_postflight.sql",
   contract: "src/lib/menu/business-menu-contract.ts",

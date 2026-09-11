@@ -1,0 +1,339 @@
+{
+  "templateId": "27-cerveceria-gastropub",
+  "reference": "reference/reference.png",
+  "design": {
+    "width": 864,
+    "height": 1821
+  },
+  "contentPolicy": {
+    "restaurantPhotographyIsDynamic": true,
+    "menuPhotosAreNotTemplateAssets": true,
+    "galleryPhotosAreNotTemplateAssets": true,
+    "referenceImageMayNotBeUsedAsPublicContentFallback": true
+  },
+  "assets": [
+    {
+      "file": "assets/ornaments/header_amber_logo.png",
+      "category": "ornaments",
+      "section": "hero",
+      "sourceBBox": [
+        134,
+        61,
+        262,
+        318
+      ],
+      "width": 128,
+      "height": 257,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/header_book_table.png",
+      "category": "ui",
+      "section": "header",
+      "sourceBBox": [
+        707,
+        18,
+        828,
+        49
+      ],
+      "width": 80,
+      "height": 31,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/hero_outline_cta.png",
+      "category": "ui",
+      "section": "hero",
+      "sourceBBox": [
+        97,
+        396,
+        218,
+        432
+      ],
+      "width": 121,
+      "height": 36,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/hero_amber_cta.png",
+      "category": "ui",
+      "section": "hero",
+      "sourceBBox": [
+        235,
+        396,
+        358,
+        432
+      ],
+      "width": 123,
+      "height": 36,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/beer_hops_line_art.png",
+      "category": "ornaments",
+      "section": "beer_menu_split",
+      "sourceBBox": [
+        209,
+        550,
+        424,
+        670
+      ],
+      "width": 206,
+      "height": 108,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/beer_outline_button.png",
+      "category": "ui",
+      "section": "beer_menu_split",
+      "sourceBBox": [
+        39,
+        652,
+        122,
+        682
+      ],
+      "width": 83,
+      "height": 30,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/menu_outline_button.png",
+      "category": "ui",
+      "section": "beer_menu_split",
+      "sourceBBox": [
+        458,
+        652,
+        546,
+        682
+      ],
+      "width": 88,
+      "height": 30,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/events_outline_button.png",
+      "category": "ui",
+      "section": "events",
+      "sourceBBox": [
+        658,
+        882,
+        817,
+        913
+      ],
+      "width": 157,
+      "height": 4,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/events_bottom_button.png",
+      "category": "ui",
+      "section": "events",
+      "sourceBBox": [
+        341,
+        1163,
+        497,
+        1194
+      ],
+      "width": 156,
+      "height": 31,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ui/gallery_outline_button.png",
+      "category": "ui",
+      "section": "gallery",
+      "sourceBBox": [
+        688,
+        1260,
+        819,
+        1291
+      ],
+      "width": 131,
+      "height": 17,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/visit_pin.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        46,
+        1518,
+        69,
+        1543
+      ],
+      "width": 21,
+      "height": 19,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/visit_clock.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        46,
+        1563,
+        70,
+        1588
+      ],
+      "width": 18,
+      "height": 12,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/visit_phone.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        46,
+        1611,
+        70,
+        1635
+      ],
+      "width": 20,
+      "height": 8,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/visit_mail.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        46,
+        1649,
+        70,
+        1674
+      ],
+      "width": 19,
+      "height": 21,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/social_facebook.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        589,
+        1649,
+        621,
+        1682
+      ],
+      "width": 32,
+      "height": 33,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/social_instagram.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        630,
+        1649,
+        663,
+        1682
+      ],
+      "width": 31,
+      "height": 33,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/social_twitter.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        674,
+        1649,
+        707,
+        1682
+      ],
+      "width": 29,
+      "height": 13,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/icons/social_beer.png",
+      "category": "icons",
+      "section": "visit_map",
+      "sourceBBox": [
+        718,
+        1649,
+        751,
+        1682
+      ],
+      "width": 27,
+      "height": 13,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    },
+    {
+      "file": "assets/ornaments/footer_brewery_line_art.png",
+      "category": "ornaments",
+      "section": "footer",
+      "sourceBBox": [
+        617,
+        1713,
+        864,
+        1821
+      ],
+      "width": 247,
+      "height": 108,
+      "preserveAspectRatio": true,
+      "stretch": false,
+      "transparentBackground": true,
+      "notes": "Reusable template asset. Restaurant menu/gallery photography is intentionally not included."
+    }
+  ]
+}

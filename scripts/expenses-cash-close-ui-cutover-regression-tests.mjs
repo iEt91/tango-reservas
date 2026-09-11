@@ -28,11 +28,11 @@ const paths = {
   e32bRegression:
     "scripts/cash-payments-ui-cutover-regression-tests.mjs",
   migration019:
-    "supabase/migrations/20260810_019_cash_payments_write.sql",
+    "supabase/migrations/20260810001900_019_cash_payments_write.sql",
   rollback019:
     "supabase/rollbacks/20260810_019_cash_payments_write.down.sql",
   migration020:
-    "supabase/migrations/20260811_020_expenses_cash_close.sql",
+    "supabase/migrations/20260811002000_020_expenses_cash_close.sql",
   rollback020:
     "supabase/rollbacks/20260811_020_expenses_cash_close.down.sql",
   docs:

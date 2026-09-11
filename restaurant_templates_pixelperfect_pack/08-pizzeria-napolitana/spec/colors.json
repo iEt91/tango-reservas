@@ -1,0 +1,14 @@
+{
+  "template": "08-pizzeria-napolitana",
+  "dominant_reference_colors": [
+    "#02316b",
+    "#f9eede",
+    "#54220a",
+    "#c42213",
+    "#be6534",
+    "#c7a283",
+    "#f1e3d1",
+    "#efd6b9"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

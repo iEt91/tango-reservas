@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 
 const migrationPath =
-  "supabase/migrations/20260802_003_business_identity_read_rls.sql";
+  "supabase/migrations/20260802000300_003_business_identity_read_rls.sql";
 const rollbackPath =
   "supabase/rollbacks/20260802_003_business_identity_read_rls.down.sql";
 const postflightPath =

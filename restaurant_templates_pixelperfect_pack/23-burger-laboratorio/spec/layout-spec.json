@@ -1,0 +1,58 @@
+{
+  "templateId": "23-burger-laboratorio",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 51,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.02801
+    },
+    {
+      "id": "hero",
+      "y": 51,
+      "height": 379,
+      "yStartRatio": 0.02801,
+      "heightRatio": 0.20813
+    },
+    {
+      "id": "builder",
+      "y": 430,
+      "height": 432,
+      "yStartRatio": 0.23613,
+      "heightRatio": 0.23723
+    },
+    {
+      "id": "menu_cards",
+      "y": 862,
+      "height": 345,
+      "yStartRatio": 0.47337,
+      "heightRatio": 0.18946
+    },
+    {
+      "id": "delivery",
+      "y": 1207,
+      "height": 211,
+      "yStartRatio": 0.66282,
+      "heightRatio": 0.11587
+    },
+    {
+      "id": "gallery",
+      "y": 1418,
+      "height": 224,
+      "yStartRatio": 0.77869,
+      "heightRatio": 0.12301
+    },
+    {
+      "id": "contact_footer",
+      "y": 1642,
+      "height": 179,
+      "yStartRatio": 0.9017,
+      "heightRatio": 0.0983
+    }
+  ]
+}

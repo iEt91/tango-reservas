@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 const paths = {
-  migration: "supabase/migrations/20260811_022_shipping_orders_write.sql",
+  migration: "supabase/migrations/20260811002200_022_shipping_orders_write.sql",
   rollback: "supabase/rollbacks/20260811_022_shipping_orders_write.down.sql",
   postflight: "supabase/preflight/20260811_022_shipping_orders_write_postflight.sql",
   contract: "src/lib/shipping/business-shipping-contract.ts",
@@ -13,10 +13,10 @@ const paths = {
   remoteHistory: "scripts/remote-schema-history-regression-tests.mjs",
   manifest: "supabase/MIGRATIONS.sha256",
   package: "package.json",
-  migration016: "supabase/migrations/20260809_016_recipe_stock_consumption.sql",
-  migration017: "supabase/migrations/20260810_017_reservation_consumption_write.sql",
-  migration019: "supabase/migrations/20260810_019_cash_payments_write.sql",
-  migration021: "supabase/migrations/20260811_021_kitchen_operational_write.sql",
+  migration016: "supabase/migrations/20260809001600_016_recipe_stock_consumption.sql",
+  migration017: "supabase/migrations/20260810001700_017_reservation_consumption_write.sql",
+  migration019: "supabase/migrations/20260810001900_019_cash_payments_write.sql",
+  migration021: "supabase/migrations/20260811002100_021_kitchen_operational_write.sql",
   migration027: "supabase/migrations/20260814144312_enforce_shipping_kitchen_readiness.sql",
   shippingUi: "src/app/local/envios/v2-envios-page.tsx",
   publicWeb: "src/app/[slug]/page.tsx",
@@ -322,13 +322,13 @@ check(
 
 check(
   "historial remoto incorpora migración 022",
-  /20260811_022_shipping_orders_write\.sql/u.test(sources.remoteHistory)
+  /20260811002200_022_shipping_orders_write\.sql/u.test(sources.remoteHistory)
     && /Envíos agrega pedido Stock Cocina y pago canónicos/u.test(sources.remoteHistory),
 );
 
 check(
   "manifiesto protege migración y rollback 022",
-  /20260811_022_shipping_orders_write\.sql/u.test(sources.manifest)
+  /20260811002200_022_shipping_orders_write\.sql/u.test(sources.manifest)
     && /20260811_022_shipping_orders_write\.down\.sql/u.test(sources.manifest),
 );
 

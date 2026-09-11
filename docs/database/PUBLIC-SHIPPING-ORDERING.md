@@ -9,7 +9,10 @@ El navegador público no recibe acceso directo a tablas Supabase. La frontera es
 
 `browser -> Route Handler Next.js -> service_role server-only -> RPC service_*`
 
-La clave `SUPABASE_SERVICE_ROLE_KEY` permanece exclusivamente en servidor.
+Las lecturas de sitio y menú usan la publishable key con permisos anónimos
+estrictamente acotados. Las escrituras de pedidos y el tracking continúan
+pasando por el gateway server-only con `SUPABASE_SECRET_KEY`; se acepta
+`SUPABASE_SERVICE_ROLE_KEY` sólo como compatibilidad temporal legacy.
 
 ## Migración 023
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 
 const files = {
-  migration: "supabase/migrations/20260808_013_staff_roles_permissions.sql",
+  migration: "supabase/migrations/20260808001300_013_staff_roles_permissions.sql",
   rollback: "supabase/rollbacks/20260808_013_staff_roles_permissions.down.sql",
   postflight: "supabase/preflight/20260808_013_staff_roles_permissions_postflight.sql",
   docs: "docs/database/STAFF-ROLES-PERMISSIONS.md",
@@ -181,7 +181,11 @@ assert.match(sources.configPage, /membership\.role !== "owner"/u);
 assert.match(sources.configPage, /getBusinessStaffForBusiness/u);
 assert.match(sources.config, /<V2StaffSection/u);
 assert.match(sources.config, /id="config-staff"/u);
-assert.match(sources.config, />Staff<\/a>/u);
+assert.match(
+  sources.config,
+  /\{ id: "staff", label: "Staff" \}/u,
+);
+assert.match(sources.config, /href=\{`#config-\$\{section\.id\}`\}/u);
 assert.doesNotMatch(sources.config, /v2LocalUsers/u);
 assert.doesNotMatch(sources.config, /Usuarios y permisos/u);
 await assert.rejects(
@@ -215,7 +219,7 @@ assert.match(sources.remote, /save_business_staff_role/u);
 assert.match(sources.remote, /user_access_controls/u);
 assert.match(
   sources.manifest,
-  /20260808_013_staff_roles_permissions\.sql/u,
+  /20260808001300_013_staff_roles_permissions\.sql/u,
 );
 assert.match(
   sources.manifest,

@@ -1,0 +1,72 @@
+{
+  "templateId": "28-pastas-familiares",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 68,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.03734
+    },
+    {
+      "id": "hero",
+      "y": 68,
+      "height": 393,
+      "yStartRatio": 0.03734,
+      "heightRatio": 0.21582
+    },
+    {
+      "id": "reservation_bar",
+      "y": 408,
+      "height": 83,
+      "yStartRatio": 0.22405,
+      "heightRatio": 0.04558
+    },
+    {
+      "id": "menu",
+      "y": 491,
+      "height": 359,
+      "yStartRatio": 0.26963,
+      "heightRatio": 0.19714
+    },
+    {
+      "id": "family",
+      "y": 850,
+      "height": 260,
+      "yStartRatio": 0.46678,
+      "heightRatio": 0.14278
+    },
+    {
+      "id": "delivery",
+      "y": 1110,
+      "height": 185,
+      "yStartRatio": 0.60956,
+      "heightRatio": 0.10159
+    },
+    {
+      "id": "gallery",
+      "y": 1295,
+      "height": 214,
+      "yStartRatio": 0.71115,
+      "heightRatio": 0.11752
+    },
+    {
+      "id": "map_contact",
+      "y": 1509,
+      "height": 241,
+      "yStartRatio": 0.82867,
+      "heightRatio": 0.13234
+    },
+    {
+      "id": "footer",
+      "y": 1750,
+      "height": 71,
+      "yStartRatio": 0.96101,
+      "heightRatio": 0.03899
+    }
+  ]
+}

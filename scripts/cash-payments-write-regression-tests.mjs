@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 const migrationPath =
-  "supabase/migrations/20260810_019_cash_payments_write.sql";
+  "supabase/migrations/20260810001900_019_cash_payments_write.sql";
 const rollbackPath =
   "supabase/rollbacks/20260810_019_cash_payments_write.down.sql";
 const postflightPath =

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { FormEvent, ReactNode } from "react";
-import { CalendarDays, Clock3, MapPin, Phone, ShoppingBag, UserRound } from "lucide-react";
+import { CalendarDays, Clock3, MapPin, Phone, UserRound } from "lucide-react";
 
 type MenuItem = { id: string; name: string; description: string; price: number; imageUrl?: string; imageSlot?: string };
 type ReservationForm = { client: string; phone: string; email: string; people: number; date: string; time: string; note: string };

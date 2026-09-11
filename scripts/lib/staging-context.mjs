@@ -8,6 +8,22 @@ function required(name) {
   return value;
 }
 
+// Confirmado en el Dashboard de Supabase: tango-resto (main / PRODUCTION).
+// Este bloqueo deliberadamente vive en el código versionado para que una
+// etiqueta local equivocada no habilite seeds, fixtures ni cleanup contra
+// producción.
+const KNOWN_PRODUCTION_PROJECT_REFS = new Set([
+  "yzkeugxygfdgzhlwdeek",
+]);
+
+export function assertDedicatedStagingProjectRef(projectRef) {
+  if (KNOWN_PRODUCTION_PROJECT_REFS.has(projectRef)) {
+    throw new Error(
+      `El project ref ${projectRef} es producción (tango-resto). Las operaciones remotas de staging están bloqueadas.`,
+    );
+  }
+}
+
 function decodeJwtPayload(value) {
   if (value.split(".").length !== 3) {
     return null;
@@ -82,7 +98,7 @@ function validateServerSecret(secret, publicKey) {
     || secret.includes("replace-staging")
   ) {
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY todavía contiene un placeholder.",
+      "La clave privilegiada de Supabase todavía contiene un placeholder.",
     );
   }
 
@@ -152,6 +168,8 @@ export function getStagingContext({
     );
   }
 
+  assertDedicatedStagingProjectRef(stagingProjectRef);
+
   const url = required("NEXT_PUBLIC_SUPABASE_URL")
     .replace(/\/+$/u, "");
   const urlProjectRef = projectRefFromUrl(url);
@@ -178,7 +196,17 @@ export function getStagingContext({
   let serverSecret = null;
 
   if (requireServerSecret) {
-    serverSecret = required("SUPABASE_SERVICE_ROLE_KEY");
+    serverSecret = (
+      process.env.SUPABASE_SECRET_KEY
+      || process.env.SUPABASE_SERVICE_ROLE_KEY
+    )?.trim();
+
+    if (!serverSecret) {
+      throw new Error(
+        "Falta SUPABASE_SECRET_KEY o SUPABASE_SERVICE_ROLE_KEY.",
+      );
+    }
+
     validateServerSecret(serverSecret, publicKey);
   }
 

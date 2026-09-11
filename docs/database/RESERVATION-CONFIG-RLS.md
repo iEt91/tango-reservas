@@ -2,7 +2,7 @@
 
 ## Alcance
 
-La migración `20260802_004_reservation_config_read_rls.sql` habilita lectura
+La migración `20260802000400_004_reservation_config_read_rls.sql` habilita lectura
 multiempresa en:
 
 - `public.business_hours`;

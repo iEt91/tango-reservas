@@ -1,0 +1,65 @@
+{
+  "templateId": "22-churrascaria-brasilera",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 49,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.02691
+    },
+    {
+      "id": "hero",
+      "y": 49,
+      "height": 399,
+      "yStartRatio": 0.02691,
+      "heightRatio": 0.21911
+    },
+    {
+      "id": "intro_features",
+      "y": 448,
+      "height": 240,
+      "yStartRatio": 0.24602,
+      "heightRatio": 0.1318
+    },
+    {
+      "id": "menu",
+      "y": 688,
+      "height": 322,
+      "yStartRatio": 0.37781,
+      "heightRatio": 0.17683
+    },
+    {
+      "id": "experiences",
+      "y": 1010,
+      "height": 274,
+      "yStartRatio": 0.55464,
+      "heightRatio": 0.15047
+    },
+    {
+      "id": "gallery",
+      "y": 1284,
+      "height": 213,
+      "yStartRatio": 0.70511,
+      "heightRatio": 0.11697
+    },
+    {
+      "id": "contact_map",
+      "y": 1497,
+      "height": 220,
+      "yStartRatio": 0.82208,
+      "heightRatio": 0.12081
+    },
+    {
+      "id": "footer",
+      "y": 1717,
+      "height": 104,
+      "yStartRatio": 0.94289,
+      "heightRatio": 0.05711
+    }
+  ]
+}

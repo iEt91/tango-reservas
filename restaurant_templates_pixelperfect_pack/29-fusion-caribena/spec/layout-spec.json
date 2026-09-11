@@ -1,0 +1,65 @@
+{
+  "templateId": "29-fusion-caribena",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 58,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.03185
+    },
+    {
+      "id": "hero",
+      "y": 58,
+      "height": 312,
+      "yStartRatio": 0.03185,
+      "heightRatio": 0.17133
+    },
+    {
+      "id": "menu",
+      "y": 370,
+      "height": 354,
+      "yStartRatio": 0.20319,
+      "heightRatio": 0.1944
+    },
+    {
+      "id": "cocktails",
+      "y": 724,
+      "height": 322,
+      "yStartRatio": 0.39758,
+      "heightRatio": 0.17683
+    },
+    {
+      "id": "gallery",
+      "y": 1046,
+      "height": 250,
+      "yStartRatio": 0.57441,
+      "heightRatio": 0.13729
+    },
+    {
+      "id": "reservation",
+      "y": 1296,
+      "height": 160,
+      "yStartRatio": 0.7117,
+      "heightRatio": 0.08786
+    },
+    {
+      "id": "contact_map",
+      "y": 1456,
+      "height": 240,
+      "yStartRatio": 0.79956,
+      "heightRatio": 0.1318
+    },
+    {
+      "id": "footer",
+      "y": 1696,
+      "height": 125,
+      "yStartRatio": 0.93136,
+      "heightRatio": 0.06864
+    }
+  ]
+}

@@ -15,9 +15,10 @@ export default function HomePage() {
               {APP_NAME}
             </h1>
             <p className="text-lg leading-8 text-slate-300">
-              Sistema multi-negocio para crear webs publicas con reservas y panel
-              privado por negocio. Esta primera version deja preparada la base
-              tecnica para crecer paso a paso.
+              Sistema multi-negocio con web publica, reservas, pedidos y panel
+              operativo por negocio. El entorno local puede ejecutarse como demo
+              aislada; los flujos remotos usan Supabase cuando se configura esa
+              fuente de datos.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -44,15 +45,15 @@ export default function HomePage() {
             },
             {
               title: "Sistema de reservas",
-              text: "La base ya deja listo el lugar donde luego se conectara el flujo real de reservas.",
+              text: "Las reservas privadas y publicas tienen validacion, disponibilidad e integracion remota cuando Supabase esta habilitado.",
             },
             {
               title: "Panel privado",
               text: "Panel del local, admin panel y web publica quedan separados para crecer sin mezclar conceptos.",
             },
             {
-              title: "Automatizaciones futuras",
-              text: "Queda preparada la arquitectura para WhatsApp, Instagram, Supabase y mas adelante.",
+              title: "Integraciones y operacion",
+              text: "Supabase, roles, permisos y los flujos operativos estan implementados; las automatizaciones externas siguen fuera de alcance.",
             },
           ].map((item) => (
             <article
@@ -74,9 +75,9 @@ export default function HomePage() {
               {APP_VERSION}
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-              Esta entrega no conecta Supabase todavia, no crea reservas reales y
-              no incluye autenticacion. Solo deja la base tecnica limpia y lista
-              para la siguiente etapa.
+              Incluye autenticacion, autorizacion por negocio y flujos de reserva
+              y pedido. Para produccion todavia se deben completar las evidencias
+              de staging, aislamiento RLS, backups, monitoreo y E2E.
             </p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5">

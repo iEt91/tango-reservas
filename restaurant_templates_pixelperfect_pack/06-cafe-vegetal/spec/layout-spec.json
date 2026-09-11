@@ -1,0 +1,77 @@
+{
+  "template": "06-cafe-vegetal",
+  "reference": {
+    "file": "reference/reference.png",
+    "width": 864,
+    "height": 1821
+  },
+  "reference_scale_rule": "Implement at native 864px width first; scale uniformly only after pixel matching.",
+  "detected_section_guides": [
+    {
+      "id": "section_01",
+      "y_start": 0,
+      "y_end": 61,
+      "height": 61
+    },
+    {
+      "id": "section_02",
+      "y_start": 61,
+      "y_end": 269,
+      "height": 208
+    },
+    {
+      "id": "section_03",
+      "y_start": 269,
+      "y_end": 964,
+      "height": 695
+    },
+    {
+      "id": "section_04",
+      "y_start": 964,
+      "y_end": 1038,
+      "height": 74
+    },
+    {
+      "id": "section_05",
+      "y_start": 1038,
+      "y_end": 1274,
+      "height": 236
+    },
+    {
+      "id": "section_06",
+      "y_start": 1274,
+      "y_end": 1356,
+      "height": 82
+    },
+    {
+      "id": "section_07",
+      "y_start": 1356,
+      "y_end": 1478,
+      "height": 122
+    },
+    {
+      "id": "section_08",
+      "y_start": 1478,
+      "y_end": 1607,
+      "height": 129
+    },
+    {
+      "id": "section_09",
+      "y_start": 1607,
+      "y_end": 1821,
+      "height": 214
+    }
+  ],
+  "guide_note": "Section boundaries are machine-detected guides. The reference PNG remains authoritative.",
+  "dynamic_content_policy": {
+    "menu_photos": "restaurant-provided; never bake reference photos into the template",
+    "gallery_photos": "restaurant-provided where supported",
+    "venue_or_hero_photos": "use restaurant-configurable content when available, keeping exact reference slot geometry"
+  },
+  "image_rules": {
+    "preserve_aspect_ratio": true,
+    "forbid_object_fit_fill": true,
+    "forbid_background_size_100_100_for_decorations": true,
+    "patterns": "repeat, never stretch"
+  }
+}

@@ -2,51 +2,51 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const initialPath =
-  "supabase/migrations/20260802_001_initial_schema_lockdown.sql";
+  "supabase/migrations/20260802000100_001_initial_schema_lockdown.sql";
 const membersPath =
-  "supabase/migrations/20260802_002_business_members_and_rls.sql";
+  "supabase/migrations/20260802000200_002_business_members_and_rls.sql";
 const identityPath =
-  "supabase/migrations/20260802_003_business_identity_read_rls.sql";
+  "supabase/migrations/20260802000300_003_business_identity_read_rls.sql";
 const reservationConfigPath =
-  "supabase/migrations/20260802_004_reservation_config_read_rls.sql";
+  "supabase/migrations/20260802000400_004_reservation_config_read_rls.sql";
 const businessHoursWritePath =
-  "supabase/migrations/20260803_005_business_hours_write_rpc.sql";
+  "supabase/migrations/20260803000500_005_business_hours_write_rpc.sql";
 const reservationSettingsWritePath =
-  "supabase/migrations/20260803_006_reservation_settings_write_rpc.sql";
+  "supabase/migrations/20260803000600_006_reservation_settings_write_rpc.sql";
 const servicesWritePath =
-  "supabase/migrations/20260803_007_services_write_rpc.sql";
+  "supabase/migrations/20260803000700_007_services_write_rpc.sql";
 const customersWritePath =
-  "supabase/migrations/20260803_008_customers_write_rpc.sql";
+  "supabase/migrations/20260803000800_008_customers_write_rpc.sql";
 const reservationsWritePath =
-  "supabase/migrations/20260804_009_reservations_write_rpc.sql";
+  "supabase/migrations/20260804000900_009_reservations_write_rpc.sql";
 const floorPlanWritePath =
-  "supabase/migrations/20260804_010_floor_plan_write_rpc.sql";
+  "supabase/migrations/20260804001000_010_floor_plan_write_rpc.sql";
 const menuWritePath =
-  "supabase/migrations/20260806_011_menu_write_rpc.sql";
+  "supabase/migrations/20260806001100_011_menu_write_rpc.sql";
 const menuPromotionsPath =
-  "supabase/migrations/20260807_012_menu_promotions_rpc.sql";
+  "supabase/migrations/20260807001200_012_menu_promotions_rpc.sql";
 const staffRolesPath =
-  "supabase/migrations/20260808_013_staff_roles_permissions.sql";
+  "supabase/migrations/20260808001300_013_staff_roles_permissions.sql";
 const stockWritePath =
-  "supabase/migrations/20260809_014_stock_write_rpc.sql";
+  "supabase/migrations/20260809001400_014_stock_write_rpc.sql";
 const recipesWritePath =
-  "supabase/migrations/20260809_015_recipes_write_rpc.sql";
+  "supabase/migrations/20260809001500_015_recipes_write_rpc.sql";
 const recipeStockConsumptionPath =
-  "supabase/migrations/20260809_016_recipe_stock_consumption.sql";
+  "supabase/migrations/20260809001600_016_recipe_stock_consumption.sql";
 const reservationConsumptionWritePath =
-  "supabase/migrations/20260810_017_reservation_consumption_write.sql";
+  "supabase/migrations/20260810001700_017_reservation_consumption_write.sql";
 const stockRealtimeSyncPath =
-  "supabase/migrations/20260810_018_stock_realtime_sync.sql";
+  "supabase/migrations/20260810001800_018_stock_realtime_sync.sql";
 const cashPaymentsWritePath =
-  "supabase/migrations/20260810_019_cash_payments_write.sql";
+  "supabase/migrations/20260810001900_019_cash_payments_write.sql";
 const expensesCashClosePath =
-  "supabase/migrations/20260811_020_expenses_cash_close.sql";
+  "supabase/migrations/20260811002000_020_expenses_cash_close.sql";
 const kitchenOperationalWritePath =
-  "supabase/migrations/20260811_021_kitchen_operational_write.sql";
+  "supabase/migrations/20260811002100_021_kitchen_operational_write.sql";
 const shippingOrdersWritePath =
-  "supabase/migrations/20260811_022_shipping_orders_write.sql";
+  "supabase/migrations/20260811002200_022_shipping_orders_write.sql";
 const publicShippingOrderingPath =
-  "supabase/migrations/20260811_023_public_shipping_ordering.sql";
+  "supabase/migrations/20260811002300_023_public_shipping_ordering.sql";
 
 const initial = await readFile(initialPath, "utf8");
 const members = await readFile(membersPath, "utf8");

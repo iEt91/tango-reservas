@@ -1,0 +1,740 @@
+{
+  "template": "09-sushi-omakase",
+  "assets": [
+    {
+      "file": "assets/panels/panel_wide_01.png",
+      "category": "panels",
+      "subtype": "panel_wide",
+      "width": 678,
+      "height": 328,
+      "source_bbox": [
+        23,
+        49,
+        697,
+        373
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_01.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 30,
+      "height": 30,
+      "source_bbox": [
+        88,
+        30,
+        113,
+        55
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_02.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 130,
+      "height": 131,
+      "source_bbox": [
+        597,
+        49,
+        726,
+        180
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_03.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 42,
+      "height": 44,
+      "source_bbox": [
+        793,
+        45,
+        835,
+        88
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_01.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 41,
+      "height": 26,
+      "source_bbox": [
+        871,
+        53,
+        910,
+        77
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_04.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 44,
+      "height": 34,
+      "source_bbox": [
+        1036,
+        46,
+        1079,
+        79
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_02.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 30,
+      "height": 46,
+      "source_bbox": [
+        64,
+        67,
+        86,
+        105
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_05.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 41,
+      "height": 38,
+      "source_bbox": [
+        787,
+        145,
+        825,
+        183
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_03.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 21,
+      "height": 34,
+      "source_bbox": [
+        905,
+        131,
+        923,
+        165
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_06.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 42,
+      "height": 40,
+      "source_bbox": [
+        1015,
+        128,
+        1055,
+        168
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_04.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 41,
+      "height": 23,
+      "source_bbox": [
+        786,
+        237,
+        827,
+        258
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_07.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 24,
+      "height": 26,
+      "source_bbox": [
+        1038,
+        347,
+        1060,
+        369
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_wide_01.png",
+      "category": "icons",
+      "subtype": "icon_wide",
+      "width": 180,
+      "height": 79,
+      "source_bbox": [
+        51,
+        413,
+        229,
+        492
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_wide_02.png",
+      "category": "icons",
+      "subtype": "icon_wide",
+      "width": 181,
+      "height": 80,
+      "source_bbox": [
+        260,
+        414,
+        439,
+        492
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_05.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 177,
+      "height": 81,
+      "source_bbox": [
+        473,
+        413,
+        649,
+        492
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_wide_03.png",
+      "category": "icons",
+      "subtype": "icon_wide",
+      "width": 182,
+      "height": 82,
+      "source_bbox": [
+        682,
+        413,
+        860,
+        492
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_wide_04.png",
+      "category": "icons",
+      "subtype": "icon_wide",
+      "width": 180,
+      "height": 79,
+      "source_bbox": [
+        893,
+        413,
+        1071,
+        492
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_08.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 27,
+      "height": 29,
+      "source_bbox": [
+        126,
+        497,
+        153,
+        524
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_09.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 26,
+      "height": 26,
+      "source_bbox": [
+        339,
+        497,
+        363,
+        522
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_10.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 27,
+      "height": 31,
+      "source_bbox": [
+        546,
+        497,
+        573,
+        524
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_11.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 25,
+      "height": 27,
+      "source_bbox": [
+        760,
+        499,
+        781,
+        522
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_06.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 30,
+      "height": 25,
+      "source_bbox": [
+        969,
+        500,
+        999,
+        521
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/ornaments/ornament_01.png",
+      "category": "ornaments",
+      "subtype": "ornament",
+      "width": 207,
+      "height": 204,
+      "source_bbox": [
+        35,
+        557,
+        241,
+        759
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/ornaments/ornament_02.png",
+      "category": "ornaments",
+      "subtype": "ornament",
+      "width": 201,
+      "height": 203,
+      "source_bbox": [
+        253,
+        558,
+        452,
+        759
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/ornaments/ornament_03.png",
+      "category": "ornaments",
+      "subtype": "ornament",
+      "width": 200,
+      "height": 201,
+      "source_bbox": [
+        468,
+        561,
+        665,
+        761
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/ornaments/ornament_04.png",
+      "category": "ornaments",
+      "subtype": "ornament",
+      "width": 210,
+      "height": 208,
+      "source_bbox": [
+        676,
+        558,
+        884,
+        764
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/ornaments/ornament_05.png",
+      "category": "ornaments",
+      "subtype": "ornament",
+      "width": 203,
+      "height": 201,
+      "source_bbox": [
+        898,
+        561,
+        1098,
+        761
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_12.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 28,
+      "height": 27,
+      "source_bbox": [
+        39,
+        818,
+        67,
+        845
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/dividers/divider_long_01.png",
+      "category": "dividers",
+      "subtype": "divider_long",
+      "width": 443,
+      "height": 29,
+      "source_bbox": [
+        40,
+        781,
+        481,
+        808
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_13.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 27,
+      "height": 27,
+      "source_bbox": [
+        170,
+        819,
+        194,
+        845
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_14.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 31,
+      "height": 24,
+      "source_bbox": [
+        299,
+        822,
+        330,
+        845
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_15.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 25,
+      "height": 25,
+      "source_bbox": [
+        457,
+        819,
+        482,
+        844
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_vertical_01.png",
+      "category": "icons",
+      "subtype": "icon_vertical",
+      "width": 10,
+      "height": 98,
+      "source_bbox": [
+        647,
+        771,
+        655,
+        868
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/panels/panel_01.png",
+      "category": "panels",
+      "subtype": "panel",
+      "width": 393,
+      "height": 305,
+      "source_bbox": [
+        695,
+        773,
+        1081,
+        1076
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/dividers/divider_long_02.png",
+      "category": "dividers",
+      "subtype": "divider_long",
+      "width": 261,
+      "height": 69,
+      "source_bbox": [
+        46,
+        881,
+        305,
+        948
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/dividers/divider_short_01.png",
+      "category": "dividers",
+      "subtype": "divider_short",
+      "width": 237,
+      "height": 68,
+      "source_bbox": [
+        319,
+        882,
+        554,
+        948
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_07.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 227,
+      "height": 159,
+      "source_bbox": [
+        667,
+        916,
+        889,
+        1072
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_16.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 54,
+      "height": 58,
+      "source_bbox": [
+        61,
+        977,
+        113,
+        1035
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_08.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 86,
+      "height": 54,
+      "source_bbox": [
+        218,
+        982,
+        302,
+        1036
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/ui/button_or_field_wide_01.png",
+      "category": "ui",
+      "subtype": "button_or_field_wide",
+      "width": 290,
+      "height": 145,
+      "source_bbox": [
+        45,
+        1088,
+        334,
+        1230
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_09.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 326,
+      "height": 158,
+      "source_bbox": [
+        507,
+        1078,
+        830,
+        1235
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_17.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 26,
+      "height": 33,
+      "source_bbox": [
+        891,
+        1093,
+        915,
+        1126
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_18.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 59,
+      "height": 77,
+      "source_bbox": [
+        381,
+        1115,
+        438,
+        1191
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_10.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 24,
+      "height": 38,
+      "source_bbox": [
+        891,
+        1138,
+        915,
+        1172
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_19.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 39,
+      "height": 39,
+      "source_bbox": [
+        885,
+        1180,
+        920,
+        1218
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_11.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 37,
+      "height": 24,
+      "source_bbox": [
+        177,
+        1249,
+        214,
+        1273
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_12.png",
+      "category": "icons",
+      "subtype": "icon",
+      "width": 42,
+      "height": 25,
+      "source_bbox": [
+        536,
+        1248,
+        577,
+        1273
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/icons/icon_square_or_round_20.png",
+      "category": "icons",
+      "subtype": "icon_square_or_round",
+      "width": 32,
+      "height": 31,
+      "source_bbox": [
+        911,
+        1247,
+        943,
+        1278
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    },
+    {
+      "file": "assets/dividers/divider_long_03.png",
+      "category": "dividers",
+      "subtype": "divider_long",
+      "width": 1047,
+      "height": 80,
+      "source_bbox": [
+        40,
+        1294,
+        1083,
+        1373
+      ],
+      "preserve_aspect_ratio": true,
+      "stretch": false
+    }
+  ]
+}

@@ -1,0 +1,360 @@
+{
+  "kit_name": "36_Moody_Fine_Dining_Editorial_Kit",
+  "source_file": "36_moody_fine_dining_editorial_asset_sheet.png",
+  "has_transparency": true,
+  "sections": [
+    {
+      "file": "assets/sections/section_01.png",
+      "bbox": [
+        129,
+        0,
+        592,
+        337
+      ]
+    },
+    {
+      "file": "assets/sections/section_02.png",
+      "bbox": [
+        847,
+        11,
+        145,
+        176
+      ]
+    },
+    {
+      "file": "assets/sections/section_03.png",
+      "bbox": [
+        13,
+        328,
+        265,
+        177
+      ]
+    },
+    {
+      "file": "assets/sections/section_04.png",
+      "bbox": [
+        268,
+        333,
+        253,
+        170
+      ]
+    },
+    {
+      "file": "assets/sections/section_05.png",
+      "bbox": [
+        512,
+        333,
+        244,
+        172
+      ]
+    },
+    {
+      "file": "assets/sections/section_06.png",
+      "bbox": [
+        748,
+        343,
+        268,
+        164
+      ]
+    },
+    {
+      "file": "assets/sections/section_07.png",
+      "bbox": [
+        437,
+        579,
+        402,
+        327
+      ]
+    },
+    {
+      "file": "assets/sections/section_08.png",
+      "bbox": [
+        16,
+        580,
+        418,
+        316
+      ]
+    },
+    {
+      "file": "assets/sections/section_09.png",
+      "bbox": [
+        831,
+        649,
+        191,
+        261
+      ]
+    },
+    {
+      "file": "assets/sections/section_10.png",
+      "bbox": [
+        14,
+        887,
+        517,
+        250
+      ]
+    },
+    {
+      "file": "assets/sections/section_11.png",
+      "bbox": [
+        526,
+        902,
+        487,
+        234
+      ]
+    },
+    {
+      "file": "assets/sections/section_12.png",
+      "bbox": [
+        15,
+        1129,
+        207,
+        170
+      ]
+    },
+    {
+      "file": "assets/sections/section_13.png",
+      "bbox": [
+        212,
+        1129,
+        197,
+        170
+      ]
+    },
+    {
+      "file": "assets/sections/section_14.png",
+      "bbox": [
+        399,
+        1129,
+        232,
+        170
+      ]
+    },
+    {
+      "file": "assets/sections/section_15.png",
+      "bbox": [
+        619,
+        1129,
+        392,
+        170
+      ]
+    },
+    {
+      "file": "assets/sections/section_16.png",
+      "bbox": [
+        6,
+        1287,
+        1018,
+        249
+      ]
+    },
+    {
+      "file": "assets/sections/section_17.png",
+      "bbox": [
+        388,
+        1337,
+        176,
+        60
+      ]
+    }
+  ],
+  "components": [
+    {
+      "file": "assets/photos/photo_001.png",
+      "category": "photos",
+      "source_section": "section_01.png",
+      "bbox_in_section": [
+        0,
+        0,
+        592,
+        337
+      ]
+    },
+    {
+      "file": "assets/decor/decor_002.png",
+      "category": "decor",
+      "source_section": "section_02.png",
+      "bbox_in_section": [
+        0,
+        0,
+        145,
+        176
+      ]
+    },
+    {
+      "file": "assets/photos/photo_003.png",
+      "category": "photos",
+      "source_section": "section_03.png",
+      "bbox_in_section": [
+        0,
+        0,
+        265,
+        177
+      ]
+    },
+    {
+      "file": "assets/photos/photo_004.png",
+      "category": "photos",
+      "source_section": "section_04.png",
+      "bbox_in_section": [
+        0,
+        0,
+        253,
+        170
+      ]
+    },
+    {
+      "file": "assets/photos/photo_005.png",
+      "category": "photos",
+      "source_section": "section_05.png",
+      "bbox_in_section": [
+        0,
+        0,
+        244,
+        172
+      ]
+    },
+    {
+      "file": "assets/photos/photo_006.png",
+      "category": "photos",
+      "source_section": "section_06.png",
+      "bbox_in_section": [
+        0,
+        0,
+        268,
+        164
+      ]
+    },
+    {
+      "file": "assets/photos/photo_007.png",
+      "category": "photos",
+      "source_section": "section_07.png",
+      "bbox_in_section": [
+        2,
+        2,
+        398,
+        323
+      ]
+    },
+    {
+      "file": "assets/icons/icon_008.png",
+      "category": "icons",
+      "source_section": "section_07.png",
+      "bbox_in_section": [
+        364,
+        5,
+        38,
+        54
+      ]
+    },
+    {
+      "file": "assets/photos/photo_009.png",
+      "category": "photos",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        0,
+        0,
+        418,
+        316
+      ]
+    },
+    {
+      "file": "assets/decor/decor_010.png",
+      "category": "decor",
+      "source_section": "section_09.png",
+      "bbox_in_section": [
+        0,
+        0,
+        191,
+        261
+      ]
+    },
+    {
+      "file": "assets/photos/photo_011.png",
+      "category": "photos",
+      "source_section": "section_10.png",
+      "bbox_in_section": [
+        0,
+        0,
+        517,
+        250
+      ]
+    },
+    {
+      "file": "assets/photos/photo_012.png",
+      "category": "photos",
+      "source_section": "section_11.png",
+      "bbox_in_section": [
+        0,
+        0,
+        487,
+        234
+      ]
+    },
+    {
+      "file": "assets/photos/photo_013.png",
+      "category": "photos",
+      "source_section": "section_12.png",
+      "bbox_in_section": [
+        0,
+        0,
+        207,
+        170
+      ]
+    },
+    {
+      "file": "assets/photos/photo_014.png",
+      "category": "photos",
+      "source_section": "section_13.png",
+      "bbox_in_section": [
+        0,
+        0,
+        197,
+        170
+      ]
+    },
+    {
+      "file": "assets/photos/photo_015.png",
+      "category": "photos",
+      "source_section": "section_14.png",
+      "bbox_in_section": [
+        0,
+        0,
+        232,
+        170
+      ]
+    },
+    {
+      "file": "assets/photos/photo_016.png",
+      "category": "photos",
+      "source_section": "section_15.png",
+      "bbox_in_section": [
+        0,
+        0,
+        392,
+        170
+      ]
+    },
+    {
+      "file": "assets/ui/ui_017.png",
+      "category": "ui",
+      "source_section": "section_16.png",
+      "bbox_in_section": [
+        384,
+        52,
+        172,
+        56
+      ]
+    },
+    {
+      "file": "assets/ui/ui_018.png",
+      "category": "ui",
+      "source_section": "section_17.png",
+      "bbox_in_section": [
+        0,
+        0,
+        176,
+        60
+      ]
+    }
+  ]
+}

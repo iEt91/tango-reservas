@@ -1,0 +1,189 @@
+{
+  "kit_name": "41_Coastal_Seafood_Minimal_Kit",
+  "source_file": "41_coastal_seafood_minimal_asset_sheet.png",
+  "has_transparency": false,
+  "sections": [
+    {
+      "file": "assets/sections/section_01.png",
+      "bbox": [
+        0,
+        0,
+        941,
+        541
+      ]
+    },
+    {
+      "file": "assets/sections/section_02.png",
+      "bbox": [
+        554,
+        530,
+        94,
+        107
+      ]
+    },
+    {
+      "file": "assets/sections/section_03.png",
+      "bbox": [
+        717,
+        530,
+        224,
+        87
+      ]
+    },
+    {
+      "file": "assets/sections/section_04.png",
+      "bbox": [
+        0,
+        622,
+        239,
+        103
+      ]
+    },
+    {
+      "file": "assets/sections/section_05.png",
+      "bbox": [
+        0,
+        625,
+        941,
+        476
+      ]
+    },
+    {
+      "file": "assets/sections/section_06.png",
+      "bbox": [
+        691,
+        625,
+        236,
+        225
+      ]
+    },
+    {
+      "file": "assets/sections/section_07.png",
+      "bbox": [
+        33,
+        714,
+        186,
+        50
+      ]
+    },
+    {
+      "file": "assets/sections/section_08.png",
+      "bbox": [
+        0,
+        753,
+        222,
+        92
+      ]
+    },
+    {
+      "file": "assets/sections/section_09.png",
+      "bbox": [
+        0,
+        1112,
+        941,
+        560
+      ]
+    }
+  ],
+  "components": [
+    {
+      "file": "assets/photos/photo_001.png",
+      "category": "photos",
+      "source_section": "section_01.png",
+      "bbox_in_section": [
+        0,
+        0,
+        941,
+        541
+      ]
+    },
+    {
+      "file": "assets/icons/icon_002.png",
+      "category": "icons",
+      "source_section": "section_02.png",
+      "bbox_in_section": [
+        0,
+        0,
+        94,
+        107
+      ]
+    },
+    {
+      "file": "assets/ui/ui_003.png",
+      "category": "ui",
+      "source_section": "section_03.png",
+      "bbox_in_section": [
+        0,
+        0,
+        224,
+        87
+      ]
+    },
+    {
+      "file": "assets/icons/icon_004.png",
+      "category": "icons",
+      "source_section": "section_04.png",
+      "bbox_in_section": [
+        0,
+        73,
+        21,
+        30
+      ]
+    },
+    {
+      "file": "assets/photos/photo_005.png",
+      "category": "photos",
+      "source_section": "section_05.png",
+      "bbox_in_section": [
+        0,
+        0,
+        941,
+        476
+      ]
+    },
+    {
+      "file": "assets/photos/photo_006.png",
+      "category": "photos",
+      "source_section": "section_06.png",
+      "bbox_in_section": [
+        0,
+        0,
+        236,
+        225
+      ]
+    },
+    {
+      "file": "assets/ui/ui_007.png",
+      "category": "ui",
+      "source_section": "section_07.png",
+      "bbox_in_section": [
+        0,
+        0,
+        186,
+        50
+      ]
+    },
+    {
+      "file": "assets/ui/ui_008.png",
+      "category": "ui",
+      "source_section": "section_08.png",
+      "bbox_in_section": [
+        0,
+        0,
+        222,
+        92
+      ]
+    },
+    {
+      "file": "assets/photos/photo_009.png",
+      "category": "photos",
+      "source_section": "section_09.png",
+      "bbox_in_section": [
+        0,
+        0,
+        941,
+        560
+      ]
+    }
+  ]
+}

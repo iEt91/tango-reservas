@@ -5,7 +5,7 @@ import {
 } from "node:fs/promises";
 
 const migrationPath =
-  "supabase/migrations/20260802_001_initial_schema_lockdown.sql";
+  "supabase/migrations/20260802000100_001_initial_schema_lockdown.sql";
 const adapterPath =
   "src/lib/data/supabase/businesses.ts";
 const adminAdapterPath =
@@ -16,7 +16,7 @@ const publicWebPath =
 const reservationsPath =
   "src/lib/data/supabase/reservations.ts";
 const reservationsWriteMigrationPath =
-  "supabase/migrations/20260804_009_reservations_write_rpc.sql";
+  "supabase/migrations/20260804000900_009_reservations_write_rpc.sql";
 const documentationPath =
   "docs/database/BUSINESS-SCHEMA-CONTRACT.md";
 

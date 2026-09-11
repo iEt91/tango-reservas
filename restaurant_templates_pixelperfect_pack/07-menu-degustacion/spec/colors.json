@@ -1,0 +1,11 @@
+{
+  "template": "07-menu-degustacion",
+  "dominant_reference_colors": [
+    "#0c090a",
+    "#3a3027",
+    "#1e1214",
+    "#2d201a",
+    "#6c5944"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

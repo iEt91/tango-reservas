@@ -54,6 +54,8 @@ assert.match(
   /stagingProjectRef === productionProjectRef/,
 );
 assert.match(context, /urlProjectRef !== stagingProjectRef/);
+assert.match(context, /KNOWN_PRODUCTION_PROJECT_REFS/);
+assert.match(context, /assertDedicatedStagingProjectRef/);
 assert.match(context, /service_role/);
 assert.match(context, /sb_secret_/);
 console.log("✓ las operaciones remotas rechazan producción");

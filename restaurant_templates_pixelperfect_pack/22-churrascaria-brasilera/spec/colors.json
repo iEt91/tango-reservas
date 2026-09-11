@@ -1,0 +1,87 @@
+{
+  "templateId": "22-churrascaria-brasilera",
+  "source": "reference/reference.png",
+  "dominantColors": [
+    {
+      "hex": "#141b15",
+      "rgb": [
+        20,
+        27,
+        21
+      ],
+      "weight": 0.1494
+    },
+    {
+      "hex": "#f1eee9",
+      "rgb": [
+        241,
+        238,
+        233
+      ],
+      "weight": 0.1369
+    },
+    {
+      "hex": "#bfc5c4",
+      "rgb": [
+        191,
+        197,
+        196
+      ],
+      "weight": 0.124
+    },
+    {
+      "hex": "#969a96",
+      "rgb": [
+        150,
+        154,
+        150
+      ],
+      "weight": 0.1191
+    },
+    {
+      "hex": "#24271d",
+      "rgb": [
+        36,
+        39,
+        29
+      ],
+      "weight": 0.1179
+    },
+    {
+      "hex": "#5b5747",
+      "rgb": [
+        91,
+        87,
+        71
+      ],
+      "weight": 0.1029
+    },
+    {
+      "hex": "#eeebe7",
+      "rgb": [
+        238,
+        235,
+        231
+      ],
+      "weight": 0.09
+    },
+    {
+      "hex": "#e2e2e0",
+      "rgb": [
+        226,
+        226,
+        224
+      ],
+      "weight": 0.0818
+    },
+    {
+      "hex": "#f4f1ed",
+      "rgb": [
+        244,
+        241,
+        237
+      ],
+      "weight": 0.0779
+    }
+  ]
+}

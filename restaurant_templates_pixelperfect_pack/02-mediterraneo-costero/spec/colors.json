@@ -1,0 +1,14 @@
+{
+  "template": "02-mediterraneo-costero",
+  "dominant_reference_colors": [
+    "#eef1f5",
+    "#3a658b",
+    "#c0c2bc",
+    "#ece6df",
+    "#827357",
+    "#d5dadd",
+    "#5f4c2d",
+    "#759ab1"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

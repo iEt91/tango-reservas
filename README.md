@@ -891,8 +891,8 @@ Crear un archivo `.env.local` a partir de `.env.example`.
 Variables esperadas:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (o `NEXT_PUBLIC_SUPABASE_ANON_KEY` legacy)
+- `SUPABASE_SECRET_KEY` server-only (o `SUPABASE_SERVICE_ROLE_KEY` legacy temporal)
 - `PUBLIC_REQUEST_FINGERPRINT_SECRET` (secreto server-only separado para limitar solicitudes públicas)
 
 Todavia no estan conectadas al frontend.

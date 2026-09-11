@@ -1,0 +1,14 @@
+{
+  "template": "09-sushi-omakase",
+  "dominant_reference_colors": [
+    "#e3ded9",
+    "#08111e",
+    "#020406",
+    "#f0edea",
+    "#553f2e",
+    "#7d6753",
+    "#27282a",
+    "#bdab9a"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

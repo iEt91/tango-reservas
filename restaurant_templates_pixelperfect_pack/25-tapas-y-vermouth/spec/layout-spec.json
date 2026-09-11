@@ -1,0 +1,65 @@
+{
+  "templateId": "25-tapas-y-vermouth",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 56,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.03075
+    },
+    {
+      "id": "hero",
+      "y": 56,
+      "height": 493,
+      "yStartRatio": 0.03075,
+      "heightRatio": 0.27073
+    },
+    {
+      "id": "menu",
+      "y": 549,
+      "height": 289,
+      "yStartRatio": 0.30148,
+      "heightRatio": 0.1587
+    },
+    {
+      "id": "categories",
+      "y": 838,
+      "height": 178,
+      "yStartRatio": 0.46019,
+      "heightRatio": 0.09775
+    },
+    {
+      "id": "experience",
+      "y": 1016,
+      "height": 268,
+      "yStartRatio": 0.55794,
+      "heightRatio": 0.14717
+    },
+    {
+      "id": "gallery",
+      "y": 1284,
+      "height": 194,
+      "yStartRatio": 0.70511,
+      "heightRatio": 0.10653
+    },
+    {
+      "id": "map_contact",
+      "y": 1478,
+      "height": 241,
+      "yStartRatio": 0.81164,
+      "heightRatio": 0.13234
+    },
+    {
+      "id": "footer",
+      "y": 1719,
+      "height": 102,
+      "yStartRatio": 0.94399,
+      "heightRatio": 0.05601
+    }
+  ]
+}

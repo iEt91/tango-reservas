@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const paths = {
   migration:
-    "supabase/migrations/20260810_018_stock_realtime_sync.sql",
+    "supabase/migrations/20260810001800_018_stock_realtime_sync.sql",
   rollback:
     "supabase/rollbacks/20260810_018_stock_realtime_sync.down.sql",
   postflight:
@@ -347,7 +347,7 @@ check(
 check(
   "manifiesto incorpora migración y rollback 018",
   sources.manifest.includes(
-    "20260810_018_stock_realtime_sync.sql",
+    "20260810001800_018_stock_realtime_sync.sql",
   )
     && sources.manifest.includes(
       "20260810_018_stock_realtime_sync.down.sql",

@@ -88,7 +88,7 @@ No ejecuta `staging:cleanup-isolation` y conserva los fixtures A/B.
 
 Archivo:
 
-`supabase/migrations/20260806_011_menu_write_rpc.sql`
+`supabase/migrations/20260806001100_011_menu_write_rpc.sql`
 
 Debe aplicarse una sola vez y únicamente después del QA local.
 

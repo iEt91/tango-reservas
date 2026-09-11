@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 
 const initialMigrationPath =
-  "supabase/migrations/20260802_001_initial_schema_lockdown.sql";
+  "supabase/migrations/20260802000100_001_initial_schema_lockdown.sql";
 const migrationPath =
-  "supabase/migrations/20260802_002_business_members_and_rls.sql";
+  "supabase/migrations/20260802000200_002_business_members_and_rls.sql";
 const initialRollbackPath =
   "supabase/rollbacks/20260802_001_initial_schema_lockdown.down.sql";
 const rollbackPath =

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { normalizePublicShippingSlug } from "@/lib/public-shipping/public-shipping-contract";
 
 type RouteContext = {
@@ -13,17 +13,15 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "El negocio p\u00fablico no es v\u00e1lido." }, { status: 404 });
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = getSupabaseClient();
   if (!supabase) {
     return NextResponse.json({ error: "La web p\u00fablica no est\u00e1 disponible." }, { status: 503 });
   }
 
-  const { data, error } = await supabase
-    .from("businesses")
-    .select("name, slug, description, address, phone, whatsapp, instagram_url, hero_eyebrow, hero_title, hero_subtitle, cta_label, secondary_cta_label, show_menu, show_reservation, show_whatsapp_button, show_gallery, show_location, show_delivery")
-    .eq("slug", slug)
-    .eq("status", "active")
-    .maybeSingle();
+  const { data, error } = await supabase.rpc(
+    "public_get_business_site",
+    { p_slug: slug },
+  );
 
   if (error) {
     console.error("[public-site] read failed", { code: error.code ?? null });

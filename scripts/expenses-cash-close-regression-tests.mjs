@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const paths = {
   migration:
-    "supabase/migrations/20260811_020_expenses_cash_close.sql",
+    "supabase/migrations/20260811002000_020_expenses_cash_close.sql",
   rollback:
     "supabase/rollbacks/20260811_020_expenses_cash_close.down.sql",
   postflight:

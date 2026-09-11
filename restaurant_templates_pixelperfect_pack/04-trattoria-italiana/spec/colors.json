@@ -1,0 +1,14 @@
+{
+  "template": "04-trattoria-italiana",
+  "dominant_reference_colors": [
+    "#595731",
+    "#e8dbc7",
+    "#922819",
+    "#050402",
+    "#f7eee0",
+    "#2a1a0c",
+    "#42341c",
+    "#d8cbb6"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

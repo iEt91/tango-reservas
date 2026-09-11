@@ -1,0 +1,65 @@
+{
+  "templateId": "26-pasteleria-y-cafe",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 53,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.0291
+    },
+    {
+      "id": "hero",
+      "y": 53,
+      "height": 388,
+      "yStartRatio": 0.0291,
+      "heightRatio": 0.21307
+    },
+    {
+      "id": "pastry_menu",
+      "y": 441,
+      "height": 337,
+      "yStartRatio": 0.24217,
+      "heightRatio": 0.18506
+    },
+    {
+      "id": "drinks",
+      "y": 778,
+      "height": 278,
+      "yStartRatio": 0.42724,
+      "heightRatio": 0.15266
+    },
+    {
+      "id": "story",
+      "y": 1056,
+      "height": 225,
+      "yStartRatio": 0.5799,
+      "heightRatio": 0.12356
+    },
+    {
+      "id": "gallery",
+      "y": 1281,
+      "height": 173,
+      "yStartRatio": 0.70346,
+      "heightRatio": 0.095
+    },
+    {
+      "id": "map_contact",
+      "y": 1454,
+      "height": 238,
+      "yStartRatio": 0.79846,
+      "heightRatio": 0.1307
+    },
+    {
+      "id": "footer",
+      "y": 1692,
+      "height": 129,
+      "yStartRatio": 0.92916,
+      "heightRatio": 0.07084
+    }
+  ]
+}

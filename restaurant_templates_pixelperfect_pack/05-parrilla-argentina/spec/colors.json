@@ -1,0 +1,12 @@
+{
+  "template": "05-parrilla-argentina",
+  "dominant_reference_colors": [
+    "#0d0d0c",
+    "#453b2f",
+    "#1d1d18",
+    "#422416",
+    "#795942",
+    "#020101"
+  ],
+  "note": "Sampled from reference; visually verify exact usage per section."
+}

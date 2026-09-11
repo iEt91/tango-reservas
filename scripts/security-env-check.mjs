@@ -47,7 +47,10 @@ const publicKey = (
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )?.trim();
-const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+const serverSecret = (
+  process.env.SUPABASE_SECRET_KEY
+  || process.env.SUPABASE_SERVICE_ROLE_KEY
+)?.trim();
 
 if (publicUrl) {
   try {
@@ -82,23 +85,33 @@ if (publicPayload?.role === "service_role") {
 
 if (
   publicKey
-  && serviceRole
-  && publicKey === serviceRole
+  && serverSecret
+  && publicKey === serverSecret
 ) {
   errors.push(
     "la clave pública y la service role no pueden ser iguales",
   );
 }
 
-const servicePayload = decodeJwtPayload(serviceRole);
+const servicePayload = decodeJwtPayload(serverSecret);
 
 if (
-  serviceRole
+  serverSecret
   && servicePayload
   && servicePayload.role !== "service_role"
 ) {
   errors.push(
-    "SUPABASE_SERVICE_ROLE_KEY no declara el rol esperado",
+    "la clave privilegiada JWT no declara el rol service_role esperado",
+  );
+}
+
+if (
+  serverSecret
+  && !servicePayload
+  && !serverSecret.startsWith("sb_secret_")
+) {
+  errors.push(
+    "la clave privilegiada no tiene un formato de Secret Key reconocido",
   );
 }
 

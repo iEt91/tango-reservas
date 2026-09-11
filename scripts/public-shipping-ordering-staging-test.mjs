@@ -875,6 +875,11 @@ try {
     ),
     true,
   );
+  assert.equal(
+    typeof ordering.business?.name,
+    "string",
+    "el snapshot canónico debe incluir el nombre público",
+  );
   console.log(
     "✓ snapshot público resuelve slug y Menú canónico",
   );
@@ -912,12 +917,35 @@ try {
       },
     );
 
-  assert.ok(
+  assert.equal(
     anonOrdering.error,
-    "anon no debe ejecutar service_get_public_business_ordering_snapshot",
+    null,
+    "anon debe poder obtener el snapshot público del menú",
+  );
+  assert.equal(
+    anonOrdering.data?.business?.name,
+    ordering.business.name,
+    "el snapshot anónimo debe corresponder al slug solicitado",
+  );
+  assert.equal(
+    anonOrdering.data?.items?.some(
+      (item) => item.id === menuItemId,
+    ),
+    true,
+    "el snapshot anónimo debe limitarse al menú público disponible",
+  );
+  assert.equal(
+    "customers" in (anonOrdering.data ?? {}),
+    false,
+    "el snapshot anónimo no debe incluir clientes",
+  );
+  assert.equal(
+    "reservations" in (anonOrdering.data ?? {}),
+    false,
+    "el snapshot anónimo no debe incluir reservas",
   );
   console.log(
-    "✓ anon no ejecuta RPC service-only",
+    "✓ anon sólo ejecuta la RPC de menú con proyección pública",
   );
 
   const anonTable =
@@ -1385,6 +1413,39 @@ try {
   );
   console.log(
     "✓ rate-limit atómico bloquea abuso",
+  );
+
+  for (
+    const status
+    of [
+      "preparing",
+      "ready",
+    ]
+  ) {
+    const kitchenTransition =
+      await userA.rpc(
+        "set_business_shipping_kitchen_command_status",
+        {
+          p_business_id:
+            businessA,
+          p_order_id:
+            shipping.order_id,
+          p_ticket_id:
+            null,
+          p_status:
+            status,
+          p_operation_key:
+            `e34c-kitchen-${status}-${suffix}`,
+        },
+      );
+
+    if (kitchenTransition.error) {
+      throw kitchenTransition.error;
+    }
+  }
+
+  console.log(
+    "✓ Cocina marca el pedido listo antes de avanzar el envío",
   );
 
   {

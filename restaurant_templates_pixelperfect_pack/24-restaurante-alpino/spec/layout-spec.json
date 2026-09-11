@@ -1,0 +1,72 @@
+{
+  "templateId": "24-restaurante-alpino",
+  "designWidth": 864,
+  "designHeight": 1821,
+  "reference": "reference/reference.png",
+  "rule": "Reference image is the absolute visual source of truth. Preserve section proportions before responsive adaptation.",
+  "sections": [
+    {
+      "id": "header",
+      "y": 0,
+      "height": 43,
+      "yStartRatio": 0.0,
+      "heightRatio": 0.02361
+    },
+    {
+      "id": "hero",
+      "y": 43,
+      "height": 406,
+      "yStartRatio": 0.02361,
+      "heightRatio": 0.22295
+    },
+    {
+      "id": "benefits",
+      "y": 449,
+      "height": 107,
+      "yStartRatio": 0.24657,
+      "heightRatio": 0.05876
+    },
+    {
+      "id": "menu_story",
+      "y": 556,
+      "height": 283,
+      "yStartRatio": 0.30533,
+      "heightRatio": 0.15541
+    },
+    {
+      "id": "sustainability",
+      "y": 839,
+      "height": 209,
+      "yStartRatio": 0.46074,
+      "heightRatio": 0.11477
+    },
+    {
+      "id": "gallery",
+      "y": 1048,
+      "height": 223,
+      "yStartRatio": 0.57551,
+      "heightRatio": 0.12246
+    },
+    {
+      "id": "reservations",
+      "y": 1271,
+      "height": 179,
+      "yStartRatio": 0.69797,
+      "heightRatio": 0.0983
+    },
+    {
+      "id": "map_contact",
+      "y": 1450,
+      "height": 237,
+      "yStartRatio": 0.79627,
+      "heightRatio": 0.13015
+    },
+    {
+      "id": "footer",
+      "y": 1687,
+      "height": 134,
+      "yStartRatio": 0.92641,
+      "heightRatio": 0.07359
+    }
+  ]
+}
