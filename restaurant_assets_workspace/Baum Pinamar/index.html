@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Baum Pinamar, cervecería y brewpub en Pinamar.">
+  <title>Baum Pinamar · Cervecería</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <a class="header__brand" href="#inicio"><img src="assets/01_logo_baum.png" alt="Baum Pinamar"></a>
+    <button class="header__toggle" type="button" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <nav class="header__nav"><a href="#inicio">Inicio</a><a href="#menu">Menú</a><a href="#reservas">Reservas</a><a href="#pedidos">Pedir</a><a href="#galeria">Galería</a><a href="#ubicacion">Ubicación</a><a href="#contacto">Contacto</a></nav>
+    <img class="header__instagram" src="assets/35_icono_instagram_marfil.png" alt="Instagram">
+    <a class="button button--gold" href="#reservas">Reservá tu mesa</a>
+  </header>
+  <main>
+    <section class="hero" id="inicio"><div class="hero__shade"></div><div class="hero__copy"><img src="assets/04_slogan_buena_cerveza.png" alt="Buena cerveza, mejores historias"><p>Baum Pinamar<br>Cervecería · Brewpub<br>en el corazón de Pinamar</p><a class="button button--gold" href="#reservas"><img src="assets/15_icono_calendario.png" alt="">Reservá tu mesa</a></div></section>
+
+    <section class="paper featured" id="destacados">
+      <div class="section-title"><span></span><img src="assets/02_arbol_dorado.png" alt=""><div><h2>Destacados</h2><p>Sabores que van bien con una buena cerveza</p></div><img src="assets/02_arbol_dorado.png" alt=""><span></span></div>
+      <div class="featured__grid"><article><div class="photo photo--burger"></div><h3>Burgers artesanales</h3><p>Carne, ingredientes reales,<br>sabores únicos.</p></article><article><div class="photo photo--beers"></div><h3>Nuestras cervezas</h3><p>Estilos propios, espíritu artesanal.</p></article><article><div class="photo photo--fries"></div><h3>Picadas &amp; entradas</h3><p>Para compartir, siempre es mejor.</p></article><article><div class="photo photo--pizza"></div><h3>Pizzas a la parrilla</h3><p>Masa casera, ingredientes frescos.</p></article></div>
+    </section>
+
+    <section class="menu" id="menu">
+      <div class="section-title section-title--dark"><span></span><img src="assets/02_arbol_dorado.png" alt=""><div><h2>Nuestro menú</h2><p>Cerveza, comida y mucho más</p></div><img src="assets/02_arbol_dorado.png" alt=""><span></span></div>
+      <div class="menu__body"><ul class="menu__categories"><li class="active"><img src="assets/05_icono_hamburguesa.png" alt="">Hamburguesas</li><li><img src="assets/06_icono_pizza.png" alt="">Pizzas</li><li><img src="assets/07_icono_entradas.png" alt="">Entradas</li><li><img src="assets/08_icono_ensaladas.png" alt="">Ensaladas</li><li><img src="assets/09_icono_sandwich.png" alt="">Sándwiches</li><li><img src="assets/10_icono_postre.png" alt="">Postres</li><li><img src="assets/11_icono_cerveza.png" alt="">Nuestras cervezas</li><li><img src="assets/12_icono_bebida.png" alt="">Bebidas</li></ul><div class="menu__photo photo photo--menu-burger"><img src="assets/13_slogan_comida_real.png" alt="Comida real para gente real"></div><div class="menu__side"><img class="menu__slogan" src="assets/14_slogan_good_beer_good_food.png" alt="Good beer, good food"><img class="menu__tree" src="assets/03_arbol_gris_grande.png" alt=""></div></div>
+      <a class="button button--gold menu__button" href="#contacto">Ver menú completo</a>
+    </section>
+
+    <section class="reservations" id="reservas"><div class="reservations__side photo photo--bar-left"><img src="assets/18_slogan_mas_que_cerveceria.png" alt="Más que una cervecería"></div><div class="reservations__form paper"><div class="section-title section-title--compact"><img src="assets/02_arbol_dorado.png" alt=""><div><h2>Reservas</h2><p>Te esperamos en Baum Pinamar</p></div><img src="assets/02_arbol_dorado.png" alt=""></div><form><label><img src="assets/15_icono_calendario.png" alt=""><input type="date" aria-label="Fecha"></label><label><img src="assets/16_icono_personas.png" alt=""><select aria-label="Personas"><option>Personas</option><option>2 personas</option><option>3 personas</option><option>4 personas</option></select></label><label class="full"><img src="assets/17_icono_reloj_formulario.png" alt=""><input type="time" aria-label="Hora"></label><button class="button button--gold full" type="submit">Reservar mesa</button></form></div><div class="reservations__side photo photo--bar-right"><img src="assets/19_slogan_buena_compania.png" alt="Buena cerveza en buena compañía"></div></section>
+
+    <section class="paper orders" id="pedidos"><div class="section-title section-title--orders"><span></span><img src="assets/02_arbol_dorado.png" alt=""><div><h2>Pedir · Delivery · Retiro</h2><p>También podés disfrutar Baum donde quieras</p></div><img src="assets/02_arbol_dorado.png" alt=""><span></span></div><div class="orders__grid"><article><span class="icon-disc"><img src="assets/20_icono_scooter.png" alt=""></span><div><h3>Pedido online</h3><p>Consultá disponibilidad<br>y hacé tu pedido.</p><a href="#contacto">Hacer pedido</a></div></article><article><span class="icon-disc"><img src="assets/21_icono_bolsa_retiro.png" alt=""></span><div><h3>Retiro en el local</h3><p>Hacé tu pedido y pasá<br>a retirarlo.</p><a href="#contacto">Pedir para retirar</a></div></article><article class="orders__info"><img src="assets/22_icono_info.png" alt=""><p>Nuestro foco es la experiencia<br>en el local. El servicio de delivery<br>está sujeto a disponibilidad.</p></article><img class="orders__slogan" src="assets/23_slogan_cerveza_viaja.png" alt="La cerveza también viaja"></div></section>
+
+    <section class="gallery" id="galeria"><div class="section-title section-title--dark section-title--gallery"><span></span><img src="assets/02_arbol_dorado.png" alt=""><div><h2>Galería</h2><p>Un poco de lo que se vive en Baum Pinamar</p></div><img src="assets/02_arbol_dorado.png" alt=""><span></span></div><button class="gallery__arrow gallery__arrow--left" aria-label="Anterior"><img src="assets/24_chevron_izquierdo.png" alt=""></button><div class="gallery__grid"><div class="photo photo--g1"></div><div class="photo photo--g2"></div><div class="photo photo--g3"></div><div class="photo photo--g4"></div><div class="photo photo--g5"></div><div class="photo photo--g6"></div></div><button class="gallery__arrow gallery__arrow--right" aria-label="Siguiente"><img src="assets/25_chevron_derecho.png" alt=""></button><img class="gallery__dots" src="assets/26_paginacion_galeria.png" alt=""></section>
+
+    <section class="paper info" id="ubicacion"><article class="info__location"><h2><img src="assets/02_arbol_dorado.png" alt="">Ubicación</h2><p>Simbad el Marino y Jason, Pinamar.</p><div class="map"><img src="assets/27_icono_ubicacion.png" alt=""><span>Baum Pinamar</span></div></article><article class="info__hours"><h2><img src="assets/02_arbol_dorado.png" alt="">Horarios</h2><div><img src="assets/31_icono_reloj.png" alt=""><table><tr><td>Lunes</td><td>Cerrado</td></tr><tr><td>Martes</td><td>18:00 – 01:00</td></tr><tr><td>Miércoles</td><td>18:00 – 01:00</td></tr><tr><td>Jueves</td><td>18:00 – 02:00</td></tr><tr><td>Viernes</td><td>18:00 – 02:00</td></tr><tr><td>Sábado</td><td>12:00 – 02:00</td></tr><tr><td>Domingo</td><td>12:00 – 01:00</td></tr></table></div></article><article class="info__contact" id="contacto"><h2><img src="assets/02_arbol_dorado.png" alt="">Contacto</h2><p><img src="assets/27_icono_ubicacion.png" alt="">Simbad el Marino y Jason, Pinamar.</p><p><img src="assets/28_icono_instagram_oscuro.png" alt="">@baum.pinamar</p><p><img src="assets/29_icono_email.png" alt="">consultas@baumpinamar.com</p><p><img src="assets/30_icono_telefono.png" alt="">+54 9 2254 55-1234</p><img class="info__slogan" src="assets/32_slogan_nos_vemos.png" alt="Nos vemos en Baum"></article><img class="info__forest" src="assets/33_bosque_footer.png" alt=""></section>
+  </main>
+  <footer class="footer"><img class="footer__logo" src="assets/01_logo_baum.png" alt="Baum Pinamar"><p>Cerveza · comida · buena compañía<br>Pinamar, Buenos Aires, Argentina</p><img class="footer__slogan" src="assets/34_slogan_footer.png" alt="Good beer, better people"><nav><a href="#inicio">Inicio</a><a href="#menu">Menú</a><a href="#reservas">Reservas</a><a href="#pedidos">Pedir</a><a href="#galeria">Galería</a><a href="#contacto">Contacto</a></nav><img class="footer__instagram" src="assets/35_icono_instagram_marfil.png" alt="Instagram"><p class="footer__end">Cerveza local<br>historias reales</p></footer>
+  <script src="script.js"></script>
+</body>
+</html>
+

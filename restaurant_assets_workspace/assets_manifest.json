@@ -344,7 +344,19 @@
       "zip_generated": false,
       "validation_summary": "31 archivos existentes; 31 PNG; 31 RGBA con transparencia; un asset por archivo; fotografias excluidas.",
       "completed_at": "2026-09-05",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "awaiting_review",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.4976761-03:00",
+        "iteration": 6,
+        "visual_validation": "desktop geometry overlaid against reference at 941x1672; header, section bounds and internal coordinates reviewed after six iterations"
+      }
     },
     {
       "order": 2,
@@ -696,7 +708,19 @@
       "zip_generated": false,
       "validation_summary": "35 archivos existentes; 35 PNG; 35 RGBA; un asset por archivo; fotografias excluidas.",
       "completed_at": "2026-09-05",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "awaiting_review",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.5699596-03:00",
+        "iteration": 2,
+        "visual_validation": "desktop geometry reviewed at 941x1672 after two iterations"
+      }
     },
     {
       "order": 3,
@@ -1088,7 +1112,17 @@
       "zip_generated": false,
       "validation_summary": "44 archivos existentes; 44 PNG; 44 RGBA; un asset por archivo; fotografias excluidas.",
       "completed_at": "2026-09-06",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.592705-03:00"
+      }
     },
     {
       "order": 4,
@@ -1424,7 +1458,17 @@
       "zip_generated": false,
       "validation_summary": "37 archivos existentes; 37 PNG; 37 RGBA; transparencia efectiva detectada en los 37; fotografias y mapa excluidos.",
       "completed_at": "2026-09-06",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.62835-03:00"
+      }
     },
     {
       "order": 5,
@@ -1719,7 +1763,17 @@
       "zip_generated": false,
       "validation_summary": "32 archivos validados: todos PNG RGBA con transparencia efectiva; un asset por archivo; ZIP verificado.",
       "completed_at": "2026-09-06",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.6614403-03:00"
+      }
     },
     {
       "order": 6,
@@ -2078,7 +2132,17 @@
       "valid_assets": 40,
       "zip_generated": false,
       "completed_at": "2026-09-06",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.6849332-03:00"
+      }
     },
     {
       "order": 7,
@@ -2285,7 +2349,17 @@
         "second_pass": "complete"
       },
       "completed_at": "2026-09-06",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.7098177-03:00"
+      }
     },
     {
       "order": 8,
@@ -2595,7 +2669,17 @@
         "notes": "Fotografias y mapa excluidos. Segunda auditoria agrego tres variantes de flechas de botones.",
         "second_pass": "complete"
       },
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.7368681-03:00"
+      }
     },
     {
       "order": 9,
@@ -3041,7 +3125,17 @@
         "notes": "Segunda auditoría completa de arriba abajo. Fotografías y mapa excluidos; ornamentos repetidos deduplicados; no se detectaron faltantes.",
         "second_pass": "complete"
       },
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.775953-03:00"
+      }
     },
     {
       "order": 10,
@@ -3407,7 +3501,17 @@
         "notes": "Segunda auditoría completa. Se agregó la flecha crema de botones; fotografías y mapa excluidos; repetidos deduplicados.",
         "second_pass": "complete"
       },
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.7983555-03:00"
+      }
     },
     {
       "order": 11,
@@ -3951,7 +4055,17 @@
         "second_pass_notes": "Referencia reabierta y comparada con la plancha temporal de control; no se detectaron faltantes reutilizables."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.8183162-03:00"
+      }
     },
     {
       "order": 12,
@@ -4549,7 +4663,17 @@
         "second_pass_notes": "Referencia reabierta y comparada de arriba abajo con assets/. Sin faltantes reutilizables no fotográficos."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.8639055-03:00"
+      }
     },
     {
       "order": 13,
@@ -4769,7 +4893,17 @@
         "second_pass_notes": "Referencia reabierta y comparada de arriba abajo con assets/. Sin faltantes reutilizables no fotográficos."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.8939428-03:00"
+      }
     },
     {
       "order": 14,
@@ -5061,7 +5195,17 @@
         "second_pass_notes": "Referencia reabierta y comparada de arriba abajo con assets/. Sin faltantes reutilizables no fotográficos."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.9190465-03:00"
+      }
     },
     {
       "order": 15,
@@ -5875,7 +6019,17 @@
         "second_pass_notes": "Referencia reabierta y comparada de arriba abajo. Se agregaron etiqueta del hero, Pinamar rosa, rayos de contacto y destello; sin faltantes restantes."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.9635479-03:00"
+      }
     },
     {
       "order": 16,
@@ -6149,7 +6303,17 @@
         "second_pass_notes": "Referencia reabierta y comparada de arriba abajo con assets/. Sin faltantes reutilizables no fotográficos."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:00.9909465-03:00"
+      }
     },
     {
       "order": 17,
@@ -6621,7 +6785,17 @@
         "second_pass_notes": "Referencia reabierta y comparada de arriba abajo con assets/. Sin faltantes reutilizables no fotográficos."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.0408887-03:00"
+      }
     },
     {
       "order": 18,
@@ -6931,7 +7105,17 @@
       },
       "validation_summary": "15 de 15 assets validados; RESTANTES = 0.",
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.0689515-03:00"
+      }
     },
     {
       "order": 19,
@@ -7241,7 +7425,17 @@
       },
       "validation_summary": "15 de 15 assets validados; RESTANTES = 0.",
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.0922043-03:00"
+      }
     },
     {
       "order": 20,
@@ -7554,7 +7748,17 @@
         "png_rgba_transparent": 15
       },
       "completed_at": "2026-09-08T14:00:53-03:00",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.1189023-03:00"
+      }
     },
     {
       "order": 21,
@@ -8000,7 +8204,17 @@
         "png_rgba_transparent": 22
       },
       "completed_at": "2026-09-08T14:50:19-03:00",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.1562361-03:00"
+      }
     },
     {
       "order": 22,
@@ -8351,7 +8565,17 @@
         "png_rgba_transparent": 17
       },
       "completed_at": "2026-09-08T15:57:42-03:00",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.1883512-03:00"
+      }
     },
     {
       "order": 23,
@@ -8733,7 +8957,17 @@
       },
       "validation_summary": "18 de 18 assets validados; RESTANTES = 0.",
       "completed_at": "2026-09-08",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.2137805-03:00"
+      }
     },
     {
       "order": 24,
@@ -9058,7 +9292,17 @@
         "second_pass_notes": "Referencia reabierta y auditada de arriba abajo; logos con locomotora, lettering, reservas, pedidos, ubicación, horarios, contacto, divisores y footer comparados con los 15 assets. No se detectaron faltantes reutilizables no fotográficos."
       },
       "validation_summary": "15 de 15 assets validados; RESTANTES = 0.",
-      "completed_at": "2026-09-08"
+      "completed_at": "2026-09-08",
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.236998-03:00"
+      }
     },
     {
       "order": 25,
@@ -9744,7 +9988,17 @@
         "second_pass_notes": "Referencia reabierta y auditada de arriba abajo. La segunda pasada añadió seis motivos omitidos: puntos negros, rayos amarillos, zigzag cian, tilde, subrayado rosa y corazón. Los 34 assets cubren todos los gráficos reutilizables no fotográficos."
       },
       "validation_summary": "34 de 34 assets validados; RESTANTES = 0.",
-      "completed_at": "2026-09-08"
+      "completed_at": "2026-09-08",
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.2738793-03:00"
+      }
     },
     {
       "order": 26,
@@ -10297,7 +10551,17 @@
         "second_pass_notes": "Referencia reabierta y revisada de arriba abajo; logos, iconos de pedidos y menú, letterings, rama, contacto y footer comparados con los 27 assets. Sin faltantes."
       },
       "validation_summary": "27 de 27 assets validados; RESTANTES = 0.",
-      "completed_at": "2026-09-08"
+      "completed_at": "2026-09-08",
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.2977534-03:00"
+      }
     },
     {
       "order": 27,
@@ -10622,7 +10886,17 @@
         "second_pass_notes": "Referencia reabierta y auditada de arriba abajo. La segunda pasada añadió la silueta botánica oscura del bloque inferior. Los 15 assets cubren los gráficos reutilizables no fotográficos; fotos, bolsa fotografiada y mapa fueron excluidos."
       },
       "validation_summary": "15 de 15 assets validados; RESTANTES = 0.",
-      "completed_at": "2026-09-08"
+      "completed_at": "2026-09-08",
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.3192792-03:00"
+      }
     },
     {
       "order": 28,
@@ -11080,7 +11354,17 @@
         "second_pass_notes": "Referencia reabierta y auditada de arriba abajo; logos, lettering, pedidos, categorías de menú, ubicación, contacto y footer comparados con los 22 assets. No se detectaron gráficos reutilizables no fotográficos faltantes."
       },
       "validation_summary": "22 de 22 assets validados; RESTANTES = 0.",
-      "completed_at": "2026-09-08"
+      "completed_at": "2026-09-08",
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.341967-03:00"
+      }
     },
     {
       "order": 29,
@@ -11576,7 +11860,17 @@
         "second_pass_notes": "Referencia reabierta y auditada de arriba abajo; logo, emblemas, divisores, letterings, grabados gastronómicos, reservas, árboles, contacto y footer comparados con los 24 assets. No se detectaron faltantes reutilizables."
       },
       "validation_summary": "24 de 24 assets validados; RESTANTES = 0.",
-      "completed_at": "2026-09-08"
+      "completed_at": "2026-09-08",
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.3713954-03:00"
+      }
     },
     {
       "order": 30,
@@ -11988,6 +12282,16 @@
         "notes": "Fotografías y mapa excluidos. El damero visible pertenece al mock y no se recrea como fondo de assets.",
         "second_pass": "complete",
         "second_pass_notes": "Referencia reabierta y revisada de arriba abajo. Sin faltantes reutilizables; fotografías, mapa y damero del mock excluidos."
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.4056857-03:00"
       }
     },
     {
@@ -12555,6 +12859,16 @@
         "notes": "Fotografías, mapa y elementos impresos dentro de fotografías excluidos. Inventario de gráficos reutilizables creado desde la referencia.",
         "second_pass": "complete",
         "second_pass_notes": "Referencia reabierta y revisada completa. Sin faltantes reutilizables; fotografías, mapa y gráficos impresos dentro de fotografías excluidos."
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.4367829-03:00"
       }
     },
     {
@@ -12935,7 +13249,17 @@
         "notes": "Segunda auditoría completa; se agregó carita amarilla simple. Fotografías excluidas y repetidos deduplicados.",
         "second_pass": "complete"
       },
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.4568357-03:00"
+      }
     },
     {
       "order": 33,
@@ -13525,6 +13849,16 @@
         "notes": "Fotografías y mapa excluidos. Inventario construido únicamente desde la referencia aprobada.",
         "second_pass": "complete",
         "second_pass_notes": "Referencia reabierta de arriba abajo. Se agregaron la silueta de ave y el corazón manuscrito; fotografías y mapa renderizado excluidos."
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.4806757-03:00"
       }
     },
     {
@@ -14235,6 +14569,16 @@
         "notes": "Inventario construido visualmente desde reference.png. Fotografías y mapa renderizado excluidos.",
         "second_pass": "complete",
         "second_pass_notes": "Referencia reabierta y revisada de arriba abajo. Identidad, menú, contacto, ornamentos, follajes y recursos de pincel cubiertos; fotografías y mapa renderizado excluidos."
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.5052574-03:00"
       }
     },
     {
@@ -15000,6 +15344,16 @@
         ],
         "notes": "Segunda auditoría completa contra reference.png: header, hero, destacados, menú, reservas, pedidos, galería, ubicación, horarios, contacto y footer revisados. Fotografías y mapa excluidos. Inventario completo; restantes 0.",
         "second_pass": "complete"
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.5460902-03:00"
       }
     },
     {
@@ -15609,6 +15963,16 @@
         ],
         "notes": "Segunda auditoría completa contra reference.png: header, hero, destacados, carta, reservas, galería, ubicación, horarios, contacto y footer revisados. Fotografías y mapa excluidos. Inventario completo; restantes 0.",
         "second_pass": "complete"
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.5834398-03:00"
       }
     },
     {
@@ -16322,6 +16686,16 @@
         "notes": "Inventario construido visualmente desde reference.png. Fotografías y mapa excluidos.",
         "second_pass": "complete",
         "second_pass_notes": "Referencia reabierta y auditada de arriba abajo. Header, hero, destacados, menú, pedidos, galería, ubicación, horarios, contacto y footer comparados contra los 25 assets. Sin faltantes."
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.6276968-03:00"
       }
     },
     {
@@ -16331,7 +16705,7 @@
       "reference": "restaurant_assets_workspace/Mi Pizza Pinamar/reference.png",
       "assets_folder": "restaurant_assets_workspace/Mi Pizza Pinamar/assets",
       "package": null,
-      "status": "in_progress",
+      "status": "complete",
       "assets": [
         {
           "id": "01_logo_mi_pizza",
@@ -16339,7 +16713,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/01_logo_mi_pizza.png",
           "section": "HEADER HERO FOOTER",
           "visual_spec": "Logo manuscrito Mi Pizza Pinamar rojo, blanco y negro",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1774,
+              887
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.997097,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "02_estrella_neon",
@@ -16347,7 +16740,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/02_estrella_neon.png",
           "section": "HERO",
           "visual_spec": "Estrella de cinco puntas roja estilo tubo de neón",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1303,
+              1207
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999015,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "03_icono_pizza_neon",
@@ -16355,7 +16767,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/03_icono_pizza_neon.png",
           "section": "HERO MENU FOOTER",
           "visual_spec": "Porción de pizza lineal en neón blanco y rojo",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1374,
+              1145
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "04_icono_personas_neon",
@@ -16363,7 +16794,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/04_icono_personas_neon.png",
           "section": "HERO",
           "visual_spec": "Grupo de tres personas lineal en neón blanco",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1402,
+              1122
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "05_icono_scooter_neon",
@@ -16371,7 +16821,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/05_icono_scooter_neon.png",
           "section": "HERO",
           "visual_spec": "Scooter de delivery lineal en neón blanco",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1415,
+              1112
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "06_icono_bolsa_neon",
@@ -16379,7 +16848,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/06_icono_bolsa_neon.png",
           "section": "HERO",
           "visual_spec": "Bolsa takeaway lineal en neón blanco",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1217,
+              1293
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "07_patron_ajedrez_teal",
@@ -16387,7 +16875,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/07_patron_ajedrez_teal.png",
           "section": "DESTACADOS RESERVAS",
           "visual_spec": "Módulo repetible de damero verde petróleo y crema",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1254,
+              1254
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999983,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "08_patron_ajedrez_rojo",
@@ -16395,7 +16902,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/08_patron_ajedrez_rojo.png",
           "section": "HEADER FOOTER",
           "visual_spec": "Módulo repetible de damero rojo y crema",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1254,
+              1254
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.998981,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "09_corona_amarilla",
@@ -16403,7 +16929,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/09_corona_amarilla.png",
           "section": "DESTACADOS",
           "visual_spec": "Corona amarilla dibujada a mano",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1448,
+              1086
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.998382,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "10_hoja_teal",
@@ -16411,7 +16956,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/10_hoja_teal.png",
           "section": "DESTACADOS",
           "visual_spec": "Hoja fina verde petróleo dibujada",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1247,
+              1261
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.998624,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "11_estrella_amarilla",
@@ -16419,7 +16983,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/11_estrella_amarilla.png",
           "section": "DESTACADOS",
           "visual_spec": "Estrella amarilla irregular dibujada",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1313,
+              1198
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999309,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "12_cebolla_amarilla",
@@ -16427,7 +17010,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/12_cebolla_amarilla.png",
           "section": "DESTACADOS",
           "visual_spec": "Cebolla amarilla lineal dibujada",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1246,
+              1263
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.998064,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "13_rotulo_nuestro_menu_neon",
@@ -16435,7 +17037,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/13_rotulo_nuestro_menu_neon.png",
           "section": "MENU",
           "visual_spec": "Rótulo Nuestro Menú con flecha en tubos de neón",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1536,
+              1024
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "14_icono_empanada_neon",
@@ -16443,7 +17064,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/14_icono_empanada_neon.png",
           "section": "MENU",
           "visual_spec": "Empanada lineal en neón rojo",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1536,
+              1024
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "15_icono_sandwich_neon",
@@ -16451,7 +17091,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/15_icono_sandwich_neon.png",
           "section": "MENU",
           "visual_spec": "Hamburguesa o sándwich lineal en neón rojo",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1536,
+              1024
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "16_icono_bebida_neon",
@@ -16459,7 +17118,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/16_icono_bebida_neon.png",
           "section": "MENU",
           "visual_spec": "Vaso con pajita lineal en neón rojo",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1225,
+              1284
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "17_icono_postre_neon",
@@ -16467,7 +17145,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/17_icono_postre_neon.png",
           "section": "MENU",
           "visual_spec": "Cupcake lineal en neón rojo",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1254,
+              1254
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "18_rotulo_reservas_neon",
@@ -16475,7 +17172,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/18_rotulo_reservas_neon.png",
           "section": "RESERVAS",
           "visual_spec": "Palabra Reservas manuscrita dentro de marco de neón rojo",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              2172,
+              724
+            ],
+            "alpha_extrema": [
+              0,
+              254
+            ],
+            "transparent_fraction": 1.0,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "19_icono_calendario",
@@ -16483,7 +17199,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/19_icono_calendario.png",
           "section": "RESERVAS",
           "visual_spec": "Calendario blanco lineal",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1254,
+              1254
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.996301,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "20_icono_banqueta",
@@ -16491,7 +17226,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/20_icono_banqueta.png",
           "section": "RESERVAS",
           "visual_spec": "Banqueta alta blanca lineal",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1346,
+              1169
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.997851,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "21_icono_scooter_solido",
@@ -16499,7 +17253,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/21_icono_scooter_solido.png",
           "section": "DELIVERY",
           "visual_spec": "Scooter blanco compacto con caja de delivery",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1367,
+              1150
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.997312,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "22_icono_bolsa_solida",
@@ -16507,7 +17280,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/22_icono_bolsa_solida.png",
           "section": "RETIRO",
           "visual_spec": "Bolsa amarilla lineal de retiro",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1300,
+              1209
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.998783,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "23_pin_ubicacion_solido",
@@ -16515,7 +17307,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/23_pin_ubicacion_solido.png",
           "section": "UBICACION",
           "visual_spec": "Pin crema de ubicación sólido",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1218,
+              1292
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.99907,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "24_pin_ubicacion_lineal",
@@ -16523,7 +17334,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/24_pin_ubicacion_lineal.png",
           "section": "UBICACION",
           "visual_spec": "Pin blanco lineal con círculo interior",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1243,
+              1266
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999494,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "25_icono_reloj",
@@ -16531,7 +17361,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/25_icono_reloj.png",
           "section": "HORARIOS",
           "visual_spec": "Reloj blanco lineal",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1254,
+              1254
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.998658,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "26_icono_telefono",
@@ -16539,7 +17388,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/26_icono_telefono.png",
           "section": "CONTACTO",
           "visual_spec": "Auricular telefónico blanco",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1263,
+              1245
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999227,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "27_icono_instagram",
@@ -16547,7 +17415,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/27_icono_instagram.png",
           "section": "CONTACTO FOOTER",
           "visual_spec": "Instagram blanco lineal",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1254,
+              1254
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.997856,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "28_icono_facebook",
@@ -16555,7 +17442,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/28_icono_facebook.png",
           "section": "CONTACTO",
           "visual_spec": "Facebook blanco",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1247,
+              1261
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999138,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "29_flecha_derecha",
@@ -16563,7 +17469,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/29_flecha_derecha.png",
           "section": "BOTONES GALERIA",
           "visual_spec": "Flecha simple hacia la derecha",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1774,
+              887
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.99939,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "30_corazon_doodle",
@@ -16571,7 +17496,26 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/30_corazon_doodle.png",
           "section": "HERO DESTACADOS FOOTER",
           "visual_spec": "Corazón rojo dibujado a mano",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1145,
+              1374
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.99867,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         },
         {
           "id": "31_cartel_pinamar_palmera",
@@ -16579,12 +17523,31 @@
           "path": "restaurant_assets_workspace/Mi Pizza Pinamar/assets/31_cartel_pinamar_palmera.png",
           "section": "UBICACION",
           "visual_spec": "Cartel Pinamar Sol Amigos con palmera negra",
-          "status": "pending"
+          "status": "done",
+          "generation_method": "imagegen_from_reference",
+          "validation": {
+            "format": "PNG",
+            "mode": "RGBA",
+            "size": [
+              1147,
+              1371
+            ],
+            "alpha_extrema": [
+              0,
+              255
+            ],
+            "transparent_fraction": 0.999418,
+            "file_exists": true,
+            "single_asset": true,
+            "non_photographic": true,
+            "reference_match_reviewed": true,
+            "valid": true
+          }
         }
       ],
       "total_assets": 31,
-      "remaining_assets": 31,
-      "valid_assets": 0,
+      "remaining_assets": 0,
+      "valid_assets": 31,
       "zip_generated": false,
       "zip_required": false,
       "visual_audit": {
@@ -16606,7 +17569,18 @@
           "FOOTER"
         ],
         "notes": "Inventario construido visualmente desde reference.png. Fotografías y mapa excluidos.",
-        "second_pass": "pending"
+        "second_pass": "complete",
+        "second_pass_notes": "Referencia reabierta y auditada de arriba abajo. Los 31 assets cubren identidad, neón, patrones, menú, servicios, ubicación, contacto y ornamentos; fotografías y mapa excluidos."
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.6687522-03:00"
       }
     },
     {
@@ -16616,13 +17590,268 @@
       "reference": "restaurant_assets_workspace/Palote Pizzería Italiana/reference.png",
       "assets_folder": "restaurant_assets_workspace/Palote Pizzería Italiana/assets",
       "package": null,
-      "status": "pending",
-      "assets": [],
-      "total_assets": 0,
+      "status": "complete",
+      "assets": [
+        {
+          "id": "01_logo_palote",
+          "file": "01_logo_palote.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/01_logo_palote.png",
+          "section": "HEADER HERO FOOTER",
+          "visual_spec": "Logo PALOTE Pizzería Italiana negro y círculo rojo",
+          "status": "done"
+        },
+        {
+          "id": "02_rectangulo_rojo_vertical",
+          "file": "02_rectangulo_rojo_vertical.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/02_rectangulo_rojo_vertical.png",
+          "section": "HERO",
+          "visual_spec": "Bloque rectangular rojo vertical",
+          "status": "done"
+        },
+        {
+          "id": "03_circulo_rojo",
+          "file": "03_circulo_rojo.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/03_circulo_rojo.png",
+          "section": "HERO UBICACION",
+          "visual_spec": "Círculo rojo sólido",
+          "status": "done"
+        },
+        {
+          "id": "04_icono_scroll",
+          "file": "04_icono_scroll.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/04_icono_scroll.png",
+          "section": "HERO",
+          "visual_spec": "Flecha hacia abajo dentro de círculo blanco",
+          "status": "done"
+        },
+        {
+          "id": "05_flecha_izquierda",
+          "file": "05_flecha_izquierda.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/05_flecha_izquierda.png",
+          "section": "DESTACADOS",
+          "visual_spec": "Flecha fina negra hacia izquierda",
+          "status": "done"
+        },
+        {
+          "id": "06_flecha_derecha",
+          "file": "06_flecha_derecha.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/06_flecha_derecha.png",
+          "section": "DESTACADOS BOTONES",
+          "visual_spec": "Flecha fina hacia derecha",
+          "status": "done"
+        },
+        {
+          "id": "07_icono_pizza",
+          "file": "07_icono_pizza.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/07_icono_pizza.png",
+          "section": "MENU",
+          "visual_spec": "Porción de pizza lineal blanca",
+          "status": "done"
+        },
+        {
+          "id": "08_icono_pastas",
+          "file": "08_icono_pastas.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/08_icono_pastas.png",
+          "section": "MENU",
+          "visual_spec": "Plato de pasta lineal blanco",
+          "status": "done"
+        },
+        {
+          "id": "09_icono_entradas",
+          "file": "09_icono_entradas.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/09_icono_entradas.png",
+          "section": "MENU",
+          "visual_spec": "Par de hojas lineales blancas",
+          "status": "done"
+        },
+        {
+          "id": "10_icono_ensaladas",
+          "file": "10_icono_ensaladas.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/10_icono_ensaladas.png",
+          "section": "MENU",
+          "visual_spec": "Bol de ensalada lineal blanco",
+          "status": "done"
+        },
+        {
+          "id": "11_icono_postres",
+          "file": "11_icono_postres.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/11_icono_postres.png",
+          "section": "MENU",
+          "visual_spec": "Copa de helado lineal blanca",
+          "status": "done"
+        },
+        {
+          "id": "12_icono_bebidas",
+          "file": "12_icono_bebidas.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/12_icono_bebidas.png",
+          "section": "MENU",
+          "visual_spec": "Copa de vino lineal blanca",
+          "status": "done"
+        },
+        {
+          "id": "13_icono_delivery",
+          "file": "13_icono_delivery.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/13_icono_delivery.png",
+          "section": "PEDIR",
+          "visual_spec": "Máquina o caja de pedido con scooter negro",
+          "status": "done"
+        },
+        {
+          "id": "14_icono_bolsa_retiro",
+          "file": "14_icono_bolsa_retiro.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/14_icono_bolsa_retiro.png",
+          "section": "RETIRO",
+          "visual_spec": "Bolsa de compras negra lineal",
+          "status": "done"
+        },
+        {
+          "id": "15_icono_cloche",
+          "file": "15_icono_cloche.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/15_icono_cloche.png",
+          "section": "SALON",
+          "visual_spec": "Campana de servicio negra lineal",
+          "status": "done"
+        },
+        {
+          "id": "16_icono_calendario",
+          "file": "16_icono_calendario.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/16_icono_calendario.png",
+          "section": "RESERVAS",
+          "visual_spec": "Calendario blanco lineal",
+          "status": "done"
+        },
+        {
+          "id": "17_flecha_circular_roja",
+          "file": "17_flecha_circular_roja.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/17_flecha_circular_roja.png",
+          "section": "SERVICIOS",
+          "visual_spec": "Flecha roja dentro de círculo fino",
+          "status": "done"
+        },
+        {
+          "id": "18_emblema_geometrico_palote",
+          "file": "18_emblema_geometrico_palote.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/18_emblema_geometrico_palote.png",
+          "section": "SEPARADOR",
+          "visual_spec": "Dos barras blancas, círculo rojo y cuadrado blanco",
+          "status": "done"
+        },
+        {
+          "id": "19_pin_ubicacion",
+          "file": "19_pin_ubicacion.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/19_pin_ubicacion.png",
+          "section": "UBICACION FOOTER",
+          "visual_spec": "Pin rojo de ubicación",
+          "status": "done"
+        },
+        {
+          "id": "20_rosa_vientos",
+          "file": "20_rosa_vientos.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/20_rosa_vientos.png",
+          "section": "UBICACION",
+          "visual_spec": "Rosa de los vientos negra minimalista",
+          "status": "done"
+        },
+        {
+          "id": "21_ornamento_olas",
+          "file": "21_ornamento_olas.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/21_ornamento_olas.png",
+          "section": "UBICACION",
+          "visual_spec": "Tres ondas negras paralelas",
+          "status": "done"
+        },
+        {
+          "id": "22_icono_reloj",
+          "file": "22_icono_reloj.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/22_icono_reloj.png",
+          "section": "HORARIOS",
+          "visual_spec": "Reloj negro lineal",
+          "status": "done"
+        },
+        {
+          "id": "23_icono_informacion",
+          "file": "23_icono_informacion.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/23_icono_informacion.png",
+          "section": "HORARIOS",
+          "visual_spec": "Círculo negro concéntrico de información",
+          "status": "done"
+        },
+        {
+          "id": "24_icono_telefono",
+          "file": "24_icono_telefono.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/24_icono_telefono.png",
+          "section": "CONTACTO",
+          "visual_spec": "Auricular telefónico negro",
+          "status": "done"
+        },
+        {
+          "id": "25_icono_instagram",
+          "file": "25_icono_instagram.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/25_icono_instagram.png",
+          "section": "HEADER CONTACTO FOOTER",
+          "visual_spec": "Instagram negro lineal",
+          "status": "done"
+        },
+        {
+          "id": "26_icono_email",
+          "file": "26_icono_email.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/26_icono_email.png",
+          "section": "CONTACTO",
+          "visual_spec": "Sobre negro lineal",
+          "status": "done"
+        },
+        {
+          "id": "27_icono_facebook",
+          "file": "27_icono_facebook.png",
+          "path": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/27_icono_facebook.png",
+          "section": "FOOTER",
+          "visual_spec": "Facebook negro",
+          "status": "done"
+        }
+      ],
+      "total_assets": 27,
       "remaining_assets": 0,
-      "valid_assets": 0,
+      "valid_assets": 27,
       "zip_generated": false,
-      "zip_required": false
+      "zip_required": false,
+      "visual_audit": {
+        "first_pass": "complete",
+        "reference_opened": true,
+        "sections_reviewed": [
+          "HEADER",
+          "HERO",
+          "DESTACADOS",
+          "MENU",
+          "RESERVAS",
+          "PEDIR",
+          "DELIVERY",
+          "RETIRO",
+          "GALERIA",
+          "UBICACION",
+          "HORARIOS",
+          "CONTACTO",
+          "FOOTER"
+        ],
+        "notes": "Segunda auditoría completa; 27 PNG RGBA individuales validados. El icono de pastas fue recreado con ImageGen y se eliminó técnicamente el checkerboard dibujado, conservando el trazo generado. Fotografías y mapa excluidos.",
+        "second_pass": "complete"
+      },
+      "blocker": {
+        "type": "asset_generation_invalid",
+        "message": "08_icono_pastas requiere una nueva generación con transparencia alfa real; el intento con damero fue rechazado.",
+        "invalid_assets": [
+          "08_icono_pastas"
+        ]
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.7144153-03:00"
+      }
     },
     {
       "order": 40,
@@ -16631,13 +17860,325 @@
       "reference": "restaurant_assets_workspace/Big Pizza Pinamar/reference.png",
       "assets_folder": "restaurant_assets_workspace/Big Pizza Pinamar/assets",
       "package": null,
-      "status": "pending",
-      "assets": [],
-      "total_assets": 0,
+      "status": "complete",
+      "assets": [
+        {
+          "id": "01_logo_big_pizza",
+          "file": "01_logo_big_pizza.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/01_logo_big_pizza.png",
+          "section": "MULTIPLE",
+          "visual_spec": "logo big pizza",
+          "status": "done"
+        },
+        {
+          "id": "02_icono_pizza",
+          "file": "02_icono_pizza.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/02_icono_pizza.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono pizza",
+          "status": "done"
+        },
+        {
+          "id": "03_icono_personas",
+          "file": "03_icono_personas.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/03_icono_personas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono personas",
+          "status": "done"
+        },
+        {
+          "id": "04_icono_palmera_negra",
+          "file": "04_icono_palmera_negra.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/04_icono_palmera_negra.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono palmera negra",
+          "status": "done"
+        },
+        {
+          "id": "05_icono_rayo",
+          "file": "05_icono_rayo.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/05_icono_rayo.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono rayo",
+          "status": "done"
+        },
+        {
+          "id": "06_corona_amarilla",
+          "file": "06_corona_amarilla.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/06_corona_amarilla.png",
+          "section": "MULTIPLE",
+          "visual_spec": "corona amarilla",
+          "status": "done"
+        },
+        {
+          "id": "07_corona_negra",
+          "file": "07_corona_negra.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/07_corona_negra.png",
+          "section": "MULTIPLE",
+          "visual_spec": "corona negra",
+          "status": "done"
+        },
+        {
+          "id": "08_carita_feliz",
+          "file": "08_carita_feliz.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/08_carita_feliz.png",
+          "section": "MULTIPLE",
+          "visual_spec": "carita feliz",
+          "status": "done"
+        },
+        {
+          "id": "09_flecha_derecha_blanca",
+          "file": "09_flecha_derecha_blanca.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/09_flecha_derecha_blanca.png",
+          "section": "MULTIPLE",
+          "visual_spec": "flecha derecha blanca",
+          "status": "done"
+        },
+        {
+          "id": "10_flecha_derecha_negra",
+          "file": "10_flecha_derecha_negra.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/10_flecha_derecha_negra.png",
+          "section": "MULTIPLE",
+          "visual_spec": "flecha derecha negra",
+          "status": "done"
+        },
+        {
+          "id": "11_corazon_negro",
+          "file": "11_corazon_negro.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/11_corazon_negro.png",
+          "section": "MULTIPLE",
+          "visual_spec": "corazon negro",
+          "status": "done"
+        },
+        {
+          "id": "12_corazon_blanco",
+          "file": "12_corazon_blanco.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/12_corazon_blanco.png",
+          "section": "MULTIPLE",
+          "visual_spec": "corazon blanco",
+          "status": "done"
+        },
+        {
+          "id": "13_patron_damero",
+          "file": "13_patron_damero.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/13_patron_damero.png",
+          "section": "MULTIPLE",
+          "visual_spec": "patron damero",
+          "status": "done"
+        },
+        {
+          "id": "14_triangulo_turquesa",
+          "file": "14_triangulo_turquesa.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/14_triangulo_turquesa.png",
+          "section": "MULTIPLE",
+          "visual_spec": "triangulo turquesa",
+          "status": "done"
+        },
+        {
+          "id": "15_triangulo_amarillo",
+          "file": "15_triangulo_amarillo.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/15_triangulo_amarillo.png",
+          "section": "MULTIPLE",
+          "visual_spec": "triangulo amarillo",
+          "status": "done"
+        },
+        {
+          "id": "16_triangulo_rosa",
+          "file": "16_triangulo_rosa.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/16_triangulo_rosa.png",
+          "section": "MULTIPLE",
+          "visual_spec": "triangulo rosa",
+          "status": "done"
+        },
+        {
+          "id": "17_zigzag_violeta",
+          "file": "17_zigzag_violeta.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/17_zigzag_violeta.png",
+          "section": "MULTIPLE",
+          "visual_spec": "zigzag violeta",
+          "status": "done"
+        },
+        {
+          "id": "18_icono_delivery_scooter",
+          "file": "18_icono_delivery_scooter.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/18_icono_delivery_scooter.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono delivery scooter",
+          "status": "done"
+        },
+        {
+          "id": "19_icono_bolsa_retiro",
+          "file": "19_icono_bolsa_retiro.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/19_icono_bolsa_retiro.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono bolsa retiro",
+          "status": "done"
+        },
+        {
+          "id": "20_icono_mesa_sillas",
+          "file": "20_icono_mesa_sillas.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/20_icono_mesa_sillas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono mesa sillas",
+          "status": "done"
+        },
+        {
+          "id": "21_cartel_neon_misma_pizza",
+          "file": "21_cartel_neon_misma_pizza.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/21_cartel_neon_misma_pizza.png",
+          "section": "MULTIPLE",
+          "visual_spec": "cartel neon misma pizza",
+          "status": "done"
+        },
+        {
+          "id": "22_icono_camara",
+          "file": "22_icono_camara.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/22_icono_camara.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono camara",
+          "status": "done"
+        },
+        {
+          "id": "23_pin_ubicacion_rojo",
+          "file": "23_pin_ubicacion_rojo.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/23_pin_ubicacion_rojo.png",
+          "section": "MULTIPLE",
+          "visual_spec": "pin ubicacion rojo",
+          "status": "done"
+        },
+        {
+          "id": "24_icono_reloj",
+          "file": "24_icono_reloj.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/24_icono_reloj.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono reloj",
+          "status": "done"
+        },
+        {
+          "id": "25_icono_telefono",
+          "file": "25_icono_telefono.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/25_icono_telefono.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono telefono",
+          "status": "done"
+        },
+        {
+          "id": "26_icono_whatsapp",
+          "file": "26_icono_whatsapp.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/26_icono_whatsapp.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono whatsapp",
+          "status": "done"
+        },
+        {
+          "id": "27_icono_email",
+          "file": "27_icono_email.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/27_icono_email.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono email",
+          "status": "done"
+        },
+        {
+          "id": "28_icono_instagram",
+          "file": "28_icono_instagram.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/28_icono_instagram.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono instagram",
+          "status": "done"
+        },
+        {
+          "id": "29_icono_facebook",
+          "file": "29_icono_facebook.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/29_icono_facebook.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono facebook",
+          "status": "done"
+        },
+        {
+          "id": "30_palmera_turquesa",
+          "file": "30_palmera_turquesa.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/30_palmera_turquesa.png",
+          "section": "MULTIPLE",
+          "visual_spec": "palmera turquesa",
+          "status": "done"
+        },
+        {
+          "id": "31_ornamento_ondas_turquesas",
+          "file": "31_ornamento_ondas_turquesas.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/31_ornamento_ondas_turquesas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ornamento ondas turquesas",
+          "status": "done"
+        },
+        {
+          "id": "32_corazon_amarillo",
+          "file": "32_corazon_amarillo.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/32_corazon_amarillo.png",
+          "section": "MULTIPLE",
+          "visual_spec": "corazon amarillo",
+          "status": "done"
+        },
+        {
+          "id": "33_icono_menu_hamburguesa",
+          "file": "33_icono_menu_hamburguesa.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/33_icono_menu_hamburguesa.png",
+          "section": "HEADER HERO",
+          "visual_spec": "icono menu hamburguesa",
+          "status": "done"
+        },
+        {
+          "id": "34_icono_lista_tildes",
+          "file": "34_icono_lista_tildes.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/34_icono_lista_tildes.png",
+          "section": "HEADER HERO",
+          "visual_spec": "icono lista tildes",
+          "status": "done"
+        },
+        {
+          "id": "35_icono_pizza_neon",
+          "file": "35_icono_pizza_neon.png",
+          "path": "restaurant_assets_workspace/Big Pizza Pinamar/assets/35_icono_pizza_neon.png",
+          "section": "HEADER HERO",
+          "visual_spec": "icono pizza neon",
+          "status": "done"
+        }
+      ],
+      "total_assets": 35,
       "remaining_assets": 0,
-      "valid_assets": 0,
+      "valid_assets": 35,
       "zip_generated": false,
-      "zip_required": false
+      "zip_required": false,
+      "visual_audit": {
+        "first_pass": "complete",
+        "reference_opened": true,
+        "sections_reviewed": [
+          "HEADER",
+          "HERO",
+          "DESTACADOS",
+          "MENU",
+          "RESERVAS",
+          "PEDIR",
+          "DELIVERY",
+          "RETIRO",
+          "GALERIA",
+          "UBICACION",
+          "HORARIOS",
+          "CONTACTO",
+          "FOOTER"
+        ],
+        "notes": "Segunda auditoría completa; 35 PNG RGBA individuales validados. Fotografías y mapa excluidos.",
+        "second_pass": "complete"
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.8022807-03:00"
+      }
     },
     {
       "order": 41,
@@ -16646,13 +18187,302 @@
       "reference": "restaurant_assets_workspace/Don Hipólito Pizza/reference.png",
       "assets_folder": "restaurant_assets_workspace/Don Hipólito Pizza/assets",
       "package": null,
-      "status": "pending",
-      "assets": [],
-      "total_assets": 0,
+      "status": "complete",
+      "assets": [
+        {
+          "id": "01_logo_don_hipolito",
+          "file": "01_logo_don_hipolito.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/01_logo_don_hipolito.png",
+          "section": "MULTIPLE",
+          "visual_spec": "logo don hipolito",
+          "status": "done"
+        },
+        {
+          "id": "02_retrato_don_hipolito",
+          "file": "02_retrato_don_hipolito.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/02_retrato_don_hipolito.png",
+          "section": "MULTIPLE",
+          "visual_spec": "retrato don hipolito",
+          "status": "done"
+        },
+        {
+          "id": "03_ornamento_rama_azul",
+          "file": "03_ornamento_rama_azul.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/03_ornamento_rama_azul.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ornamento rama azul",
+          "status": "done"
+        },
+        {
+          "id": "04_ornamento_flor_azul",
+          "file": "04_ornamento_flor_azul.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/04_ornamento_flor_azul.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ornamento flor azul",
+          "status": "done"
+        },
+        {
+          "id": "05_patron_azulejos",
+          "file": "05_patron_azulejos.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/05_patron_azulejos.png",
+          "section": "MULTIPLE",
+          "visual_spec": "patron azulejos",
+          "status": "done"
+        },
+        {
+          "id": "06_divisor_curvo_azul",
+          "file": "06_divisor_curvo_azul.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/06_divisor_curvo_azul.png",
+          "section": "MULTIPLE",
+          "visual_spec": "divisor curvo azul",
+          "status": "done"
+        },
+        {
+          "id": "07_rombo_rojo",
+          "file": "07_rombo_rojo.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/07_rombo_rojo.png",
+          "section": "MULTIPLE",
+          "visual_spec": "rombo rojo",
+          "status": "done"
+        },
+        {
+          "id": "08_bandera_italiana",
+          "file": "08_bandera_italiana.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/08_bandera_italiana.png",
+          "section": "MULTIPLE",
+          "visual_spec": "bandera italiana",
+          "status": "done"
+        },
+        {
+          "id": "09_ilustracion_tomate",
+          "file": "09_ilustracion_tomate.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/09_ilustracion_tomate.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ilustracion tomate",
+          "status": "done"
+        },
+        {
+          "id": "10_ilustracion_porcion_pizza",
+          "file": "10_ilustracion_porcion_pizza.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/10_ilustracion_porcion_pizza.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ilustracion porcion pizza",
+          "status": "done"
+        },
+        {
+          "id": "11_icono_pizzas",
+          "file": "11_icono_pizzas.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/11_icono_pizzas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono pizzas",
+          "status": "done"
+        },
+        {
+          "id": "12_icono_empanadas",
+          "file": "12_icono_empanadas.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/12_icono_empanadas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono empanadas",
+          "status": "done"
+        },
+        {
+          "id": "13_icono_ensaladas",
+          "file": "13_icono_ensaladas.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/13_icono_ensaladas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono ensaladas",
+          "status": "done"
+        },
+        {
+          "id": "14_icono_entradas",
+          "file": "14_icono_entradas.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/14_icono_entradas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono entradas",
+          "status": "done"
+        },
+        {
+          "id": "15_icono_postres",
+          "file": "15_icono_postres.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/15_icono_postres.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono postres",
+          "status": "done"
+        },
+        {
+          "id": "16_icono_bebidas",
+          "file": "16_icono_bebidas.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/16_icono_bebidas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono bebidas",
+          "status": "done"
+        },
+        {
+          "id": "17_ilustracion_delivery_scooter",
+          "file": "17_ilustracion_delivery_scooter.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/17_ilustracion_delivery_scooter.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ilustracion delivery scooter",
+          "status": "done"
+        },
+        {
+          "id": "18_ilustracion_bolsa_retiro",
+          "file": "18_ilustracion_bolsa_retiro.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/18_ilustracion_bolsa_retiro.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ilustracion bolsa retiro",
+          "status": "done"
+        },
+        {
+          "id": "19_ilustracion_mesa_reservada",
+          "file": "19_ilustracion_mesa_reservada.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/19_ilustracion_mesa_reservada.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ilustracion mesa reservada",
+          "status": "done"
+        },
+        {
+          "id": "20_icono_whatsapp",
+          "file": "20_icono_whatsapp.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/20_icono_whatsapp.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono whatsapp",
+          "status": "done"
+        },
+        {
+          "id": "21_icono_calendario",
+          "file": "21_icono_calendario.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/21_icono_calendario.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono calendario",
+          "status": "done"
+        },
+        {
+          "id": "22_icono_mapa",
+          "file": "22_icono_mapa.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/22_icono_mapa.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono mapa",
+          "status": "done"
+        },
+        {
+          "id": "23_pin_ubicacion_rojo",
+          "file": "23_pin_ubicacion_rojo.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/23_pin_ubicacion_rojo.png",
+          "section": "MULTIPLE",
+          "visual_spec": "pin ubicacion rojo",
+          "status": "done"
+        },
+        {
+          "id": "24_icono_reloj",
+          "file": "24_icono_reloj.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/24_icono_reloj.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono reloj",
+          "status": "done"
+        },
+        {
+          "id": "25_icono_telefono",
+          "file": "25_icono_telefono.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/25_icono_telefono.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono telefono",
+          "status": "done"
+        },
+        {
+          "id": "26_icono_instagram",
+          "file": "26_icono_instagram.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/26_icono_instagram.png",
+          "section": "MULTIPLE",
+          "visual_spec": "icono instagram",
+          "status": "done"
+        },
+        {
+          "id": "27_ornamento_atardecer",
+          "file": "27_ornamento_atardecer.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/27_ornamento_atardecer.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ornamento atardecer",
+          "status": "done"
+        },
+        {
+          "id": "28_ornamento_olas",
+          "file": "28_ornamento_olas.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/28_ornamento_olas.png",
+          "section": "MULTIPLE",
+          "visual_spec": "ornamento olas",
+          "status": "done"
+        },
+        {
+          "id": "29_estampilla_pinamar",
+          "file": "29_estampilla_pinamar.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/29_estampilla_pinamar.png",
+          "section": "MULTIPLE",
+          "visual_spec": "estampilla pinamar",
+          "status": "done"
+        },
+        {
+          "id": "30_patron_textil_footer",
+          "file": "30_patron_textil_footer.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/30_patron_textil_footer.png",
+          "section": "MULTIPLE",
+          "visual_spec": "patron textil footer",
+          "status": "done"
+        },
+        {
+          "id": "31_divisor_curvo_rojo",
+          "file": "31_divisor_curvo_rojo.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/31_divisor_curvo_rojo.png",
+          "section": "DESTACADOS",
+          "visual_spec": "divisor curvo rojo",
+          "status": "done"
+        },
+        {
+          "id": "32_ornamento_floral_azul_vertical",
+          "file": "32_ornamento_floral_azul_vertical.png",
+          "path": "restaurant_assets_workspace/Don Hipólito Pizza/assets/32_ornamento_floral_azul_vertical.png",
+          "section": "HISTORIA",
+          "visual_spec": "ornamento floral azul vertical",
+          "status": "done"
+        }
+      ],
+      "total_assets": 32,
       "remaining_assets": 0,
-      "valid_assets": 0,
+      "valid_assets": 32,
       "zip_generated": false,
-      "zip_required": false
+      "zip_required": false,
+      "visual_audit": {
+        "first_pass": "complete",
+        "reference_opened": true,
+        "sections_reviewed": [
+          "HEADER",
+          "HERO",
+          "DESTACADOS",
+          "HISTORIA",
+          "MENU",
+          "RESERVAS",
+          "PEDIR",
+          "DELIVERY",
+          "RETIRO",
+          "GALERIA",
+          "UBICACION",
+          "HORARIOS",
+          "CONTACTO",
+          "FOOTER"
+        ],
+        "notes": "Segunda auditoría completa; se agregaron divisor rojo y ornamento floral vertical. 32 PNG RGBA individuales validados. Fotografías y mapa excluidos.",
+        "second_pass": "complete"
+      },
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.8806965-03:00"
+      }
     },
     {
       "order": 42,
@@ -17265,7 +19095,17 @@
         "second_pass_notes": "Referencia reabierta de arriba abajo. Se añadieron cuatro letterings omitidos; no quedan assets reutilizables pendientes."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.9468202-03:00"
+      }
     },
     {
       "order": 43,
@@ -17933,7 +19773,17 @@
         "second_pass_notes": "Referencia opaca corregida reabierta y revisada de arriba abajo; inventario comparado con assets/. No se detectaron faltantes reutilizables."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:01.9941558-03:00"
+      }
     },
     {
       "order": 44,
@@ -18745,7 +20595,17 @@
         "second_pass_notes": "Referencia reabierta; se añadieron menú, flecha, lettering y corazón detectados en la segunda pasada. Restantes 0."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:02.0465621-03:00"
+      }
     },
     {
       "order": 45,
@@ -19557,7 +21417,17 @@
         "second_pass_notes": "Referencia reabierta; se añadieron tres letterings pequeños. Comparación final contra assets/ sin faltantes reutilizables."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:02.1192858-03:00"
+      }
     },
     {
       "order": 46,
@@ -20333,10 +22203,31 @@
         "second_pass_notes": "Referencia reabierta y revisada de arriba abajo; inventario completo, sin faltantes reutilizables."
       },
       "completed_at": "2026-09-07",
-      "zip_required": false
+      "zip_required": false,
+      "web": {
+        "status": "complete",
+        "files": [
+          "index.html",
+          "styles.css",
+          "script.js"
+        ],
+        "reference": "reference.png",
+        "generated_at": "2026-09-12T14:40:02.1667629-03:00"
+      }
     }
   ],
   "zip_policy": "no_zip_required",
   "zip_policy_updated_at": "2026-09-08",
-  "zip_policy_note": "Los assets y reference.png permanecen en cada carpeta; no crear paquetes ZIP."
+  "zip_policy_note": "Los assets y reference.png permanecen en cada carpeta; no crear paquetes ZIP.",
+  "transparency_audit": {
+    "status": "complete",
+    "audited_at": "2026-09-12",
+    "total_assets": 1286,
+    "businesses_reviewed": 46,
+    "review_sheets_inspected": 67,
+    "invalid_assets": 0,
+    "suspicious_assets": 0,
+    "report": "restaurant_assets_workspace/transparency_audit.json",
+    "result": "Auditoría visual manual completa: los 1286 assets actuales fueron inspeccionados sobre fondo gris neutro. No quedan dameros dibujados ni fondos planos accidentales. Palote Pizzería Italiana/assets/08_icono_pastas.png fue confirmado visualmente ya corregido."
+  }
 }

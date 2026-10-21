@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACCLA — Resto Cervecería | Pinamar</title>
+  <meta name="description" content="ACCLA resto cervecería en Pinamar. Cerveza artesanal, burgers, picadas, pizzas, reservas y retiro.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Montserrat:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="site-header" id="inicio">
+    <div class="shell header-inner">
+      <a href="#inicio" class="brand">
+        <img src="./assets/01_logo_accla.png" alt="ACCLA resto cervecería">
+      </a>
+
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menú" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="main-nav" id="mainNav">
+        <a href="#inicio">INICIO</a>
+        <a href="#nosotros">NOSOTROS</a>
+        <a href="#menu">MENÚ</a>
+        <a href="#galeria">GALERÍA</a>
+        <a href="#reservas">RESERVAS</a>
+        <a href="#contacto">CONTACTO</a>
+      </nav>
+
+      <button class="btn btn-gold" data-open-modal="booking">RESERVÁ TU MESA</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="nosotros">
+      <div class="hero-bg"></div>
+      <div class="hero-shade"></div>
+      <div class="shell hero-content">
+        <div class="hero-copy">
+          <h1>BUENA CERVEZA<br>MEJORES MOMENTOS</h1>
+          <p class="eyebrow">ACCLA · RESTO CERVECERÍA<br>PINAMAR</p>
+          <p class="hero-text">
+            Cerveza artesanal, comida que da ganas de compartir y un ambiente único en Pinamar.
+          </p>
+          <button class="btn btn-gold" data-open-modal="booking">
+            RESERVÁ TU MESA
+            <img src="./assets/02_flecha_derecha_dorada.png" alt="">
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="featured dark-section">
+      <div class="shell">
+        <div class="section-title section-title-light">
+          <span></span>
+          <div>
+            <h2>NUESTROS DESTACADOS</h2>
+            <p>SABORES QUE SIEMPRE VUELVEN</p>
+          </div>
+          <span></span>
+        </div>
+
+        <div class="cards-4">
+          <article class="food-card">
+            <img src="./media/featured-burgers.png" alt="Burgers">
+            <h3>BURGERS</h3>
+            <p>Jugosas, con identidad propia.</p>
+          </article>
+          <article class="food-card">
+            <img src="./media/featured-beers.png" alt="Cervezas">
+            <h3>CERVEZAS</h3>
+            <p>Variedad de estilos artesanales.</p>
+          </article>
+          <article class="food-card">
+            <img src="./media/featured-picadas.png" alt="Picadas">
+            <h3>PICADAS</h3>
+            <p>Ideales para compartir.</p>
+          </article>
+          <article class="food-card">
+            <img src="./media/featured-pizzas.png" alt="Pizzas">
+            <h3>PIZZAS</h3>
+            <p>Clásicas y con mucho carácter.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="menu-section" id="menu">
+      <div class="menu-top">
+        <div class="shell menu-top-inner">
+          <img class="menu-decoration" src="./assets/03_lupulo_lineal.png" alt="">
+          <div class="menu-copy">
+            <p class="menu-kicker">NUESTRO</p>
+            <h2>MENÚ</h2>
+            <p class="menu-summary">CERVEZAS, PICADAS, BURGERS, PIZZAS Y MUCHO MÁS.</p>
+            <button class="btn btn-gold" id="toggleMenu">
+              VER MENÚ COMPLETO
+              <img src="./assets/02_flecha_derecha_dorada.png" alt="">
+            </button>
+          </div>
+          <div class="menu-spacer" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="menu-panel" id="menuPanel" aria-hidden="true">
+        <div class="shell">
+          <div class="menu-panel-head">
+            <div class="menu-panel-title-wrap">
+              <span class="menu-panel-subtitle">MENÚ ACCLA</span>
+              <h3 id="menuPanelTitle">BURGERS</h3>
+            </div>
+
+            <div class="menu-tabs" id="menuTabs"></div>
+
+            <button class="menu-close" id="menuClose" aria-label="Cerrar menú">×</button>
+          </div>
+
+          <div class="carousel-wrap">
+            <button class="carousel-arrow" id="prevSlide" aria-label="Anterior">‹</button>
+            <div class="menu-carousel" id="menuCarousel"></div>
+            <button class="carousel-arrow" id="nextSlide" aria-label="Siguiente">›</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="reservations" id="reservas">
+      <div class="reservations-image"></div>
+      <div class="reservations-copy">
+        <div class="shell">
+          <div class="reservations-card">
+            <h2>RESERVAS</h2>
+            <p class="eyebrow eyebrow-small">ASEGURÁ TU LUGAR</p>
+            <p>Te esperamos en Pinamar para vivir una experiencia cervecera única. Reservá tu mesa y disfrutá sin preocupaciones.</p>
+            <button class="btn btn-gold" data-open-modal="booking">
+              RESERVÁ TU MESA
+              <img src="./assets/02_flecha_derecha_dorada.png" alt="">
+            </button>
+
+            <div class="icons-row">
+              <span><img src="./assets/05_icono_cumpleanos.png" alt="">CUMPLEAÑOS</span>
+              <span><img src="./assets/06_icono_amigos.png" alt="">SALIDAS CON AMIGOS</span>
+              <span><img src="./assets/07_icono_cena_especial.png" alt="">CENAS ESPECIALES</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="orders-section">
+      <div class="orders-bg"></div>
+      <div class="orders-overlay"></div>
+      <div class="shell orders-grid">
+        <div class="orders-copy">
+          <img class="orders-bag" src="./assets/04_icono_bolsa_retiro.png" alt="">
+          <h2>PEDIDOS Y RETIRO</h2>
+          <p class="eyebrow eyebrow-small">DISFRUTÁ ACCLA DONDE QUIERAS</p>
+          <p>Realizá tu pedido en el local y consultá disponibilidad de retiro. La mejor comida, también para llevar.</p>
+          <button class="btn btn-gold" data-open-modal="order">
+            CONSULTÁ DISPONIBILIDAD
+            <img src="./assets/02_flecha_derecha_dorada.png" alt="">
+          </button>
+        </div>
+
+        <div class="orders-side">
+          <img class="takeaway-phrase" src="./assets/08_lettering_buena_cerveza_llevar.png" alt="Buena cerveza también para llevar">
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery-section" id="galeria">
+      <div class="shell">
+        <div class="section-title section-title-dark">
+          <span></span>
+          <div>
+            <h2>GALERÍA</h2>
+            <p>MOMENTOS REALES, SABORES VERDADEROS</p>
+          </div>
+          <span></span>
+        </div>
+
+        <div class="gallery-strip">
+          <img src="./media/gallery-01.png" alt="Galería ACCLA 1">
+          <img src="./media/gallery-02.png" alt="Galería ACCLA 2">
+          <img src="./media/gallery-03.png" alt="Galería ACCLA 3">
+          <img src="./media/gallery-04.png" alt="Galería ACCLA 4">
+          <img src="./media/gallery-05.png" alt="Galería ACCLA 5">
+          <img src="./media/gallery-06.png" alt="Galería ACCLA 6">
+        </div>
+      </div>
+    </section>
+
+    <section class="info-section" id="contacto">
+      <div class="shell info-grid">
+        <article class="info-card">
+          <div class="info-head">
+            <img src="./assets/09_pin_ubicacion.png" alt="">
+            <div>
+              <h3>UBICACIÓN</h3>
+              <p>Av. del Libertador, Pinamar</p>
+            </div>
+          </div>
+          <img class="map-image" src="./media/map-pinamar.png" alt="Mapa ACCLA">
+        </article>
+
+        <article class="info-card">
+          <div class="info-head">
+            <img src="./assets/10_icono_reloj.png" alt="">
+            <div>
+              <h3>HORARIOS</h3>
+            </div>
+          </div>
+          <dl class="hours-list" id="hoursList"></dl>
+          <p class="hours-note">Los horarios pueden variar en temporada. Consultá nuestras redes para actualizaciones.</p>
+        </article>
+
+        <article class="info-card">
+          <div class="info-head">
+            <img src="./assets/11_icono_email.png" alt="">
+            <div>
+              <h3>CONTACTO</h3>
+            </div>
+          </div>
+          <p class="contact-script">¡Hablemos!</p>
+          <p>Consultas, reservas y más.<br>Estamos para ayudarte.</p>
+          <button class="btn btn-gold" data-open-modal="contact">ESCRIBINOS POR WHATSAPP</button>
+
+          <div class="social-line">
+            <img src="./assets/12_icono_instagram.png" alt="">
+            <span>@accla.pinamar</span>
+            <img src="./assets/13_icono_facebook.png" alt="">
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-main">
+      <a class="footer-brand-compact" href="#inicio" aria-label="Volver al inicio">
+        <img src="./assets/01_logo_accla.png" alt="ACCLA">
+      </a>
+
+      <nav class="footer-nav" aria-label="Navegación del pie">
+        <a href="#inicio">INICIO</a>
+        <a href="#nosotros">NOSOTROS</a>
+        <a href="#menu">MENÚ</a>
+        <a href="#galeria">GALERÍA</a>
+        <a href="#reservas">RESERVAS</a>
+        <a href="#contacto">CONTACTO</a>
+      </nav>
+    </div>
+
+    <div class="shell footer-bottom">
+      <span>© 2024 ACCLA · Resto Cervecería. Todos los derechos reservados.</span>
+      <span>Pinamar · Buenos momentos.</span>
+    </div>
+  </footer>
+
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-box">
+      <button class="modal-close" data-close-modal>×</button>
+      <span class="modal-label">ACCLA · PINAMAR</span>
+      <h3 id="modalTitle">Acción</h3>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script src="./data.js"></script>
+  <script src="./menu.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

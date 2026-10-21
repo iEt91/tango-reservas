@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "audit_type": "manual_visual",
+  "audited_at": "2026-09-12",
+  "businesses_reviewed": 46,
+  "review_sheets_inspected": 67,
+  "total_assets_reviewed": 1286,
+  "invalid_count": 0,
+  "suspicious_count": 0,
+  "invalid": [],
+  "suspicious": [],
+  "known_corrected_asset": "restaurant_assets_workspace/Palote Pizzería Italiana/assets/08_icono_pastas.png",
+  "method": "Cada PNG fue mostrado en una celda individual sobre fondo gris neutro y evaluado visualmente, hoja por hoja. Se buscaron dameros dibujados, rectángulos opacos, fondos planos o escenas accidentales alrededor del sujeto.",
+  "result": "Los 1286 archivos actuales muestran el asset aislado sobre la superficie de control. No quedan fondos falsos que requieran recreación.",
+  "note": "Los patrones, manchas de acuarela, cintas, sellos y fondos circulares que constituyen el propio elemento gráfico se conservaron como assets intencionales."
+}

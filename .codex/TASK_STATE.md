@@ -1,14 +1,10 @@
-# Webs de prospectos de Pinamar
-Goal: crear webs con identidad y assets separados para los 164 prospectos e integrarlas por gastronomía.
-Success criteria: datos reales, assets con fuente, plantillas seleccionables, revisión visual y checks relevantes.
-Completed: 50 plantillas originales clasificadas en 12 categorías; filtros y cantidades.
-Completed: Baum Pinamar agregada como plantilla 51 en Cervecería y bar, con vista previa /plantillas/baum-pinamar.
-Completed: logo y cuatro productos originales de Baum en archivos separados; fuentes y paleta documentadas.
-Completed: inventario de 164 prospectos en docs/prospectos/pinamar-catalogo.json; 61 clasificaciones a revisar.
-Validation: TypeScript y ESLint focalizado correctos; portada desktop/móvil y carta revisadas; formulario demo probado sin enviar datos.
-Remaining: build final en ejecución; fotos, carta, precios y datos actuales de la sucursal Baum; otras 163 webs y assets.
-Files intentionally modified: src/lib/v2/v2-web-templates.ts; src/app/local/web/plantillas/page.tsx; src/components/public-templates/RestaurantPublicTemplateRenderer.tsx.
-Files added: src/components/public-templates/BaumPinamarTemplate.tsx; src/app/plantillas/baum-pinamar; public/web-templates/baum-pinamar; docs/prospectos/pinamar-catalogo.json.
-Blocker: galería administrativa requiere sesión válida; no se verificó persistencia ni reservas reales de Baum.
-Next action: terminar build y seguir con revisión de categorías y siguiente prospecto del Excel.
-Existing work preserved: reconstrucción visual 06–50 pendiente de la tarea anterior; cambios ajenos de seguridad/datos intactos.
+Goal: respaldar Tango Reservas en su GitHub para permitir retirar la carpeta local.
+Success criteria: trabajo no versionado incluido, sin secretos; push y hash remoto verificados; configuración privada preservada afuera.
+Completed: origin iEt91/tango-reservas público; main y origin/main iguales en 97ed958; rama local reservas-lab sin commits exclusivos.
+Completed: inventario inicial de 8270 archivos del proyecto; 368 archivos nuevos de restaurant_assets_workspace (218640850 bytes), manifiesto y estado ACCLA modificados.
+Completed: configuración privada copiada por autorización explícita a C:/Users/Ismael/Desktop/Proyectos/TangoReservas-privado-local-2026-10-20-OBPzmb; cinco archivos idénticos por SHA256, sin valores en logs.
+Completed: estado previo ACCLA conservado sin cambios en TASK_STATE-ACCLA-PREVIO-2026-10-20.md.
+Remaining: escaneo de secretos, commit del trabajo local, push, verificación de recuperación y reporte.
+Files intentionally modified: sólo .codex/TASK_STATE.md y su copia histórica; se preserva sin editar el trabajo previo de recursos/manifiesto.
+Current blocker: ninguno. No desplegar, borrar ni operar servicios remotos.
+Exact next action: validar los archivos a publicar y crear el commit de respaldo autorizado.

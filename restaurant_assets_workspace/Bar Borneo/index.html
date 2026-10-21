@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Bar Borneo: bar de amigos en Pinamar." />
+    <title>Bar Borneo · Pinamar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Permanent+Marker&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="inicio">
+      <a class="brand" href="#inicio" aria-label="Volver al inicio">
+        <img src="./assets/01_logo_borneo.png" alt="Bar Borneo" />
+      </a>
+      <nav class="desktop-nav" aria-label="Navegación principal">
+        <a href="#inicio">INICIO</a>
+        <a href="#menu">MENÚ</a>
+        <a href="#reservas">RESERVAS</a>
+        <a href="#pedidos">PEDIR</a>
+        <a href="#galeria">GALERÍA</a>
+        <a href="#ubicacion">UBICACIÓN</a>
+        <a href="#contacto">CONTACTO</a>
+      </nav>
+      <div class="header-social" aria-label="Redes sociales">
+        <a data-instagram-link href="#contacto" aria-label="Instagram"><img src="./assets/30_icono_instagram.png" alt="" /></a>
+        <a data-whatsapp-link href="#contacto" aria-label="WhatsApp"><img src="./assets/31_icono_whatsapp.png" alt="" /></a>
+      </div>
+      <button class="mobile-menu-button" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Abrir menú">
+        <img src="./assets/39_icono_menu_hamburguesa.png" alt="" />
+      </button>
+      <nav class="mobile-nav" id="mobile-nav" aria-label="Navegación móvil" hidden>
+        <a href="#inicio">INICIO</a><a href="#menu">MENÚ</a><a href="#reservas">RESERVAS</a><a href="#galeria">GALERÍA</a><a href="#contacto">CONTACTO</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-label="Presentación de Bar Borneo">
+        <div class="hero-cyan-swipe" aria-hidden="true"></div>
+        <div class="hero-pink-swipe" aria-hidden="true"></div>
+        <div class="hero-wordmark-backing" aria-hidden="true"></div>
+        <img class="hero-photo hero-photo-left" data-hero-left alt="Experiencia Bar Borneo" />
+        <img class="hero-photo hero-photo-right" data-hero-right alt="Noche en Bar Borneo" />
+        <img class="hero-wordmark" src="./assets/02_wordmark_borneo_hero.png" alt="Bar Borneo, bar de amigos, Pinamar" />
+        <img class="hero-friends-label" src="./assets/40_etiqueta_bar_de_amigos.png" alt="Bar de amigos" />
+        <img class="hero-pinamar-label" src="./assets/41_lettering_pinamar_rosa.png" alt="Pinamar" />
+        <img class="hero-lightning" src="./assets/03_rayo_pop.png" alt="" />
+        <img class="hero-bubble" src="./assets/04_globo_buena_comida.png" alt="" />
+        <img class="hero-star" src="./assets/05_estrella_ocre.png" alt="" />
+        <img class="hero-heart" src="./assets/06_corazon_contorno.png" alt="" />
+        <img class="hero-palm" src="./assets/07_palmera_silueta.png" alt="" />
+        <img class="hero-crown" src="./assets/10_corona_ocre.png" alt="" />
+        <img class="hero-story" src="./assets/37_lettering_buenas_historias.png" alt="Aquí se viven las buenas historias" />
+        <div class="hero-stripes" aria-hidden="true"></div>
+      </section>
+
+      <section class="featured" id="destacados" aria-labelledby="featured-title">
+        <div class="featured-heading">
+          <span>LOS</span>
+          <h2 id="featured-title">DESTACADOS</h2>
+          <img src="./assets/09_icono_fuego.png" alt="" />
+        </div>
+        <div class="featured-grid" data-featured-list></div>
+        <article class="featured-manifesto">
+          <img class="manifesto-smiley" src="./assets/08_smiley.png" alt="" />
+          <img class="manifesto-lettering" src="./assets/11_lettering_mas_que_bar.png" alt="Más que un bar, una banda" />
+        </article>
+      </section>
+
+      <section class="services" id="menu">
+        <div class="menu-column" data-section="menu">
+          <div class="menu-title-wrap">
+            <p>PROBÁ TODO</p>
+            <h2>NUESTRO MENÚ</h2>
+            <img src="./assets/36_subrayado_rosa.png" alt="" />
+          </div>
+          <div class="menu-body">
+            <div class="category-list" data-category-list aria-label="Categorías del menú"></div>
+            <div class="menu-photo-frame">
+              <img data-menu-image alt="Hamburguesa de Bar Borneo" />
+              <img class="menu-photo-crown" src="./assets/10_corona_ocre.png" alt="" />
+            </div>
+          </div>
+        </div>
+
+        <div class="reservation-column" id="reservas" data-section="reservations">
+          <img class="reservation-calendar" src="./assets/18_icono_calendario.png" alt="" />
+          <h2 data-reservation-title></h2>
+          <p data-reservation-subtitle></p>
+          <form class="reservation-form" data-reservation-form>
+            <label><span>NOMBRE</span><input name="name" required autocomplete="name" /></label>
+            <label><span>FECHA</span><input name="date" type="date" required /></label>
+            <label><span>PERSONAS</span><select name="people" required><option value="">—</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7+</option></select></label>
+            <button type="submit" data-reservation-button></button>
+          </form>
+          <img class="reservation-people" src="./assets/19_icono_personas.png" alt="" />
+          <img class="reservation-toast" src="./assets/20_icono_brindis.png" alt="" />
+        </div>
+
+        <div class="delivery-column" id="pedidos" data-section="delivery">
+          <div class="delivery-title"><span>VOS ELEGÍS</span><h2 data-delivery-title></h2></div>
+          <div class="delivery-options" data-delivery-options></div>
+          <img class="delivery-plan" src="./assets/38_lettering_plan_casa.png" alt="El mejor plan también puede ser en casa" />
+        </div>
+
+        <div class="menu-products" data-menu-products hidden aria-live="polite">
+          <button class="products-close" type="button" data-products-close aria-label="Cerrar platos">×</button>
+          <div class="products-heading"><span data-products-eyebrow></span><h3 data-products-title></h3></div>
+          <div class="products-grid" data-products-grid></div>
+        </div>
+      </section>
+
+      <section class="gallery" id="galeria" data-section="gallery" aria-labelledby="gallery-title">
+        <div class="gallery-heading">
+          <span>ASÍ SE VIVE BORNEO</span>
+          <h2 id="gallery-title">GALERÍA</h2>
+          <img src="./assets/43_destello_blanco.png" alt="" />
+        </div>
+        <div class="gallery-track" data-gallery-list></div>
+      </section>
+
+      <section class="contact" id="contacto">
+        <div class="location-column" id="ubicacion" data-section="map">
+          <h2>UBICACIÓN</h2>
+          <a class="map-card" data-map-link target="_blank" rel="noreferrer">
+            <span class="map-grid" aria-hidden="true"></span>
+            <img src="./assets/24_pin_ubicacion_grande.png" alt="" />
+            <strong data-address></strong>
+          </a>
+        </div>
+        <div class="hours-column">
+          <img src="./assets/26_icono_reloj.png" alt="" />
+          <h2 data-hours-title></h2>
+          <p data-hours></p>
+        </div>
+        <div class="contact-column">
+          <div class="contact-copy">
+            <img src="./assets/27_icono_chat.png" alt="" />
+            <h2 data-contact-title></h2>
+            <p data-contact-text></p>
+            <a data-contact-instagram></a>
+          </div>
+          <img class="contact-rays" src="./assets/42_rayos_rosa_contacto.png" alt="" />
+          <img class="contact-dog" src="./assets/28_mascota_perro_gafas.png" alt="Mascota de Bar Borneo" />
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <img src="./assets/01_logo_borneo.png" alt="Bar Borneo" />
+        <img src="./assets/40_etiqueta_bar_de_amigos.png" alt="Bar de amigos" />
+      </div>
+      <div class="footer-social">
+        <p>SEGUINOS</p>
+        <div>
+          <a data-instagram-link href="#contacto" aria-label="Instagram"><img src="./assets/30_icono_instagram.png" alt="" /></a>
+          <a data-facebook-link href="#contacto" aria-label="Facebook"><img src="./assets/32_icono_facebook.png" alt="" /></a>
+          <a data-tiktok-link href="#contacto" aria-label="TikTok"><img src="./assets/33_icono_tiktok.png" alt="" /></a>
+          <a data-spotify-link href="#contacto" aria-label="Spotify"><img src="./assets/34_icono_spotify.png" alt="" /></a>
+        </div>
+      </div>
+      <img class="footer-see-you" src="./assets/35_lettering_nos_vemos.png" alt="Nos vemos en Borneo" />
+      <img class="footer-pinamar" src="./assets/41_lettering_pinamar_rosa.png" alt="Pinamar" />
+      <img class="footer-palm" src="./assets/29_palmera_footer.png" alt="" />
+      <p class="footer-copy">© <span data-year></span> <span data-business-name></span></p>
+    </footer>
+
+    <div class="notice" data-notice role="status" aria-live="polite" hidden></div>
+    <script src="./data.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>
